@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ChevronLeft, Save, Layout, Grid3X3, Grid2X2, ImagePlus, Star, FileText, Palette, DollarSign } from "lucide-react";
+import { ChevronLeft, Save, LayoutGrid, Grid3X3, Grid2X2, ImagePlus, Star, FileText, Palette, DollarSign } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Link } from "react-router-dom";
 import { Label } from "@/components/ui/label";
@@ -14,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MenuNav } from "@/components/menu/MenuNav";
-import Layout from "@/components/Layout";
+import AppLayout from "@/components/Layout";
 
 const MenuDesign = () => {
   const { t } = useLanguage();
@@ -22,7 +23,7 @@ const MenuDesign = () => {
   const [gridStyle, setGridStyle] = useState("4");
 
   return (
-    <Layout interface="admin">
+    <AppLayout interface="admin">
       <div className="container mx-auto p-4 md:p-6">
         <PageHeader 
           title={<T text="Menu Design" />}
@@ -133,7 +134,7 @@ const MenuDesign = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </Layout>
+    </AppLayout>
   );
 };
 
