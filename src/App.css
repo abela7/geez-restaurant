@@ -22,3 +22,22 @@
     animation: logo-spin infinite 20s linear;
   }
 }
+
+/* Override any backdrop blur effects */
+.backdrop-blur-sm,
+.backdrop-blur,
+.backdrop-blur-md,
+.backdrop-blur-lg,
+.backdrop-blur-xl,
+.backdrop-blur-2xl {
+  backdrop-filter: none !important;
+}
+
+/* Ensure the background is opaque */
+.bg-background\/50,
+.bg-background\/80,
+[class*="bg-white/"],
+[class*="bg-black/"] {
+  background-color: var(--background) !important;
+  --tw-bg-opacity: 1 !important;
+}

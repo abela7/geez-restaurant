@@ -53,14 +53,15 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Custom theme colors for Ethiopian/Eritrean restaurant
-        cream: "#F1ECE2",       // Background
-        plum: "#4D4052",        // Text
-        turmeric: "#DAA520",    // Active item
-        sand: "#CDAF56",        // Borders
-        eggplant: "#4A1E3C",    // Deep accent color
-        amber: "#FFC107",       // Highlight color
-        sienna: "#8A4117",      // Secondary accent
+        // Custom theme colors for Ethiopian/Eritrean restaurant with exact hex values
+        cream: "#F1ECE2",       // Main background (light theme)
+        plum: "#4D4052",        // Text, headings, labels
+        eggplant: "#301934",    // Secondary text, icons
+        turmeric: "#DAA520",    // Buttons, highlights, calls-to-action
+        sand: "#CDAF56",        // Borders, edges, dividers, accents
+        coffee: "#5D4225",      // Tertiary elements, footer
+        
+        // Sidebar specific colors
         sidebar: "hsl(var(--sidebar))",
         "sidebar-foreground": "hsl(var(--sidebar-foreground))",
         "sidebar-border": "hsl(var(--sidebar-border))",

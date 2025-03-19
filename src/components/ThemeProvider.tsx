@@ -17,19 +17,23 @@ export const useTheme = () => useContext(ThemeContext);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light');
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     // Check for saved theme preference
     const savedTheme = localStorage.getItem('theme') as Theme;
-    if (savedTheme) {
+    if (savedTheme && ['light', 'dark', 'high-contrast'].includes(savedTheme)) {
       setTheme(savedTheme);
     } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       // Use system preference as fallback
       setTheme('dark');
     }
+    setIsInitialized(true);
   }, []);
 
   useEffect(() => {
+    if (!isInitialized) return;
+    
     // Update the class on the document element when theme changes
     const root = document.documentElement;
     root.classList.remove('light', 'dark', 'high-contrast');
@@ -37,7 +41,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     
     // Save to localStorage
     localStorage.setItem('theme', theme);
-  }, [theme]);
+  }, [theme, isInitialized]);
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>

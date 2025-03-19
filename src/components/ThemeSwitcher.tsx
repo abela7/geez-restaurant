@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Sun, Moon, CircleDot } from 'lucide-react';
+import { Sun, Moon, Eye } from 'lucide-react';
 import { useLanguage, T } from '@/contexts/LanguageContext';
 
 const ThemeSwitcher: React.FC = () => {
@@ -28,7 +28,7 @@ const ThemeSwitcher: React.FC = () => {
             "absolute h-5 w-5 rotate-90 scale-0 transition-all", 
             theme === "dark" && "rotate-0 scale-100 opacity-100"
           )} />
-          <CircleDot className={cn(
+          <Eye className={cn(
             "absolute h-5 w-5 rotate-90 scale-0 transition-all", 
             theme === "high-contrast" && "rotate-0 scale-100 opacity-100"
           )} />
@@ -41,21 +41,24 @@ const ThemeSwitcher: React.FC = () => {
           className={cn("cursor-pointer", theme === 'light' && "bg-accent")}
         >
           <Sun className="mr-2 h-4 w-4" />
-          <T text="Light" />
+          <span><T text="Light" /></span>
+          <span className="ml-auto text-xs opacity-60">(Cream)</span>
         </DropdownMenuItem>
         <DropdownMenuItem 
           onClick={() => setTheme('dark')}
           className={cn("cursor-pointer", theme === 'dark' && "bg-accent")}
         >
           <Moon className="mr-2 h-4 w-4" />
-          <T text="Dark" />
+          <span><T text="Dark" /></span>
+          <span className="ml-auto text-xs opacity-60">(Eggplant)</span>
         </DropdownMenuItem>
         <DropdownMenuItem 
           onClick={() => setTheme('high-contrast')}
           className={cn("cursor-pointer", theme === 'high-contrast' && "bg-accent")}
         >
-          <CircleDot className="mr-2 h-4 w-4" />
-          <T text="High Contrast" />
+          <Eye className="mr-2 h-4 w-4" />
+          <span><T text="High Contrast" /></span>
+          <span className="ml-auto text-xs opacity-60">(White)</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

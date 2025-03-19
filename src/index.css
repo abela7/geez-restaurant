@@ -6,126 +6,120 @@
 @layer base {
   :root {
     /* Light Theme (Default) */
-    --background: 46 29% 92%; /* Cream */
-    --foreground: 293 13% 28%; /* Plum */
+    --background: 43 34% 92%; /* Cream #F1ECE2 */
+    --foreground: 280 13% 28%; /* Plum #4D4052 */
 
-    --card: 46 29% 92%; /* Cream */
-    --card-foreground: 293 13% 28%; /* Plum */
+    --card: 43 34% 92%; /* Cream #F1ECE2 */
+    --card-foreground: 280 13% 28%; /* Plum #4D4052 */
 
-    --popover: 46 29% 92%; /* Cream */
-    --popover-foreground: 293 13% 28%; /* Plum */
+    --popover: 43 34% 92%; /* Cream #F1ECE2 */
+    --popover-foreground: 280 13% 28%; /* Plum #4D4052 */
 
-    --primary: 43 57% 60%; /* Turmeric */
-    --primary-foreground: 295 45% 16%; /* Eggplant */
+    --primary: 43 65% 49%; /* Turmeric #DAA520 */
+    --primary-foreground: 295 45% 16%; /* Eggplant #301934 */
 
-    --secondary: 47 47% 57%; /* Sand */
-    --secondary-foreground: 293 13% 28%; /* Plum */
+    --secondary: 46 40% 57%; /* Sand #CDAF56 */
+    --secondary-foreground: 280 13% 28%; /* Plum #4D4052 */
 
-    --muted: 46 20% 85%; /* Lighter Cream */
-    --muted-foreground: 293 8% 40%; /* Lighter Plum */
+    --muted: 43 20% 85%; /* Lighter Cream */
+    --muted-foreground: 280 8% 40%; /* Lighter Plum */
 
-    --accent: 47 47% 57%; /* Sand */
-    --accent-foreground: 295 45% 16%; /* Eggplant */
+    --accent: 46 40% 57%; /* Sand #CDAF56 */
+    --accent-foreground: 295 45% 16%; /* Eggplant #301934 */
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 47 47% 57%; /* Sand */
-    --input: 47 47% 57%; /* Sand */
-    --ring: 43 57% 50%; /* Darker Turmeric */
+    --border: 46 40% 57%; /* Sand #CDAF56 */
+    --input: 46 40% 57%; /* Sand #CDAF56 */
+    --ring: 43 65% 49%; /* Turmeric #DAA520 */
 
     --radius: 0.5rem;
 
-    /* Sidebar variables */
-    --sidebar-background: 46 29% 92%; /* Cream */
-    --sidebar-foreground: 293 13% 28%; /* Plum */
-    --sidebar-primary: 43 57% 60%; /* Turmeric */
-    --sidebar-primary-foreground: 295 45% 16%; /* Eggplant */
-    --sidebar-accent: 47 47% 57%; /* Sand */
-    --sidebar-accent-foreground: 295 45% 16%; /* Eggplant */
-    --sidebar-border: 47 47% 57%; /* Sand */
-    --sidebar-ring: 43 57% 50%; /* Darker Turmeric */
+    /* Sidebar variables (for light theme) */
+    --sidebar: 43 34% 92%; /* Cream #F1ECE2 */
+    --sidebar-foreground: 280 13% 28%; /* Plum #4D4052 */
+    --sidebar-border: 46 40% 57%; /* Sand #CDAF56 */
+    --sidebar-ring: 43 65% 49%; /* Turmeric #DAA520 */
+    --sidebar-accent: 46 40% 57%; /* Sand #CDAF56 */
+    --sidebar-accent-foreground: 295 45% 16%; /* Eggplant #301934 */
   }
 
   .dark {
     /* Dark Theme */
-    --background: 295 45% 16%; /* Eggplant */
-    --foreground: 46 29% 92%; /* Cream */
+    --background: 295 45% 16%; /* Eggplant #301934 */
+    --foreground: 43 34% 92%; /* Cream #F1ECE2 */
 
-    --card: 295 45% 16%; /* Eggplant */
-    --card-foreground: 46 29% 92%; /* Cream */
+    --card: 295 45% 16%; /* Eggplant #301934 */
+    --card-foreground: 43 34% 92%; /* Cream #F1ECE2 */
 
-    --popover: 295 45% 16%; /* Eggplant */
-    --popover-foreground: 46 29% 92%; /* Cream */
+    --popover: 295 45% 16%; /* Eggplant #301934 */
+    --popover-foreground: 43 34% 92%; /* Cream #F1ECE2 */
 
-    --primary: 43 57% 60%; /* Turmeric */
-    --primary-foreground: 295 45% 16%; /* Eggplant */
+    --primary: 43 65% 49%; /* Turmeric #DAA520 */
+    --primary-foreground: 295 45% 16%; /* Eggplant #301934 */
 
-    --secondary: 47 47% 57%; /* Sand */
-    --secondary-foreground: 295 45% 16%; /* Eggplant */
+    --secondary: 46 40% 57%; /* Sand #CDAF56 */
+    --secondary-foreground: 295 45% 16%; /* Eggplant #301934 */
 
-    --muted: 293 13% 18%; /* Darker Plum */
-    --muted-foreground: 46 20% 85%; /* Lighter Cream */
+    --muted: 280 13% 18%; /* Darker Plum */
+    --muted-foreground: 43 20% 85%; /* Lighter Cream */
 
-    --accent: 47 47% 57%; /* Sand */
-    --accent-foreground: 295 45% 16%; /* Eggplant */
+    --accent: 46 40% 57%; /* Sand #CDAF56 */
+    --accent-foreground: 295 45% 16%; /* Eggplant #301934 */
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 293 13% 28%; /* Plum */
-    --input: 293 13% 28%; /* Plum */
-    --ring: 43 57% 60%; /* Turmeric */
+    --border: 280 13% 28%; /* Plum #4D4052 */
+    --input: 280 13% 28%; /* Plum #4D4052 */
+    --ring: 43 65% 49%; /* Turmeric #DAA520 */
 
-    /* Sidebar variables */
-    --sidebar-background: 293 13% 28%; /* Plum */
-    --sidebar-foreground: 46 29% 92%; /* Cream */
-    --sidebar-primary: 43 57% 60%; /* Turmeric */
-    --sidebar-primary-foreground: 295 45% 16%; /* Eggplant */
-    --sidebar-accent: 293 13% 22%; /* Darker Plum */
-    --sidebar-accent-foreground: 46 29% 92%; /* Cream */
-    --sidebar-border: 293 13% 22%; /* Darker Plum */
-    --sidebar-ring: 43 57% 60%; /* Turmeric */
+    /* Sidebar variables (for dark theme) */
+    --sidebar: 295 45% 16%; /* Eggplant #301934 */
+    --sidebar-foreground: 43 34% 92%; /* Cream #F1ECE2 */
+    --sidebar-border: 280 13% 28%; /* Plum #4D4052 */
+    --sidebar-ring: 43 65% 49%; /* Turmeric #DAA520 */
+    --sidebar-accent: 280 13% 22%; /* Darker Plum */
+    --sidebar-accent-foreground: 43 34% 92%; /* Cream #F1ECE2 */
   }
 
   .high-contrast {
-    --background: 0 0% 100%; /* White */
-    --foreground: 295 45% 16%; /* Eggplant */
+    --background: 0 0% 100%; /* White #FFFFFF */
+    --foreground: 295 45% 16%; /* Eggplant #301934 */
 
-    --card: 0 0% 100%; /* White */
-    --card-foreground: 295 45% 16%; /* Eggplant */
+    --card: 0 0% 100%; /* White #FFFFFF */
+    --card-foreground: 295 45% 16%; /* Eggplant #301934 */
 
-    --popover: 0 0% 100%; /* White */
-    --popover-foreground: 295 45% 16%; /* Eggplant */
+    --popover: 0 0% 100%; /* White #FFFFFF */
+    --popover-foreground: 295 45% 16%; /* Eggplant #301934 */
 
-    --primary: 43 57% 60%; /* Turmeric */
+    --primary: 43 65% 49%; /* Turmeric #DAA520 */
     --primary-foreground: 0 0% 0%; /* Black */
 
     --secondary: 0 0% 93%; /* Light Gray */
-    --secondary-foreground: 295 45% 16%; /* Eggplant */
+    --secondary-foreground: 295 45% 16%; /* Eggplant #301934 */
 
     --muted: 0 0% 93%; /* Light Gray */
-    --muted-foreground: 295 45% 16%; /* Eggplant */
+    --muted-foreground: 295 45% 16%; /* Eggplant #301934 */
 
-    --accent: 47 47% 57%; /* Sand */
-    --accent-foreground: 295 45% 16%; /* Eggplant */
+    --accent: 46 40% 57%; /* Sand #CDAF56 */
+    --accent-foreground: 295 45% 16%; /* Eggplant #301934 */
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 0%; /* Black */
 
     --border: 0 0% 0%; /* Black */
     --input: 0 0% 0%; /* Black */
-    --ring: 43 57% 60%; /* Turmeric */
+    --ring: 43 65% 49%; /* Turmeric #DAA520 */
 
-    /* Sidebar variables */
-    --sidebar-background: 0 0% 100%; /* White */
-    --sidebar-foreground: 295 45% 16%; /* Eggplant */
-    --sidebar-primary: 43 57% 60%; /* Turmeric */
-    --sidebar-primary-foreground: 0 0% 0%; /* Black */
-    --sidebar-accent: 0 0% 93%; /* Light Gray */
-    --sidebar-accent-foreground: 295 45% 16%; /* Eggplant */
+    /* Sidebar variables (for high-contrast theme) */
+    --sidebar: 0 0% 100%; /* White #FFFFFF */
+    --sidebar-foreground: 295 45% 16%; /* Eggplant #301934 */
     --sidebar-border: 0 0% 0%; /* Black */
-    --sidebar-ring: 43 57% 60%; /* Turmeric */
+    --sidebar-ring: 43 65% 49%; /* Turmeric #DAA520 */
+    --sidebar-accent: 0 0% 93%; /* Light Gray */
+    --sidebar-accent-foreground: 295 45% 16%; /* Eggplant #301934 */
   }
 }
 
@@ -136,21 +130,23 @@
 
   body {
     @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
 /* Custom button styles */
 @layer components {
   .btn-primary {
-    @apply bg-turmeric text-eggplant hover:bg-turmeric/90 px-4 py-2 rounded-md font-medium;
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md font-medium;
   }
   
   .btn-secondary {
-    @apply bg-sand text-plum hover:bg-sand/90 px-4 py-2 rounded-md font-medium;
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/90 px-4 py-2 rounded-md font-medium;
   }
   
   .btn-outline {
-    @apply border-2 border-turmeric bg-transparent text-turmeric hover:bg-turmeric/10 px-4 py-2 rounded-md font-medium;
+    @apply border-2 border-primary bg-transparent text-primary hover:bg-primary/10 px-4 py-2 rounded-md font-medium;
   }
 
   .card-custom {
@@ -158,6 +154,16 @@
   }
 
   .input-custom {
-    @apply border-sand focus:border-turmeric focus:ring-1 focus:ring-turmeric;
+    @apply border-secondary focus:border-primary focus:ring-1 focus:ring-primary;
   }
+}
+
+/* Remove any backdrop blur effects that might be causing the blurry appearance */
+.backdrop-blur-sm,
+.backdrop-blur,
+.backdrop-blur-md,
+.backdrop-blur-lg,
+.backdrop-blur-xl,
+.backdrop-blur-2xl {
+  backdrop-filter: none !important;
 }
