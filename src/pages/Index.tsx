@@ -1,417 +1,341 @@
-
-import React, { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import React from 'react';
 import Layout from '@/components/Layout';
-import { PageHeader } from '@/components/ui/page-header';
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { StatCard } from '@/components/ui/card-stat';
-import { Separator } from "@/components/ui/separator";
 import { useLanguage, T } from '@/contexts/LanguageContext';
-import { Plus, Calendar, Users, ChefHat, ShoppingCart, AlertTriangle } from 'lucide-react';
-
+import { 
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle 
+} from '@/components/ui/card';
+import { CardStat } from '@/components/ui/card-stat';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts';
+  LayoutDashboard, Users, Clock, Utensils, DollarSign, ShoppingCart,
+  Bell, CalendarDays, ClipboardList, ArrowUp, ArrowDown, Search,
+  PlusCircle, Filter, FileDown, Printer, HelpCircle
+} from 'lucide-react';
 
-// Mock data
-const salesData = [
-  { name: 'Mon', sales: 1200 },
-  { name: 'Tue', sales: 1900 },
-  { name: 'Wed', sales: 2100 },
-  { name: 'Thu', sales: 2400 },
-  { name: 'Fri', sales: 2800 },
-  { name: 'Sat', sales: 3200 },
-  { name: 'Sun', sales: 2700 },
+// Mock Data
+const recentOrders = [
+  { id: '#1532', table: 'Table 5', items: 3, total: '$52.50', time: '10 mins ago', status: 'Preparing' },
+  { id: '#1531', table: 'Table 8', items: 2, total: '$31.20', time: '25 mins ago', status: 'Served' },
+  { id: '#1530', table: 'Table 2', items: 5, total: '$75.80', time: '40 mins ago', status: 'Completed' },
+  { id: '#1529', table: 'Table 11', items: 1, total: '$18.90', time: '55 mins ago', status: 'Completed' },
+  { id: '#1528', table: 'Table 4', items: 4, total: '$62.30', time: '1 hour ago', status: 'Completed' },
 ];
 
-const menuItems = [
-  { name: 'Doro Wat', orders: 45 },
-  { name: 'Tibs', orders: 38 },
-  { name: 'Kitfo', orders: 30 },
-  { name: 'Shiro', orders: 28 },
-  { name: 'Injera', orders: 25 },
+const activeStaff = [
+  { id: 1, name: 'Abebe Kebede', role: 'Server', status: 'Active', since: '08:00 AM' },
+  { id: 2, name: 'Sara Hailu', role: 'Chef', status: 'Active', since: '07:30 AM' },
+  { id: 3, name: 'Dawit Tesfaye', role: 'Cashier', status: 'Break', since: '08:15 AM' },
+  { id: 4, name: 'Tigist Alemu', role: 'Server', status: 'Active', since: '09:00 AM' },
 ];
 
-const staffPresence = [
-  { name: 'Present', value: 8 },
-  { name: 'Absent', value: 3 },
-  { name: 'On Leave', value: 1 },
+const lowStockItems = [
+  { id: 1, name: 'Berbere Spice', current: '120g', threshold: '500g', status: 'critical' },
+  { id: 2, name: 'Injera', current: '15 pcs', threshold: '30 pcs', status: 'low' },
+  { id: 3, name: 'Lamb Meat', current: '2.3 kg', threshold: '5 kg', status: 'low' },
 ];
 
-const COLORS = ['#DAA520', '#4D4052', '#CDAF56', '#5D4225'];
+const todayStats = {
+  sales: { value: '$1,285.24', change: 12.5, isPositive: true },
+  orders: { value: '32', change: 8.2, isPositive: true },
+  averageOrder: { value: '$40.16', change: 3.7, isPositive: true },
+  customers: { value: '48', change: -5.3, isPositive: false }
+};
 
-const Index: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+const AdminDashboard: React.FC = () => {
   const { t } = useLanguage();
-
-  useEffect(() => {
-    // For demo purposes, simple check for user in localStorage
-    const user = localStorage.getItem('user');
-    if (!user) {
-      // For demo, create a fake user
-      localStorage.setItem('user', JSON.stringify({ name: 'Admin User', role: 'admin' }));
-    }
-    setIsAuthenticated(true);
-  }, []);
-
-  // Show loading while checking authentication
-  if (isAuthenticated === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  // Redirect to login if not authenticated
-  if (isAuthenticated === false) {
-    return <Navigate to="/login" />;
-  }
 
   return (
     <Layout interface="admin">
-      <PageHeader 
-        title="Administrative Dashboard" 
-        description="Monitor your restaurant operations in real-time"
-        actions={
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            <T text="New Report" />
-          </Button>
-        }
-      />
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard
-          title="Today's Sales"
-          value="$3,248"
-          change="+12.5%"
-          isPositive={true}
-          icon={<DollarSign size={20} />}
-        />
-        <StatCard
-          title="Active Orders"
-          value="18"
-          change="+3"
-          isPositive={true}
-          icon={<ClipboardList size={20} />}
-        />
-        <StatCard
-          title="Staff Present"
-          value="8/12"
-          icon={<Users size={20} />}
-        />
-        <StatCard
-          title="Inventory Alerts"
-          value="3"
-          change="+2"
-          isPositive={false}
-          icon={<AlertTriangle size={20} />}
-        />
-      </div>
-
-      <Tabs defaultValue="sales" className="w-full mb-6">
-        <TabsList>
-          <TabsTrigger value="sales">
-            <T text="Sales" />
-          </TabsTrigger>
-          <TabsTrigger value="items">
-            <T text="Popular Items" />
-          </TabsTrigger>
-          <TabsTrigger value="staff">
-            <T text="Staff" />
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="sales">
-          <Card>
-            <div className="p-4">
-              <h3 className="text-lg font-semibold mb-2">
-                <T text="Weekly Sales" />
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                <T text="Revenue trends for the current week" />
-              </p>
-            </div>
-            <Separator />
-            <div className="p-4">
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={salesData}
-                    margin={{
-                      top: 10,
-                      right: 30,
-                      left: 20,
-                      bottom: 10,
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'var(--card)',
-                        borderColor: 'var(--border)',
-                        borderRadius: '0.5rem',
-                      }} 
-                    />
-                    <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="sales"
-                      stroke="#DAA520"
-                      strokeWidth={2}
-                      activeDot={{ r: 8 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </Card>
-        </TabsContent>
-        <TabsContent value="items">
-          <Card>
-            <div className="p-4">
-              <h3 className="text-lg font-semibold mb-2">
-                <T text="Popular Menu Items" />
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                <T text="Most ordered dishes this month" />
-              </p>
-            </div>
-            <Separator />
-            <div className="p-4">
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={menuItems}
-                    margin={{
-                      top: 10,
-                      right: 10,
-                      left: 10,
-                      bottom: 20,
-                    }}
-                    layout="vertical"
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" />
-                    <YAxis dataKey="name" type="category" />
-                    <Tooltip
-                      contentStyle={{ 
-                        backgroundColor: 'var(--card)',
-                        borderColor: 'var(--border)',
-                        borderRadius: '0.5rem',
-                      }}
-                    />
-                    <Bar dataKey="orders" fill="#CDAF56" radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </Card>
-        </TabsContent>
-        <TabsContent value="staff">
-          <Card>
-            <div className="p-4">
-              <h3 className="text-lg font-semibold mb-2">
-                <T text="Staff Attendance" />
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                <T text="Current staff presence status" />
-              </p>
-            </div>
-            <Separator />
-            <div className="p-4">
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={staffPresence}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={true}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {staffPresence.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+      <div className="space-y-6">
+        {/* Quick Actions Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-cream/50 p-3 rounded-lg border border-sand">
+          {/* Left side - Breadcrumb */}
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbPage><T text="Dashboard" /></BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+          
+          {/* Right side - Quick Actions */}
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="sm">
+              <Search className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline"><T text="Search" /></span>
+            </Button>
+            <Button variant="outline" size="sm">
+              <PlusCircle className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline"><T text="New Order" /></span>
+            </Button>
+            <Button variant="outline" size="sm">
+              <Filter className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline"><T text="Filter" /></span>
+            </Button>
+            <Button variant="outline" size="sm" className="hidden md:flex">
+              <FileDown className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline"><T text="Export" /></span>
+            </Button>
+            <Button variant="outline" size="sm" className="hidden md:flex">
+              <Printer className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline"><T text="Print" /></span>
+            </Button>
+            <Button variant="outline" size="sm" className="hidden lg:flex">
+              <HelpCircle className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline"><T text="Help" /></span>
+            </Button>
+          </div>
+        </div>
+        
+        {/* Today's Statistics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <CardStat
+            title={t("Today's Sales")}
+            value={todayStats.sales.value}
+            icon={<DollarSign className="h-5 w-5" />}
+            trend={todayStats.sales.change}
+            trendText={`${todayStats.sales.isPositive ? '+' : ''}${todayStats.sales.change}% vs yesterday`}
+            positive={todayStats.sales.isPositive}
+          />
+          <CardStat
+            title={t("Orders")}
+            value={todayStats.orders.value}
+            icon={<ClipboardList className="h-5 w-5" />}
+            trend={todayStats.orders.change}
+            trendText={`${todayStats.orders.isPositive ? '+' : ''}${todayStats.orders.change}% vs yesterday`}
+            positive={todayStats.orders.isPositive}
+          />
+          <CardStat
+            title={t("Average Order")}
+            value={todayStats.averageOrder.value}
+            icon={<Utensils className="h-5 w-5" />}
+            trend={todayStats.averageOrder.change}
+            trendText={`${todayStats.averageOrder.isPositive ? '+' : ''}${todayStats.averageOrder.change}% vs yesterday`}
+            positive={todayStats.averageOrder.isPositive}
+          />
+          <CardStat
+            title={t("Customers")}
+            value={todayStats.customers.value}
+            icon={<Users className="h-5 w-5" />}
+            trend={todayStats.customers.change}
+            trendText={`${todayStats.customers.isPositive ? '+' : ''}${todayStats.customers.change}% vs yesterday`}
+            positive={todayStats.customers.isPositive}
+          />
+        </div>
+        
+        {/* Dashboard Tabs */}
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">
+              <LayoutDashboard className="h-4 w-4 mr-2" />
+              <T text="Overview" />
+            </TabsTrigger>
+            <TabsTrigger value="orders">
+              <ClipboardList className="h-4 w-4 mr-2" />
+              <T text="Orders" />
+            </TabsTrigger>
+            <TabsTrigger value="staff">
+              <Users className="h-4 w-4 mr-2" />
+              <T text="Staff" />
+            </TabsTrigger>
+            <TabsTrigger value="inventory">
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              <T text="Inventory" />
+            </TabsTrigger>
+          </TabsList>
+          
+          {/* Overview Tab Content */}
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* Recent Orders */}
+              <Card className="lg:col-span-2">
+                <CardHeader className="pb-2">
+                  <CardTitle><T text="Recent Orders" /></CardTitle>
+                  <CardDescription><T text="Latest customer orders from all tables" /></CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[280px]">
+                    <div className="space-y-4">
+                      {recentOrders.map((order) => (
+                        <div key={order.id} className="flex items-center justify-between border-b border-sand pb-2 last:border-0">
+                          <div>
+                            <p className="font-medium">{order.id} - {order.table}</p>
+                            <p className="text-sm text-muted-foreground">{order.items} items · {order.time}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium">{order.total}</p>
+                            <p className={`text-xs ${
+                              order.status === 'Preparing' ? 'text-amber-500' : 
+                              order.status === 'Served' ? 'text-blue-500' : 
+                              'text-green-500'
+                            }`}>{order.status}</p>
+                          </div>
+                        </div>
                       ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{ 
-                        backgroundColor: 'var(--card)',
-                        borderColor: 'var(--border)',
-                        borderRadius: '0.5rem',
-                      }}
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+                <CardFooter>
+                  <Button variant="outline" className="w-full">
+                    <T text="View All Orders" />
+                  </Button>
+                </CardFooter>
+              </Card>
+              
+              {/* Today's Schedule */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle><T text="Today's Schedule" /></CardTitle>
+                  <CardDescription><T text="Upcoming events and shifts" /></CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="border-l-4 border-blue-500 pl-2">
+                      <p className="text-xs text-muted-foreground">9:00 AM - 11:00 AM</p>
+                      <p className="font-medium">Morning Staff Meeting</p>
+                    </div>
+                    <div className="border-l-4 border-green-500 pl-2">
+                      <p className="text-xs text-muted-foreground">11:30 AM - 2:30 PM</p>
+                      <p className="font-medium">Lunch Service</p>
+                    </div>
+                    <div className="border-l-4 border-amber-500 pl-2">
+                      <p className="text-xs text-muted-foreground">3:00 PM</p>
+                      <p className="font-medium">Food Delivery</p>
+                    </div>
+                    <div className="border-l-4 border-green-500 pl-2">
+                      <p className="text-xs text-muted-foreground">5:30 PM - 10:00 PM</p>
+                      <p className="font-medium">Dinner Service</p>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button variant="outline" className="w-full">
+                    <CalendarDays className="h-4 w-4 mr-2" />
+                    <T text="View Calendar" />
+                  </Button>
+                </CardFooter>
+              </Card>
             </div>
-          </Card>
-        </TabsContent>
-      </Tabs>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <div className="p-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold mb-2">
-                <T text="Recent Orders" />
-              </h3>
-              <Button variant="outline" size="sm">
-                <T text="View All" />
-              </Button>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Active Staff */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle><T text="Active Staff" /></CardTitle>
+                  <CardDescription><T text="Current staff on duty" /></CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[200px]">
+                    <div className="space-y-3">
+                      {activeStaff.map((staff) => (
+                        <div key={staff.id} className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <div className="w-8 h-8 rounded-full bg-turmeric/20 flex items-center justify-center mr-2">
+                              <Users className="h-4 w-4 text-plum" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{staff.name}</p>
+                              <p className="text-xs text-muted-foreground">{staff.role}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className={`text-xs font-medium ${
+                              staff.status === 'Active' ? 'text-green-500' : 'text-amber-500'
+                            }`}>{staff.status}</p>
+                            <p className="text-xs text-muted-foreground">Since {staff.since}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+                <CardFooter>
+                  <Button variant="outline" className="w-full">
+                    <Clock className="h-4 w-4 mr-2" />
+                    <T text="Staff Timeline" />
+                  </Button>
+                </CardFooter>
+              </Card>
+              
+              {/* Inventory Alerts */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle><T text="Inventory Alerts" /></CardTitle>
+                  <CardDescription><T text="Items low in stock" /></CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[200px]">
+                    <div className="space-y-3">
+                      {lowStockItems.map((item) => (
+                        <div key={item.id} className="border-l-4 pl-2 py-1" 
+                          style={{ 
+                            borderColor: item.status === 'critical' ? 'rgb(239, 68, 68)' : 'rgb(234, 179, 8)'
+                          }}
+                        >
+                          <p className="font-medium">{item.name}</p>
+                          <div className="flex justify-between items-center">
+                            <p className="text-xs text-muted-foreground">Current: {item.current}</p>
+                            <p className="text-xs text-muted-foreground">Threshold: {item.threshold}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+                <CardFooter>
+                  <Button variant="outline" className="w-full">
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    <T text="Manage Inventory" />
+                  </Button>
+                </CardFooter>
+              </Card>
             </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              <T text="Latest orders from customers" />
-            </p>
-          </div>
-          <Separator />
-          <div className="p-4">
-            <table className="w-full">
-              <thead>
-                <tr className="text-left text-sm">
-                  <th className="pb-2"><T text="Order ID" /></th>
-                  <th className="pb-2"><T text="Table" /></th>
-                  <th className="pb-2"><T text="Status" /></th>
-                  <th className="pb-2 text-right"><T text="Amount" /></th>
-                </tr>
-              </thead>
-              <tbody>
-                <OrderRow id="ORD-1234" table="T3" status="Delivered" amount="$78.50" />
-                <OrderRow id="ORD-1233" table="T5" status="Preparing" amount="$124.00" />
-                <OrderRow id="ORD-1232" table="T1" status="Ordered" amount="$43.20" />
-                <OrderRow id="ORD-1231" table="T7" status="Delivered" amount="$65.75" />
-                <OrderRow id="ORD-1230" table="T2" status="Paid" amount="$92.30" />
-              </tbody>
-            </table>
-          </div>
-        </Card>
-
-        <Card>
-          <div className="p-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold mb-2">
-                <T text="Inventory Alerts" />
-              </h3>
-              <Button variant="outline" size="sm">
-                <T text="View All" />
-              </Button>
-            </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              <T text="Items running low on stock" />
-            </p>
-          </div>
-          <Separator />
-          <div className="p-4">
-            <div className="space-y-3">
-              <InventoryAlert item="Berbere Spice" stock="200g" required="1kg" severity="high" />
-              <InventoryAlert item="Teff Flour" stock="2kg" required="5kg" severity="medium" />
-              <InventoryAlert item="Coffee Beans" stock="1kg" required="2kg" severity="low" />
-            </div>
-          </div>
-        </Card>
+          </TabsContent>
+          
+          {/* Other tabs would be implemented here */}
+          <TabsContent value="orders">
+            <Card>
+              <CardHeader>
+                <CardTitle><T text="All Orders" /></CardTitle>
+                <CardDescription><T text="Manage and track all restaurant orders" /></CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p><T text="Order management functionality would be implemented here." /></p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="staff">
+            <Card>
+              <CardHeader>
+                <CardTitle><T text="Staff Management" /></CardTitle>
+                <CardDescription><T text="Oversee staff schedules and performance" /></CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p><T text="Staff management functionality would be implemented here." /></p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="inventory">
+            <Card>
+              <CardHeader>
+                <CardTitle><T text="Inventory Management" /></CardTitle>
+                <CardDescription><T text="Track stock levels and ingredients" /></CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p><T text="Inventory management functionality would be implemented here." /></p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );
 };
 
-// Missing Lucide imports
-import { DollarSign, ClipboardList } from 'lucide-react';
-
-interface OrderRowProps {
-  id: string;
-  table: string;
-  status: string;
-  amount: string;
-}
-
-const OrderRow: React.FC<OrderRowProps> = ({ id, table, status, amount }) => {
-  const { t } = useLanguage();
-  
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Delivered':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'Preparing':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-      case 'Ordered':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      case 'Paid':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-    }
-  };
-
-  return (
-    <tr className="border-b border-border text-sm">
-      <td className="py-3">{id}</td>
-      <td className="py-3">{table}</td>
-      <td className="py-3">
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
-          <T text={status} />
-        </span>
-      </td>
-      <td className="py-3 text-right">{amount}</td>
-    </tr>
-  );
-};
-
-interface InventoryAlertProps {
-  item: string;
-  stock: string;
-  required: string;
-  severity: 'low' | 'medium' | 'high';
-}
-
-const InventoryAlert: React.FC<InventoryAlertProps> = ({ item, stock, required, severity }) => {
-  const { t } = useLanguage();
-  
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'high':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-      case 'medium':
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
-      case 'low':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-    }
-  };
-
-  return (
-    <div className="flex items-center justify-between p-3 border border-border rounded-md">
-      <div>
-        <h4 className="font-medium"><T text={item} /></h4>
-        <p className="text-sm text-muted-foreground">
-          {stock} <T text="available" /> / {required} <T text="required" />
-        </p>
-      </div>
-      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getSeverityColor(severity)}`}>
-        <T text={severity.charAt(0).toUpperCase() + severity.slice(1)} />
-      </span>
-    </div>
-  );
-};
-
-export default Index;
+export default AdminDashboard;

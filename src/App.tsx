@@ -18,6 +18,18 @@ import Communication from "./pages/admin/Communication";
 import FinancialManagement from "./pages/admin/FinancialManagement";
 import LanguageManagement from "./pages/admin/LanguageManagement";
 
+// New Admin Routes
+import AdminCustomers from "./pages/admin/Customers";
+import AdminSettings from "./pages/admin/Settings";
+import AdminActivity from "./pages/admin/ActivityLog";
+
+// Admin Subroutes
+import SalesAnalytics from "./pages/admin/reports/SalesAnalytics";
+import StaffReports from "./pages/admin/reports/StaffReports";
+import InventoryReports from "./pages/admin/reports/InventoryReports";
+import CustomerInsights from "./pages/admin/reports/CustomerInsights";
+import CustomReports from "./pages/admin/reports/CustomReports";
+
 // Waiter Interface
 import WaiterDashboard from "./pages/waiter/WaiterDashboard";
 import TableManagement from "./pages/waiter/TableManagement";
@@ -62,13 +74,39 @@ const App = () => (
               
               {/* Admin Portal Routes */}
               <Route path="/" element={<Index />} />
+              
+              {/* Reports Section */}
               <Route path="/admin/reports" element={<Reports />} />
+              <Route path="/admin/reports/sales" element={<SalesAnalytics />} />
+              <Route path="/admin/reports/staff" element={<StaffReports />} />
+              <Route path="/admin/reports/inventory" element={<InventoryReports />} />
+              <Route path="/admin/reports/customers" element={<CustomerInsights />} />
+              <Route path="/admin/reports/custom" element={<CustomReports />} />
+              
+              {/* Staff Management */}
               <Route path="/admin/staff" element={<StaffManagement />} />
+              
+              {/* Inventory Management */}
               <Route path="/admin/inventory" element={<InventoryControl />} />
+              
+              {/* Menu Management */}
               <Route path="/admin/menu" element={<MenuManagement />} />
+              
+              {/* Tasks */}
               <Route path="/admin/tasks" element={<TaskManagement />} />
+              
+              {/* Communication */}
               <Route path="/admin/communication" element={<Communication />} />
+              
+              {/* Finance */}
               <Route path="/admin/finance" element={<FinancialManagement />} />
+              
+              {/* New Admin Routes */}
+              <Route path="/admin/customers" element={<AdminCustomers />} />
+              <Route path="/admin/settings" element={<AdminSettings />} />
+              <Route path="/admin/activity" element={<AdminActivity />} />
+              
+              {/* Language Management */}
               <Route path="/admin/language" element={<LanguageManagement />} />
               
               {/* Waiter Interface Routes */}
