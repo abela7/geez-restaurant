@@ -56,8 +56,8 @@
   }
   
   /* Keep header above overlay */
-  .sticky.top-0.z-25 {
-    z-index: 30;
+  .sticky.top-0.z-30 {
+    z-index: 35;
   }
 }
 
@@ -81,6 +81,16 @@
   background-color: var(--primary);
   color: var(--primary-foreground);
   font-weight: 500;
+}
+
+/* Hide scrollbar but keep functionality */
+.hide-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }
 
 /* Responsive language adjustments */
@@ -145,4 +155,107 @@
 /* Main content transition */
 #root > div > div:last-child {
   transition: margin-left 0.3s ease-in-out;
+}
+
+/* Modern dashboard card styling */
+.card-dashboard {
+  border-radius: 0.5rem;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border);
+}
+
+.card-dashboard:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+/* Custom scrollbar styling */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--muted) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--muted);
+  border-radius: 3px;
+}
+
+/* Tab navigation */
+.tab-nav {
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tab-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-nav-item {
+  white-space: nowrap;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  transition: all 0.15s ease;
+  border-radius: 0.25rem;
+}
+
+.tab-nav-item.active {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+/* Chart styling enhancements */
+.recharts-default-tooltip {
+  border-radius: 0.5rem !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  background-color: var(--card) !important;
+  border-color: var(--border) !important;
+}
+
+.recharts-tooltip-item-name,
+.recharts-tooltip-item-value {
+  color: var(--foreground) !important;
+}
+
+/* Badge styling */
+.status-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+}
+
+/* Improve mobile UI */
+@media (max-width: 640px) {
+  .grid {
+    gap: 0.75rem !important;
+  }
+  
+  main {
+    padding: 1rem !important;
+  }
+  
+  .card-padding {
+    padding: 1rem !important;
+  }
+  
+  h1 {
+    font-size: 1.5rem !important;
+  }
+  
+  .hide-on-mobile {
+    display: none !important;
+  }
 }

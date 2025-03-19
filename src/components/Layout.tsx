@@ -2,22 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { MainSidebar } from './MainSidebar';
-import ThemeSwitcher from './ThemeSwitcher';
-import LanguageSwitcher from './LanguageSwitcher';
 import { cn } from '@/lib/utils';
 import { useLanguage, T } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { 
-  ChevronDown, User, LogOut, Search, Bell, Store,
-  Menu as MenuIcon
-} from 'lucide-react';
+import Header from './Header';
+
 import { 
   Breadcrumb, 
   BreadcrumbItem, 
@@ -34,7 +23,6 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'admin' }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const { t } = useLanguage();
   const location = useLocation();
   const isMobile = useIsMobile();
   
@@ -45,6 +33,8 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
   useEffect(() => {
     if (isMobile) {
       setSidebarOpen(false);
+    } else {
+      setSidebarOpen(true);
     }
   }, [location.pathname, isMobile]);
 
@@ -73,16 +63,6 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
   
   const breadcrumbs = getBreadcrumbs();
 
-  const interfaces = [
-    { value: 'admin', label: 'Administrative Portal', path: '/' },
-    { value: 'waiter', label: 'Waiter Interface', path: '/waiter' },
-    { value: 'kitchen', label: 'Kitchen Staff Interface', path: '/kitchen' },
-    { value: 'customer', label: 'Customer Interface', path: '/menu' },
-    { value: 'system', label: 'System Administration', path: '/system' },
-  ];
-
-  const currentInterface = interfaces.find(i => i.value === userInterface) || interfaces[0];
-
   const contentClasses = cn(
     "flex-1 flex flex-col w-full transition-all duration-300",
     sidebarOpen ? "md:ml-64" : "md:ml-0"
@@ -93,7 +73,7 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
       {isMobile && (
         <div
           className={cn(
-            "fixed inset-0 z-20 bg-background/80 md:hidden transition-opacity duration-300",
+            "fixed inset-0 z-20 bg-black/60 md:hidden transition-opacity duration-300",
             sidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
           )}
           onClick={() => setSidebarOpen(false)}
@@ -114,83 +94,10 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
       </div>
       
       <div className={contentClasses}>
-        <header className="h-16 flex items-center justify-between px-4 md:px-6 border-b border-border shadow-sm bg-background sticky top-0 z-25">
-          <div className="flex items-center gap-2">
-            <Button 
-              onClick={toggleSidebar} 
-              variant="ghost"
-              size="icon"
-              className="mr-2"
-              aria-label={t("Toggle sidebar")}
-            >
-              <MenuIcon size={20} />
-            </Button>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
-                  <span className="hidden md:inline"><T text={currentInterface.label} /></span>
-                  <span className="md:hidden inline"><T text="Interface" /></span>
-                  <ChevronDown size={16} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                {interfaces.map((item) => (
-                  <DropdownMenuItem key={item.value} asChild>
-                    <Link to={item.path} className={cn(
-                      "cursor-pointer",
-                      location.pathname === item.path && "bg-accent"
-                    )}>
-                      <T text={item.label} />
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          
-          <div className="flex items-center space-x-1 md:space-x-4">
-            <Button variant="ghost" size="icon" className="hidden md:flex">
-              <Search size={20} />
-            </Button>
-            
-            <Button variant="ghost" size="icon" className="hidden md:flex relative">
-              <Bell size={20} />
-              <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500"></span>
-            </Button>
-            
-            <Button variant="outline" size="sm" className="hidden md:flex items-center">
-              <Store size={16} className="mr-2" />
-              <T text="Open" />
-            </Button>
-            
-            <LanguageSwitcher />
-            <ThemeSwitcher />
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <div className="rounded-full bg-primary text-primary-foreground flex items-center justify-center h-8 w-8">
-                    <span className="font-bold">A</span>
-                  </div>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem className="cursor-pointer">
-                  <User className="mr-2 h-4 w-4" />
-                  <span><T text="Profile" /></span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span><T text="Logout" /></span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </header>
+        <Header toggleSidebar={toggleSidebar} interface={userInterface} />
         
         {location.pathname !== '/' && (
-          <div className="px-4 md:px-6 py-2 border-b border-border bg-background/50">
+          <div className="px-4 md:px-6 py-2 bg-background/50 border-b border-border/50">
             <Breadcrumb>
               <BreadcrumbList className="flex-wrap">
                 {breadcrumbs.map((crumb, index) => (
@@ -216,8 +123,8 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
           {children}
         </main>
         
-        <footer className="p-4 border-t border-border text-center text-sm text-muted-foreground">
-          <p><T text="© 2023" /></p>
+        <footer className="p-3 border-t border-border text-center text-xs text-muted-foreground bg-card/50">
+          <p><T text="© 2023 Habesha Restaurant. All rights reserved." /></p>
         </footer>
       </div>
     </div>
