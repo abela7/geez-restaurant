@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -91,19 +92,19 @@ const StockLevels = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <StatCard 
-            title={<T text="Total Items" />}
+            title="Total Items"
             value={stockItems.length.toString()}
             icon={<Package size={18} />}
           />
           <StatCard 
-            title={<T text="Low Stock Items" />}
+            title="Low Stock Items"
             value={lowStockCount.toString()}
             change={"+2"} 
             isPositive={false}
             icon={<AlertTriangle size={18} />}
           />
           <StatCard 
-            title={<T text="Pending Orders" />}
+            title="Pending Orders"
             value="3" 
             icon={<Truck size={18} />}
           />

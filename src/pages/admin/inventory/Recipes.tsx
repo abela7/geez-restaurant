@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -156,8 +155,8 @@ const recipes = [
 const Recipes = () => {
   const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedDietary, setSelectedDietary] = useState("all");
+  const [selectedCategory, setSelectedCategory] = useState("All Categories");
+  const [selectedDietary, setSelectedDietary] = useState("All Dietary");
 
   // Unique categories and dietary preferences for filters
   const categories = ["All Categories", ...new Set(recipes.map(recipe => recipe.category))];
@@ -199,17 +198,17 @@ const Recipes = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <StatCard 
-            title={<T text="Total Recipes" />}
+            title="Total Recipes"
             value={recipes.length.toString()}
             icon={<ChefHat size={18} />}
           />
           <StatCard 
-            title={<T text="Vegetarian Options" />}
+            title="Vegetarian Options"
             value={(recipes.filter(r => r.dietary.includes("Vegetarian"))).length.toString()}
             icon={<Leaf size={18} />}
           />
           <StatCard 
-            title={<T text="Average Cost per Serving" />}
+            title="Average Cost per Serving"
             value={`$${(recipes.reduce((sum, recipe) => sum + recipe.cost/recipe.servings, 0) / recipes.length).toFixed(2)}`}
             icon={<Users size={18} />}
           />
