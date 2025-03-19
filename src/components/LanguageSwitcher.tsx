@@ -9,24 +9,29 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const LanguageSwitcher: React.FC = () => {
   const { currentLanguage, setCurrentLanguage, t } = useLanguage();
+  const isMobile = useIsMobile();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon">
+        <Button variant="ghost" size={isMobile ? "sm" : "icon"} className="relative">
           <Globe className="h-5 w-5" />
-          <span className="sr-only">{t("Switch language")}</span>
+          {!isMobile && <span className="sr-only">{t("Switch language")}</span>}
+          {isMobile && (
+            <span className="ml-2 text-xs">{currentLanguage === 'en' ? 'EN' : 'አማ'}</span>
+          )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="min-w-[120px]">
         <DropdownMenuItem 
           onClick={() => setCurrentLanguage('en')}
           className="cursor-pointer"
         >
-          <div className="flex items-center">
+          <div className="flex items-center w-full justify-between">
             <span className={currentLanguage === 'en' ? "font-bold" : ""}>English</span>
             {currentLanguage === 'en' && <span className="ml-2">✓</span>}
           </div>
@@ -35,7 +40,7 @@ const LanguageSwitcher: React.FC = () => {
           onClick={() => setCurrentLanguage('am')}
           className="cursor-pointer"
         >
-          <div className="flex items-center">
+          <div className="flex items-center w-full justify-between">
             <span className={currentLanguage === 'am' ? "font-bold" : ""}>አማርኛ</span>
             {currentLanguage === 'am' && <span className="ml-2">✓</span>}
           </div>

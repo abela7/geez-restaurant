@@ -56,3 +56,32 @@
     display: block !important;
   }
 }
+
+/* Language-specific styles */
+[data-language="am"] {
+  /* Amharic text might need slightly different styles */
+  --amharic-font-scale: 1.05;
+}
+
+/* Responsive language adjustments */
+@media (max-width: 768px) {
+  [data-language="am"] h1,
+  [data-language="am"] h2,
+  [data-language="am"] h3,
+  [data-language="am"] h4,
+  [data-language="am"] h5,
+  [data-language="am"] h6,
+  [data-language="am"] p,
+  [data-language="am"] span,
+  [data-language="am"] button,
+  [data-language="am"] a {
+    word-break: break-word;
+    hyphens: auto;
+  }
+  
+  /* Make the language switcher more prominent on mobile */
+  .language-switcher-mobile {
+    padding: 0.5rem;
+    margin-right: 0.5rem;
+  }
+}
