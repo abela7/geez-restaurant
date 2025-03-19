@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -289,7 +290,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <div
       className={cn(
-        "h-screen bg-cream fixed left-0 top-0 z-10 flex flex-col border-r border-sand transition-all duration-300 ease-in-out md:translate-x-0",
+        "h-screen bg-cream fixed left-0 top-0 z-50 flex flex-col border-r border-sand transition-all duration-300 ease-in-out md:translate-x-0",
         open ? "w-64" : "w-16",
         !open && "md:w-16 w-0 -translate-x-full md:translate-x-0"
       )}

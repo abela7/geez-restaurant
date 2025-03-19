@@ -89,13 +89,16 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
 
   return (
     <div className="flex min-h-screen relative bg-background">
-      <div
-        className={cn(
-          "fixed inset-0 z-40 bg-background/80 backdrop-blur-sm transition-all duration-300",
-          sidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none md:hidden"
-        )}
-        onClick={() => setSidebarOpen(false)}
-      />
+      {/* Mobile overlay - Only visible on mobile when sidebar is open */}
+      {isMobile && (
+        <div
+          className={cn(
+            "fixed inset-0 z-40 bg-background/80 md:hidden transition-opacity duration-300",
+            sidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          )}
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
       
       <Sidebar open={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} interface={userInterface} />
       
