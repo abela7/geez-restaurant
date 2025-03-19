@@ -18,6 +18,12 @@ import Communication from "./pages/admin/Communication";
 import FinancialManagement from "./pages/admin/FinancialManagement";
 import LanguageManagement from "./pages/admin/LanguageManagement";
 
+// Finance Subpages
+import DailySales from "./pages/admin/finance/DailySales";
+import FinancialReports from "./pages/admin/finance/FinancialReports";
+import PaymentManagement from "./pages/admin/finance/PaymentManagement";
+import Budgeting from "./pages/admin/finance/Budgeting";
+
 // New Admin Routes
 import AdminCustomers from "./pages/admin/Customers";
 import AdminSettings from "./pages/admin/Settings";
@@ -92,6 +98,13 @@ const App = () => (
               <Route path="/admin/reports/customers" element={<CustomerInsights />} />
               <Route path="/admin/reports/custom" element={<CustomReports />} />
               
+              {/* Finance Section */}
+              <Route path="/admin/finance" element={<FinancialManagement />} />
+              <Route path="/admin/finance/daily-sales" element={<DailySales />} />
+              <Route path="/admin/finance/financial-reports" element={<FinancialReports />} />
+              <Route path="/admin/finance/payment-management" element={<PaymentManagement />} />
+              <Route path="/admin/finance/budgeting" element={<Budgeting />} />
+              
               {/* Staff Management */}
               <Route path="/admin/staff" element={<StaffManagement />} />
               <Route path="/admin/staff/profile/:id" element={<StaffProfile />} />
@@ -113,9 +126,6 @@ const App = () => (
               
               {/* Communication */}
               <Route path="/admin/communication" element={<Communication />} />
-              
-              {/* Finance */}
-              <Route path="/admin/finance" element={<FinancialManagement />} />
               
               {/* New Admin Routes */}
               <Route path="/admin/customers" element={<AdminCustomers />} />
