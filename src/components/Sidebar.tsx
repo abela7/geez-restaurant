@@ -1,11 +1,11 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useLanguage, T } from '@/contexts/LanguageContext';
 import { 
   LayoutDashboard, DollarSign, Users, Menu as MenuIcon, Package, BarChart, 
-  User, Settings, ClipboardList, ChevronDown, ChevronRight, Languages
+  User, Settings, ClipboardList, ChevronDown, ChevronRight, Languages,
+  BookUser, ListChecks, BadgeDollarSign
 } from 'lucide-react';
 
 interface SidebarLinkProps {
@@ -120,7 +120,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     );
   };
 
-  // Admin navigation structure
   const adminSections: NavSection[] = [
     { 
       label: "Dashboard", 
@@ -221,7 +220,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   ];
 
-  // Waiter links
   const waiterLinks = [
     { to: "/waiter", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
     { to: "/waiter/tables", label: "Table Management", icon: <MenuIcon size={20} /> },
@@ -230,7 +228,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { to: "/waiter/tasks", label: "Tasks", icon: <ClipboardList size={20} /> },
   ];
 
-  // Kitchen links
   const kitchenLinks = [
     { to: "/kitchen", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
     { to: "/kitchen/recipes", label: "Recipe Viewer", icon: <MenuIcon size={20} /> },
@@ -238,14 +235,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { to: "/kitchen/tasks", label: "Tasks", icon: <ClipboardList size={20} /> },
   ];
 
-  // Customer links
   const customerLinks = [
     { to: "/menu", label: "Menu", icon: <MenuIcon size={20} /> },
     { to: "/feedback", label: "Feedback", icon: <ClipboardList size={20} /> },
     { to: "/promotions", label: "Promotions", icon: <DollarSign size={20} /> },
   ];
 
-  // System links
   const systemLinks = [
     { to: "/system", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
     { to: "/system/errors", label: "Error Logs", icon: <ClipboardList size={20} /> },
@@ -253,9 +248,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { to: "/system/docs", label: "Documentation", icon: <ClipboardList size={20} /> },
   ];
 
-  // Determine which links to show based on interface
+  const staffManagementQuickLinks = [
+    { to: "/admin/staff", label: "Overview", icon: <Users size={20} /> },
+    { to: "/admin/staff/directory", label: "Directory", icon: <BookUser size={20} /> },
+    { to: "/admin/staff/tasks", label: "Tasks", icon: <ListChecks size={20} /> },
+    { to: "/admin/staff/payroll", label: "Payroll", icon: <BadgeDollarSign size={20} /> },
+  ];
+
   let links;
   let interfaceTitle;
+  let quickLinks = null;
   
   switch (userInterface) {
     case 'waiter':
@@ -275,8 +277,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       interfaceTitle = "System Administration";
       break;
     default:
-      // For admin, we'll handle the links differently
       interfaceTitle = "Administrative Portal";
+      
+      if (location.pathname.includes('/admin/staff')) {
+        quickLinks = staffManagementQuickLinks;
+      }
   }
 
   const { t } = useLanguage();
@@ -286,7 +291,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       className={cn(
         "h-screen bg-cream fixed left-0 top-0 z-10 flex flex-col border-r border-sand transition-all duration-300 ease-in-out md:translate-x-0",
         open ? "w-64" : "w-16",
-        !open && "md:w-16 w-0 -translate-x-full md:translate-x-0" // Mobile handling
+        !open && "md:w-16 w-0 -translate-x-full md:translate-x-0"
       )}
     >
       <div className="p-4 flex justify-center items-center h-16 border-b border-sand">
@@ -310,7 +315,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         
         <nav className="space-y-1">
           {userInterface === 'admin' ? (
-            // Admin navigation with dropdown support
             adminSections.map((section) => (
               <React.Fragment key={section.path}>
                 <SidebarLink
@@ -342,7 +346,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </React.Fragment>
             ))
           ) : (
-            // Standard navigation for other interfaces
             links.map((link) => (
               <SidebarLink
                 key={link.to}

@@ -35,6 +35,9 @@ import StaffProfile from "./pages/admin/staff/StaffProfile";
 import StaffAttendance from "./pages/admin/staff/Attendance";
 import StaffPerformance from "./pages/admin/staff/Performance";
 import NewStaff from "./pages/admin/staff/NewStaff";
+import Directory from "./pages/admin/staff/Directory";
+import Tasks from "./pages/admin/staff/Tasks";
+import Payroll from "./pages/admin/staff/Payroll";
 
 // Waiter Interface
 import WaiterDashboard from "./pages/waiter/WaiterDashboard";
@@ -95,6 +98,9 @@ const App = () => (
               <Route path="/admin/staff/attendance" element={<StaffAttendance />} />
               <Route path="/admin/staff/performance" element={<StaffPerformance />} />
               <Route path="/admin/staff/new" element={<NewStaff />} />
+              <Route path="/admin/staff/directory" element={<Directory />} />
+              <Route path="/admin/staff/tasks" element={<Tasks />} />
+              <Route path="/admin/staff/payroll" element={<Payroll />} />
               
               {/* Inventory Management */}
               <Route path="/admin/inventory" element={<InventoryControl />} />
