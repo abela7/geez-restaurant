@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ChevronLeft, Save, Layout, Grid3X3, Grid2X2, ImagePlus, Star, FileText, Palette } from "lucide-react";
+import { ChevronLeft, Save, Layout, Grid3X3, Grid2X2, ImagePlus, Star, FileText, Palette, DollarSign } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Link } from "react-router-dom";
 import { Label } from "@/components/ui/label";
