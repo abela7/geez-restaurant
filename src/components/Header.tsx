@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { ThemeSwitcher } from './ThemeSwitcher';
-import { LanguageSwitcher } from './LanguageSwitcher';
+import ThemeSwitcher from './ThemeSwitcher';
+import LanguageSwitcher from './LanguageSwitcher';
 import { Button } from './ui/button';
 import { Bell, Menu, Search, User } from 'lucide-react';
 import { Input } from './ui/input';
