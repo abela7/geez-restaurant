@@ -24,10 +24,7 @@ const LanguageSwitcher: React.FC = () => {
           className="relative language-switcher-mobile"
         >
           <Globe className="h-[18px] w-[18px]" />
-          {!isMobile && <span className="sr-only">{t("Switch language")}</span>}
-          {isMobile && (
-            <span className="ml-1.5 text-xs font-medium">{currentLanguage === 'en' ? 'EN' : 'አማ'}</span>
-          )}
+          <span className="ml-1.5 text-xs font-medium">{currentLanguage === 'en' ? 'EN' : 'አማ'}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[120px]">

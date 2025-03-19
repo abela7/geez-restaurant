@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
@@ -42,8 +41,6 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
   useEffect(() => {
     if (isMobile) {
       setSidebarOpen(false);
-    } else {
-      setSidebarOpen(true);
     }
   }, [location.pathname, isMobile]);
 
@@ -100,12 +97,15 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
         />
       )}
       
-      <Sidebar open={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} interface={userInterface} />
-      
+      {/* Sidebar - hidden by default but can be toggled */}
       <div className={cn(
-        "flex-1 transition-all duration-300 ease-in-out flex flex-col",
-        sidebarOpen ? "md:ml-64" : "md:ml-16"
+        "fixed inset-y-0 left-0 z-50 w-64 bg-sidebar text-sidebar-foreground transition-transform duration-300 transform border-r border-sidebar-border",
+        sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
+        <Sidebar open={true} onToggle={() => setSidebarOpen(!sidebarOpen)} interface={userInterface} />
+      </div>
+      
+      <div className="flex-1 flex flex-col">
         <header className="h-16 flex items-center justify-between px-4 md:px-6 border-b border-border shadow-sm bg-background sticky top-0 z-30">
           <div className="flex items-center gap-2">
             <Button 
@@ -211,7 +211,7 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
         </main>
         
         <footer className="p-4 border-t border-border text-center text-sm text-muted-foreground">
-          <p><T text="© 2023 Habesha Restaurant Management System" /></p>
+          <p><T text="© 2023" /></p>
         </footer>
       </div>
     </div>
