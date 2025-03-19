@@ -230,6 +230,11 @@ export const MainSidebar: React.FC<MainSidebarProps> = ({
       label: "Language Management", 
       icon: <Languages size={20} />, 
       path: "/admin/language"
+    },
+    { 
+      label: "Logout", 
+      icon: <LogOut size={20} />, 
+      path: "/login"
     }
   ];
 
@@ -239,6 +244,7 @@ export const MainSidebar: React.FC<MainSidebarProps> = ({
     { to: "/waiter/orders", label: "Order Management", icon: <ClipboardList size={20} /> },
     { to: "/waiter/payments", label: "Payment Processing", icon: <DollarSign size={20} /> },
     { to: "/waiter/tasks", label: "Tasks", icon: <ClipboardList size={20} /> },
+    { to: "/login", label: "Logout", icon: <LogOut size={20} /> },
   ];
 
   const kitchenLinks = [
@@ -246,12 +252,14 @@ export const MainSidebar: React.FC<MainSidebarProps> = ({
     { to: "/kitchen/recipes", label: "Recipe Viewer", icon: <MenuIcon size={20} /> },
     { to: "/kitchen/inventory", label: "Inventory Check", icon: <Package size={20} /> },
     { to: "/kitchen/tasks", label: "Tasks", icon: <ClipboardList size={20} /> },
+    { to: "/login", label: "Logout", icon: <LogOut size={20} /> },
   ];
 
   const customerLinks = [
     { to: "/menu", label: "Menu", icon: <MenuIcon size={20} /> },
     { to: "/feedback", label: "Feedback", icon: <ClipboardList size={20} /> },
     { to: "/promotions", label: "Promotions", icon: <DollarSign size={20} /> },
+    { to: "/login", label: "Logout", icon: <LogOut size={20} /> },
   ];
 
   const systemLinks = [
@@ -259,6 +267,7 @@ export const MainSidebar: React.FC<MainSidebarProps> = ({
     { to: "/system/errors", label: "Error Logs", icon: <ClipboardList size={20} /> },
     { to: "/system/users", label: "User Management", icon: <Users size={20} /> },
     { to: "/system/docs", label: "Documentation", icon: <ClipboardList size={20} /> },
+    { to: "/login", label: "Logout", icon: <LogOut size={20} /> },
   ];
 
   let links;
@@ -360,16 +369,6 @@ export const MainSidebar: React.FC<MainSidebarProps> = ({
             ))
           )}
         </nav>
-      </div>
-      
-      <div className="p-4 border-t border-sidebar-border">
-        <SidebarLink
-          to="/login"
-          icon={<LogOut size={20} />}
-          label="Logout"
-          isActive={false}
-          isOpen={open}
-        />
       </div>
     </div>
   );

@@ -7,7 +7,7 @@ import {
   LayoutDashboard, DollarSign, Users, Package, BarChart, 
   User, Settings, ClipboardList, ChevronDown, ChevronRight, Languages,
   BookUser, ListChecks, BadgeDollarSign, Menu as MenuIcon, LogOut, 
-  X, ChevronLeft
+  ChevronLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -229,6 +229,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: "Language Management", 
       icon: <Languages size={20} />, 
       path: "/admin/language"
+    },
+    { 
+      label: "Logout", 
+      icon: <LogOut size={20} />, 
+      path: "/login"
     }
   ];
 
@@ -238,6 +243,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { to: "/waiter/orders", label: "Order Management", icon: <ClipboardList size={20} /> },
     { to: "/waiter/payments", label: "Payment Processing", icon: <DollarSign size={20} /> },
     { to: "/waiter/tasks", label: "Tasks", icon: <ClipboardList size={20} /> },
+    { to: "/login", label: "Logout", icon: <LogOut size={20} /> },
   ];
 
   const kitchenLinks = [
@@ -245,12 +251,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { to: "/kitchen/recipes", label: "Recipe Viewer", icon: <MenuIcon size={20} /> },
     { to: "/kitchen/inventory", label: "Inventory Check", icon: <Package size={20} /> },
     { to: "/kitchen/tasks", label: "Tasks", icon: <ClipboardList size={20} /> },
+    { to: "/login", label: "Logout", icon: <LogOut size={20} /> },
   ];
 
   const customerLinks = [
     { to: "/menu", label: "Menu", icon: <MenuIcon size={20} /> },
     { to: "/feedback", label: "Feedback", icon: <ClipboardList size={20} /> },
     { to: "/promotions", label: "Promotions", icon: <DollarSign size={20} /> },
+    { to: "/login", label: "Logout", icon: <LogOut size={20} /> },
   ];
 
   const systemLinks = [
@@ -258,6 +266,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { to: "/system/errors", label: "Error Logs", icon: <ClipboardList size={20} /> },
     { to: "/system/users", label: "User Management", icon: <Users size={20} /> },
     { to: "/system/docs", label: "Documentation", icon: <ClipboardList size={20} /> },
+    { to: "/login", label: "Logout", icon: <LogOut size={20} /> },
   ];
 
   let links;
@@ -359,21 +368,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             ))
           )}
         </nav>
-      </div>
-      
-      <div className="p-4 border-t border-sidebar-border">
-        <Link
-          to="/login"
-          className={cn(
-            "flex items-center px-3 py-2.5 rounded-md transition-colors",
-            "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-          )}
-        >
-          <div className="w-8 h-8 flex items-center justify-center">
-            <LogOut size={20} />
-          </div>
-          <span className="ml-2 text-sm"><T text="Logout" /></span>
-        </Link>
       </div>
     </div>
   );
