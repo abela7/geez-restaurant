@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -28,6 +29,12 @@ import StaffReports from "./pages/admin/reports/StaffReports";
 import InventoryReports from "./pages/admin/reports/InventoryReports";
 import CustomerInsights from "./pages/admin/reports/CustomerInsights";
 import CustomReports from "./pages/admin/reports/CustomReports";
+
+// Staff Management Pages
+import StaffProfile from "./pages/admin/staff/StaffProfile";
+import StaffAttendance from "./pages/admin/staff/Attendance";
+import StaffPerformance from "./pages/admin/staff/Performance";
+import NewStaff from "./pages/admin/staff/NewStaff";
 
 // Waiter Interface
 import WaiterDashboard from "./pages/waiter/WaiterDashboard";
@@ -84,6 +91,10 @@ const App = () => (
               
               {/* Staff Management */}
               <Route path="/admin/staff" element={<StaffManagement />} />
+              <Route path="/admin/staff/profile/:id" element={<StaffProfile />} />
+              <Route path="/admin/staff/attendance" element={<StaffAttendance />} />
+              <Route path="/admin/staff/performance" element={<StaffPerformance />} />
+              <Route path="/admin/staff/new" element={<NewStaff />} />
               
               {/* Inventory Management */}
               <Route path="/admin/inventory" element={<InventoryControl />} />
