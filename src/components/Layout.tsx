@@ -1,11 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import ThemeSwitcher from './ThemeSwitcher';
 import LanguageSwitcher from './LanguageSwitcher';
 import { cn } from '@/lib/utils';
 import { useLanguage, T } from '@/contexts/LanguageContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -15,7 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { 
   ChevronDown, User, LogOut, Search, Bell, Store,
-  Menu as MenuIcon
+  Menu as MenuIcon, X
 } from 'lucide-react';
 import { 
   Breadcrumb, 
@@ -32,9 +33,19 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'admin' }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { t } = useLanguage();
   const location = useLocation();
+  const isMobile = useIsMobile();
+  
+  // Auto-close sidebar on mobile when navigating
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    } else {
+      setSidebarOpen(true);
+    }
+  }, [location.pathname, isMobile]);
 
   // Helper function to generate breadcrumbs from the current location
   const getBreadcrumbs = () => {
@@ -49,7 +60,7 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
     const breadcrumbs = [{ label: 'Dashboard', path: '/' }];
     
     let currentPath = '';
-    paths.forEach((path, index) => {
+    paths.forEach((path) => {
       currentPath += `/${path}`;
       // Format the label (capitalize first letter, replace hyphens with spaces)
       const label = path
@@ -77,33 +88,43 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
   const currentInterface = interfaces.find(i => i.value === userInterface) || interfaces[0];
 
   return (
-    <div className="flex min-h-screen relative bg-cream">
+    <div className="flex min-h-screen relative bg-background">
+      <div
+        className={cn(
+          "fixed inset-0 z-40 bg-background/80 backdrop-blur-sm transition-all duration-300",
+          sidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none md:hidden"
+        )}
+        onClick={() => setSidebarOpen(false)}
+      />
+      
       <Sidebar open={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} interface={userInterface} />
       
       <div className={cn(
-        "flex-1 transition-all duration-300 ease-in-out",
-        sidebarOpen ? "md:ml-64 ml-0" : "md:ml-16 ml-0"
+        "flex-1 transition-all duration-300 ease-in-out flex flex-col",
+        sidebarOpen ? "md:ml-64" : "md:ml-16"
       )}>
-        <header className="h-16 flex items-center justify-between px-6 border-b border-sand shadow-sm bg-cream">
-          <div className="flex items-center">
-            <button 
+        <header className="h-16 flex items-center justify-between px-4 md:px-6 border-b border-border shadow-sm bg-background sticky top-0 z-30">
+          <div className="flex items-center gap-2">
+            <Button 
               onClick={() => setSidebarOpen(!sidebarOpen)} 
-              className="mr-4 p-2 rounded-md hover:bg-accent md:flex hidden"
+              variant="ghost"
+              size="icon"
+              className="mr-2"
               aria-label={t("Toggle sidebar")}
             >
-              <MenuIcon size={20} />
-            </button>
+              {sidebarOpen ? <X size={20} /> : <MenuIcon size={20} />}
+            </Button>
             
-            <div className="md:block hidden">
-              <h1 className="text-xl font-semibold text-plum"><T text="Habesha Restaurant Manager" /></h1>
+            <div className="hidden md:block">
+              <h1 className="text-xl font-semibold text-foreground"><T text="Habesha Restaurant Manager" /></h1>
             </div>
 
             {/* Interface Selector - Only for demo */}
             <DropdownMenu>
-              <DropdownMenuTrigger asChild className="md:ml-4 ml-0">
+              <DropdownMenuTrigger asChild className="ml-2">
                 <Button variant="outline" className="flex items-center gap-2">
-                  <span className="md:block hidden"><T text={currentInterface.label} /></span>
-                  <span className="md:hidden block"><T text="Interface" /></span>
+                  <span className="hidden md:inline"><T text={currentInterface.label} /></span>
+                  <span className="md:hidden inline"><T text="Interface" /></span>
                   <ChevronDown size={16} />
                 </Button>
               </DropdownMenuTrigger>
@@ -122,12 +143,12 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
             </DropdownMenu>
           </div>
           
-          <div className="flex items-center space-x-2 md:space-x-4">
+          <div className="flex items-center space-x-1 md:space-x-4">
             <Button variant="ghost" size="icon" className="hidden md:flex">
               <Search size={20} />
             </Button>
             
-            <Button variant="ghost" size="icon" className="hidden md:flex">
+            <Button variant="ghost" size="icon" className="hidden md:flex relative">
               <Bell size={20} />
               <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500"></span>
             </Button>
@@ -143,7 +164,7 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <div className="rounded-full bg-turmeric text-eggplant flex items-center justify-center h-8 w-8">
+                  <div className="rounded-full bg-primary text-primary-foreground flex items-center justify-center h-8 w-8">
                     <span className="font-bold">A</span>
                   </div>
                 </Button>
@@ -164,9 +185,9 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
         
         {/* Breadcrumbs - shown only on non-dashboard pages */}
         {location.pathname !== '/' && (
-          <div className="px-6 py-2 border-b border-sand bg-cream/50">
+          <div className="px-4 md:px-6 py-2 border-b border-border bg-background/50">
             <Breadcrumb>
-              <BreadcrumbList>
+              <BreadcrumbList className="flex-wrap">
                 {breadcrumbs.map((crumb, index) => (
                   <React.Fragment key={crumb.path}>
                     {index > 0 && <BreadcrumbSeparator />}
@@ -186,9 +207,13 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
           </div>
         )}
         
-        <main className="p-6">
+        <main className="flex-1 p-4 md:p-6 overflow-auto">
           {children}
         </main>
+        
+        <footer className="p-4 border-t border-border text-center text-sm text-muted-foreground">
+          <p><T text="© 2023 Habesha Restaurant Management System" /></p>
+        </footer>
       </div>
     </div>
   );

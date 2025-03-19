@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search, ChevronRight, Phone, Mail, FilterX } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Sample staff data - using the same data structure as in other staff pages
 const staffMembers = [
@@ -75,6 +76,7 @@ const staffMembers = [
 const Directory = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   
@@ -105,26 +107,41 @@ const Directory = () => {
         }
       />
 
-      <div className="mb-6">
-        <div className="relative w-full max-w-md mb-4">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder={t("Search by name, role, email...")}
-            className="w-full pl-9"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className="mb-6 space-y-4">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder={t("Search by name, role, email...")}
+              className="w-full pl-9"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          {searchTerm && (
+            <Button 
+              variant="ghost" 
+              onClick={() => setSearchTerm("")}
+              size="sm"
+              className="self-start"
+            >
+              <T text="Clear" />
+            </Button>
+          )}
         </div>
         
-        <Tabs defaultValue="all" onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="all"><T text="All Staff" /></TabsTrigger>
-            <TabsTrigger value="Kitchen"><T text="Kitchen" /></TabsTrigger>
-            <TabsTrigger value="Front of House"><T text="Front of House" /></TabsTrigger>
-            <TabsTrigger value="Management"><T text="Management" /></TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="overflow-x-auto">
+          <Tabs defaultValue="all" onValueChange={setActiveTab} className="w-full">
+            <TabsList className="w-full sm:w-auto flex justify-start overflow-x-auto pb-1">
+              <TabsTrigger value="all"><T text="All Staff" /></TabsTrigger>
+              <TabsTrigger value="Kitchen"><T text="Kitchen" /></TabsTrigger>
+              <TabsTrigger value="Front of House"><T text="Front of House" /></TabsTrigger>
+              <TabsTrigger value="Management"><T text="Management" /></TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
       {filteredStaff.length === 0 ? (
@@ -147,10 +164,10 @@ const Directory = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredStaff.map((staff) => (
             <Card key={staff.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-16 w-16">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-start justify-between mb-4 flex-wrap gap-2">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <Avatar className="h-12 w-12 sm:h-16 sm:w-16 flex-shrink-0">
                       <img 
                         src={staff.image} 
                         alt={staff.name} 
@@ -158,8 +175,8 @@ const Directory = () => {
                       />
                     </Avatar>
                     <div>
-                      <h3 className="font-semibold text-lg">{staff.name}</h3>
-                      <p className="text-muted-foreground">{staff.role}</p>
+                      <h3 className="font-semibold text-base sm:text-lg">{staff.name}</h3>
+                      <p className="text-muted-foreground text-sm">{staff.role}</p>
                       <Badge 
                         variant="outline" 
                         className="mt-1"
@@ -171,12 +188,12 @@ const Directory = () => {
                 </div>
                 
                 <div className="space-y-2 mb-4">
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{staff.email}</span>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-sm truncate">{staff.email}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex items-center gap-2 text-sm">
+                    <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                     <span className="text-sm">{staff.phone}</span>
                   </div>
                 </div>
