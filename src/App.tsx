@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,6 +19,11 @@ import LanguageManagement from "./pages/admin/LanguageManagement";
 
 // Menu Management Subpages
 import RecipeManagement from "./pages/admin/menu/RecipeManagement";
+import FoodManagement from "./pages/admin/menu/FoodManagement";
+import MenuDesign from "./pages/admin/menu/MenuDesign";
+import Categories from "./pages/admin/menu/Categories";
+import Modifiers from "./pages/admin/menu/Modifiers";
+import Pricing from "./pages/admin/menu/Pricing";
 
 // Finance Subpages
 import DailySales from "./pages/admin/finance/DailySales";
@@ -124,6 +128,11 @@ const App = () => (
               {/* Menu Management */}
               <Route path="/admin/menu" element={<MenuManagement />} />
               <Route path="/admin/menu/recipes" element={<RecipeManagement />} />
+              <Route path="/admin/menu/food" element={<FoodManagement />} />
+              <Route path="/admin/menu/categories" element={<Categories />} />
+              <Route path="/admin/menu/modifiers" element={<Modifiers />} />
+              <Route path="/admin/menu/pricing" element={<Pricing />} />
+              <Route path="/admin/menu/design" element={<MenuDesign />} />
               
               {/* Tasks */}
               <Route path="/admin/tasks" element={<TaskManagement />} />

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -7,11 +6,10 @@ import {
   LayoutDashboard, DollarSign, Users, Package, BarChart, 
   User, Settings, ClipboardList, ChevronDown, ChevronRight, Languages,
   BookUser, ListChecks, BadgeDollarSign, Menu as MenuIcon, LogOut, 
-  ChevronLeft
+  ChevronLeft, Utensils
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-// Define types first
 interface SidebarLinkProps {
   to: string;
   icon: React.ReactNode;
@@ -108,7 +106,6 @@ interface MainSidebarProps {
   interface?: 'admin' | 'waiter' | 'kitchen' | 'customer' | 'system';
 }
 
-// Move staffManagementQuickLinks definition before it's used
 const staffManagementQuickLinks = [
   { to: "/admin/staff", label: "Overview", icon: <Users size={20} /> },
   { to: "/admin/staff/directory", label: "Directory", icon: <BookUser size={20} /> },
@@ -167,7 +164,8 @@ export const MainSidebar: React.FC<MainSidebarProps> = ({
       icon: <MenuIcon size={20} />, 
       path: "/admin/menu",
       submenu: [
-        { to: "items", label: "Menu Items" },
+        { to: "food", label: "Food Management" },
+        { to: "recipes", label: "Recipe Management" },
         { to: "categories", label: "Categories" },
         { to: "modifiers", label: "Modifiers & Options" },
         { to: "pricing", label: "Pricing" },

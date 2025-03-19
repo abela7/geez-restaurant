@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -17,7 +16,6 @@ import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 
-// Tabs that will be shown in the menu management page
 const menuTabs = [
   { id: "items", label: "Menu Items" },
   { id: "categories", label: "Categories" },
@@ -26,10 +24,8 @@ const menuTabs = [
   { id: "design", label: "Menu Design" }
 ];
 
-// Sample menu categories
 const menuCategories = ["Main Dishes", "Vegetarian", "Appetizers", "Beverages", "Desserts"];
 
-// Sample menu items
 const menuItems = [
   { id: 1, name: "Doro Wat", category: "Main Dishes", price: 18.99, cost: 7.45, profit: 11.54, available: true, image: "/placeholder.svg", description: "Spicy chicken stew with berbere sauce and hard-boiled eggs" },
   { id: 2, name: "Kitfo", category: "Main Dishes", price: 19.99, cost: 8.75, profit: 11.24, available: true, image: "/placeholder.svg", description: "Minced raw beef seasoned with mitmita and niter kibbeh" },
@@ -69,6 +65,12 @@ const MenuManagement = () => {
         description={<T text="Create and manage your restaurant's menu items" />}
         actions={
           <>
+            <Button variant="outline" asChild>
+              <Link to="/admin/menu/food">
+                <Utensils className="mr-2 h-4 w-4" />
+                <T text="Food Management" />
+              </Link>
+            </Button>
             <Button variant="outline" asChild>
               <Link to="/admin/menu/recipes">
                 <DollarSign className="mr-2 h-4 w-4" />
@@ -287,6 +289,14 @@ const MenuManagement = () => {
         </TabsContent>
 
         <TabsContent value="categories">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium"><T text="Categories" /></h3>
+            <Button asChild>
+              <Link to="/admin/menu/categories">
+                <T text="Manage Categories" />
+              </Link>
+            </Button>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {menuCategories.map((category, index) => (
               <Card key={index} className="p-4">
@@ -318,9 +328,10 @@ const MenuManagement = () => {
             <Settings className="mx-auto h-12 w-12 mb-4 text-muted-foreground" />
             <h3 className="text-lg font-medium mb-2"><T text="Modifiers & Options" /></h3>
             <p className="max-w-md mx-auto mb-4"><T text="Define modifiers like spice level, sides, and cooking preferences for your menu items." /></p>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              <T text="Add Modifier Group" />
+            <Button asChild>
+              <Link to="/admin/menu/modifiers">
+                <T text="Manage Modifiers" />
+              </Link>
             </Button>
           </div>
         </TabsContent>
@@ -343,8 +354,10 @@ const MenuManagement = () => {
             <Utensils className="mx-auto h-12 w-12 mb-4 text-muted-foreground" />
             <h3 className="text-lg font-medium mb-2"><T text="Menu Design" /></h3>
             <p className="max-w-md mx-auto mb-4"><T text="Customize how your menu looks to customers with layouts, themes, and featured items." /></p>
-            <Button>
-              <T text="Customize Menu Design" />
+            <Button asChild>
+              <Link to="/admin/menu/design">
+                <T text="Customize Menu Design" />
+              </Link>
             </Button>
           </div>
         </TabsContent>
