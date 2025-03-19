@@ -51,6 +51,19 @@ import InventoryReports from "./pages/admin/reports/InventoryReports";
 import CustomerInsights from "./pages/admin/reports/CustomerInsights";
 import CustomReports from "./pages/admin/reports/CustomReports";
 
+// Customer Pages
+import CustomerFeedback from "./pages/admin/customers/Feedback";
+import CustomerDatabase from "./pages/admin/customers/CustomerDatabase";
+import Promotions from "./pages/admin/customers/Promotions";
+import LoyaltyProgram from "./pages/admin/customers/LoyaltyProgram";
+
+// Settings Pages
+import RestaurantProfile from "./pages/admin/settings/RestaurantProfile";
+import UserAccess from "./pages/admin/settings/UserAccess";
+import PrintersDevices from "./pages/admin/settings/PrintersDevices";
+import SystemLogs from "./pages/admin/settings/SystemLogs";
+import Integrations from "./pages/admin/settings/Integrations";
+
 // Staff Management Pages
 import StaffProfile from "./pages/admin/staff/StaffProfile";
 import StaffAttendance from "./pages/admin/staff/Attendance";
@@ -75,8 +88,8 @@ import KitchenTasks from "./pages/kitchen/KitchenTasks";
 
 // Customer Interface
 import CustomerMenu from "./pages/customer/CustomerMenu";
-import CustomerFeedback from "./pages/customer/CustomerFeedback";
-import Promotions from "./pages/customer/Promotions";
+import CustomerFeedbackPage from "./pages/customer/CustomerFeedback";
+import PromotionsPage from "./pages/customer/Promotions";
 
 // System Administration Interface
 import SystemDashboard from "./pages/system/SystemDashboard";
@@ -153,9 +166,22 @@ const App = () => (
               {/* Communication */}
               <Route path="/admin/communication" element={<Communication />} />
               
-              {/* New Admin Routes */}
+              {/* Customers Section */}
               <Route path="/admin/customers" element={<AdminCustomers />} />
+              <Route path="/admin/customers/feedback" element={<CustomerFeedback />} />
+              <Route path="/admin/customers/database" element={<CustomerDatabase />} />
+              <Route path="/admin/customers/promotions" element={<Promotions />} />
+              <Route path="/admin/customers/loyalty" element={<LoyaltyProgram />} />
+              
+              {/* Settings Section */}
               <Route path="/admin/settings" element={<AdminSettings />} />
+              <Route path="/admin/settings/profile" element={<RestaurantProfile />} />
+              <Route path="/admin/settings/users" element={<UserAccess />} />
+              <Route path="/admin/settings/devices" element={<PrintersDevices />} />
+              <Route path="/admin/settings/logs" element={<SystemLogs />} />
+              <Route path="/admin/settings/integrations" element={<Integrations />} />
+              
+              {/* Activity Log */}
               <Route path="/admin/activity" element={<AdminActivity />} />
               
               {/* Language Management */}
@@ -176,8 +202,8 @@ const App = () => (
               
               {/* Customer Interface Routes */}
               <Route path="/menu" element={<CustomerMenu />} />
-              <Route path="/feedback" element={<CustomerFeedback />} />
-              <Route path="/promotions" element={<Promotions />} />
+              <Route path="/feedback" element={<CustomerFeedbackPage />} />
+              <Route path="/promotions" element={<PromotionsPage />} />
               
               {/* System Administration Interface Routes */}
               <Route path="/system" element={<SystemDashboard />} />
