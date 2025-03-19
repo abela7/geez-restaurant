@@ -118,13 +118,9 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
               {sidebarOpen ? <X size={20} /> : <MenuIcon size={20} />}
             </Button>
             
-            <div className="hidden md:block">
-              <h1 className="text-xl font-semibold text-foreground"><T text="Habesha Restaurant Manager" /></h1>
-            </div>
-
             {/* Interface Selector - Only for demo */}
             <DropdownMenu>
-              <DropdownMenuTrigger asChild className="ml-2">
+              <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="flex items-center gap-2">
                   <span className="hidden md:inline"><T text={currentInterface.label} /></span>
                   <span className="md:hidden inline"><T text="Interface" /></span>

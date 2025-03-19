@@ -37,11 +37,11 @@
     --radius: 0.5rem;
 
     /* Sidebar variables (for light theme) */
-    --sidebar: 43 34% 92%; /* Cream #F1ECE2 */
+    --sidebar: 43 34% 94%; /* Slightly lighter cream for sidebar */
     --sidebar-foreground: 280 13% 28%; /* Plum #4D4052 */
-    --sidebar-border: 46 40% 57%; /* Sand #CDAF56 */
+    --sidebar-border: 46 40% 75%; /* Lighter sand for borders */
     --sidebar-ring: 43 65% 49%; /* Turmeric #DAA520 */
-    --sidebar-accent: 46 40% 57%; /* Sand #CDAF56 */
+    --sidebar-accent: 46 40% 80%; /* Lighter Sand for hover */
     --sidebar-accent-foreground: 295 45% 16%; /* Eggplant #301934 */
   }
 
@@ -76,11 +76,11 @@
     --ring: 43 65% 49%; /* Turmeric #DAA520 */
 
     /* Sidebar variables (for dark theme) */
-    --sidebar: 295 45% 16%; /* Eggplant #301934 */
+    --sidebar: 295 45% 18%; /* Slightly darker eggplant for sidebar */
     --sidebar-foreground: 43 34% 92%; /* Cream #F1ECE2 */
-    --sidebar-border: 280 13% 28%; /* Plum #4D4052 */
+    --sidebar-border: 280 13% 32%; /* Slightly lighter plum for borders */
     --sidebar-ring: 43 65% 49%; /* Turmeric #DAA520 */
-    --sidebar-accent: 280 13% 22%; /* Darker Plum */
+    --sidebar-accent: 280 13% 28%; /* Plum for hover */
     --sidebar-accent-foreground: 43 34% 92%; /* Cream #F1ECE2 */
   }
 
@@ -166,4 +166,15 @@
 .backdrop-blur-xl,
 .backdrop-blur-2xl {
   backdrop-filter: none !important;
+}
+
+/* Additional responsive classes for mobile devices */
+@media (max-width: 768px) {
+  .mobile-menu-button {
+    margin-right: 0.5rem;
+  }
+
+  .mobile-header-title {
+    font-size: 1rem;
+  }
 }

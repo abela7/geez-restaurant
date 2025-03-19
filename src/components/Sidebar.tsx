@@ -1,11 +1,12 @@
+
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useLanguage, T } from '@/contexts/LanguageContext';
 import { 
-  LayoutDashboard, DollarSign, Users, Menu as MenuIcon, Package, BarChart, 
+  LayoutDashboard, DollarSign, Users, Package, BarChart, 
   User, Settings, ClipboardList, ChevronDown, ChevronRight, Languages,
-  BookUser, ListChecks, BadgeDollarSign
+  BookUser, ListChecks, BadgeDollarSign, Menu as MenuIcon, LogOut
 } from 'lucide-react';
 
 interface SidebarLinkProps {
@@ -29,15 +30,15 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
   isExpanded = false, 
   onClick 
 }) => {
-  const { t } = useLanguage();
-  
   return (
     <div className="relative">
       <Link
         to={to}
         className={cn(
-          "flex items-center px-3 py-2 my-1 rounded-md transition-colors",
-          isActive ? "bg-primary text-primary-foreground" : "hover:bg-accent hover:text-accent-foreground"
+          "flex items-center px-3 py-2.5 my-1 rounded-md transition-colors",
+          isActive 
+            ? "bg-primary text-primary-foreground font-medium" 
+            : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
         )}
         onClick={hasDropdown ? onClick : undefined}
       >
@@ -46,7 +47,7 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
         </div>
         {isOpen && (
           <>
-            <span className="ml-2"><T text={label} /></span>
+            <span className="ml-2 text-sm"><T text={label} /></span>
             {hasDropdown && (
               <div className="ml-auto">
                 {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
@@ -80,8 +81,8 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({ items, isOpen, isExpanded, 
           className={cn(
             "block px-3 py-1.5 my-1 rounded-md text-sm transition-colors",
             location.pathname === `${parentPath}/${item.to}` 
-              ? "bg-primary text-primary-foreground"
-              : "hover:bg-accent hover:text-accent-foreground"
+              ? "bg-primary/80 text-primary-foreground"
+              : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           )}
         >
           <T text={item.label} />
@@ -284,23 +285,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
       }
   }
 
-  const { t } = useLanguage();
-
   return (
     <div
       className={cn(
-        "h-screen fixed left-0 top-0 z-50 flex flex-col border-r border-sidebar-border transition-all duration-300 ease-in-out md:translate-x-0",
-        "bg-sidebar text-sidebar-foreground",
+        "h-screen fixed left-0 top-0 z-50 flex flex-col transition-all duration-300 ease-in-out md:translate-x-0",
+        "bg-sidebar text-sidebar-foreground border-r border-sidebar-border",
         open ? "w-64" : "w-16",
         !open && "md:w-16 w-0 -translate-x-full md:translate-x-0"
       )}
     >
       <div className="p-4 flex justify-center items-center h-16 border-b border-sidebar-border">
         {open ? (
-          <h1 className="text-xl font-bold"><T text="Habesha" /></h1>
+          <div className="text-xl font-bold">
+            <span className="text-primary">Habesha</span>
+          </div>
         ) : (
-          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">H</span>
+          <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+            <span className="text-primary-foreground font-bold text-lg">H</span>
           </div>
         )}
       </div>
@@ -308,13 +309,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="flex-1 py-4 px-2 overflow-y-auto">
         {open && (
           <div className="mb-4 px-3 py-1">
-            <h2 className="text-xs uppercase font-semibold opacity-70">
+            <h2 className="text-xs uppercase font-semibold text-sidebar-foreground/70">
               <T text={interfaceTitle} />
             </h2>
           </div>
         )}
         
-        <nav className="space-y-1">
+        <nav className="space-y-0.5">
           {userInterface === 'admin' ? (
             adminSections.map((section) => (
               <React.Fragment key={section.path}>
@@ -362,17 +363,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
       
       <div className="p-4 border-t border-sidebar-border">
-        <SidebarLink
+        <Link
           to="/login"
-          icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M16 17L21 12L16 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M21 12H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>}
-          label="Logout"
-          isActive={false}
-          isOpen={open}
-        />
+          className={cn(
+            "flex items-center px-3 py-2.5 rounded-md transition-colors",
+            "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          )}
+        >
+          <div className="w-8 h-8 flex items-center justify-center">
+            <LogOut size={20} />
+          </div>
+          {open && <span className="ml-2 text-sm"><T text="Logout" /></span>}
+        </Link>
       </div>
     </div>
   );

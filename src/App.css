@@ -63,6 +63,22 @@
   --amharic-font-scale: 1.05;
 }
 
+/* Sidebar design improvements */
+.sidebar-link {
+  transition: all 0.2s ease;
+  border-radius: 8px;
+}
+
+.sidebar-link:hover {
+  background-color: var(--sidebar-accent);
+}
+
+.sidebar-link.active {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 500;
+}
+
 /* Responsive language adjustments */
 @media (max-width: 768px) {
   [data-language="am"] h1,
@@ -81,7 +97,9 @@
   
   /* Make the language switcher more prominent on mobile */
   .language-switcher-mobile {
-    padding: 0.5rem;
-    margin-right: 0.5rem;
+    padding: 0.4rem 0.6rem;
+    margin-right: 0.3rem;
+    display: flex;
+    align-items: center;
   }
 }
