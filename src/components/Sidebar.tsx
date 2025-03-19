@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -105,6 +106,14 @@ interface SidebarProps {
   onToggle: () => void;
   interface?: 'admin' | 'waiter' | 'kitchen' | 'customer' | 'system';
 }
+
+// Define staffManagementQuickLinks before using it
+const staffManagementQuickLinks = [
+  { to: "/admin/staff", label: "Overview", icon: <Users size={20} /> },
+  { to: "/admin/staff/directory", label: "Directory", icon: <BookUser size={20} /> },
+  { to: "/admin/staff/tasks", label: "Tasks", icon: <ListChecks size={20} /> },
+  { to: "/admin/staff/payroll", label: "Payroll", icon: <BadgeDollarSign size={20} /> },
+];
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
   open, 
@@ -279,13 +288,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         quickLinks = staffManagementQuickLinks;
       }
   }
-
-  const staffManagementQuickLinks = [
-    { to: "/admin/staff", label: "Overview", icon: <Users size={20} /> },
-    { to: "/admin/staff/directory", label: "Directory", icon: <BookUser size={20} /> },
-    { to: "/admin/staff/tasks", label: "Tasks", icon: <ListChecks size={20} /> },
-    { to: "/admin/staff/payroll", label: "Payroll", icon: <BadgeDollarSign size={20} /> },
-  ];
 
   return (
     <div className="h-full flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
