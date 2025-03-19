@@ -1,0 +1,930 @@
+
+import React, { useState } from 'react';
+import Layout from '@/components/Layout';
+import { useLanguage, T } from '@/contexts/LanguageContext';
+import { PageHeader } from '@/components/ui/page-header';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  Users, Timer, Utensils, ClipboardList, ClipboardCopy, Ban,
+  Trash2, SquarePen, QrCode, Plus, RefreshCw, FileEdit
+} from 'lucide-react';
+
+interface Table {
+  id: number;
+  number: string;
+  capacity: number;
+  status: 'available' | 'occupied' | 'reserved' | 'cleaning';
+  occupiedSince?: string;
+  reservedFor?: string;
+  reservationTime?: string;
+  guests?: number;
+  orders?: number;
+  server?: string;
+}
+
+// Mock data
+const mockTables: Table[] = [
+  { 
+    id: 1, 
+    number: 'T1', 
+    capacity: 4, 
+    status: 'available'
+  },
+  { 
+    id: 2, 
+    number: 'T2', 
+    capacity: 2, 
+    status: 'occupied',
+    occupiedSince: '13:45',
+    guests: 2,
+    orders: 1,
+    server: 'Tigist'
+  },
+  { 
+    id: 3, 
+    number: 'T3', 
+    capacity: 6, 
+    status: 'occupied',
+    occupiedSince: '14:15',
+    guests: 5,
+    orders: 2,
+    server: 'Abebe'
+  },
+  { 
+    id: 4, 
+    number: 'T4', 
+    capacity: 4, 
+    status: 'reserved',
+    reservedFor: 'Makeda Family',
+    reservationTime: '18:30'
+  },
+  { 
+    id: 5, 
+    number: 'T5', 
+    capacity: 8, 
+    status: 'available'
+  },
+  { 
+    id: 6, 
+    number: 'T6', 
+    capacity: 2, 
+    status: 'cleaning'
+  },
+  { 
+    id: 7, 
+    number: 'T7', 
+    capacity: 4, 
+    status: 'occupied',
+    occupiedSince: '14:45',
+    guests: 3,
+    orders: 0,
+    server: 'Tigist'
+  },
+  { 
+    id: 8, 
+    number: 'T8', 
+    capacity: 6, 
+    status: 'available'
+  },
+  { 
+    id: 9, 
+    number: 'T9', 
+    capacity: 4, 
+    status: 'reserved',
+    reservedFor: 'Daniel Group',
+    reservationTime: '19:00'
+  },
+  { 
+    id: 10, 
+    number: 'T10', 
+    capacity: 2, 
+    status: 'available'
+  },
+  { 
+    id: 11, 
+    number: 'T11', 
+    capacity: 4, 
+    status: 'available'
+  },
+  { 
+    id: 12, 
+    number: 'T12', 
+    capacity: 8, 
+    status: 'available'
+  },
+];
+
+const TableManagement: React.FC = () => {
+  const { t } = useLanguage();
+  const [tables, setTables] = useState<Table[]>(mockTables);
+  const [selectedTable, setSelectedTable] = useState<Table | null>(null);
+  const [tableView, setTableView] = useState<'grid' | 'list'>('grid');
+
+  // Count tables by status
+  const availableTables = tables.filter(t => t.status === 'available').length;
+  const occupiedTables = tables.filter(t => t.status === 'occupied').length;
+  const reservedTables = tables.filter(t => t.status === 'reserved').length;
+  const tablesNeedingCleaning = tables.filter(t => t.status === 'cleaning').length;
+
+  const updateTableStatus = (tableId: number, newStatus: Table['status']) => {
+    setTables(prev => 
+      prev.map(table => 
+        table.id === tableId 
+          ? { 
+              ...table, 
+              status: newStatus,
+              // Add current time if marking as occupied
+              occupiedSince: newStatus === 'occupied' ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : table.occupiedSince,
+              // Clear reservation data if marking as occupied or available
+              reservedFor: (newStatus === 'occupied' || newStatus === 'available') ? undefined : table.reservedFor,
+              reservationTime: (newStatus === 'occupied' || newStatus === 'available') ? undefined : table.reservationTime,
+            } 
+          : table
+      )
+    );
+  };
+
+  const handleCreateReservation = (tableId: number, name: string, time: string) => {
+    setTables(prev => 
+      prev.map(table => 
+        table.id === tableId 
+          ? { 
+              ...table, 
+              status: 'reserved',
+              reservedFor: name,
+              reservationTime: time,
+            } 
+          : table
+      )
+    );
+  };
+
+  const handleSeatGuests = (tableId: number, guestCount: number, server: string) => {
+    setTables(prev => 
+      prev.map(table => 
+        table.id === tableId 
+          ? { 
+              ...table, 
+              status: 'occupied',
+              guests: guestCount,
+              server: server,
+              occupiedSince: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+              orders: 0,
+              // Clear reservation data
+              reservedFor: undefined,
+              reservationTime: undefined,
+            } 
+          : table
+      )
+    );
+  };
+
+  // Get status badge color
+  const getStatusBadge = (status: Table['status']) => {
+    switch(status) {
+      case 'available':
+        return <Badge className="bg-green-600">Available</Badge>;
+      case 'occupied':
+        return <Badge className="bg-red-600">Occupied</Badge>;
+      case 'reserved':
+        return <Badge className="bg-blue-600">Reserved</Badge>;
+      case 'cleaning':
+        return <Badge className="bg-yellow-600">Cleaning</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
+    }
+  };
+
+  return (
+    <Layout interface="waiter">
+      <PageHeader 
+        title="Table Management" 
+        description="Manage restaurant seating and reservations"
+        actions={
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setTableView(tableView === 'grid' ? 'list' : 'grid')}>
+              {tableView === 'grid' ? (
+                <>
+                  <ClipboardList className="mr-2 h-4 w-4" />
+                  <T text="List View" />
+                </>
+              ) : (
+                <>
+                  <Utensils className="mr-2 h-4 w-4" />
+                  <T text="Grid View" />
+                </>
+              )}
+            </Button>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              <T text="New Reservation" />
+            </Button>
+          </div>
+        }
+      />
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center">
+              <Users className="mr-2 h-5 w-5 text-green-600" />
+              <T text="Available" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{availableTables}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center">
+              <Utensils className="mr-2 h-5 w-5 text-red-600" />
+              <T text="Occupied" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{occupiedTables}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center">
+              <Timer className="mr-2 h-5 w-5 text-blue-600" />
+              <T text="Reserved" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{reservedTables}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center">
+              <RefreshCw className="mr-2 h-5 w-5 text-yellow-600" />
+              <T text="Cleaning" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{tablesNeedingCleaning}</div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <Tabs defaultValue="all-tables" className="w-full">
+        <TabsList>
+          <TabsTrigger value="all-tables">
+            <T text="All Tables" />
+          </TabsTrigger>
+          <TabsTrigger value="available">
+            <T text="Available" />
+          </TabsTrigger>
+          <TabsTrigger value="occupied">
+            <T text="Occupied" />
+          </TabsTrigger>
+          <TabsTrigger value="reserved">
+            <T text="Reserved" />
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="all-tables">
+          <Card>
+            <CardHeader>
+              <CardTitle><T text="Restaurant Floor Plan" /></CardTitle>
+              <CardDescription>
+                <T text="All tables and their current status" />
+              </CardDescription>
+            </CardHeader>
+            <Separator />
+            <CardContent className="pt-6">
+              {tableView === 'grid' ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  {tables.map(table => (
+                    <TableCard 
+                      key={table.id}
+                      table={table}
+                      onClick={() => setSelectedTable(table)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="text-left text-sm">
+                        <th className="pb-3 pl-4"><T text="Table" /></th>
+                        <th className="pb-3"><T text="Capacity" /></th>
+                        <th className="pb-3"><T text="Status" /></th>
+                        <th className="pb-3"><T text="Details" /></th>
+                        <th className="pb-3 text-right pr-4"><T text="Actions" /></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tables.map(table => (
+                        <TableRow 
+                          key={table.id}
+                          table={table}
+                          onClick={() => setSelectedTable(table)}
+                        />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="available">
+          <Card>
+            <CardHeader>
+              <CardTitle><T text="Available Tables" /></CardTitle>
+              <CardDescription>
+                <T text="Tables ready to be seated" />
+              </CardDescription>
+            </CardHeader>
+            <Separator />
+            <CardContent className="pt-6">
+              {tableView === 'grid' ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  {tables
+                    .filter(t => t.status === 'available')
+                    .map(table => (
+                      <TableCard 
+                        key={table.id}
+                        table={table}
+                        onClick={() => setSelectedTable(table)}
+                      />
+                    ))}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="text-left text-sm">
+                        <th className="pb-3 pl-4"><T text="Table" /></th>
+                        <th className="pb-3"><T text="Capacity" /></th>
+                        <th className="pb-3"><T text="Status" /></th>
+                        <th className="pb-3"><T text="Details" /></th>
+                        <th className="pb-3 text-right pr-4"><T text="Actions" /></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tables
+                        .filter(t => t.status === 'available')
+                        .map(table => (
+                          <TableRow 
+                            key={table.id}
+                            table={table}
+                            onClick={() => setSelectedTable(table)}
+                          />
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              
+              {tables.filter(t => t.status === 'available').length === 0 && (
+                <div className="text-center py-12">
+                  <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">
+                    <T text="No Available Tables" />
+                  </h3>
+                  <p className="text-muted-foreground">
+                    <T text="All tables are currently occupied, reserved, or being cleaned." />
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="occupied">
+          <Card>
+            <CardHeader>
+              <CardTitle><T text="Occupied Tables" /></CardTitle>
+              <CardDescription>
+                <T text="Tables with seated guests" />
+              </CardDescription>
+            </CardHeader>
+            <Separator />
+            <CardContent className="pt-6">
+              {tableView === 'grid' ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  {tables
+                    .filter(t => t.status === 'occupied')
+                    .map(table => (
+                      <TableCard 
+                        key={table.id}
+                        table={table}
+                        onClick={() => setSelectedTable(table)}
+                      />
+                    ))}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="text-left text-sm">
+                        <th className="pb-3 pl-4"><T text="Table" /></th>
+                        <th className="pb-3"><T text="Capacity" /></th>
+                        <th className="pb-3"><T text="Status" /></th>
+                        <th className="pb-3"><T text="Details" /></th>
+                        <th className="pb-3 text-right pr-4"><T text="Actions" /></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tables
+                        .filter(t => t.status === 'occupied')
+                        .map(table => (
+                          <TableRow 
+                            key={table.id}
+                            table={table}
+                            onClick={() => setSelectedTable(table)}
+                          />
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              
+              {tables.filter(t => t.status === 'occupied').length === 0 && (
+                <div className="text-center py-12">
+                  <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">
+                    <T text="No Occupied Tables" />
+                  </h3>
+                  <p className="text-muted-foreground">
+                    <T text="There are currently no guests seated at any tables." />
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="reserved">
+          <Card>
+            <CardHeader>
+              <CardTitle><T text="Reserved Tables" /></CardTitle>
+              <CardDescription>
+                <T text="Tables with upcoming reservations" />
+              </CardDescription>
+            </CardHeader>
+            <Separator />
+            <CardContent className="pt-6">
+              {tableView === 'grid' ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  {tables
+                    .filter(t => t.status === 'reserved')
+                    .map(table => (
+                      <TableCard 
+                        key={table.id}
+                        table={table}
+                        onClick={() => setSelectedTable(table)}
+                      />
+                    ))}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="text-left text-sm">
+                        <th className="pb-3 pl-4"><T text="Table" /></th>
+                        <th className="pb-3"><T text="Capacity" /></th>
+                        <th className="pb-3"><T text="Status" /></th>
+                        <th className="pb-3"><T text="Details" /></th>
+                        <th className="pb-3 text-right pr-4"><T text="Actions" /></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tables
+                        .filter(t => t.status === 'reserved')
+                        .map(table => (
+                          <TableRow 
+                            key={table.id}
+                            table={table}
+                            onClick={() => setSelectedTable(table)}
+                          />
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              
+              {tables.filter(t => t.status === 'reserved').length === 0 && (
+                <div className="text-center py-12">
+                  <Timer className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">
+                    <T text="No Reserved Tables" />
+                  </h3>
+                  <p className="text-muted-foreground">
+                    <T text="There are currently no upcoming reservations." />
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+      
+      {/* Table Detail Dialog */}
+      <Dialog open={!!selectedTable} onOpenChange={(open) => !open && setSelectedTable(null)}>
+        <DialogContent className="sm:max-w-[500px]">
+          {selectedTable && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center justify-between">
+                  <span><T text="Table" /> {selectedTable.number}</span>
+                  {getStatusBadge(selectedTable.status)}
+                </DialogTitle>
+                <DialogDescription>
+                  <T text="Capacity" />: {selectedTable.capacity} <T text="guests" />
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="grid gap-4 py-4">
+                {selectedTable.status === 'occupied' && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label><T text="Guests" /></Label>
+                        <div className="font-medium mt-1">{selectedTable.guests}</div>
+                      </div>
+                      <div>
+                        <Label><T text="Server" /></Label>
+                        <div className="font-medium mt-1">{selectedTable.server}</div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label><T text="Seated at" /></Label>
+                        <div className="font-medium mt-1">{selectedTable.occupiedSince}</div>
+                      </div>
+                      <div>
+                        <Label><T text="Orders" /></Label>
+                        <div className="font-medium mt-1">{selectedTable.orders}</div>
+                      </div>
+                    </div>
+                  </>
+                )}
+                
+                {selectedTable.status === 'reserved' && (
+                  <>
+                    <div>
+                      <Label><T text="Reserved for" /></Label>
+                      <div className="font-medium mt-1">{selectedTable.reservedFor}</div>
+                    </div>
+                    <div>
+                      <Label><T text="Reservation time" /></Label>
+                      <div className="font-medium mt-1">{selectedTable.reservationTime}</div>
+                    </div>
+                  </>
+                )}
+              </div>
+              
+              <DialogFooter className="flex-col sm:flex-row gap-2">
+                {selectedTable.status === 'available' && (
+                  <>
+                    <SeatGuestsDialog 
+                      table={selectedTable}
+                      onConfirm={(guestCount, server) => {
+                        handleSeatGuests(selectedTable.id, guestCount, server);
+                        setSelectedTable(null);
+                      }}
+                    />
+                    <ReserveTableDialog 
+                      table={selectedTable}
+                      onConfirm={(name, time) => {
+                        handleCreateReservation(selectedTable.id, name, time);
+                        setSelectedTable(null);
+                      }}
+                    />
+                    <Button 
+                      variant="outline"
+                      onClick={() => {
+                        updateTableStatus(selectedTable.id, 'cleaning');
+                        setSelectedTable(null);
+                      }}
+                    >
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      <T text="Mark for Cleaning" />
+                    </Button>
+                  </>
+                )}
+                
+                {selectedTable.status === 'occupied' && (
+                  <>
+                    <Button
+                      onClick={() => {
+                        updateTableStatus(selectedTable.id, 'cleaning');
+                        setSelectedTable(null);
+                      }}
+                    >
+                      <T text="Mark as Vacant" />
+                    </Button>
+                    <Button variant="outline">
+                      <ClipboardCopy className="mr-2 h-4 w-4" />
+                      <T text="Print Check" />
+                    </Button>
+                    <Button variant="outline">
+                      <QrCode className="mr-2 h-4 w-4" />
+                      <T text="Show QR Code" />
+                    </Button>
+                  </>
+                )}
+                
+                {selectedTable.status === 'reserved' && (
+                  <>
+                    <SeatGuestsDialog 
+                      table={selectedTable}
+                      onConfirm={(guestCount, server) => {
+                        handleSeatGuests(selectedTable.id, guestCount, server);
+                        setSelectedTable(null);
+                      }}
+                    />
+                    <Button 
+                      variant="outline"
+                      onClick={() => {
+                        updateTableStatus(selectedTable.id, 'available');
+                        setSelectedTable(null);
+                      }}
+                    >
+                      <Ban className="mr-2 h-4 w-4" />
+                      <T text="Cancel Reservation" />
+                    </Button>
+                  </>
+                )}
+                
+                {selectedTable.status === 'cleaning' && (
+                  <Button
+                    onClick={() => {
+                      updateTableStatus(selectedTable.id, 'available');
+                      setSelectedTable(null);
+                    }}
+                  >
+                    <T text="Mark as Available" />
+                  </Button>
+                )}
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </Layout>
+  );
+};
+
+interface TableCardProps {
+  table: Table;
+  onClick: () => void;
+}
+
+const TableCard: React.FC<TableCardProps> = ({ table, onClick }) => {
+  const { t } = useLanguage();
+  
+  // Status color classes
+  const getStatusClasses = (status: Table['status']) => {
+    switch(status) {
+      case 'available':
+        return 'border-green-600 bg-green-50 text-green-800 dark:bg-green-900/20 dark:border-green-800 dark:text-green-300';
+      case 'occupied':
+        return 'border-red-600 bg-red-50 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300';
+      case 'reserved':
+        return 'border-blue-600 bg-blue-50 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300';
+      case 'cleaning':
+        return 'border-yellow-600 bg-yellow-50 text-yellow-800 dark:bg-yellow-900/20 dark:border-yellow-800 dark:text-yellow-300';
+      default:
+        return 'border-muted-foreground';
+    }
+  };
+  
+  return (
+    <div 
+      className={`relative border-2 rounded-lg p-4 flex flex-col items-center justify-center h-32 cursor-pointer hover:opacity-90 transition-opacity ${getStatusClasses(table.status)}`}
+      onClick={onClick}
+    >
+      <div className="text-2xl font-bold mb-1">{table.number}</div>
+      <div className="text-sm opacity-80 mb-2">
+        <T text="Capacity" />: {table.capacity}
+      </div>
+      
+      {table.status === 'occupied' && (
+        <div className="text-xs opacity-70">
+          {table.occupiedSince} · {table.guests} <T text="guests" />
+        </div>
+      )}
+      
+      {table.status === 'reserved' && (
+        <div className="text-xs opacity-70">
+          <T text="Reserved" />: {table.reservationTime}
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface TableRowProps {
+  table: Table;
+  onClick: () => void;
+}
+
+const TableRow: React.FC<TableRowProps> = ({ table, onClick }) => {
+  const { t } = useLanguage();
+  
+  return (
+    <tr className="border-b cursor-pointer hover:bg-muted/50" onClick={onClick}>
+      <td className="py-3 pl-4 font-medium">{table.number}</td>
+      <td className="py-3">{table.capacity} <T text="guests" /></td>
+      <td className="py-3">{getStatusBadge(table.status)}</td>
+      <td className="py-3">
+        {table.status === 'occupied' && (
+          <div className="text-sm">
+            {table.guests} <T text="guests" /> · <T text="Since" /> {table.occupiedSince}
+          </div>
+        )}
+        
+        {table.status === 'reserved' && (
+          <div className="text-sm">
+            {table.reservedFor} · {table.reservationTime}
+          </div>
+        )}
+        
+        {(table.status === 'available' || table.status === 'cleaning') && (
+          <div className="text-sm text-muted-foreground">
+            {table.status === 'available' ? <T text="Ready to seat guests" /> : <T text="Being cleaned" />}
+          </div>
+        )}
+      </td>
+      <td className="py-3 text-right pr-4">
+        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onClick(); }}>
+          <FileEdit size={16} />
+        </Button>
+      </td>
+    </tr>
+  );
+};
+
+interface SeatGuestsDialogProps {
+  table: Table;
+  onConfirm: (guestCount: number, server: string) => void;
+}
+
+const SeatGuestsDialog: React.FC<SeatGuestsDialogProps> = ({ table, onConfirm }) => {
+  const { t } = useLanguage();
+  const [isOpen, setIsOpen] = useState(false);
+  const [guestCount, setGuestCount] = useState<number>(2);
+  const [server, setServer] = useState<string>("Tigist");
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onConfirm(guestCount, server);
+    setIsOpen(false);
+  };
+  
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <Users className="mr-2 h-4 w-4" />
+          <T text="Seat Guests" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle><T text="Seat Guests at Table" /> {table.number}</DialogTitle>
+            <DialogDescription>
+              <T text="Enter guest information to seat at this table." />
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="guest-count" className="text-right">
+                <T text="Guests" />
+              </Label>
+              <Input
+                id="guest-count"
+                type="number"
+                min={1}
+                max={table.capacity}
+                value={guestCount}
+                onChange={(e) => setGuestCount(parseInt(e.target.value))}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="server" className="text-right">
+                <T text="Server" />
+              </Label>
+              <Select 
+                defaultValue={server}
+                onValueChange={setServer}
+              >
+                <SelectTrigger className="col-span-3" id="server">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Tigist">Tigist</SelectItem>
+                  <SelectItem value="Abebe">Abebe</SelectItem>
+                  <SelectItem value="Solomon">Solomon</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="submit">
+              <T text="Confirm Seating" />
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+interface ReserveTableDialogProps {
+  table: Table;
+  onConfirm: (name: string, time: string) => void;
+}
+
+const ReserveTableDialog: React.FC<ReserveTableDialogProps> = ({ table, onConfirm }) => {
+  const { t } = useLanguage();
+  const [isOpen, setIsOpen] = useState(false);
+  const [name, setName] = useState<string>("");
+  const [time, setTime] = useState<string>("18:00");
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (name && time) {
+      onConfirm(name, time);
+      setIsOpen(false);
+    }
+  };
+  
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline">
+          <Timer className="mr-2 h-4 w-4" />
+          <T text="Reserve Table" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle><T text="Reserve Table" /> {table.number}</DialogTitle>
+            <DialogDescription>
+              <T text="Create a new reservation for this table." />
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="reserve-name" className="text-right">
+                <T text="Name" />
+              </Label>
+              <Input
+                id="reserve-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="col-span-3"
+                placeholder="Guest or group name"
+                required
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="reserve-time" className="text-right">
+                <T text="Time" />
+              </Label>
+              <Input
+                id="reserve-time"
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className="col-span-3"
+                required
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="submit">
+              <T text="Confirm Reservation" />
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default TableManagement;
