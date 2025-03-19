@@ -6,8 +6,10 @@ import { useLanguage, T } from '@/contexts/LanguageContext';
 import { 
   LayoutDashboard, DollarSign, Users, Package, BarChart, 
   User, Settings, ClipboardList, ChevronDown, ChevronRight, Languages,
-  BookUser, ListChecks, BadgeDollarSign, Menu as MenuIcon, LogOut
+  BookUser, ListChecks, BadgeDollarSign, Menu as MenuIcon, LogOut, 
+  X, ChevronLeft
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface SidebarLinkProps {
   to: string;
@@ -112,6 +114,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const location = useLocation();
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
+  const { t } = useLanguage();
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => 
@@ -286,34 +289,41 @@ export const Sidebar: React.FC<SidebarProps> = ({
   }
 
   return (
-    <div
-      className={cn(
-        "h-screen fixed left-0 top-0 z-50 flex flex-col transition-all duration-300 ease-in-out md:translate-x-0",
-        "bg-sidebar text-sidebar-foreground border-r border-sidebar-border",
-        open ? "w-64" : "w-16",
-        !open && "md:w-16 w-0 -translate-x-full md:translate-x-0"
-      )}
-    >
-      <div className="p-4 flex justify-center items-center h-16 border-b border-sidebar-border">
-        {open ? (
-          <div className="text-xl font-bold">
-            <span className="text-primary">Habesha</span>
-          </div>
-        ) : (
-          <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-lg">H</span>
-          </div>
-        )}
+    <div className="h-full flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
+      <div className="p-4 flex justify-between items-center h-16 border-b border-sidebar-border">
+        <div className="text-xl font-bold text-primary">
+          Habesha
+        </div>
+        
+        {/* Close button for the sidebar */}
+        <Button
+          onClick={onToggle}
+          variant="ghost"
+          size="icon"
+          className="hidden md:flex"
+          aria-label={t("Close sidebar")}
+        >
+          <ChevronLeft size={18} />
+        </Button>
+        
+        {/* Close button for mobile */}
+        <Button
+          onClick={onToggle}
+          variant="ghost"
+          size="icon"
+          className="md:hidden"
+          aria-label={t("Close sidebar")}
+        >
+          <X size={18} />
+        </Button>
       </div>
       
       <div className="flex-1 py-4 px-2 overflow-y-auto">
-        {open && (
-          <div className="mb-4 px-3 py-1">
-            <h2 className="text-xs uppercase font-semibold text-sidebar-foreground/70">
-              <T text={interfaceTitle} />
-            </h2>
-          </div>
-        )}
+        <div className="mb-4 px-3 py-1">
+          <h2 className="text-xs uppercase font-semibold text-sidebar-foreground/70">
+            <T text={interfaceTitle} />
+          </h2>
+        </div>
         
         <nav className="space-y-0.5">
           {userInterface === 'admin' ? (
@@ -373,7 +383,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="w-8 h-8 flex items-center justify-center">
             <LogOut size={20} />
           </div>
-          {open && <span className="ml-2 text-sm"><T text="Logout" /></span>}
+          <span className="ml-2 text-sm"><T text="Logout" /></span>
         </Link>
       </div>
     </div>

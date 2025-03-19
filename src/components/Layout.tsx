@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
@@ -86,7 +87,7 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
 
   return (
     <div className="flex min-h-screen relative bg-background">
-      {/* Mobile overlay - Only visible on mobile when sidebar is open */}
+      {/* Backdrop overlay - Only visible on mobile when sidebar is open */}
       {isMobile && (
         <div
           className={cn(
@@ -97,22 +98,30 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
         />
       )}
       
-      {/* Sidebar - hidden by default but can be toggled */}
-      <div className={cn(
-        "fixed inset-y-0 left-0 z-50 w-64 bg-sidebar text-sidebar-foreground transition-transform duration-300 transform border-r border-sidebar-border",
-        sidebarOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
-        <Sidebar open={true} onToggle={() => setSidebarOpen(!sidebarOpen)} interface={userInterface} />
+      {/* Sidebar component with its own container */}
+      <div 
+        className={cn(
+          "fixed md:sticky top-0 left-0 h-screen z-30",
+          "transition-all duration-300 ease-in-out",
+          "w-64 shrink-0",
+          isMobile ? (sidebarOpen ? "translate-x-0" : "-translate-x-full") : "translate-x-0"
+        )}
+      >
+        <div className="h-full">
+          <Sidebar open={true} onToggle={() => setSidebarOpen(!sidebarOpen)} interface={userInterface} />
+        </div>
       </div>
       
-      <div className="flex-1 flex flex-col">
-        <header className="h-16 flex items-center justify-between px-4 md:px-6 border-b border-border shadow-sm bg-background sticky top-0 z-30">
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col w-full transition-all duration-300">
+        <header className="h-16 flex items-center justify-between px-4 md:px-6 border-b border-border shadow-sm bg-background sticky top-0 z-20">
           <div className="flex items-center gap-2">
+            {/* Only show toggle on mobile, or when sidebar is closed on desktop */}
             <Button 
               onClick={() => setSidebarOpen(!sidebarOpen)} 
               variant="ghost"
               size="icon"
-              className="mr-2"
+              className="mr-2 md:hidden"
               aria-label={t("Toggle sidebar")}
             >
               {sidebarOpen ? <X size={20} /> : <MenuIcon size={20} />}
