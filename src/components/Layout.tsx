@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { MainSidebar } from './MainSidebar';
@@ -22,7 +21,7 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'admin' }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const isMobile = useIsMobile();
   
@@ -31,12 +30,8 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
   };
   
   useEffect(() => {
-    if (isMobile) {
-      setSidebarOpen(false);
-    } else {
-      setSidebarOpen(true);
-    }
-  }, [location.pathname, isMobile]);
+    setSidebarOpen(false);
+  }, [location.pathname]);
 
   const getBreadcrumbs = () => {
     const paths = location.pathname.split('/').filter(path => path);

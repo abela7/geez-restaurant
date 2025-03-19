@@ -1,24 +1,13 @@
 
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { ThemeSwitcher } from './ThemeSwitcher';
+import { LanguageSwitcher } from './LanguageSwitcher';
+import { Button } from './ui/button';
+import { Bell, Menu, Search, User } from 'lucide-react';
+import { Input } from './ui/input';
 import { cn } from '@/lib/utils';
 import { useLanguage, T } from '@/contexts/LanguageContext';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { 
-  ChevronDown, User, LogOut, Search, Bell, Store,
-  Menu as MenuIcon
-} from 'lucide-react';
-import ThemeSwitcher from './ThemeSwitcher';
-import LanguageSwitcher from './LanguageSwitcher';
-import { Avatar } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -27,100 +16,86 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ toggleSidebar, interface: userInterface = 'admin' }) => {
   const { t } = useLanguage();
-  const isMobile = useIsMobile();
-  const navigate = useNavigate();
-
-  const interfaces = [
-    { value: 'admin', label: 'Administrative Portal', path: '/' },
-    { value: 'waiter', label: 'Waiter Interface', path: '/waiter' },
-    { value: 'kitchen', label: 'Kitchen Staff Interface', path: '/kitchen' },
-    { value: 'customer', label: 'Customer Interface', path: '/menu' },
-    { value: 'system', label: 'System Administration', path: '/system' },
-  ];
-
-  const currentInterface = interfaces.find(i => i.value === userInterface) || interfaces[0];
   
   return (
-    <header className="h-16 flex items-center justify-between px-4 md:px-6 border-b border-border bg-card sticky top-0 z-30 shadow-sm">
-      <div className="flex items-center gap-2">
-        <Button 
-          onClick={toggleSidebar} 
-          variant="ghost"
-          size="icon"
-          className="text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-          aria-label={t("Toggle sidebar")}
-        >
-          <MenuIcon size={20} />
-        </Button>
+    <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
+      <div className="flex h-16 items-center px-4 md:px-6">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost" 
+                size="icon"
+                className="mr-4 size-9 shrink-0 border border-border hover:bg-primary hover:text-primary-foreground"
+                onClick={toggleSidebar}
+                aria-label={t("Toggle sidebar")}
+              >
+                <Menu className="size-5" />
+                <span className="sr-only">{t("Toggle sidebar")}</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <T text="Open Menu" />
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="flex items-center gap-1 h-9 px-3 font-medium bg-card hover:bg-muted hover:text-foreground transition-colors border border-input shadow-sm">
-              <span className="hidden md:inline text-foreground"><T text={currentInterface.label} /></span>
-              <span className="md:hidden inline"><T text="Interface" /></span>
-              <ChevronDown size={14} className="text-muted-foreground ml-1" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56">
-            {interfaces.map((item) => (
-              <DropdownMenuItem key={item.value} asChild>
-                <Link to={item.path} className={cn(
-                  "cursor-pointer flex items-center",
-                  item.value === userInterface && "bg-primary/10 text-primary font-medium"
-                )}>
-                  <T text={item.label} />
-                </Link>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      
-      <div className="flex items-center gap-1 md:gap-3">
-        <Button variant="ghost" size="icon" className="hidden md:flex text-muted-foreground hover:text-foreground">
-          <Search size={18} />
-        </Button>
-        
-        <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground">
-          <Bell size={18} />
-          <Badge variant="destructive" className="h-2 w-2 p-0 absolute top-2 right-2" />
-        </Button>
-        
-        <Button variant="outline" size="sm" className="hidden md:flex items-center h-8 px-3 border-amber-500/50 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/30 dark:text-amber-400 dark:hover:bg-amber-950/50">
-          <Store size={14} className="mr-1.5" />
-          <T text="Open" />
-        </Button>
-        
-        <div className="flex items-center gap-1 md:gap-2">
-          <LanguageSwitcher />
-          <ThemeSwitcher />
+        <div className="flex items-center space-x-4">
+          <h2 className="text-lg font-medium">
+            <T text={
+              userInterface === 'admin' ? 'Admin Portal' :
+              userInterface === 'waiter' ? 'Waiter Interface' :
+              userInterface === 'kitchen' ? 'Kitchen Staff Interface' :
+              userInterface === 'customer' ? 'Customer Interface' :
+              'System Administration'
+            } />
+          </h2>
         </div>
         
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0 overflow-hidden border border-border hover:bg-muted">
-              <Avatar className="h-8 w-8">
-                <div className="flex items-center justify-center h-full w-full bg-primary text-primary-foreground text-sm font-semibold">
-                  A
-                </div>
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <div className="p-2 border-b">
-              <p className="font-medium">Abebe Kebede</p>
-              <p className="text-sm text-muted-foreground">admin@habesha.com</p>
-            </div>
-            <DropdownMenuItem className="cursor-pointer mt-1">
-              <User className="mr-2 h-4 w-4" />
-              <span><T text="Profile" /></span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/login')}>
-              <LogOut className="mr-2 h-4 w-4" />
-              <span><T text="Logout" /></span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="ml-auto flex items-center space-x-2 md:space-x-4">
+          <div className="hidden md:flex relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder={t("Search...")}
+              className="w-64 pl-9 rounded-full bg-muted"
+            />
+          </div>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="icon" className="size-9">
+                  <Bell className="size-5" />
+                  <span className="sr-only">{t("Notifications")}</span>
+                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+                    2
+                  </span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <T text="Notifications" />
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <ThemeSwitcher />
+          <LanguageSwitcher />
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="icon" className="size-9">
+                  <User className="size-5" />
+                  <span className="sr-only">{t("User menu")}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <T text="User Menu" />
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
     </header>
   );
