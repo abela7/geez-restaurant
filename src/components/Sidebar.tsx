@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -252,13 +251,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { to: "/system/docs", label: "Documentation", icon: <ClipboardList size={20} /> },
   ];
 
-  const staffManagementQuickLinks = [
-    { to: "/admin/staff", label: "Overview", icon: <Users size={20} /> },
-    { to: "/admin/staff/directory", label: "Directory", icon: <BookUser size={20} /> },
-    { to: "/admin/staff/tasks", label: "Tasks", icon: <ListChecks size={20} /> },
-    { to: "/admin/staff/payroll", label: "Payroll", icon: <BadgeDollarSign size={20} /> },
-  ];
-
   let links;
   let interfaceTitle;
   let quickLinks = null;
@@ -288,6 +280,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       }
   }
 
+  const staffManagementQuickLinks = [
+    { to: "/admin/staff", label: "Overview", icon: <Users size={20} /> },
+    { to: "/admin/staff/directory", label: "Directory", icon: <BookUser size={20} /> },
+    { to: "/admin/staff/tasks", label: "Tasks", icon: <ListChecks size={20} /> },
+    { to: "/admin/staff/payroll", label: "Payroll", icon: <BadgeDollarSign size={20} /> },
+  ];
+
   return (
     <div className="h-full flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
       <div className="p-4 flex justify-between items-center h-16 border-b border-sidebar-border">
@@ -295,26 +294,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           Habesha
         </div>
         
-        {/* Close button for the sidebar */}
         <Button
           onClick={onToggle}
-          variant="ghost"
+          variant="outline"
           size="icon"
-          className="hidden md:flex"
-          aria-label={t("Close sidebar")}
+          className="w-10 h-10 bg-amber-400 hover:bg-amber-500 border-amber-500 text-amber-800"
+          aria-label={t("Toggle sidebar")}
         >
-          <ChevronLeft size={18} />
-        </Button>
-        
-        {/* Close button for mobile */}
-        <Button
-          onClick={onToggle}
-          variant="ghost"
-          size="icon"
-          className="md:hidden"
-          aria-label={t("Close sidebar")}
-        >
-          <X size={18} />
+          <ChevronLeft size={20} />
         </Button>
       </div>
       

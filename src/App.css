@@ -109,25 +109,37 @@
   transition: transform 0.3s ease, width 0.3s ease;
 }
 
-/* Sidebar toggle button */
+/* Sidebar toggle button - Make it more visible and clear */
 .sidebar-toggle {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: 2.5rem;
+  height: 2.5rem;
   border-radius: 0.375rem;
-  background-color: var(--background);
-  color: var(--foreground);
-  border: 1px solid var(--border);
+  background-color: var(--amber-400);
+  color: var(--amber-900);
+  border: 1px solid var(--amber-500);
   cursor: pointer;
+  transition: all 0.15s ease;
 }
 
 .sidebar-toggle:hover {
-  background-color: var(--accent);
+  background-color: var(--amber-500);
 }
 
 /* Animation for content shifting */
 .content-transition {
   transition: margin-left 0.3s ease, padding-left 0.3s ease, width 0.3s ease;
 }
+
+/* Ensure smooth transitions for sidebar and content */
+.fixed {
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Main content transition */
+#root > div > div:last-child {
+  transition: margin-left 0.3s ease-in-out;
+}
+

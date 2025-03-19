@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
@@ -33,10 +32,15 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'admin' }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const { t } = useLanguage();
   const location = useLocation();
   const isMobile = useIsMobile();
+  
+  // Function to toggle sidebar
+  const toggleSidebar = () => {
+    setSidebarOpen(prev => !prev);
+  };
   
   // Auto-close sidebar on mobile when navigating
   useEffect(() => {
@@ -85,6 +89,12 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
 
   const currentInterface = interfaces.find(i => i.value === userInterface) || interfaces[0];
 
+  // Calculate the content margin based on sidebar state
+  const contentClasses = cn(
+    "flex-1 flex flex-col w-full transition-all duration-300",
+    sidebarOpen ? "md:ml-64" : "md:ml-0"
+  );
+
   return (
     <div className="flex min-h-screen relative bg-background">
       {/* Backdrop overlay - Only visible on mobile when sidebar is open */}
@@ -101,27 +111,27 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
       {/* Sidebar component with its own container */}
       <div 
         className={cn(
-          "fixed md:sticky top-0 left-0 h-screen z-30",
+          "fixed md:fixed top-0 left-0 h-screen z-30",
           "transition-all duration-300 ease-in-out",
           "w-64 shrink-0",
-          isMobile ? (sidebarOpen ? "translate-x-0" : "-translate-x-full") : "translate-x-0"
+          isMobile ? (sidebarOpen ? "translate-x-0" : "-translate-x-full") : (sidebarOpen ? "translate-x-0" : "-translate-x-full")
         )}
       >
         <div className="h-full">
-          <Sidebar open={true} onToggle={() => setSidebarOpen(!sidebarOpen)} interface={userInterface} />
+          <Sidebar open={sidebarOpen} onToggle={toggleSidebar} interface={userInterface} />
         </div>
       </div>
       
       {/* Main content area */}
-      <div className="flex-1 flex flex-col w-full transition-all duration-300">
+      <div className={contentClasses}>
         <header className="h-16 flex items-center justify-between px-4 md:px-6 border-b border-border shadow-sm bg-background sticky top-0 z-20">
           <div className="flex items-center gap-2">
-            {/* Only show toggle on mobile, or when sidebar is closed on desktop */}
+            {/* Show toggle button always */}
             <Button 
-              onClick={() => setSidebarOpen(!sidebarOpen)} 
+              onClick={toggleSidebar} 
               variant="ghost"
               size="icon"
-              className="mr-2 md:hidden"
+              className="mr-2"
               aria-label={t("Toggle sidebar")}
             >
               {sidebarOpen ? <X size={20} /> : <MenuIcon size={20} />}
