@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -30,6 +31,13 @@ import DailySales from "./pages/admin/finance/DailySales";
 import FinancialReports from "./pages/admin/finance/FinancialReports";
 import PaymentManagement from "./pages/admin/finance/PaymentManagement";
 import Budgeting from "./pages/admin/finance/Budgeting";
+
+// Inventory Subpages
+import StockLevels from "./pages/admin/inventory/StockLevels";
+import Ingredients from "./pages/admin/inventory/Ingredients";
+import Recipes from "./pages/admin/inventory/Recipes";
+import Suppliers from "./pages/admin/inventory/Suppliers";
+import PurchaseOrders from "./pages/admin/inventory/PurchaseOrders";
 
 // New Admin Routes
 import AdminCustomers from "./pages/admin/Customers";
@@ -124,6 +132,11 @@ const App = () => (
               
               {/* Inventory Management */}
               <Route path="/admin/inventory" element={<InventoryControl />} />
+              <Route path="/admin/inventory/stock" element={<StockLevels />} />
+              <Route path="/admin/inventory/ingredients" element={<Ingredients />} />
+              <Route path="/admin/inventory/recipes" element={<Recipes />} />
+              <Route path="/admin/inventory/suppliers" element={<Suppliers />} />
+              <Route path="/admin/inventory/purchase-orders" element={<PurchaseOrders />} />
               
               {/* Menu Management */}
               <Route path="/admin/menu" element={<MenuManagement />} />
