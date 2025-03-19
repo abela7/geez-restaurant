@@ -12,6 +12,9 @@ interface StatCardProps {
   isPositive?: boolean;
   icon?: React.ReactNode;
   className?: string;
+  trend?: number;
+  trendText?: string;
+  positive?: boolean;
 }
 
 export function StatCard({ 
@@ -20,8 +23,16 @@ export function StatCard({
   change, 
   isPositive = true,
   icon,
-  className
+  className,
+  trend,
+  trendText,
+  positive
 }: StatCardProps) {
+  // Use trend and positive if provided, otherwise use change and isPositive
+  const displayTrend = trend !== undefined ? trend : change;
+  const displayPositive = positive !== undefined ? positive : isPositive;
+  const displayTrendText = trendText !== undefined ? trendText : displayTrend;
+
   return (
     <Card className={cn("card-custom", className)}>
       <div className="p-4">
@@ -33,13 +44,13 @@ export function StatCard({
         </div>
         <div className="flex items-end justify-between mt-2">
           <h3 className="text-2xl font-bold">{value}</h3>
-          {change && (
+          {displayTrend && (
             <span className={cn(
               "text-sm font-medium flex items-center gap-1",
-              isPositive ? "text-green-600 dark:text-green-500" : "text-red-600 dark:text-red-500"
+              displayPositive ? "text-green-600 dark:text-green-500" : "text-red-600 dark:text-red-500"
             )}>
-              {isPositive ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-              {change}
+              {displayPositive ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+              {displayTrendText}
             </span>
           )}
         </div>
@@ -47,3 +58,6 @@ export function StatCard({
     </Card>
   );
 }
+
+// Export as CardStat as well for backward compatibility
+export { StatCard as CardStat };

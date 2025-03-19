@@ -4,7 +4,7 @@ import { useLanguage, T } from '@/contexts/LanguageContext';
 import { 
   Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle 
 } from '@/components/ui/card';
-import { CardStat } from '@/components/ui/card-stat';
+import { StatCard } from '@/components/ui/card-stat';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -16,7 +16,6 @@ import {
   PlusCircle, Filter, FileDown, Printer, HelpCircle
 } from 'lucide-react';
 
-// Mock Data
 const recentOrders = [
   { id: '#1532', table: 'Table 5', items: 3, total: '$52.50', time: '10 mins ago', status: 'Preparing' },
   { id: '#1531', table: 'Table 8', items: 2, total: '$31.20', time: '25 mins ago', status: 'Served' },
@@ -51,9 +50,7 @@ const AdminDashboard: React.FC = () => {
   return (
     <Layout interface="admin">
       <div className="space-y-6">
-        {/* Quick Actions Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 bg-cream/50 p-3 rounded-lg border border-sand">
-          {/* Left side - Breadcrumb */}
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
@@ -62,7 +59,6 @@ const AdminDashboard: React.FC = () => {
             </BreadcrumbList>
           </Breadcrumb>
           
-          {/* Right side - Quick Actions */}
           <div className="flex items-center space-x-2">
             <Button variant="outline" size="sm">
               <Search className="h-4 w-4 mr-1" />
@@ -91,9 +87,8 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
         
-        {/* Today's Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <CardStat
+          <StatCard
             title={t("Today's Sales")}
             value={todayStats.sales.value}
             icon={<DollarSign className="h-5 w-5" />}
@@ -101,7 +96,7 @@ const AdminDashboard: React.FC = () => {
             trendText={`${todayStats.sales.isPositive ? '+' : ''}${todayStats.sales.change}% vs yesterday`}
             positive={todayStats.sales.isPositive}
           />
-          <CardStat
+          <StatCard
             title={t("Orders")}
             value={todayStats.orders.value}
             icon={<ClipboardList className="h-5 w-5" />}
@@ -109,7 +104,7 @@ const AdminDashboard: React.FC = () => {
             trendText={`${todayStats.orders.isPositive ? '+' : ''}${todayStats.orders.change}% vs yesterday`}
             positive={todayStats.orders.isPositive}
           />
-          <CardStat
+          <StatCard
             title={t("Average Order")}
             value={todayStats.averageOrder.value}
             icon={<Utensils className="h-5 w-5" />}
@@ -117,7 +112,7 @@ const AdminDashboard: React.FC = () => {
             trendText={`${todayStats.averageOrder.isPositive ? '+' : ''}${todayStats.averageOrder.change}% vs yesterday`}
             positive={todayStats.averageOrder.isPositive}
           />
-          <CardStat
+          <StatCard
             title={t("Customers")}
             value={todayStats.customers.value}
             icon={<Users className="h-5 w-5" />}
@@ -127,7 +122,6 @@ const AdminDashboard: React.FC = () => {
           />
         </div>
         
-        {/* Dashboard Tabs */}
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList>
             <TabsTrigger value="overview">
@@ -148,10 +142,8 @@ const AdminDashboard: React.FC = () => {
             </TabsTrigger>
           </TabsList>
           
-          {/* Overview Tab Content */}
           <TabsContent value="overview" className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* Recent Orders */}
               <Card className="lg:col-span-2">
                 <CardHeader className="pb-2">
                   <CardTitle><T text="Recent Orders" /></CardTitle>
@@ -186,7 +178,6 @@ const AdminDashboard: React.FC = () => {
                 </CardFooter>
               </Card>
               
-              {/* Today's Schedule */}
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle><T text="Today's Schedule" /></CardTitle>
@@ -222,7 +213,6 @@ const AdminDashboard: React.FC = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Active Staff */}
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle><T text="Active Staff" /></CardTitle>
@@ -261,7 +251,6 @@ const AdminDashboard: React.FC = () => {
                 </CardFooter>
               </Card>
               
-              {/* Inventory Alerts */}
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle><T text="Inventory Alerts" /></CardTitle>
@@ -296,7 +285,6 @@ const AdminDashboard: React.FC = () => {
             </div>
           </TabsContent>
           
-          {/* Other tabs would be implemented here */}
           <TabsContent value="orders">
             <Card>
               <CardHeader>
