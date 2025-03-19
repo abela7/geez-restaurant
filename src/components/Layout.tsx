@@ -37,34 +37,28 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
   const location = useLocation();
   const isMobile = useIsMobile();
   
-  // Function to toggle sidebar
   const toggleSidebar = () => {
     setSidebarOpen(prev => !prev);
   };
   
-  // Auto-close sidebar on mobile when navigating
   useEffect(() => {
     if (isMobile) {
       setSidebarOpen(false);
     }
   }, [location.pathname, isMobile]);
 
-  // Helper function to generate breadcrumbs from the current location
   const getBreadcrumbs = () => {
     const paths = location.pathname.split('/').filter(path => path);
     
-    // Return just a home breadcrumb for the root path
     if (paths.length === 0) {
       return [{ label: 'Dashboard', path: '/' }];
     }
     
-    // Build the breadcrumb items
     const breadcrumbs = [{ label: 'Dashboard', path: '/' }];
     
     let currentPath = '';
     paths.forEach((path) => {
       currentPath += `/${path}`;
-      // Format the label (capitalize first letter, replace hyphens with spaces)
       const label = path
         .split('-')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -78,7 +72,6 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
   
   const breadcrumbs = getBreadcrumbs();
 
-  // Interface selector for demo purposes
   const interfaces = [
     { value: 'admin', label: 'Administrative Portal', path: '/' },
     { value: 'waiter', label: 'Waiter Interface', path: '/waiter' },
@@ -89,7 +82,6 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
 
   const currentInterface = interfaces.find(i => i.value === userInterface) || interfaces[0];
 
-  // Calculate the content margin based on sidebar state
   const contentClasses = cn(
     "flex-1 flex flex-col w-full transition-all duration-300",
     sidebarOpen ? "md:ml-64" : "md:ml-0"
@@ -97,18 +89,16 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
 
   return (
     <div className="flex min-h-screen relative bg-background">
-      {/* Backdrop overlay - Only visible on mobile when sidebar is open */}
       {isMobile && (
         <div
           className={cn(
-            "fixed inset-0 z-40 bg-background/80 md:hidden transition-opacity duration-300",
+            "fixed inset-0 z-20 bg-background/80 md:hidden transition-opacity duration-300",
             sidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
           )}
           onClick={() => setSidebarOpen(false)}
         />
       )}
       
-      {/* Sidebar component with its own container */}
       <div 
         className={cn(
           "fixed md:fixed top-0 left-0 h-screen z-30",
@@ -122,11 +112,9 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
         </div>
       </div>
       
-      {/* Main content area */}
       <div className={contentClasses}>
-        <header className="h-16 flex items-center justify-between px-4 md:px-6 border-b border-border shadow-sm bg-background sticky top-0 z-20">
+        <header className="h-16 flex items-center justify-between px-4 md:px-6 border-b border-border shadow-sm bg-background sticky top-0 z-25">
           <div className="flex items-center gap-2">
-            {/* Show toggle button always */}
             <Button 
               onClick={toggleSidebar} 
               variant="ghost"
@@ -137,7 +125,6 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
               {sidebarOpen ? <X size={20} /> : <MenuIcon size={20} />}
             </Button>
             
-            {/* Interface Selector - Only for demo */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="flex items-center gap-2">
@@ -201,7 +188,6 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
           </div>
         </header>
         
-        {/* Breadcrumbs - shown only on non-dashboard pages */}
         {location.pathname !== '/' && (
           <div className="px-4 md:px-6 py-2 border-b border-border bg-background/50">
             <Breadcrumb>

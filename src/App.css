@@ -43,17 +43,21 @@
   --tw-bg-opacity: 1 !important;
 }
 
-/* Fix for the sidebar overlay issue */
-.fixed.inset-0.z-40.bg-background\/80,
-.fixed.inset-0.z-40.bg-background {
-  display: none !important;
-}
-
-/* Only show overlay on mobile when sidebar is open */
+/* Fix for mobile sidebar overlay */
 @media (max-width: 768px) {
-  .md\:hidden.fixed.inset-0.z-40.bg-background\/80,
-  .md\:hidden.fixed.inset-0.z-40.bg-background {
-    display: block !important;
+  /* Ensure sidebar is above the overlay */
+  .fixed.top-0.left-0.h-screen.z-30 {
+    z-index: 40;
+  }
+  
+  /* Position the overlay below the sidebar */
+  .fixed.inset-0.z-20.bg-background\/80 {
+    z-index: 20;
+  }
+  
+  /* Keep header above overlay */
+  .sticky.top-0.z-25 {
+    z-index: 30;
   }
 }
 
@@ -142,4 +146,3 @@
 #root > div > div:last-child {
   transition: margin-left 0.3s ease-in-out;
 }
-
