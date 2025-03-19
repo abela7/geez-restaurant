@@ -18,6 +18,9 @@ import Communication from "./pages/admin/Communication";
 import FinancialManagement from "./pages/admin/FinancialManagement";
 import LanguageManagement from "./pages/admin/LanguageManagement";
 
+// Menu Management Subpages
+import RecipeManagement from "./pages/admin/menu/RecipeManagement";
+
 // Finance Subpages
 import DailySales from "./pages/admin/finance/DailySales";
 import FinancialReports from "./pages/admin/finance/FinancialReports";
@@ -120,6 +123,7 @@ const App = () => (
               
               {/* Menu Management */}
               <Route path="/admin/menu" element={<MenuManagement />} />
+              <Route path="/admin/menu/recipes" element={<RecipeManagement />} />
               
               {/* Tasks */}
               <Route path="/admin/tasks" element={<TaskManagement />} />
