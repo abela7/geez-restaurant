@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Sidebar } from './Sidebar';
+import { MainSidebar } from './MainSidebar';
 import ThemeSwitcher from './ThemeSwitcher';
 import LanguageSwitcher from './LanguageSwitcher';
 import { cn } from '@/lib/utils';
@@ -15,7 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { 
   ChevronDown, User, LogOut, Search, Bell, Store,
-  Menu as MenuIcon, X
+  Menu as MenuIcon
 } from 'lucide-react';
 import { 
   Breadcrumb, 
@@ -108,7 +109,7 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
         )}
       >
         <div className="h-full">
-          <Sidebar open={sidebarOpen} onToggle={toggleSidebar} interface={userInterface} />
+          <MainSidebar open={sidebarOpen} onToggle={toggleSidebar} interface={userInterface} />
         </div>
       </div>
       
@@ -122,7 +123,7 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
               className="mr-2"
               aria-label={t("Toggle sidebar")}
             >
-              {sidebarOpen ? <X size={20} /> : <MenuIcon size={20} />}
+              <MenuIcon size={20} />
             </Button>
             
             <DropdownMenu>
