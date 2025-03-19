@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -38,7 +37,7 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
         to={to}
         className={cn(
           "flex items-center px-3 py-2 my-1 rounded-md transition-colors",
-          isActive ? "bg-turmeric text-eggplant" : "hover:bg-accent"
+          isActive ? "bg-primary text-primary-foreground" : "hover:bg-accent hover:text-accent-foreground"
         )}
         onClick={hasDropdown ? onClick : undefined}
       >
@@ -73,7 +72,7 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({ items, isOpen, isExpanded, 
   if (!isOpen || !isExpanded) return null;
   
   return (
-    <div className="ml-8 pl-2 border-l border-sand">
+    <div className="ml-8 pl-2 border-l border-sidebar-border">
       {items.map((item) => (
         <Link
           key={item.to}
@@ -81,8 +80,8 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({ items, isOpen, isExpanded, 
           className={cn(
             "block px-3 py-1.5 my-1 rounded-md text-sm transition-colors",
             location.pathname === `${parentPath}/${item.to}` 
-              ? "bg-turmeric text-eggplant"
-              : "hover:bg-accent"
+              ? "bg-primary text-primary-foreground"
+              : "hover:bg-accent hover:text-accent-foreground"
           )}
         >
           <T text={item.label} />
@@ -290,17 +289,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <div
       className={cn(
-        "h-screen bg-cream fixed left-0 top-0 z-50 flex flex-col border-r border-sand transition-all duration-300 ease-in-out md:translate-x-0",
+        "h-screen fixed left-0 top-0 z-50 flex flex-col border-r border-sidebar-border transition-all duration-300 ease-in-out md:translate-x-0",
+        "bg-sidebar text-sidebar-foreground",
         open ? "w-64" : "w-16",
         !open && "md:w-16 w-0 -translate-x-full md:translate-x-0"
       )}
     >
-      <div className="p-4 flex justify-center items-center h-16 border-b border-sand">
+      <div className="p-4 flex justify-center items-center h-16 border-b border-sidebar-border">
         {open ? (
-          <h1 className="text-xl font-bold text-plum"><T text="Habesha" /></h1>
+          <h1 className="text-xl font-bold"><T text="Habesha" /></h1>
         ) : (
-          <div className="w-8 h-8 bg-turmeric rounded-full flex items-center justify-center">
-            <span className="text-eggplant font-bold text-sm">H</span>
+          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+            <span className="text-primary-foreground font-bold text-sm">H</span>
           </div>
         )}
       </div>
@@ -308,7 +308,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="flex-1 py-4 px-2 overflow-y-auto">
         {open && (
           <div className="mb-4 px-3 py-1">
-            <h2 className="text-xs uppercase font-semibold text-plum opacity-70">
+            <h2 className="text-xs uppercase font-semibold opacity-70">
               <T text={interfaceTitle} />
             </h2>
           </div>
@@ -361,7 +361,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
       </div>
       
-      <div className="p-4 border-t border-sand">
+      <div className="p-4 border-t border-sidebar-border">
         <SidebarLink
           to="/login"
           icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
