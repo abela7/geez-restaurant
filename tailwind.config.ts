@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,14 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Ethiopian/Eritrean restaurant theme colors
+				cream: '#F1ECE2',
+				plum: '#4D4052',
+				eggplant: '#301934',
+				turmeric: '#DAA520',
+				sand: '#CDAF56',
+				coffee: '#5D4225',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
