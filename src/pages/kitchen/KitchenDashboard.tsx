@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { useLanguage, T } from '@/contexts/LanguageContext';
@@ -12,7 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   ChefHat, Clock, AlertTriangle, CheckCircle2, XCircle, 
-  Timer, Printer, Bell, BellOff, Play, Pause, Coffee
+  Timer, Printer, Bell, BellOff, Play, Pause, Coffee, Plus
 } from 'lucide-react';
 
 // Mock data
@@ -609,3 +608,4 @@ const OrderCard: React.FC<OrderCardProps> = ({
 };
 
 export default KitchenDashboard;
+

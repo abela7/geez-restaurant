@@ -82,7 +82,10 @@ const OrderManagement = () => {
                       <div className="flex items-center gap-2">
                         {order.table}
                         {order.special && (
-                          <AlertCircle className="h-4 w-4 text-amber-500" title="Special requests" />
+                          <div className="flex items-center">
+                            <AlertCircle className="h-4 w-4 text-amber-500" />
+                            <span className="sr-only">Special requests</span>
+                          </div>
                         )}
                       </div>
                     </TableCell>

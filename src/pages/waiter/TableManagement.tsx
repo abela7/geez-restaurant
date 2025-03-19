@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import { useLanguage, T } from '@/contexts/LanguageContext';
@@ -122,6 +121,21 @@ const mockTables: Table[] = [
   },
 ];
 
+const getStatusBadge = (status: Table['status']) => {
+  switch(status) {
+    case 'available':
+      return <Badge className="bg-green-600">Available</Badge>;
+    case 'occupied':
+      return <Badge className="bg-red-600">Occupied</Badge>;
+    case 'reserved':
+      return <Badge className="bg-blue-600">Reserved</Badge>;
+    case 'cleaning':
+      return <Badge className="bg-yellow-600">Cleaning</Badge>;
+    default:
+      return <Badge>{status}</Badge>;
+  }
+};
+
 const TableManagement: React.FC = () => {
   const { t } = useLanguage();
   const [tables, setTables] = useState<Table[]>(mockTables);
@@ -185,22 +199,6 @@ const TableManagement: React.FC = () => {
           : table
       )
     );
-  };
-
-  // Get status badge color
-  const getStatusBadge = (status: Table['status']) => {
-    switch(status) {
-      case 'available':
-        return <Badge className="bg-green-600">Available</Badge>;
-      case 'occupied':
-        return <Badge className="bg-red-600">Occupied</Badge>;
-      case 'reserved':
-        return <Badge className="bg-blue-600">Reserved</Badge>;
-      case 'cleaning':
-        return <Badge className="bg-yellow-600">Cleaning</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
-    }
   };
 
   return (
@@ -928,3 +926,4 @@ const ReserveTableDialog: React.FC<ReserveTableDialogProps> = ({ table, onConfir
 };
 
 export default TableManagement;
+
