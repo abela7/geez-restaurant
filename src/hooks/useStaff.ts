@@ -23,7 +23,13 @@ export function useStaff() {
 
       if (error) throw error;
 
-      setStaff(data || []);
+      // Cast the roles to make TypeScript happy
+      const typedData = data?.map(item => ({
+        ...item,
+        role: item.role as StaffMember['role']
+      })) || [];
+      
+      setStaff(typedData);
     } catch (err) {
       console.error('Error fetching staff:', err);
       setError('Failed to load staff data');
@@ -46,7 +52,11 @@ export function useStaff() {
       // For demo purposes, we'd just insert directly if allowed
       const { data, error } = await supabase
         .from('profiles')
-        .insert([staffData])
+        .insert([{
+          // Generate a UUID on the client side since we can't insert without an ID
+          id: crypto.randomUUID(),
+          ...staffData
+        }])
         .select();
 
       if (error) throw error;
@@ -145,7 +155,11 @@ export function useStaff() {
 
       if (error) throw error;
       
-      return data as StaffMember;
+      // Cast the role to make TypeScript happy
+      return {
+        ...data,
+        role: data.role as StaffMember['role']
+      } as StaffMember;
     } catch (err) {
       console.error('Error fetching staff member:', err);
       toast({
