@@ -29,6 +29,8 @@ export interface TableWithDetails extends Table {
   currentGuests?: number;
   occupiedSince?: string;
   server?: string;
+  reservedFor?: string;
+  reservationTime?: string;
 }
 
 export interface TableGuest {
