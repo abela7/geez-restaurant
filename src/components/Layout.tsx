@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { MainSidebar } from './MainSidebar';
@@ -21,17 +22,13 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'admin' }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation();
   const isMobile = useIsMobile();
   
   const toggleSidebar = () => {
     setSidebarOpen(prev => !prev);
   };
-  
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [location.pathname]);
 
   const getBreadcrumbs = () => {
     const paths = location.pathname.split('/').filter(path => path);
@@ -60,11 +57,12 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
 
   const contentClasses = cn(
     "flex-1 flex flex-col w-full transition-all duration-300",
-    sidebarOpen ? "md:ml-64" : "md:ml-0"
+    sidebarOpen && !isMobile ? "ml-64" : "ml-0"
   );
 
   return (
     <div className="flex min-h-screen relative bg-background">
+      {/* Overlay for mobile sidebar */}
       {isMobile && (
         <div
           className={cn(
@@ -75,12 +73,13 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
         />
       )}
       
+      {/* Sidebar */}
       <div 
         className={cn(
-          "fixed md:fixed top-0 left-0 h-screen z-30",
+          "md:relative top-0 left-0 h-screen z-30",
           "transition-all duration-300 ease-in-out",
           "w-64 shrink-0",
-          isMobile ? (sidebarOpen ? "translate-x-0" : "-translate-x-full") : (sidebarOpen ? "translate-x-0" : "-translate-x-full")
+          isMobile ? (sidebarOpen ? "translate-x-0" : "-translate-x-full") : ""
         )}
       >
         <div className="h-full">
@@ -88,6 +87,7 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
         </div>
       </div>
       
+      {/* Main content */}
       <div className={contentClasses}>
         <Header toggleSidebar={toggleSidebar} interface={userInterface} />
         

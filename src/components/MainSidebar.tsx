@@ -1,333 +1,105 @@
 
-import React from "react";
-import { useLocation, Link } from "react-router-dom";
-import {
-  BarChart4,
-  DollarSign,
-  Users,
-  UtensilsCrossed,
-  ClipboardList,
-  MessageSquare,
-  Settings,
-  LayoutGrid,
-  Clock,
-  ShoppingCart,
-  Store,
-  Truck,
-  User,
-  LogOut,
-  Bell,
-  KeyRound,
-  Salad,
-  MapPin,
-  ReceiptText,
-  FileQuestion,
-  ClipboardCheck,
-  ChevronDown
-} from "lucide-react";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { Location as RouterLocation } from "react-router-dom";
+import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { useLanguage, T } from '@/contexts/LanguageContext';
+import { 
+  LayoutDashboard, DollarSign, Users, Package, BarChart, 
+  User, Settings, ClipboardList, ChevronDown, ChevronRight, Languages,
+  BookUser, ListChecks, BadgeDollarSign, Menu as MenuIcon, LogOut, 
+  ChevronLeft, MapPin, ClipboardCheck, FileText
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-// This type represents a section in the sidebar nav
-export type NavSectionType = {
-  title: string;
-  href: string;
+interface SidebarLinkProps {
+  to: string;
   icon: React.ReactNode;
-  routes?: { title: string; href: string }[]; // Optional sub-routes
-  active?: boolean; // Is this the current section?
+  label: string;
+  isActive: boolean;
+  isOpen: boolean;
+  hasDropdown?: boolean;
+  isExpanded?: boolean;
+  onClick?: (e: React.MouseEvent) => void;
+}
+
+const SidebarLink: React.FC<SidebarLinkProps> = ({ 
+  to, 
+  icon, 
+  label, 
+  isActive, 
+  isOpen, 
+  hasDropdown = false, 
+  isExpanded = false, 
+  onClick 
+}) => {
+  return (
+    <div className="relative">
+      <Link
+        to={to}
+        className={cn(
+          "flex items-center px-3 py-2.5 my-1 rounded-md transition-colors",
+          isActive 
+            ? "bg-primary text-primary-foreground font-medium" 
+            : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        )}
+        onClick={hasDropdown ? onClick : undefined}
+      >
+        <div className="w-8 h-8 flex items-center justify-center">
+          {icon}
+        </div>
+        {isOpen && (
+          <>
+            <span className="ml-2 text-sm"><T text={label} /></span>
+            {hasDropdown && (
+              <div className="ml-auto">
+                {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              </div>
+            )}
+          </>
+        )}
+      </Link>
+    </div>
+  );
 };
 
-// Helper to get admin nav sections based on pathname
-export const getAdminNav = (pathname: string, t: (s: string) => string): NavSectionType[] => {
-  const sections: NavSectionType[] = [
-    {
-      title: t("Dashboard"),
-      href: "/",
-      icon: <LayoutGrid className="h-4 w-4" />,
-      active: pathname === "/"
-    },
-    {
-      title: t("Reports"),
-      href: "/admin/reports",
-      icon: <BarChart4 className="h-4 w-4" />,
-      routes: [
-        { title: t("Sales Analytics"), href: "/admin/reports/sales" },
-        { title: t("Staff Reports"), href: "/admin/reports/staff" },
-        { title: t("Inventory Reports"), href: "/admin/reports/inventory" },
-        { title: t("Customer Insights"), href: "/admin/reports/customers" },
-        { title: t("Custom Reports"), href: "/admin/reports/custom" }
-      ],
-      active: pathname.startsWith("/admin/reports")
-    },
-    {
-      title: t("Staff"),
-      href: "/admin/staff",
-      icon: <Users className="h-4 w-4" />,
-      routes: [
-        { title: t("Staff Directory"), href: "/admin/staff/directory" },
-        { title: t("Attendance"), href: "/admin/staff/attendance" },
-        { title: t("Performance"), href: "/admin/staff/performance" },
-        { title: t("Tasks"), href: "/admin/staff/tasks" },
-        { title: t("Payroll"), href: "/admin/staff/payroll" }
-      ],
-      active: pathname.startsWith("/admin/staff")
-    },
-    {
-      title: t("Inventory"),
-      href: "/admin/inventory",
-      icon: <ShoppingCart className="h-4 w-4" />,
-      routes: [
-        { title: t("Stock Levels"), href: "/admin/inventory/stock" },
-        { title: t("Ingredients"), href: "/admin/inventory/ingredients" },
-        { title: t("Recipes"), href: "/admin/inventory/recipes" },
-        { title: t("Suppliers"), href: "/admin/inventory/suppliers" },
-        { title: t("Purchase Orders"), href: "/admin/inventory/purchase-orders" }
-      ],
-      active: pathname.startsWith("/admin/inventory")
-    },
-    {
-      title: t("Menu"),
-      href: "/admin/menu",
-      icon: <UtensilsCrossed className="h-4 w-4" />,
-      routes: [
-        { title: t("Food Items"), href: "/admin/menu/food" },
-        { title: t("Categories"), href: "/admin/menu/categories" },
-        { title: t("Recipes"), href: "/admin/menu/recipes" },
-        { title: t("Modifiers"), href: "/admin/menu/modifiers" },
-        { title: t("Pricing"), href: "/admin/menu/pricing" },
-        { title: t("Menu Design"), href: "/admin/menu/design" }
-      ],
-      active: pathname.startsWith("/admin/menu")
-    },
-    {
-      title: t("Tasks"),
-      href: "/admin/tasks",
-      icon: <ClipboardList className="h-4 w-4" />,
-      active: pathname === "/admin/tasks"
-    },
-    {
-      title: t("Food Safety"),
-      href: "/admin/food-safety",
-      icon: <ClipboardCheck className="h-4 w-4" />,
-      routes: [
-        { title: t("Dashboard"), href: "/admin/food-safety" },
-        { title: t("Checklists"), href: "/admin/food-safety/checklists" },
-        { title: t("Create Checklist"), href: "/admin/food-safety/checklists/new" }
-      ],
-      active: pathname.startsWith("/admin/food-safety")
-    },
-    {
-      title: t("Finance"),
-      href: "/admin/finance",
-      icon: <DollarSign className="h-4 w-4" />,
-      routes: [
-        { title: t("Daily Sales"), href: "/admin/finance/daily-sales" },
-        { title: t("Financial Reports"), href: "/admin/finance/financial-reports" },
-        { title: t("Payment Management"), href: "/admin/finance/payment-management" },
-        { title: t("Budgeting"), href: "/admin/finance/budgeting" }
-      ],
-      active: pathname.startsWith("/admin/finance")
-    },
-    {
-      title: t("Customers"),
-      href: "/admin/customers",
-      icon: <User className="h-4 w-4" />,
-      routes: [
-        { title: t("Customer Database"), href: "/admin/customers/database" },
-        { title: t("Feedback"), href: "/admin/customers/feedback" },
-        { title: t("Promotions"), href: "/admin/customers/promotions" },
-        { title: t("Loyalty Program"), href: "/admin/customers/loyalty" }
-      ],
-      active: pathname.startsWith("/admin/customers")
-    },
-    {
-      title: t("Communication"),
-      href: "/admin/communication",
-      icon: <MessageSquare className="h-4 w-4" />,
-      active: pathname === "/admin/communication"
-    },
-    {
-      title: t("Settings"),
-      href: "/admin/settings",
-      icon: <Settings className="h-4 w-4" />,
-      routes: [
-        { title: t("Restaurant Profile"), href: "/admin/settings/profile" },
-        { title: t("User Access"), href: "/admin/settings/users" },
-        { title: t("Printers & Devices"), href: "/admin/settings/devices" },
-        { title: t("System Logs"), href: "/admin/settings/logs" },
-        { title: t("Integrations"), href: "/admin/settings/integrations" }
-      ],
-      active: pathname.startsWith("/admin/settings")
-    }
-  ];
+interface DropdownMenuProps {
+  items: { to: string; label: string }[];
+  isOpen: boolean;
+  isExpanded: boolean;
+  parentPath: string;
+}
 
-  return sections;
-};
-
-// Helper to get waiter nav sections based on pathname
-export const getWaiterNav = (pathname: string, t: (s: string) => string): NavSectionType[] => {
-  const sections: NavSectionType[] = [
-    {
-      title: t("Dashboard"),
-      href: "/waiter",
-      icon: <LayoutGrid className="h-4 w-4" />,
-      active: pathname === "/waiter"
-    },
-    {
-      title: t("Orders"),
-      href: "/waiter/orders",
-      icon: <ReceiptText className="h-4 w-4" />,
-      active: pathname === "/waiter/orders"
-    },
-    {
-      title: t("Tables"),
-      href: "/waiter/tables",
-      icon: <MapPin className="h-4 w-4" />,
-      active: pathname === "/waiter/tables"
-    },
-    {
-      title: t("Payments"),
-      href: "/waiter/payments",
-      icon: <DollarSign className="h-4 w-4" />,
-      active: pathname === "/waiter/payments"
-    },
-    {
-      title: t("Tasks"),
-      href: "/waiter/tasks",
-      icon: <ClipboardList className="h-4 w-4" />,
-      active: pathname === "/waiter/tasks"
-    },
-    {
-      title: t("Food Safety"),
-      href: "/waiter/food-safety",
-      icon: <ClipboardCheck className="h-4 w-4" />,
-      active: pathname === "/waiter/food-safety"
-    }
-  ];
-
-  return sections;
-};
-
-// Helper to get kitchen nav sections based on pathname
-export const getKitchenNav = (pathname: string, t: (s: string) => string): NavSectionType[] => {
-  const sections: NavSectionType[] = [
-    {
-      title: t("Dashboard"),
-      href: "/kitchen",
-      icon: <LayoutGrid className="h-4 w-4" />,
-      active: pathname === "/kitchen"
-    },
-    {
-      title: t("Recipes"),
-      href: "/kitchen/recipes",
-      icon: <Salad className="h-4 w-4" />,
-      active: pathname === "/kitchen/recipes"
-    },
-    {
-      title: t("Inventory"),
-      href: "/kitchen/inventory",
-      icon: <ShoppingCart className="h-4 w-4" />,
-      active: pathname === "/kitchen/inventory"
-    },
-    {
-      title: t("Tasks"),
-      href: "/kitchen/tasks",
-      icon: <ClipboardList className="h-4 w-4" />,
-      active: pathname === "/kitchen/tasks"
-    },
-    {
-      title: t("Food Safety"),
-      href: "/kitchen/food-safety",
-      icon: <ClipboardCheck className="h-4 w-4" />,
-      active: pathname === "/kitchen/food-safety"
-    }
-  ];
-
-  return sections;
-};
-
-// Helper to get customer nav sections based on pathname
-export const getCustomerNav = (pathname: string, t: (s: string) => string): NavSectionType[] => {
-  const sections: NavSectionType[] = [
-    {
-      title: t("Menu"),
-      href: "/customer/menu",
-      icon: <UtensilsCrossed className="h-4 w-4" />,
-      active: pathname === "/customer/menu"
-    },
-    {
-      title: t("Feedback"),
-      href: "/customer/feedback",
-      icon: <FileQuestion className="h-4 w-4" />,
-      active: pathname === "/customer/feedback"
-    },
-    {
-      title: t("Promotions"),
-      href: "/customer/promotions",
-      icon: <Bell className="h-4 w-4" />,
-      active: pathname === "/customer/promotions"
-    }
-  ];
-
-  return sections;
-};
-
-// Helper to get system nav sections based on pathname
-export const getSystemNav = (pathname: string, t: (s: string) => string): NavSectionType[] => {
-  const sections: NavSectionType[] = [
-    {
-      title: t("Dashboard"),
-      href: "/system",
-      icon: <LayoutGrid className="h-4 w-4" />,
-      active: pathname === "/system"
-    },
-    {
-      title: t("User Management"),
-      href: "/system/users",
-      icon: <Users className="h-4 w-4" />,
-      active: pathname === "/system/users"
-    },
-    {
-      title: t("Error Logs"),
-      href: "/system/logs",
-      icon: <KeyRound className="h-4 w-4" />,
-      active: pathname === "/system/logs"
-    },
-    {
-      title: t("Documentation"),
-      href: "/system/docs",
-      icon: <FileQuestion className="h-4 w-4" />,
-      active: pathname === "/system/docs"
-    }
-  ];
-
-  return sections;
-};
-
-// Get nav sections based on interface and location
-export const getNavSections = (
-  interfaceType: "admin" | "waiter" | "kitchen" | "customer" | "system",
-  location: RouterLocation
-): NavSectionType[] => {
-  const { t } = useLanguage();
+const DropdownMenu: React.FC<DropdownMenuProps> = ({ items, isOpen, isExpanded, parentPath }) => {
+  const location = useLocation();
   
-  const pathname = location.pathname;
-
-  switch (interfaceType) {
-    case "admin":
-      return getAdminNav(pathname, t);
-    case "waiter":
-      return getWaiterNav(pathname, t);
-    case "kitchen":
-      return getKitchenNav(pathname, t);
-    case "customer":
-      return getCustomerNav(pathname, t);
-    case "system":
-      return getSystemNav(pathname, t);
-    default:
-      return [];
-  }
+  if (!isOpen || !isExpanded) return null;
+  
+  return (
+    <div className="ml-8 pl-2 border-l border-sidebar-border">
+      {items.map((item) => (
+        <Link
+          key={item.to}
+          to={`${parentPath}/${item.to}`}
+          className={cn(
+            "block px-3 py-1.5 my-1 rounded-md text-sm transition-colors",
+            location.pathname === `${parentPath}/${item.to}` 
+              ? "bg-primary/80 text-primary-foreground"
+              : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          )}
+        >
+          <T text={item.label} />
+        </Link>
+      ))}
+    </div>
+  );
 };
+
+interface NavSection {
+  label: string;
+  icon: React.ReactNode;
+  path: string;
+  submenu?: { to: string; label: string }[];
+}
 
 export const MainSidebar: React.FC<{
   open: boolean;
@@ -335,70 +107,296 @@ export const MainSidebar: React.FC<{
   interface: "admin" | "waiter" | "kitchen" | "customer" | "system";
 }> = ({ open, onToggle, interface: interfaceType }) => {
   const location = useLocation();
-  const navSections = getNavSections(interfaceType, location);
+  const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const { t } = useLanguage();
+
+  const toggleSection = (e: React.MouseEvent, section: string) => {
+    e.preventDefault();
+    setExpandedSections(prev => 
+      prev.includes(section) 
+        ? prev.filter(item => item !== section) 
+        : [...prev, section]
+    );
+  };
+
+  // Navigation sections for admin interface
+  const getAdminSections = () => {
+    return [
+      { 
+        label: "Dashboard", 
+        icon: <LayoutDashboard size={20} />, 
+        path: "/"
+      },
+      { 
+        label: "Reports", 
+        icon: <BarChart size={20} />, 
+        path: "/admin/reports",
+        submenu: [
+          { to: "sales", label: "Sales Analytics" },
+          { to: "staff", label: "Staff Reports" },
+          { to: "inventory", label: "Inventory Reports" },
+          { to: "customers", label: "Customer Insights" },
+          { to: "custom", label: "Custom Reports" }
+        ]
+      },
+      { 
+        label: "Staff", 
+        icon: <Users size={20} />, 
+        path: "/admin/staff",
+        submenu: [
+          { to: "directory", label: "Staff Directory" },
+          { to: "attendance", label: "Attendance" },
+          { to: "performance", label: "Performance" },
+          { to: "tasks", label: "Tasks" },
+          { to: "payroll", label: "Payroll" }
+        ]
+      },
+      { 
+        label: "Inventory", 
+        icon: <Package size={20} />, 
+        path: "/admin/inventory",
+        submenu: [
+          { to: "stock", label: "Stock Levels" },
+          { to: "ingredients", label: "Ingredients" },
+          { to: "recipes", label: "Recipes" },
+          { to: "suppliers", label: "Suppliers" },
+          { to: "purchase-orders", label: "Purchase Orders" }
+        ]
+      },
+      { 
+        label: "Menu", 
+        icon: <MenuIcon size={20} />, 
+        path: "/admin/menu",
+        submenu: [
+          { to: "food", label: "Food Items" },
+          { to: "categories", label: "Categories" },
+          { to: "recipes", label: "Recipes" },
+          { to: "modifiers", label: "Modifiers" },
+          { to: "pricing", label: "Pricing" },
+          { to: "design", label: "Menu Design" }
+        ]
+      },
+      { 
+        label: "Tasks", 
+        icon: <ClipboardList size={20} />, 
+        path: "/admin/tasks"
+      },
+      { 
+        label: "Food Safety", 
+        icon: <ClipboardCheck size={20} />, 
+        path: "/admin/food-safety",
+        submenu: [
+          { to: "checklists", label: "Checklists" }
+        ]
+      },
+      { 
+        label: "Finance", 
+        icon: <DollarSign size={20} />, 
+        path: "/admin/finance",
+        submenu: [
+          { to: "daily-sales", label: "Daily Sales" },
+          { to: "financial-reports", label: "Financial Reports" },
+          { to: "payment-management", label: "Payment Management" },
+          { to: "budgeting", label: "Budgeting" }
+        ]
+      },
+      { 
+        label: "Customers", 
+        icon: <User size={20} />, 
+        path: "/admin/customers",
+        submenu: [
+          { to: "database", label: "Customer Database" },
+          { to: "feedback", label: "Feedback" },
+          { to: "promotions", label: "Promotions" },
+          { to: "loyalty", label: "Loyalty Program" }
+        ]
+      },
+      { 
+        label: "Communication", 
+        icon: <FileText size={20} />, 
+        path: "/admin/communication"
+      },
+      {
+        label: "General",
+        icon: <Settings size={20} />,
+        path: "/admin/general",
+        submenu: [
+          { to: "table-management", label: "Table Management" }
+        ]
+      },
+      { 
+        label: "Settings", 
+        icon: <Settings size={20} />, 
+        path: "/admin/settings",
+        submenu: [
+          { to: "profile", label: "Restaurant Profile" },
+          { to: "users", label: "User Access" },
+          { to: "devices", label: "Printers & Devices" },
+          { to: "logs", label: "System Logs" },
+          { to: "integrations", label: "Integrations" }
+        ]
+      },
+      { 
+        label: "Activity Log", 
+        icon: <ClipboardList size={20} />, 
+        path: "/admin/activity"
+      },
+      { 
+        label: "Language Management", 
+        icon: <Languages size={20} />, 
+        path: "/admin/language"
+      }
+    ];
+  };
+
+  // Navigation sections for waiter interface
+  const getWaiterSections = () => {
+    return [
+      { to: "/waiter", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
+      { to: "/waiter/tables", label: "Table Management", icon: <MapPin size={20} /> },
+      { to: "/waiter/orders", label: "Order Management", icon: <ClipboardList size={20} /> },
+      { to: "/waiter/payments", label: "Payment Processing", icon: <DollarSign size={20} /> },
+      { to: "/waiter/tasks", label: "Tasks", icon: <ClipboardList size={20} /> },
+      { to: "/waiter/food-safety", label: "Food Safety", icon: <ClipboardCheck size={20} /> }
+    ];
+  };
+
+  // Navigation sections for kitchen interface
+  const getKitchenSections = () => {
+    return [
+      { to: "/kitchen", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
+      { to: "/kitchen/recipes", label: "Recipe Viewer", icon: <MenuIcon size={20} /> },
+      { to: "/kitchen/inventory", label: "Inventory Check", icon: <Package size={20} /> },
+      { to: "/kitchen/tasks", label: "Tasks", icon: <ClipboardList size={20} /> },
+      { to: "/kitchen/food-safety", label: "Food Safety", icon: <ClipboardCheck size={20} /> }
+    ];
+  };
+
+  // Navigation sections for customer interface
+  const getCustomerSections = () => {
+    return [
+      { to: "/menu", label: "Menu", icon: <MenuIcon size={20} /> },
+      { to: "/feedback", label: "Feedback", icon: <ClipboardList size={20} /> },
+      { to: "/promotions", label: "Promotions", icon: <DollarSign size={20} /> }
+    ];
+  };
+
+  // Navigation sections for system admin interface
+  const getSystemSections = () => {
+    return [
+      { to: "/system", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
+      { to: "/system/errors", label: "Error Logs", icon: <ClipboardList size={20} /> },
+      { to: "/system/users", label: "User Management", icon: <Users size={20} /> },
+      { to: "/system/docs", label: "Documentation", icon: <ClipboardList size={20} /> }
+    ];
+  };
+
+  // Get the appropriate navigation sections based on interface type
+  let navSections: any[] = [];
+  let interfaceTitle = "";
   
+  switch (interfaceType) {
+    case 'waiter':
+      navSections = getWaiterSections();
+      interfaceTitle = "Waiter Interface";
+      break;
+    case 'kitchen':
+      navSections = getKitchenSections();
+      interfaceTitle = "Kitchen Staff Interface";
+      break;
+    case 'customer':
+      navSections = getCustomerSections();
+      interfaceTitle = "Menu & Feedback";
+      break;
+    case 'system':
+      navSections = getSystemSections();
+      interfaceTitle = "System Administration";
+      break;
+    default:
+      navSections = getAdminSections();
+      interfaceTitle = "Administrative Portal";
+  }
+
   return (
-    <div className="fixed inset-y-0 left-0 z-50 w-64 bg-background border-r">
-      <div className="flex h-screen flex-col">
-        <div className="px-3 py-2 flex h-14 items-center border-b">
-          <h2 className="text-lg font-semibold">Restaurant Manager</h2>
+    <div className="h-full flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
+      <div className="p-4 flex justify-between items-center h-16 border-b border-sidebar-border">
+        <div className="text-xl font-bold text-primary">
+          Habesha
         </div>
         
-        <div className="flex-1 overflow-auto py-2">
-          <nav className="space-y-1 px-2">
-            {navSections.map((section, index) => (
-              <div key={index} className="py-1">
-                <Link
-                  to={section.href}
-                  className={`flex items-center px-3 py-2 text-sm rounded-md transition-colors ${
-                    section.active
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                  }`}
-                >
-                  <span className="mr-3 h-4 w-4">{section.icon}</span>
-                  <span>{section.title}</span>
-                  {section.routes && (
-                    <ChevronDown className="ml-auto h-4 w-4" />
-                  )}
-                </Link>
-                
-                {section.routes && section.active && (
-                  <div className="mt-1 ml-6 space-y-1">
-                    {section.routes.map((route, routeIndex) => (
-                      <Link
-                        key={routeIndex}
-                        to={route.href}
-                        className={`block px-3 py-2 text-sm rounded-md transition-colors ${
-                          location.pathname === route.href
-                            ? "bg-accent text-accent-foreground"
-                            : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground"
-                        }`}
-                      >
-                        {route.title}
-                      </Link>
-                    ))}
-                  </div>
+        <Button
+          onClick={onToggle}
+          variant="outline"
+          size="icon"
+          className="w-8 h-8 bg-amber-400 hover:bg-amber-500 border-amber-500 text-amber-800"
+          aria-label={t("Toggle sidebar")}
+        >
+          <ChevronLeft size={18} />
+        </Button>
+      </div>
+      
+      <div className="flex-1 py-4 px-2 overflow-y-auto">
+        <div className="mb-4 px-3 py-1">
+          <h2 className="text-xs uppercase font-semibold text-sidebar-foreground/70">
+            <T text={interfaceTitle} />
+          </h2>
+        </div>
+        
+        <nav className="space-y-0.5">
+          {interfaceType === 'admin' ? (
+            navSections.map((section: NavSection) => (
+              <React.Fragment key={section.path}>
+                <SidebarLink
+                  to={section.submenu ? '#' : section.path}
+                  icon={section.icon}
+                  label={section.label}
+                  isActive={
+                    section.submenu 
+                      ? location.pathname.startsWith(section.path) 
+                      : location.pathname === section.path
+                  }
+                  isOpen={open}
+                  hasDropdown={!!section.submenu}
+                  isExpanded={expandedSections.includes(section.path)}
+                  onClick={(e) => section.submenu ? toggleSection(e, section.path) : undefined}
+                />
+                {section.submenu && (
+                  <DropdownMenu 
+                    items={section.submenu} 
+                    isOpen={open} 
+                    isExpanded={expandedSections.includes(section.path)}
+                    parentPath={section.path}
+                  />
                 )}
-              </div>
-            ))}
-          </nav>
-        </div>
-        
-        <div className="border-t p-3">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-              <User className="h-4 w-4" />
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <p className="text-sm font-medium leading-none truncate">Admin User</p>
-              <p className="text-xs text-muted-foreground truncate">admin@restaurant.com</p>
-            </div>
-            <button className="text-muted-foreground hover:text-foreground">
-              <LogOut className="h-4 w-4" />
-            </button>
+              </React.Fragment>
+            ))
+          ) : (
+            navSections.map((link: any) => (
+              <SidebarLink
+                key={link.to}
+                to={link.to}
+                icon={link.icon}
+                label={link.label}
+                isActive={location.pathname === link.to}
+                isOpen={open}
+              />
+            ))
+          )}
+        </nav>
+      </div>
+      
+      <div className="border-t p-3">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+            <User className="h-4 w-4" />
           </div>
+          <div className="flex-1 overflow-hidden">
+            <p className="text-sm font-medium leading-none truncate">Admin User</p>
+            <p className="text-xs text-muted-foreground truncate">admin@restaurant.com</p>
+          </div>
+          <button className="text-muted-foreground hover:text-foreground">
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </div>
