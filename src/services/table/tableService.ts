@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Room, Table, Reservation } from "./types";
 
@@ -102,7 +101,7 @@ export const getTablesByRoom = async (roomId: string): Promise<Table[]> => {
     throw error;
   }
   
-  return (data || []) as unknown as Table[];
+  return (data || []) as any as Table[];
 };
 
 export const getTableById = async (id: string): Promise<Table | null> => {
@@ -273,7 +272,7 @@ export const updateTablePosition = async (id: string, position_x: number, positi
   const updateData = { 
     position_x, 
     position_y 
-  } as any; // Use type assertion to bypass strict type checking
+  } as any;
   
   const { data, error } = await supabase
     .from('restaurant_tables')
@@ -294,7 +293,7 @@ export const updateTableDimensions = async (id: string, width: number, height: n
   const updateData = { 
     width, 
     height 
-  } as any; // Use type assertion to bypass strict type checking
+  } as any;
   
   const { data, error } = await supabase
     .from('restaurant_tables')
