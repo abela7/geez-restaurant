@@ -69,6 +69,7 @@ import StaffProfile from "./pages/admin/staff/StaffProfile";
 import StaffAttendance from "./pages/admin/staff/Attendance";
 import StaffPerformance from "./pages/admin/staff/Performance";
 import NewStaff from "./pages/admin/staff/NewStaff";
+import EditStaff from "./pages/admin/staff/EditStaff";
 import Directory from "./pages/admin/staff/Directory";
 import Tasks from "./pages/admin/staff/Tasks";
 import Payroll from "./pages/admin/staff/Payroll";
