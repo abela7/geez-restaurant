@@ -6,7 +6,7 @@ import {
   LayoutDashboard, DollarSign, Users, Package, BarChart, 
   User, Settings, ClipboardList, ChevronDown, ChevronRight, Languages,
   BookUser, ListChecks, BadgeDollarSign, Menu as MenuIcon, LogOut, 
-  ChevronLeft, TableProperties, Database
+  ChevronLeft, TableProperties, Database, ClipboardCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -155,8 +155,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { to: "directory", label: "Staff Directory" },
         { to: "performance", label: "Performance Tracking" },
         { to: "attendance", label: "Time & Attendance" },
-        { to: "tasks", label: "Task Assignment" },
+        { to: "tasks", label: "Task Management" },
         { to: "payroll", label: "Payroll" }
+      ]
+    },
+    { 
+      label: "General", 
+      icon: <Settings size={20} />, 
+      path: "/admin/general",
+      submenu: [
+        { to: "tables", label: "Table Management" }
       ]
     },
     { 
@@ -181,14 +189,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { to: "recipes", label: "Recipes" },
         { to: "suppliers", label: "Suppliers" },
         { to: "purchase-orders", label: "Purchase Orders" }
-      ]
-    },
-    { 
-      label: "General", 
-      icon: <Settings size={20} />, 
-      path: "/admin/general",
-      submenu: [
-        { to: "tables", label: "Table Management" }
       ]
     },
     { 
