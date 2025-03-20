@@ -1,46 +1,63 @@
 
 import React from "react";
-import { useLocation, Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { useLanguage, T } from "@/contexts/LanguageContext";
-import { 
-  Package, 
-  Leaf, 
-  FileText, 
-  Truck, 
-  ShoppingCart
-} from "lucide-react";
+import { useLocation } from "react-router-dom";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Package, TruckIcon, BarChart2, Warehouse, FileText } from "lucide-react";
+import { Link } from "react-router-dom";
 
-export const InventoryNav: React.FC = () => {
-  const location = useLocation();
+export const InventoryNav = () => {
   const { t } = useLanguage();
-  
-  // Define the inventory navigation items
-  const navItems = [
-    { path: "/admin/inventory/stock", label: "Stock Levels", icon: <Package className="h-4 w-4 mr-2" /> },
-    { path: "/admin/inventory/ingredients", label: "Ingredients", icon: <Leaf className="h-4 w-4 mr-2" /> },
-    { path: "/admin/inventory/recipes", label: "Recipes", icon: <FileText className="h-4 w-4 mr-2" /> },
-    { path: "/admin/inventory/suppliers", label: "Suppliers", icon: <Truck className="h-4 w-4 mr-2" /> },
-    { path: "/admin/inventory/purchase-orders", label: "Purchase Orders", icon: <ShoppingCart className="h-4 w-4 mr-2" /> },
-  ];
+  const location = useLocation();
+  const currentPath = location.pathname;
+
+  const getActiveTab = () => {
+    if (currentPath.includes("/stock")) return "stock";
+    if (currentPath.includes("/ingredients")) return "ingredients";
+    if (currentPath.includes("/suppliers")) return "suppliers";
+    if (currentPath.includes("/purchase-orders")) return "purchase-orders";
+    if (currentPath.includes("/reports")) return "reports";
+    return "stock";
+  };
 
   return (
-    <div className="w-full overflow-auto mb-6">
-      <div className="inline-flex items-center space-x-1 p-1 bg-muted/50 rounded-lg">
-        {navItems.map((item) => (
-          <Button
-            key={item.path}
-            variant={location.pathname === item.path ? "default" : "ghost"}
-            size="sm"
-            asChild
-          >
-            <Link to={item.path}>
-              {item.icon}
-              <span className="hidden sm:inline"><T text={item.label} /></span>
+    <div className="mb-6">
+      <Tabs value={getActiveTab()} className="w-full">
+        <TabsList className="w-full md:w-auto">
+          <TabsTrigger value="stock" asChild>
+            <Link to="/admin/inventory/stock" className="flex items-center">
+              <Package className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline"><T text="Stock Levels" /></span>
+              <span className="sm:hidden"><T text="Stock" /></span>
             </Link>
-          </Button>
-        ))}
-      </div>
+          </TabsTrigger>
+          <TabsTrigger value="ingredients" asChild>
+            <Link to="/admin/inventory/ingredients" className="flex items-center">
+              <Warehouse className="mr-2 h-4 w-4" />
+              <span><T text="Ingredients" /></span>
+            </Link>
+          </TabsTrigger>
+          <TabsTrigger value="suppliers" asChild>
+            <Link to="/admin/inventory/suppliers" className="flex items-center">
+              <FileText className="mr-2 h-4 w-4" />
+              <span><T text="Suppliers" /></span>
+            </Link>
+          </TabsTrigger>
+          <TabsTrigger value="purchase-orders" asChild>
+            <Link to="/admin/inventory/purchase-orders" className="flex items-center">
+              <TruckIcon className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline"><T text="Purchase Orders" /></span>
+              <span className="sm:hidden"><T text="Orders" /></span>
+            </Link>
+          </TabsTrigger>
+          <TabsTrigger value="reports" asChild>
+            <Link to="/admin/inventory/reports" className="flex items-center">
+              <BarChart2 className="mr-2 h-4 w-4" />
+              <span><T text="Reports" /></span>
+            </Link>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
     </div>
   );
 };

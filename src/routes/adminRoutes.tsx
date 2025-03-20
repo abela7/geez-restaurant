@@ -1,4 +1,3 @@
-
 import { Route, Routes } from "react-router-dom";
 
 // Administrative Portal
@@ -35,6 +34,7 @@ import Ingredients from "../pages/admin/inventory/Ingredients";
 import Recipes from "../pages/admin/inventory/Recipes";
 import Suppliers from "../pages/admin/inventory/Suppliers";
 import PurchaseOrders from "../pages/admin/inventory/PurchaseOrders";
+import InventoryReports from "../pages/admin/reports/InventoryReports";
 
 // Food Safety Subpages
 import Checklists from "../pages/admin/food-safety/Checklists";
@@ -48,7 +48,6 @@ import AdminActivity from "../pages/admin/ActivityLog";
 // Admin Subroutes
 import SalesAnalytics from "../pages/admin/reports/SalesAnalytics";
 import StaffReports from "../pages/admin/reports/StaffReports";
-import InventoryReports from "../pages/admin/reports/InventoryReports";
 import CustomerInsights from "../pages/admin/reports/CustomerInsights";
 import CustomReports from "../pages/admin/reports/CustomReports";
 
@@ -119,6 +118,7 @@ const AdminRoutes = () => {
       <Route path="/admin/inventory/recipes" element={<Recipes />} />
       <Route path="/admin/inventory/suppliers" element={<Suppliers />} />
       <Route path="/admin/inventory/purchase-orders" element={<PurchaseOrders />} />
+      <Route path="/admin/inventory/reports" element={<InventoryReports />} />
       
       {/* Menu Management */}
       <Route path="/admin/menu" element={<MenuManagement />} />
@@ -169,3 +169,4 @@ const AdminRoutes = () => {
 };
 
 export default AdminRoutes;
+

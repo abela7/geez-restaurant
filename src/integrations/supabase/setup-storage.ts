@@ -8,6 +8,7 @@ export const setupStorage = async () => {
     const { data: buckets } = await supabase.storage.listBuckets();
     
     const staffImagesBucketExists = buckets?.some(bucket => bucket.name === 'staff_images');
+    const foodImagesBucketExists = buckets?.some(bucket => bucket.name === 'food_images');
     
     if (!staffImagesBucketExists) {
       // Create the staff_images bucket
@@ -24,6 +25,23 @@ export const setupStorage = async () => {
       console.log('Created staff_images storage bucket');
     } else {
       console.log('staff_images bucket already exists');
+    }
+
+    if (!foodImagesBucketExists) {
+      // Create the food_images bucket
+      const { error } = await supabase.storage.createBucket('food_images', {
+        public: true,
+        fileSizeLimit: 5242880, // 5MB
+        allowedMimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/gif']
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      console.log('Created food_images storage bucket');
+    } else {
+      console.log('food_images bucket already exists');
     }
 
     // Set up storage policies

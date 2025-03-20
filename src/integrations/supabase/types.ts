@@ -461,6 +461,7 @@ export type Database = {
         Row: {
           allergens: string[] | null
           category: string | null
+          cost: number | null
           created_at: string | null
           dietary: string[] | null
           id: string
@@ -477,6 +478,7 @@ export type Database = {
         Insert: {
           allergens?: string[] | null
           category?: string | null
+          cost?: number | null
           created_at?: string | null
           dietary?: string[] | null
           id?: string
@@ -493,6 +495,7 @@ export type Database = {
         Update: {
           allergens?: string[] | null
           category?: string | null
+          cost?: number | null
           created_at?: string | null
           dietary?: string[] | null
           id?: string
@@ -507,6 +510,62 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      inventory_transactions: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          ingredient_id: string | null
+          new_quantity: number
+          notes: string | null
+          previous_quantity: number | null
+          quantity: number
+          reference_id: string | null
+          reference_type: string | null
+          transaction_type: string
+          unit: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          ingredient_id?: string | null
+          new_quantity: number
+          notes?: string | null
+          previous_quantity?: number | null
+          quantity: number
+          reference_id?: string | null
+          reference_type?: string | null
+          transaction_type: string
+          unit: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          ingredient_id?: string | null
+          new_quantity?: number
+          notes?: string | null
+          previous_quantity?: number | null
+          quantity?: number
+          reference_id?: string | null
+          reference_type?: string | null
+          transaction_type?: string
+          unit?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_transactions_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       menu_categories: {
         Row: {
@@ -1378,6 +1437,69 @@ export type Database = {
             columns: ["staff_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      supplier_category_mappings: {
+        Row: {
+          category_id: string | null
+          created_at: string | null
+          id: string
+          supplier_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string | null
+          id?: string
+          supplier_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string | null
+          id?: string
+          supplier_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_category_mappings_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_category_mappings_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
