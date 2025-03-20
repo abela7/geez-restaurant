@@ -1,0 +1,6 @@
+
+/* Language-specific styles */
+[data-language="am"] {
+  /* Amharic text might need slightly different styles */
+  --amharic-font-scale: 1.05;
+}

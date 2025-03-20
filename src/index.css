@@ -89,13 +89,11 @@
   }
 }
 
-@layer utilities {
-  .hide-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  
-  .hide-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-}
+/* Import the modularized CSS files */
+@import './styles/base.css';
+@import './styles/performance.css';
+@import './styles/sidebar.css';
+@import './styles/mobile.css';
+@import './styles/language.css';
+@import './styles/layout.css';
+@import './styles/components.css';

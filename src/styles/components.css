@@ -1,0 +1,60 @@
+
+/* Modern dashboard card styling */
+.card-dashboard {
+  border-radius: 0.5rem;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border);
+}
+
+.card-dashboard:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+
+/* Tab navigation */
+.tab-nav {
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tab-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-nav-item {
+  white-space: nowrap;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  transition: all 0.15s ease;
+  border-radius: 0.25rem;
+}
+
+.tab-nav-item.active {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+/* Chart styling enhancements */
+.recharts-default-tooltip {
+  border-radius: 0.5rem !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  background-color: var(--card) !important;
+  border-color: var(--border) !important;
+}
+
+.recharts-tooltip-item-name,
+.recharts-tooltip-item-value {
+  color: var(--foreground) !important;
+}
+
+/* Badge styling */
+.status-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+}
