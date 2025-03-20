@@ -15,7 +15,6 @@ export function useStaff() {
       setIsLoading(true);
       setError(null);
 
-      // We'll create a new profiles table in your new Supabase project
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -37,6 +36,7 @@ export function useStaff() {
       const typedData = data?.map(item => ({
         ...item,
         role: item.role as StaffMember['role'],
+        // Set staff_role based on role if it doesn't exist in the database
         staff_role: roleMapping[item.role] || 'Customer'
       })) || [];
       
