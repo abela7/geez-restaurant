@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/page-header";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Search, Plus, FilePen, DollarSign, ChevronLeft, Trash2, Calculator, Loader2 } from "lucide-react";
+import { Search, Plus, FilePen, DollarSign, ChevronLeft, Trash2, Calculator, Loader2, Utensils } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Link } from "react-router-dom";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,7 @@ import Layout from "@/components/Layout";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface FoodItem {
   id: string;
@@ -34,6 +35,7 @@ interface FoodItem {
   is_gluten_free: boolean;
   is_spicy: boolean;
   categoryName?: string;
+  preparation_time?: number | null;
 }
 
 interface Category {
@@ -49,6 +51,7 @@ const FoodManagement = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddFoodDialog, setShowAddFoodDialog] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   
   const [newItem, setNewItem] = useState<Partial<FoodItem>>({
     name: "",
@@ -60,7 +63,8 @@ const FoodManagement = () => {
     is_vegetarian: false,
     is_vegan: false, 
     is_gluten_free: false,
-    is_spicy: false
+    is_spicy: false,
+    preparation_time: 15
   });
 
   useEffect(() => {
@@ -234,6 +238,33 @@ const FoodManagement = () => {
     }
   };
 
+  const handleToggleFoodAvailability = async (id: string, currentStatus: boolean) => {
+    try {
+      setIsLoading(true);
+      
+      const { error } = await supabase
+        .from('food_items')
+        .update({ available: !currentStatus })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setFoodItems(prev => 
+        prev.map(item => 
+          item.id === id ? { ...item, available: !currentStatus } : item
+        )
+      );
+      
+      toast.success(`Food item ${!currentStatus ? 'enabled' : 'disabled'}`);
+      
+    } catch (error) {
+      console.error("Error updating food availability:", error);
+      toast.error("Failed to update food availability");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const filteredFoodItems = foodItems.filter(item => 
     item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (item.categoryName && item.categoryName.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -244,7 +275,7 @@ const FoodManagement = () => {
 
   return (
     <Layout interface="admin">
-      <div className="container mx-auto p-4 md:p-6">
+      <div className="container mx-auto p-4 md:p-6 max-w-7xl">
         <PageHeader 
           title={<T text="Food Management" />}
           description={<T text="Create and manage dishes with recipes, ingredients, and costs" />}
@@ -257,6 +288,12 @@ const FoodManagement = () => {
                 </Link>
               </Button>
               <Button variant="outline" asChild>
+                <Link to="/admin/menu/dishes">
+                  <Utensils className="mr-2 h-4 w-4" />
+                  <T text="View Dishes" />
+                </Link>
+              </Button>
+              <Button variant="outline" asChild>
                 <Link to="/admin/menu/recipes">
                   <Calculator className="mr-2 h-4 w-4" />
                   <T text="Recipe Management" />
@@ -264,7 +301,7 @@ const FoodManagement = () => {
               </Button>
               <Dialog open={showAddFoodDialog} onOpenChange={setShowAddFoodDialog}>
                 <DialogTrigger asChild>
-                  <Button>
+                  <Button className="bg-amber-500 hover:bg-amber-600">
                     <Plus className="mr-2 h-4 w-4" />
                     <T text="Add Food Item" />
                   </Button>
@@ -411,31 +448,63 @@ const FoodManagement = () => {
 
         <MenuNav />
 
-        <div className="mb-6 flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder={t("Search food items...")}
-              className="w-full pl-9"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+        <div className="mb-6 bg-white rounded-lg shadow p-4">
+          <div className="flex flex-col md:flex-row gap-4 items-center mb-4">
+            <div className="relative flex-1 w-full">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder={t("Search food items...")}
+                className="w-full pl-9"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <div className="flex space-x-2">
+              <Button
+                variant={viewMode === "grid" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode("grid")}
+              >
+                <div className="grid grid-cols-2 gap-1 h-4 w-4 mr-2">
+                  <div className="bg-current rounded-sm"></div>
+                  <div className="bg-current rounded-sm"></div>
+                  <div className="bg-current rounded-sm"></div>
+                  <div className="bg-current rounded-sm"></div>
+                </div>
+                <T text="Grid" />
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode("list")}
+              >
+                <div className="flex flex-col space-y-1 h-4 w-4 mr-2">
+                  <div className="bg-current rounded-sm h-[2px]"></div>
+                  <div className="bg-current rounded-sm h-[2px]"></div>
+                  <div className="bg-current rounded-sm h-[2px]"></div>
+                </div>
+                <T text="List" />
+              </Button>
+            </div>
           </div>
-          <div className="flex gap-2 overflow-x-auto hide-scrollbar">
+          
+          <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
             <Button 
-              variant="outline" 
+              variant={searchQuery === "" ? "default" : "outline"} 
               size="sm" 
               onClick={() => setSearchQuery("")}
+              className={searchQuery === "" ? "bg-amber-500 hover:bg-amber-600" : ""}
             >
               <T text="All Categories" />
             </Button>
             {uniqueCategories.map((category) => (
               <Button 
                 key={category} 
-                variant="outline" 
+                variant={searchQuery === category ? "default" : "outline"} 
                 size="sm"
                 onClick={() => setSearchQuery(category)}
+                className={searchQuery === category ? "bg-amber-500 hover:bg-amber-600" : ""}
               >
                 {category}
               </Button>
@@ -444,76 +513,184 @@ const FoodManagement = () => {
         </div>
 
         {isLoading ? (
-          <div className="flex justify-center items-center p-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="flex justify-center items-center p-12 bg-white rounded-lg shadow">
+            <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredFoodItems.length === 0 ? (
-              <div className="col-span-full text-center p-12">
-                <p className="text-muted-foreground">
-                  {searchQuery ? (
-                    <T text="No food items found matching your search" />
-                  ) : (
-                    <T text="No food items found. Create your first food item!" />
-                  )}
-                </p>
-              </div>
-            ) : (
-              filteredFoodItems.map((item) => (
-                <Card key={item.id} className={`overflow-hidden ${!item.available ? 'opacity-60' : ''}`}>
-                  <AspectRatio ratio={16 / 9}>
-                    <img 
-                      src={item.image_url || "/placeholder.svg"} 
-                      alt={item.name} 
-                      className="object-cover w-full h-full"
-                    />
-                  </AspectRatio>
-                  <div className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="text-lg font-medium">{item.name}</h3>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          <Badge variant="outline">{item.categoryName}</Badge>
-                          {!item.available && <Badge variant="destructive"><T text="Unavailable" /></Badge>}
-                          {item.is_vegetarian && <Badge variant="secondary" className="bg-green-100 text-green-800"><T text="Vegetarian" /></Badge>}
-                          {item.is_vegan && <Badge variant="secondary" className="bg-green-100 text-green-800"><T text="Vegan" /></Badge>}
-                          {item.is_gluten_free && <Badge variant="secondary" className="bg-blue-100 text-blue-800"><T text="Gluten Free" /></Badge>}
-                          {item.is_spicy && <Badge variant="secondary" className="bg-red-100 text-red-800"><T text="Spicy" /></Badge>}
-                        </div>
+          <Tabs defaultValue="available" className="space-y-4">
+            <TabsList className="bg-amber-50">
+              <TabsTrigger value="available" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">
+                <T text="Available Items" />
+              </TabsTrigger>
+              <TabsTrigger value="all" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">
+                <T text="All Items" />
+              </TabsTrigger>
+              <TabsTrigger value="unavailable" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">
+                <T text="Unavailable Items" />
+              </TabsTrigger>
+            </TabsList>
+            
+            {["available", "all", "unavailable"].map((tab) => (
+              <TabsContent key={tab} value={tab} className="mt-6">
+                {viewMode === "grid" ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredFoodItems
+                      .filter(item => 
+                        tab === "all" ? true : 
+                        tab === "available" ? item.available : 
+                        !item.available
+                      )
+                      .length === 0 ? (
+                      <div className="col-span-full text-center p-12 bg-white rounded-lg shadow">
+                        <p className="text-muted-foreground">
+                          {searchQuery ? (
+                            <T text="No food items found matching your search" />
+                          ) : (
+                            <T text="No food items found. Create your first food item!" />
+                          )}
+                        </p>
                       </div>
-                      <div className="text-lg font-bold">£{(item.price || 0).toFixed(2)}</div>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{item.description}</p>
-                    
-                    <div className="flex justify-between items-center mb-3">
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <DollarSign className="h-4 w-4 mr-1" />
-                        <T text="Cost" />: £{(item.cost || 0).toFixed(2)} | 
-                        <T text="Margin" />: {item.profit_margin || 0}%
-                      </div>
-                    </div>
-                    <div className="flex justify-between mt-4">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => toggleFoodAvailability(item.id, item.available)}
-                      >
-                        {item.available ? <T text="Mark Unavailable" /> : <T text="Mark Available" />}
-                      </Button>
-                      
-                      <Button variant="outline" size="sm" asChild>
-                        <Link to={`/admin/menu/recipes?foodId=${item.id}`}>
-                          <FilePen className="h-4 w-4 mr-2" />
-                          <T text="Edit Recipe" />
-                        </Link>
-                      </Button>
-                    </div>
+                    ) : (
+                      filteredFoodItems
+                        .filter(item => 
+                          tab === "all" ? true : 
+                          tab === "available" ? item.available : 
+                          !item.available
+                        )
+                        .map((item) => (
+                          <Card key={item.id} className={`overflow-hidden hover:shadow-lg transition-shadow ${!item.available ? 'opacity-70' : ''} border-t-4 ${item.available ? 'border-t-green-500' : 'border-t-red-500'}`}>
+                            <AspectRatio ratio={16 / 9}>
+                              <img 
+                                src={item.image_url || "/placeholder.svg"} 
+                                alt={item.name} 
+                                className="object-cover w-full h-full"
+                              />
+                            </AspectRatio>
+                            <CardContent className="p-4">
+                              <div className="flex justify-between items-start mb-2">
+                                <div>
+                                  <h3 className="text-lg font-medium">{item.name}</h3>
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    <Badge variant="outline" className="bg-amber-50">{item.categoryName}</Badge>
+                                    {!item.available && <Badge variant="destructive"><T text="Unavailable" /></Badge>}
+                                    {item.is_vegetarian && <Badge variant="secondary" className="bg-green-100 text-green-800"><T text="Vegetarian" /></Badge>}
+                                    {item.is_vegan && <Badge variant="secondary" className="bg-green-100 text-green-800"><T text="Vegan" /></Badge>}
+                                    {item.is_gluten_free && <Badge variant="secondary" className="bg-blue-100 text-blue-800"><T text="Gluten Free" /></Badge>}
+                                    {item.is_spicy && <Badge variant="secondary" className="bg-red-100 text-red-800"><T text="Spicy" /></Badge>}
+                                  </div>
+                                </div>
+                                <div className="text-lg font-bold text-amber-600">£{(item.price || 0).toFixed(2)}</div>
+                              </div>
+                              <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{item.description}</p>
+                              
+                              <div className="flex justify-between items-center mb-3">
+                                <div className="flex items-center text-sm text-muted-foreground">
+                                  <DollarSign className="h-4 w-4 mr-1" />
+                                  <T text="Cost" />: £{(item.cost || 0).toFixed(2)} | 
+                                  <T text="Margin" />: {item.profit_margin || 0}%
+                                </div>
+                              </div>
+                              <div className="flex justify-between mt-4">
+                                <Button 
+                                  variant={item.available ? "outline" : "default"}
+                                  size="sm"
+                                  className={item.available ? "" : "bg-green-500 hover:bg-green-600"}
+                                  onClick={() => handleToggleFoodAvailability(item.id, item.available)}
+                                >
+                                  {item.available ? <T text="Mark Unavailable" /> : <T text="Mark Available" />}
+                                </Button>
+                                
+                                <Button variant="outline" size="sm" className="hover:bg-amber-50" asChild>
+                                  <Link to={`/admin/menu/recipes?foodId=${item.id}`}>
+                                    <FilePen className="h-4 w-4 mr-2" />
+                                    <T text="Edit Recipe" />
+                                  </Link>
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))
+                    )}
                   </div>
-                </Card>
-              ))
-            )}
-          </div>
+                ) : (
+                  <Card>
+                    <Table>
+                      <TableHeader className="bg-amber-50">
+                        <TableRow>
+                          <TableHead><T text="Name" /></TableHead>
+                          <TableHead><T text="Category" /></TableHead>
+                          <TableHead><T text="Price" /></TableHead>
+                          <TableHead><T text="Cost" /></TableHead>
+                          <TableHead><T text="Margin" /></TableHead>
+                          <TableHead><T text="Status" /></TableHead>
+                          <TableHead className="text-right"><T text="Actions" /></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredFoodItems
+                          .filter(item => 
+                            tab === "all" ? true : 
+                            tab === "available" ? item.available : 
+                            !item.available
+                          )
+                          .length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={7} className="h-24 text-center">
+                              {searchQuery ? (
+                                <T text="No food items found matching your search" />
+                              ) : (
+                                <T text="No food items found. Create your first food item!" />
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          filteredFoodItems
+                            .filter(item => 
+                              tab === "all" ? true : 
+                              tab === "available" ? item.available : 
+                              !item.available
+                            )
+                            .map((item) => (
+                              <TableRow key={item.id} className={!item.available ? 'opacity-70' : ''}>
+                                <TableCell className="font-medium">{item.name}</TableCell>
+                                <TableCell>{item.categoryName}</TableCell>
+                                <TableCell className="font-semibold text-amber-600">£{(item.price || 0).toFixed(2)}</TableCell>
+                                <TableCell>£{(item.cost || 0).toFixed(2)}</TableCell>
+                                <TableCell>{item.profit_margin || 0}%</TableCell>
+                                <TableCell>
+                                  <Badge variant={item.available ? "success" : "destructive"}>
+                                    {item.available ? <T text="Available" /> : <T text="Unavailable" />}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex justify-end gap-2">
+                                    <Button 
+                                      variant={item.available ? "outline" : "default"}
+                                      size="sm"
+                                      className={item.available ? "" : "bg-green-500 hover:bg-green-600"}
+                                      onClick={() => handleToggleFoodAvailability(item.id, item.available)}
+                                    >
+                                      {item.available ? <T text="Mark Unavailable" /> : <T text="Mark Available" />}
+                                    </Button>
+                                    
+                                    <Button variant="outline" size="sm" className="hover:bg-amber-50" asChild>
+                                      <Link to={`/admin/menu/recipes?foodId=${item.id}`}>
+                                        <FilePen className="h-4 w-4 mr-2" />
+                                        <T text="Edit" />
+                                      </Link>
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </Card>
+                )}
+              </TabsContent>
+            ))}
+          </Tabs>
         )}
       </div>
     </Layout>
