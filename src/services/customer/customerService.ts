@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Customer, CustomerFeedback, Promotion, CustomerPromotion } from "./types";
 
@@ -281,14 +280,13 @@ export const redeemPromotion = async (id: string): Promise<CustomerPromotion> =>
   const promotionId = data.promotion_id;
   
   // Using rpc to call the increment_promotion_usage function
-  await supabase
-    .rpc('increment_promotion_usage', { promotion_id: promotionId })
-    .then(() => {
-      console.log('Promotion usage count incremented successfully');
-    })
-    .catch(error => {
-      console.error('Error incrementing promotion usage count:', error);
-    });
+  try {
+    await supabase
+      .rpc('increment_promotion_usage', { promotion_id: promotionId });
+    console.log('Promotion usage count incremented successfully');
+  } catch (error) {
+    console.error('Error incrementing promotion usage count:', error);
+  }
   
   return data as unknown as CustomerPromotion;
 };
