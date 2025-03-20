@@ -90,6 +90,7 @@ export const getTables = async (): Promise<Table[]> => {
 };
 
 export const getTablesByRoom = async (roomId: string): Promise<Table[]> => {
+  // Using simple type assertion to avoid deep type instantiation
   const { data, error } = await supabase
     .from('restaurant_tables')
     .select('*')
@@ -101,7 +102,8 @@ export const getTablesByRoom = async (roomId: string): Promise<Table[]> => {
     throw error;
   }
   
-  return (data || []) as any;
+  // Simplified type assertion to prevent TypeScript from deeply analyzing the type
+  return data as any;
 };
 
 export const getTableById = async (id: string): Promise<Table | null> => {
