@@ -1,105 +1,13 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useLanguage, T } from '@/contexts/LanguageContext';
-import { 
-  LayoutDashboard, DollarSign, Users, Package, BarChart, 
-  User, Settings, ClipboardList, ChevronDown, ChevronRight, Languages,
-  LogOut, ChevronLeft, Menu as MenuIcon, Settings2, MapPin, Utensils,
-  PanelLeft, PanelRight, X
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useIsMobile } from '@/hooks/use-mobile';
-
-interface SidebarLinkProps {
-  to: string;
-  icon: React.ReactNode;
-  label: string;
-  isActive: boolean;
-  isOpen: boolean;
-  hasDropdown?: boolean;
-  isExpanded?: boolean;
-  onClick?: (e: React.MouseEvent) => void;
-}
-
-const SidebarLink: React.FC<SidebarLinkProps> = ({ 
-  to, 
-  icon, 
-  label, 
-  isActive, 
-  isOpen, 
-  hasDropdown = false, 
-  isExpanded = false, 
-  onClick 
-}) => {
-  return (
-    <div className="relative">
-      <Link
-        to={to}
-        className={cn(
-          "flex items-center px-3 py-2.5 my-1 rounded-md transition-colors",
-          isActive 
-            ? "bg-amber-500 text-white font-medium" 
-            : "hover:bg-muted"
-        )}
-        onClick={hasDropdown ? onClick : undefined}
-      >
-        <div className="w-8 h-8 flex items-center justify-center">
-          {icon}
-        </div>
-        {isOpen && (
-          <>
-            <span className="ml-2 text-sm"><T text={label} /></span>
-            {hasDropdown && (
-              <div className="ml-auto">
-                {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-              </div>
-            )}
-          </>
-        )}
-      </Link>
-    </div>
-  );
-};
-
-interface DropdownMenuProps {
-  items: { to: string; label: string }[];
-  isOpen: boolean;
-  isExpanded: boolean;
-  parentPath: string;
-}
-
-const DropdownMenu: React.FC<DropdownMenuProps> = ({ items, isOpen, isExpanded, parentPath }) => {
-  const location = useLocation();
-  
-  if (!isOpen || !isExpanded) return null;
-  
-  return (
-    <div className="ml-8 pl-2 border-l border-border/50">
-      {items.map((item) => (
-        <Link
-          key={item.to}
-          to={`${parentPath}/${item.to}`}
-          className={cn(
-            "block px-3 py-1.5 my-1 rounded-md text-sm transition-colors",
-            location.pathname === `${parentPath}/${item.to}` 
-              ? "bg-amber-500/80 text-white"
-              : "hover:bg-muted"
-          )}
-        >
-          <T text={item.label} />
-        </Link>
-      ))}
-    </div>
-  );
-};
-
-interface NavSection {
-  label: string;
-  icon: React.ReactNode;
-  path: string;
-  submenu?: { to: string; label: string }[];
-}
+import SidebarLink from './sidebar/SidebarLink';
+import DropdownMenu from './sidebar/DropdownMenu';
+import SidebarUserProfile from './sidebar/SidebarUserProfile';
+import SidebarHeader from './sidebar/SidebarHeader';
+import { getNavSections, getInterfaceTitle, NavSection } from './sidebar/SidebarNavData';
 
 export const MainSidebar: React.FC<{
   open: boolean;
@@ -110,6 +18,19 @@ export const MainSidebar: React.FC<{
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const { t } = useLanguage();
   const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    // Check if there's a stored value for sidebar collapsed state
+    const storedCollapsed = localStorage.getItem('sidebarCollapsed');
+    if (storedCollapsed !== null) {
+      setCollapsed(storedCollapsed === 'true');
+    }
+  }, []);
+
+  useEffect(() => {
+    // Save collapsed state to localStorage when it changes
+    localStorage.setItem('sidebarCollapsed', collapsed.toString());
+  }, [collapsed]);
 
   const toggleSection = (e: React.MouseEvent, section: string) => {
     e.preventDefault();
@@ -124,188 +45,8 @@ export const MainSidebar: React.FC<{
     setCollapsed(prev => !prev);
   };
 
-  const adminSections: NavSection[] = [
-    { 
-      label: "Dashboard", 
-      icon: <LayoutDashboard size={20} />, 
-      path: "/"
-    },
-    { 
-      label: "Sales & Finance", 
-      icon: <DollarSign size={20} />, 
-      path: "/admin/finance",
-      submenu: [
-        { to: "daily-sales", label: "Daily Sales" },
-        { to: "financial-reports", label: "Financial Reports" },
-        { to: "payment-management", label: "Payment Management" },
-        { to: "budgeting", label: "Budgeting" }
-      ]
-    },
-    { 
-      label: "Staff Management", 
-      icon: <Users size={20} />, 
-      path: "/admin/staff",
-      submenu: [
-        { to: "directory", label: "Staff Directory" },
-        { to: "performance", label: "Performance" },
-        { to: "attendance", label: "Attendance" },
-        { to: "tasks", label: "Tasks" },
-        { to: "payroll", label: "Payroll" }
-      ]
-    },
-    { 
-      label: "Menu Management", 
-      icon: <MenuIcon size={20} />, 
-      path: "/admin/menu",
-      submenu: [
-        { to: "food", label: "Food Items" },
-        { to: "categories", label: "Categories" },
-        { to: "recipes", label: "Recipes" },
-        { to: "modifiers", label: "Modifiers" },
-        { to: "pricing", label: "Pricing" },
-        { to: "design", label: "Menu Design" }
-      ]
-    },
-    { 
-      label: "Inventory", 
-      icon: <Package size={20} />, 
-      path: "/admin/inventory",
-      submenu: [
-        { to: "stock", label: "Stock Levels" },
-        { to: "ingredients", label: "Ingredients" },
-        { to: "recipes", label: "Recipes" },
-        { to: "suppliers", label: "Suppliers" },
-        { to: "purchase-orders", label: "Purchase Orders" }
-      ]
-    },
-    { 
-      label: "Food Hygiene", 
-      icon: <Utensils size={20} />, 
-      path: "/admin/food-safety",
-      submenu: [
-        { to: "checklists", label: "Safety Checklists" },
-        { to: "temperature", label: "Temperature Logs" },
-        { to: "inspections", label: "Inspections" },
-        { to: "training", label: "Staff Training" }
-      ]
-    },
-    { 
-      label: "Reports", 
-      icon: <BarChart size={20} />, 
-      path: "/admin/reports",
-      submenu: [
-        { to: "sales", label: "Sales Analytics" },
-        { to: "staff", label: "Staff Reports" },
-        { to: "inventory", label: "Inventory Reports" },
-        { to: "customers", label: "Customer Insights" },
-        { to: "custom", label: "Custom Reports" }
-      ]
-    },
-    { 
-      label: "Customers", 
-      icon: <User size={20} />, 
-      path: "/admin/customers",
-      submenu: [
-        { to: "database", label: "Customer Database" },
-        { to: "feedback", label: "Feedback" },
-        { to: "promotions", label: "Promotions" },
-        { to: "loyalty", label: "Loyalty Program" }
-      ]
-    },
-    {
-      label: "General", 
-      icon: <Settings2 size={20} />, 
-      path: "/admin/general",
-      submenu: [
-        { to: "table-management", label: "Table Management" }
-      ]
-    },
-    { 
-      label: "Settings", 
-      icon: <Settings size={20} />, 
-      path: "/admin/settings",
-      submenu: [
-        { to: "profile", label: "Restaurant Profile" },
-        { to: "users", label: "User Access" },
-        { to: "devices", label: "Printers & Devices" },
-        { to: "logs", label: "System Logs" },
-        { to: "integrations", label: "Integrations" }
-      ]
-    },
-    { 
-      label: "Activity Log", 
-      icon: <ClipboardList size={20} />, 
-      path: "/admin/activity"
-    },
-    { 
-      label: "Language Management", 
-      icon: <Languages size={20} />, 
-      path: "/admin/language"
-    },
-    { 
-      label: "Logout", 
-      icon: <LogOut size={20} />, 
-      path: "/login"
-    }
-  ];
-
-  const waiterLinks = [
-    { to: "/waiter", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
-    { to: "/waiter/tables", label: "Table Management", icon: <MapPin size={20} /> },
-    { to: "/waiter/orders", label: "Order Management", icon: <ClipboardList size={20} /> },
-    { to: "/waiter/payments", label: "Payment Processing", icon: <DollarSign size={20} /> },
-    { to: "/waiter/tasks", label: "Tasks", icon: <ClipboardList size={20} /> },
-    { to: "/login", label: "Logout", icon: <LogOut size={20} /> },
-  ];
-
-  const kitchenLinks = [
-    { to: "/kitchen", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
-    { to: "/kitchen/recipes", label: "Recipe Viewer", icon: <MenuIcon size={20} /> },
-    { to: "/kitchen/inventory", label: "Inventory Check", icon: <Package size={20} /> },
-    { to: "/kitchen/tasks", label: "Tasks", icon: <ClipboardList size={20} /> },
-    { to: "/login", label: "Logout", icon: <LogOut size={20} /> },
-  ];
-
-  const customerLinks = [
-    { to: "/menu", label: "Menu", icon: <MenuIcon size={20} /> },
-    { to: "/feedback", label: "Feedback", icon: <ClipboardList size={20} /> },
-    { to: "/promotions", label: "Promotions", icon: <DollarSign size={20} /> },
-    { to: "/login", label: "Logout", icon: <LogOut size={20} /> },
-  ];
-
-  const systemLinks = [
-    { to: "/system", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
-    { to: "/system/errors", label: "Error Logs", icon: <ClipboardList size={20} /> },
-    { to: "/system/users", label: "User Management", icon: <Users size={20} /> },
-    { to: "/system/docs", label: "Documentation", icon: <ClipboardList size={20} /> },
-    { to: "/login", label: "Logout", icon: <LogOut size={20} /> },
-  ];
-
-  let navSections: any[] = [];
-  let interfaceTitle = "";
-  
-  switch (interfaceType) {
-    case 'waiter':
-      navSections = waiterLinks;
-      interfaceTitle = "Waiter Interface";
-      break;
-    case 'kitchen':
-      navSections = kitchenLinks;
-      interfaceTitle = "Kitchen Staff Interface";
-      break;
-    case 'customer':
-      navSections = customerLinks;
-      interfaceTitle = "Menu & Feedback";
-      break;
-    case 'system':
-      navSections = systemLinks;
-      interfaceTitle = "System Administration";
-      break;
-    default:
-      navSections = adminSections;
-      interfaceTitle = "Administrative Portal";
-  }
-
+  const navSections = getNavSections(interfaceType);
+  const interfaceTitle = getInterfaceTitle(interfaceType);
   const sidebarWidth = collapsed ? "w-16" : "w-64";
 
   return (
@@ -315,32 +56,16 @@ export const MainSidebar: React.FC<{
       "transition-all duration-300 ease-in-out"
     )}>
       <div className="flex flex-col h-full">
-        <div className="p-4 h-16 flex items-center justify-between border-b border-gray-200">
-          <Link to="/" className="text-xl font-bold text-amber-500">
-            {!collapsed ? "Habesha" : "H"}
-          </Link>
-          
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={toggleCollapse}
-              variant="ghost"
-              size="icon"
-              className="w-8 h-8 hover:bg-gray-100"
-              aria-label={t(collapsed ? "Expand sidebar" : "Collapse sidebar")}
-            >
-              {collapsed ? <PanelRight size={18} /> : <PanelLeft size={18} />}
-            </Button>
-          </div>
-        </div>
+        <SidebarHeader collapsed={collapsed} toggleCollapse={toggleCollapse} />
         
         <div className="px-4 py-3 uppercase text-xs font-semibold text-gray-500">
-          {!collapsed && <span><T text="ADMINISTRATIVE PORTAL" /></span>}
+          {!collapsed && <span><T text={interfaceTitle} /></span>}
         </div>
         
         <div className="flex-1 py-2 overflow-y-auto">
           <nav className="px-2">
             {interfaceType === 'admin' ? (
-              adminSections.map((section: NavSection) => (
+              navSections.map((section: NavSection) => (
                 <React.Fragment key={section.path}>
                   <SidebarLink
                     to={section.submenu ? '#' : section.path}
@@ -367,13 +92,13 @@ export const MainSidebar: React.FC<{
                 </React.Fragment>
               ))
             ) : (
-              navSections.map((link: any) => (
+              navSections.map((link: NavSection) => (
                 <SidebarLink
-                  key={link.to}
-                  to={link.to}
+                  key={link.path}
+                  to={link.path}
                   icon={link.icon}
                   label={link.label}
-                  isActive={location.pathname === link.to}
+                  isActive={location.pathname === link.path}
                   isOpen={!collapsed}
                 />
               ))
@@ -381,26 +106,7 @@ export const MainSidebar: React.FC<{
           </nav>
         </div>
         
-        <div className="border-t border-gray-200 p-4">
-          {!collapsed ? (
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                <User className="h-4 w-4 text-gray-600" />
-              </div>
-              <div className="flex-1 overflow-hidden">
-                <p className="text-sm font-medium leading-none truncate">Admin User</p>
-                <p className="text-xs text-gray-500 truncate">admin@restaurant.com</p>
-              </div>
-              <LogOut className="h-4 w-4 text-gray-500 hover:text-gray-700 cursor-pointer" />
-            </div>
-          ) : (
-            <div className="flex justify-center">
-              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                <User className="h-4 w-4 text-gray-600" />
-              </div>
-            </div>
-          )}
-        </div>
+        <SidebarUserProfile collapsed={collapsed} />
       </div>
     </div>
   );

@@ -28,9 +28,11 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
   const location = useLocation();
   
   useEffect(() => {
-    // Close sidebar when location changes
-    setSidebarOpen(false);
-  }, [location]);
+    // Close sidebar when location changes on mobile
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [location, isMobile]);
   
   const toggleSidebar = () => {
     setSidebarOpen(prev => !prev);
@@ -86,6 +88,34 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
         <Header toggleSidebar={toggleSidebar} interface={userInterface} />
         
         <main className="flex-1 overflow-auto p-4 md:p-6">
+          {/* Breadcrumbs */}
+          <div className="mb-4">
+            <Breadcrumb>
+              <BreadcrumbList>
+                {breadcrumbs.map((crumb, index) => (
+                  <React.Fragment key={crumb.path}>
+                    {index < breadcrumbs.length - 1 ? (
+                      <>
+                        <BreadcrumbItem>
+                          <BreadcrumbLink as={Link} to={crumb.path}>
+                            <T text={crumb.label} />
+                          </BreadcrumbLink>
+                        </BreadcrumbItem>
+                        <BreadcrumbSeparator />
+                      </>
+                    ) : (
+                      <BreadcrumbItem>
+                        <BreadcrumbPage>
+                          <T text={crumb.label} />
+                        </BreadcrumbPage>
+                      </BreadcrumbItem>
+                    )}
+                  </React.Fragment>
+                ))}
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+          
           {children}
         </main>
         
