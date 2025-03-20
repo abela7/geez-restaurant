@@ -127,6 +127,36 @@ export const useStaffTasks = (staffId: string) => {
     }
   };
 
+  const deleteTask = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('staff_tasks')
+        .delete()
+        .eq('id', id);
+        
+      if (error) {
+        throw error;
+      }
+      
+      setTasks(prev => prev.filter(task => task.id !== id));
+      
+      toast({
+        title: "Success",
+        description: "Task deleted successfully"
+      });
+      
+      return true;
+    } catch (err: any) {
+      console.error('Error deleting task:', err);
+      toast({
+        title: "Error",
+        description: `Failed to delete task: ${err.message}`,
+        variant: "destructive"
+      });
+      throw err;
+    }
+  };
+
   useEffect(() => {
     if (staffId) {
       fetchTasks();
@@ -139,7 +169,8 @@ export const useStaffTasks = (staffId: string) => {
     error,
     fetchTasks,
     addTask,
-    updateTask
+    updateTask,
+    deleteTask
   };
 };
 

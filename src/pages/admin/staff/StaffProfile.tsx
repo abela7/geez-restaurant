@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -59,6 +58,7 @@ const StaffProfile = () => {
     payrollRecords, 
     isLoading: isPayrollLoading, 
     error: payrollError,
+    addPayrollRecord,
     updatePayrollRecord 
   } = useStaffPayroll(id || '');
   
@@ -169,7 +169,6 @@ const StaffProfile = () => {
         priority,
         status: 'Pending',
         due_date: dueDate ? new Date(dueDate).toISOString() : null,
-        completed_at: null
       };
       
       await addTask(newTask);
