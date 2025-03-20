@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -9,6 +8,7 @@ import {
   LogOut, ChevronLeft, Menu as MenuIcon, Settings2, MapPin, Utensils
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface SidebarLinkProps {
   to: string;
@@ -108,6 +108,7 @@ export const MainSidebar: React.FC<{
   const location = useLocation();
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const { t } = useLanguage();
+  const isMobile = useIsMobile();
 
   const toggleSection = (e: React.MouseEvent, section: string) => {
     e.preventDefault();
@@ -118,7 +119,6 @@ export const MainSidebar: React.FC<{
     );
   };
 
-  // Navigation sections for admin interface - reordered as requested
   const adminSections: NavSection[] = [
     { 
       label: "Dashboard", 
@@ -144,7 +144,7 @@ export const MainSidebar: React.FC<{
         { to: "directory", label: "Staff Directory" },
         { to: "performance", label: "Performance" },
         { to: "attendance", label: "Attendance" },
-        { to: "tasks", label: "Tasks" }, // Tasks under Staff as requested
+        { to: "tasks", label: "Tasks" },
         { to: "payroll", label: "Payroll" }
       ]
     },
@@ -244,7 +244,6 @@ export const MainSidebar: React.FC<{
     }
   ];
 
-  // Navigation sections for waiter interface
   const waiterLinks = [
     { to: "/waiter", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
     { to: "/waiter/tables", label: "Table Management", icon: <MapPin size={20} /> },
@@ -254,7 +253,6 @@ export const MainSidebar: React.FC<{
     { to: "/login", label: "Logout", icon: <LogOut size={20} /> },
   ];
 
-  // Navigation sections for kitchen interface
   const kitchenLinks = [
     { to: "/kitchen", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
     { to: "/kitchen/recipes", label: "Recipe Viewer", icon: <MenuIcon size={20} /> },
@@ -263,7 +261,6 @@ export const MainSidebar: React.FC<{
     { to: "/login", label: "Logout", icon: <LogOut size={20} /> },
   ];
 
-  // Navigation sections for customer interface
   const customerLinks = [
     { to: "/menu", label: "Menu", icon: <MenuIcon size={20} /> },
     { to: "/feedback", label: "Feedback", icon: <ClipboardList size={20} /> },
@@ -271,7 +268,6 @@ export const MainSidebar: React.FC<{
     { to: "/login", label: "Logout", icon: <LogOut size={20} /> },
   ];
 
-  // Navigation sections for system admin interface
   const systemLinks = [
     { to: "/system", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
     { to: "/system/errors", label: "Error Logs", icon: <ClipboardList size={20} /> },
@@ -280,7 +276,6 @@ export const MainSidebar: React.FC<{
     { to: "/login", label: "Logout", icon: <LogOut size={20} /> },
   ];
 
-  // Get the appropriate navigation sections based on interface type
   let navSections: any[] = [];
   let interfaceTitle = "";
   
@@ -309,25 +304,31 @@ export const MainSidebar: React.FC<{
   return (
     <div className="h-full flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
       <div className="p-4 flex justify-between items-center h-16 border-b border-sidebar-border">
-        <div className="text-xl font-bold text-amber-500">
+        <div className="text-xl font-bold text-amber-500 flex-1 text-center">
           Habesha
         </div>
         
-        <Button
-          onClick={onToggle}
-          variant="outline"
-          size="icon"
-          className="w-8 h-8 bg-amber-400 hover:bg-amber-500 border-amber-500 text-amber-800"
-          aria-label={t("Toggle sidebar")}
-        >
-          <ChevronLeft size={18} />
-        </Button>
+        {isMobile && (
+          <Button
+            onClick={onToggle}
+            variant="outline"
+            size="icon"
+            className="w-8 h-8 bg-amber-400 hover:bg-amber-500 border-amber-500 text-amber-800"
+            aria-label={t("Toggle sidebar")}
+          >
+            <ChevronLeft size={18} />
+          </Button>
+        )}
       </div>
       
       <div className="flex-1 py-4 px-2 overflow-y-auto">
         <div className="mb-4 px-3 py-1">
           <h2 className="text-xs uppercase font-semibold text-sidebar-foreground/70">
-            <T text={interfaceTitle} />
+            <T text={interfaceType === 'admin' ? 'Administrative Portal' : 
+                    interfaceType === 'waiter' ? 'Waiter Interface' :
+                    interfaceType === 'kitchen' ? 'Kitchen Staff Interface' :
+                    interfaceType === 'customer' ? 'Customer Interface' :
+                    'System Administration'} />
           </h2>
         </div>
         

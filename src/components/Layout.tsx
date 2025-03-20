@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { MainSidebar } from './MainSidebar';
@@ -67,21 +68,23 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
         />
       )}
       
-      {/* Sidebar */}
+      {/* Sidebar - updated with fixed position and always visible on larger screens */}
       <div 
         className={cn(
-          "fixed top-0 left-0 h-screen z-30 w-64",
+          "fixed left-0 top-0 h-screen z-30 w-64",
           "transition-transform duration-300 ease-in-out",
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
-          "md:relative md:translate-x-0",
-          !sidebarOpen && "md:hidden"
+          "md:translate-x-0"
         )}
       >
         <MainSidebar open={sidebarOpen} onToggle={toggleSidebar} interface={userInterface} />
       </div>
       
-      {/* Main content */}
-      <div className="flex-1 flex flex-col w-full">
+      {/* Main content - adjusted with padding to account for fixed sidebar */}
+      <div className={cn(
+        "flex-1 flex flex-col w-full",
+        "md:ml-64" // Add margin to account for sidebar width
+      )}>
         <div className="sticky top-0 z-10 bg-background border-b border-border">
           <div className="flex items-center h-16 px-4">
             <div className="flex-1">

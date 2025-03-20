@@ -8,6 +8,7 @@ import { Input } from './ui/input';
 import { cn } from '@/lib/utils';
 import { useLanguage, T } from '@/contexts/LanguageContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -16,29 +17,32 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ toggleSidebar, interface: userInterface = 'admin' }) => {
   const { t } = useLanguage();
+  const isMobile = useIsMobile();
   
   return (
     <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
       <div className="flex h-16 items-center px-4 md:px-6">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost" 
-                size="icon"
-                className="mr-4 size-9 shrink-0 border border-border hover:bg-primary hover:text-primary-foreground"
-                onClick={toggleSidebar}
-                aria-label={t("Toggle sidebar")}
-              >
-                <Menu className="size-5" />
-                <span className="sr-only">{t("Toggle sidebar")}</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <T text="Toggle Menu" />
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        {isMobile && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost" 
+                  size="icon"
+                  className="mr-4 size-9 shrink-0 border border-border hover:bg-primary hover:text-primary-foreground"
+                  onClick={toggleSidebar}
+                  aria-label={t("Toggle sidebar")}
+                >
+                  <Menu className="size-5" />
+                  <span className="sr-only">{t("Toggle sidebar")}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <T text="Toggle Menu" />
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
         
         <div className="flex items-center space-x-4">
           <h2 className="text-lg font-medium">
