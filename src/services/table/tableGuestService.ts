@@ -1,5 +1,6 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { TableGuest } from "./types";
+import { TableGuest, Table } from "./types";
 import { updateTableStatus, deleteTable } from "./tableService";
 
 export const getTableGuests = async (): Promise<TableGuest[]> => {
@@ -151,7 +152,7 @@ export const completeTemporaryTable = async (tableId: string): Promise<void> => 
   }
 };
 
-export const checkTemporaryTableUsage = async (): Promise<TableType[]> => {
+export const checkTemporaryTableUsage = async (): Promise<Table[]> => {
   try {
     const { data, error } = await supabase
       .from('restaurant_tables')
@@ -163,7 +164,7 @@ export const checkTemporaryTableUsage = async (): Promise<TableType[]> => {
       throw error;
     }
     
-    return data as TableType[];
+    return data as Table[];
   } catch (error) {
     console.error('Error checking temporary tables:', error);
     throw error;
