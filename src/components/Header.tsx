@@ -8,6 +8,7 @@ import { Input } from './ui/input';
 import { cn } from '@/lib/utils';
 import { useLanguage, T } from '@/contexts/LanguageContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Avatar, AvatarFallback } from './ui/avatar';
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -65,10 +66,10 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, interface: userInterface
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="outline" size="icon" className="size-9">
+                <Button variant="outline" size="icon" className="size-9 relative">
                   <Bell className="size-5" />
                   <span className="sr-only">{t("Notifications")}</span>
-                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
                     2
                   </span>
                 </Button>
@@ -85,8 +86,12 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, interface: userInterface
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="outline" size="icon" className="size-9">
-                  <User className="size-5" />
+                <Button variant="outline" size="icon" className="size-9 rounded-full">
+                  <Avatar className="h-7 w-7">
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      <User className="size-4" />
+                    </AvatarFallback>
+                  </Avatar>
                   <span className="sr-only">{t("User menu")}</span>
                 </Button>
               </TooltipTrigger>
