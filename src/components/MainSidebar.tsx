@@ -1,7 +1,6 @@
 
 import React from "react";
-import { useLocation } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import {
   BarChart4,
   DollarSign,
@@ -27,6 +26,7 @@ import {
   ChevronDown
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Location as RouterLocation } from "react-router-dom";
 
 // This type represents a section in the sidebar nav
 export type NavSectionType = {
@@ -307,7 +307,7 @@ export const getSystemNav = (pathname: string, t: (s: string) => string): NavSec
 // Get nav sections based on interface and location
 export const getNavSections = (
   interfaceType: "admin" | "waiter" | "kitchen" | "customer" | "system",
-  location: Location
+  location: RouterLocation
 ): NavSectionType[] => {
   const { t } = useLanguage();
   
