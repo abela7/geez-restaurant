@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { PanelLeft, PanelRight } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage, T } from '@/contexts/LanguageContext';
 
@@ -16,7 +16,7 @@ const SidebarHeader: React.FC<SidebarHeaderProps> = ({ collapsed, toggleCollapse
   return (
     <div className="p-4 h-16 flex items-center justify-between border-b border-gray-200">
       <Link to="/" className="text-xl font-bold text-amber-500">
-        {!collapsed ? "Habesha" : "H"}
+        Habesha
       </Link>
       
       <div className="flex items-center gap-2">
@@ -25,9 +25,9 @@ const SidebarHeader: React.FC<SidebarHeaderProps> = ({ collapsed, toggleCollapse
           variant="ghost"
           size="icon"
           className="w-8 h-8 hover:bg-gray-100"
-          aria-label={t(collapsed ? "Expand sidebar" : "Collapse sidebar")}
+          aria-label={t("Close sidebar")}
         >
-          {collapsed ? <PanelRight size={18} /> : <PanelLeft size={18} />}
+          <X size={18} />
         </Button>
       </div>
     </div>

@@ -29,19 +29,14 @@ export const MainSidebar: React.FC<{
 
   const navSections = getNavSections(interfaceType);
   const interfaceTitle = getInterfaceTitle(interfaceType);
-  const sidebarWidth = collapsed ? "w-16" : "w-64";
 
   return (
-    <div className={cn(
-      "h-full flex flex-col bg-white text-gray-800 border-r border-gray-200",
-      sidebarWidth,
-      "transition-all duration-300 ease-in-out"
-    )}>
+    <div className="h-full flex flex-col bg-white text-gray-800 border-r border-gray-200 w-64 transition-all duration-300 ease-in-out">
       <div className="flex flex-col h-full">
         <SidebarHeader collapsed={collapsed} toggleCollapse={toggleCollapse} />
         
         <div className="px-4 py-3 uppercase text-xs font-semibold text-gray-500">
-          {!collapsed && <span><T text={interfaceTitle} /></span>}
+          <span><T text={interfaceTitle} /></span>
         </div>
         
         <div className="flex-1 py-2 overflow-y-auto">
@@ -58,7 +53,7 @@ export const MainSidebar: React.FC<{
                         ? location.pathname.startsWith(section.path) 
                         : location.pathname === section.path
                     }
-                    isOpen={!collapsed}
+                    isOpen={true}
                     hasDropdown={!!section.submenu}
                     isExpanded={expandedSections.includes(section.path)}
                     onClick={(e) => section.submenu ? toggleSection(e, section.path) : undefined}
@@ -66,7 +61,7 @@ export const MainSidebar: React.FC<{
                   {section.submenu && (
                     <DropdownMenu 
                       items={section.submenu} 
-                      isOpen={!collapsed} 
+                      isOpen={true} 
                       isExpanded={expandedSections.includes(section.path)}
                       parentPath={section.path}
                     />
@@ -81,14 +76,14 @@ export const MainSidebar: React.FC<{
                   icon={link.icon}
                   label={link.label}
                   isActive={location.pathname === link.path}
-                  isOpen={!collapsed}
+                  isOpen={true}
                 />
               ))
             )}
           </nav>
         </div>
         
-        <SidebarUserProfile collapsed={collapsed} />
+        <SidebarUserProfile collapsed={false} />
       </div>
     </div>
   );

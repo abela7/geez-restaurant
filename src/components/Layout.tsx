@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { MainSidebar } from './MainSidebar';
@@ -130,20 +131,22 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
 
   return (
     <div className="flex min-h-screen bg-background">
-      <div className={cn(
-        "w-64 flex-shrink-0 transition-all duration-300 ease-in-out",
-        sidebarCollapsed && "w-16"
-      )}>
-        <div className="fixed top-0 left-0 h-screen">
-          <MainSidebar
-            collapsed={sidebarCollapsed}
-            toggleCollapse={toggleSidebar}
-            interface={userInterface}
-          />
+      {!sidebarCollapsed && (
+        <div className="w-64 flex-shrink-0 transition-all duration-300 ease-in-out">
+          <div className="fixed top-0 left-0 h-screen">
+            <MainSidebar
+              collapsed={sidebarCollapsed}
+              toggleCollapse={toggleSidebar}
+              interface={userInterface}
+            />
+          </div>
         </div>
-      </div>
+      )}
       
-      <div className="flex-1 flex flex-col w-full transition-all duration-300 ease-in-out">
+      <div className={cn(
+        "flex-1 flex flex-col w-full transition-all duration-300 ease-in-out",
+        !sidebarCollapsed && "ml-0"
+      )}>
         <Header toggleSidebar={toggleSidebar} interface={userInterface} />
         
         <main className="flex-1 overflow-auto p-4 md:p-6">
