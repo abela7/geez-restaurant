@@ -1683,7 +1683,12 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      increment_promotion_usage: {
+        Args: {
+          promotion_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

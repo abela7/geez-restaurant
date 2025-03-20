@@ -119,9 +119,12 @@ export const getPromotions = async (): Promise<Promotion[]> => {
     throw error;
   }
   
+  // Using type assertion to handle the discount_type field
+  const promotions = data || [];
+  
   // Update status based on dates
   const today = new Date();
-  return (data || []).map(promo => {
+  return promotions.map(promo => {
     const startDate = new Date(promo.start_date);
     const endDate = new Date(promo.end_date);
     
@@ -135,7 +138,7 @@ export const getPromotions = async (): Promise<Promotion[]> => {
       }
     }
     
-    return promo;
+    return promo as unknown as Promotion;
   });
 };
 
@@ -151,7 +154,7 @@ export const createPromotion = async (promotion: Omit<Promotion, 'id' | 'created
     throw error;
   }
   
-  return data;
+  return data as unknown as Promotion;
 };
 
 export const updatePromotion = async (id: string, promotion: Partial<Promotion>): Promise<Promotion> => {
@@ -167,7 +170,7 @@ export const updatePromotion = async (id: string, promotion: Partial<Promotion>)
     throw error;
   }
   
-  return data;
+  return data as unknown as Promotion;
 };
 
 export const deletePromotion = async (id: string): Promise<void> => {
@@ -233,7 +236,10 @@ export const getCustomerPromotions = async (customerId: string): Promise<Custome
     throw error;
   }
   
-  return data || [];
+  return (data || []).map(item => ({
+    ...item,
+    promotion: item.promotion as unknown as Promotion
+  })) as CustomerPromotion[];
 };
 
 export const assignPromotionToCustomer = async (customerId: string, promotionId: string): Promise<CustomerPromotion> => {
@@ -252,7 +258,7 @@ export const assignPromotionToCustomer = async (customerId: string, promotionId:
     throw error;
   }
   
-  return data;
+  return data as unknown as CustomerPromotion;
 };
 
 export const redeemPromotion = async (id: string): Promise<CustomerPromotion> => {
@@ -273,11 +279,16 @@ export const redeemPromotion = async (id: string): Promise<CustomerPromotion> =>
   
   // Also update the usage count on the promotion
   const promotionId = data.promotion_id;
+  
+  // Using rpc to call the increment_promotion_usage function
   await supabase
     .rpc('increment_promotion_usage', { promotion_id: promotionId })
+    .then(() => {
+      console.log('Promotion usage count incremented successfully');
+    })
     .catch(error => {
       console.error('Error incrementing promotion usage count:', error);
     });
   
-  return data;
+  return data as unknown as CustomerPromotion;
 };
