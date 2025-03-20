@@ -15,20 +15,17 @@ import { toast } from 'sonner';
 import { 
   getRestaurantProfile,
   updateRestaurantProfile,
-  getBusinessHours,
-  updateBusinessHours,
   getRestaurantBranding,
   updateRestaurantBranding,
   uploadImage
 } from '@/services/settings/restaurantProfileService';
-import { RestaurantProfile as RestaurantProfileType, BusinessHours, RestaurantBranding } from '@/services/settings/types';
+import { RestaurantProfile as RestaurantProfileType, RestaurantBranding } from '@/services/settings/types';
 
 const RestaurantProfilePage: React.FC = () => {
   const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [profile, setProfile] = useState<RestaurantProfileType | null>(null);
-  const [businessHours, setBusinessHours] = useState<BusinessHours[]>([]);
   const [branding, setBranding] = useState<RestaurantBranding | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
@@ -40,11 +37,9 @@ const RestaurantProfilePage: React.FC = () => {
       setIsLoading(true);
       try {
         const profileData = await getRestaurantProfile();
-        const hoursData = await getBusinessHours();
         const brandingData = await getRestaurantBranding();
         
         setProfile(profileData);
-        setBusinessHours(hoursData);
         setBranding(brandingData);
         
         if (brandingData?.logo_url) {
@@ -67,16 +62,6 @@ const RestaurantProfilePage: React.FC = () => {
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setProfile(prev => prev ? { ...prev, [name]: value } : null);
-  };
-
-  const handleHoursChange = (day: string, field: 'open_time' | 'close_time', value: string) => {
-    setBusinessHours(prev => 
-      prev.map(hour => 
-        hour.day_of_week === day 
-          ? { ...hour, [field]: value } 
-          : hour
-      )
-    );
   };
 
   const handleBrandingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -110,25 +95,6 @@ const RestaurantProfilePage: React.FC = () => {
     } catch (error) {
       console.error('Error saving profile:', error);
       toast.error('Failed to save restaurant profile');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleSaveHours = async () => {
-    setIsSaving(true);
-    try {
-      for (const hour of businessHours) {
-        await updateBusinessHours(hour.day_of_week, {
-          open_time: hour.open_time,
-          close_time: hour.close_time,
-          is_closed: hour.is_closed
-        });
-      }
-      toast.success('Business hours updated successfully');
-    } catch (error) {
-      console.error('Error saving hours:', error);
-      toast.error('Failed to save business hours');
     } finally {
       setIsSaving(false);
     }
@@ -186,9 +152,8 @@ const RestaurantProfilePage: React.FC = () => {
       />
       
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
           <TabsTrigger value="general"><T text="General Information" /></TabsTrigger>
-          <TabsTrigger value="hours"><T text="Business Hours" /></TabsTrigger>
           <TabsTrigger value="branding"><T text="Branding" /></TabsTrigger>
         </TabsList>
         
@@ -297,71 +262,6 @@ const RestaurantProfilePage: React.FC = () => {
                       <Save className="h-4 w-4 mr-2" />
                     )}
                     <T text="Save Changes" />
-                  </Button>
-                </CardFooter>
-              </>
-            )}
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="hours">
-          <Card>
-            <CardHeader>
-              <CardTitle><T text="Business Hours" /></CardTitle>
-              <CardDescription><T text="Set your operating hours" /></CardDescription>
-            </CardHeader>
-            {businessHours.length === 0 ? (
-              <CardContent>
-                <NoData message={t("No business hours information found")} />
-              </CardContent>
-            ) : (
-              <>
-                <CardContent>
-                  <div className="space-y-4">
-                    {businessHours.map((hour) => (
-                      <div key={hour.day_of_week} className="flex flex-col md:flex-row md:items-center justify-between border-b pb-4 last:border-0">
-                        <div className="font-medium w-32 mb-2 md:mb-0">
-                          <T text={hour.day_of_week} />
-                        </div>
-                        
-                        <div className="flex items-center space-x-4 flex-1">
-                          <div className="grid grid-cols-2 gap-2 flex-1">
-                            <div>
-                              <Label htmlFor={`${hour.day_of_week.toLowerCase()}-open`} className="text-xs">
-                                <T text="Open" />
-                              </Label>
-                              <Input 
-                                id={`${hour.day_of_week.toLowerCase()}-open`} 
-                                value={hour.open_time}
-                                onChange={(e) => handleHoursChange(hour.day_of_week, 'open_time', e.target.value)}
-                                className="h-8" 
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor={`${hour.day_of_week.toLowerCase()}-close`} className="text-xs">
-                                <T text="Close" />
-                              </Label>
-                              <Input 
-                                id={`${hour.day_of_week.toLowerCase()}-close`} 
-                                value={hour.close_time}
-                                onChange={(e) => handleHoursChange(hour.day_of_week, 'close_time', e.target.value)}
-                                className="h-8" 
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button onClick={handleSaveHours} disabled={isSaving}>
-                    {isSaving ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Save className="h-4 w-4 mr-2" />
-                    )}
-                    <T text="Save Hours" />
                   </Button>
                 </CardFooter>
               </>

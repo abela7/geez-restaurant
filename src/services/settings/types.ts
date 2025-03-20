@@ -13,16 +13,6 @@ export interface RestaurantProfile {
   updated_at: string;
 }
 
-export interface BusinessHours {
-  id: string;
-  day_of_week: string;
-  open_time: string;
-  close_time: string;
-  is_closed: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface RestaurantBranding {
   id: string;
   logo_url: string | null;

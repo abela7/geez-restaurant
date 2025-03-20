@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { RestaurantProfile, BusinessHours, RestaurantBranding } from "./types";
+import { RestaurantProfile, RestaurantBranding } from "./types";
 import { toast } from "sonner";
 
 // Restaurant Profile Functions
@@ -76,78 +76,6 @@ export const updateRestaurantProfile = async (profile: Partial<RestaurantProfile
   }
 };
 
-// Business Hours Functions
-export const getBusinessHours = async (): Promise<BusinessHours[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('business_hours')
-      .select('*')
-      .order('CASE ' +
-        'WHEN day_of_week = \'Monday\' THEN 1 ' +
-        'WHEN day_of_week = \'Tuesday\' THEN 2 ' +
-        'WHEN day_of_week = \'Wednesday\' THEN 3 ' +
-        'WHEN day_of_week = \'Thursday\' THEN 4 ' +
-        'WHEN day_of_week = \'Friday\' THEN 5 ' +
-        'WHEN day_of_week = \'Saturday\' THEN 6 ' +
-        'WHEN day_of_week = \'Sunday\' THEN 7 END');
-    
-    if (error) throw error;
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching business hours:', error);
-    toast.error('Failed to load business hours');
-    return [];
-  }
-};
-
-export const updateBusinessHours = async (dayOfWeek: string, hours: Partial<BusinessHours>): Promise<BusinessHours | null> => {
-  try {
-    // Get the existing business hours for the day
-    const { data: existingHours } = await supabase
-      .from('business_hours')
-      .select('id')
-      .eq('day_of_week', dayOfWeek)
-      .single();
-    
-    if (!existingHours) {
-      // If no hours exist for this day, create them
-      // Ensure required fields are provided
-      if (!hours.open_time || !hours.close_time) {
-        throw new Error('Open time and close time are required');
-      }
-      
-      const { data, error } = await supabase
-        .from('business_hours')
-        .insert({
-          day_of_week: dayOfWeek,
-          open_time: hours.open_time,
-          close_time: hours.close_time,
-          is_closed: hours.is_closed ?? false
-        })
-        .select('*')
-        .single();
-      
-      if (error) throw error;
-      return data;
-    }
-    
-    // Update the existing hours
-    const { data, error } = await supabase
-      .from('business_hours')
-      .update(hours)
-      .eq('id', existingHours.id)
-      .select('*')
-      .single();
-    
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('Error updating business hours:', error);
-    toast.error('Failed to update business hours');
-    return null;
-  }
-};
-
 // Restaurant Branding Functions
 export const getRestaurantBranding = async (): Promise<RestaurantBranding | null> => {
   try {
@@ -179,7 +107,7 @@ export const updateRestaurantBranding = async (branding: Partial<RestaurantBrand
       // If no branding exists, create one
       const { data, error } = await supabase
         .from('restaurant_branding')
-        .insert([branding])
+        .insert(branding)
         .select('*')
         .single();
       
