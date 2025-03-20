@@ -1,5 +1,5 @@
-
 import React, { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import Layout from '@/components/Layout';
 import { useLanguage, T } from '@/contexts/LanguageContext';
 import { PageHeader } from '@/components/ui/page-header';
@@ -20,9 +20,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { createCustomerFeedback } from '@/services/customer/customerService';
+import { CustomerFeedback } from '@/services/customer/types';
+import { useToast } from '@/hooks/use-toast';
 
 const CustomerFeedback: React.FC = () => {
   const { t, currentLanguage } = useLanguage();
+  const { toast } = useToast();
+  
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [tableNumber, setTableNumber] = useState('');
@@ -50,34 +55,54 @@ const CustomerFeedback: React.FC = () => {
   
   const [visitDate, setVisitDate] = useState('');
   
+  const submitMutation = useMutation({
+    mutationFn: (feedback: Omit<CustomerFeedback, 'id' | 'created_at' | 'updated_at'>) => 
+      createCustomerFeedback(feedback),
+    onSuccess: () => {
+      setShowConfirmation(true);
+      toast({
+        title: t("Feedback Submitted"),
+        description: t("Thank you for sharing your experience with us!"),
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: t("Error"),
+        description: t("Failed to submit feedback. Please try again."),
+        variant: "destructive",
+      });
+      console.error("Error submitting feedback:", error);
+    }
+  });
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Feedback submitted:', {
-      name: anonymous ? 'Anonymous' : name,
-      email: anonymous ? '' : email,
-      tableNumber,
-      waiterName,
-      ratings: {
-        food: foodRating,
-        service: serviceRating,
-        atmosphere: atmosphereRating,
-        value: valueRating,
-        details: {
-          foodTaste,
-          foodPresentation,
-          foodTemperature,
-          foodPortion,
-          foodAuthenticity,
-          serviceSpeed,
-          serviceAttentiveness,
-          serviceKnowledge
-        }
-      },
-      comments,
-      visitDate
-    });
     
-    setShowConfirmation(true);
+    // Validate that at least overall rating is provided
+    if (!foodRating) {
+      toast({
+        title: t("Missing Rating"),
+        description: t("Please provide at least a food quality rating before submitting."),
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Calculate overall rating as average of provided ratings
+    const ratingValues = [foodRating, serviceRating, atmosphereRating, valueRating].filter(r => r !== null) as number[];
+    const overallRating = ratingValues.reduce((sum, rating) => sum + rating, 0) / ratingValues.length;
+    
+    const feedbackData: Omit<CustomerFeedback, 'id' | 'created_at' | 'updated_at'> = {
+      overall_rating: Math.round(overallRating),
+      food_rating: foodRating,
+      service_rating: serviceRating,
+      atmosphere_rating: atmosphereRating,
+      comments,
+    };
+    
+    console.log('Feedback submitted:', feedbackData);
+    
+    submitMutation.mutate(feedbackData);
   };
   
   const handleAnonymousChange = (checked: boolean) => {
@@ -123,7 +148,7 @@ const CustomerFeedback: React.FC = () => {
           >
             <Star
               size={24}
-              className={star <= (rating || 0) ? "fill-turmeric text-turmeric" : "text-gray-300"}
+              className={star <= (rating || 0) ? "fill-yellow-500 text-yellow-500" : "text-gray-300"}
             />
           </button>
         ))}
@@ -415,8 +440,11 @@ const CustomerFeedback: React.FC = () => {
               <Button type="button" variant="outline" onClick={resetForm}>
                 <T text="Clear Form" />
               </Button>
-              <Button type="submit">
-                <T text="Submit Feedback" />
+              <Button 
+                type="submit"
+                disabled={submitMutation.isPending}
+              >
+                {submitMutation.isPending ? <T text="Submitting..." /> : <T text="Submit Feedback" />}
               </Button>
             </CardFooter>
           </form>
@@ -529,7 +557,7 @@ const CustomerReview: React.FC<CustomerReviewProps> = ({ name, date, rating, com
           <Star 
             key={i} 
             size={14} 
-            className={i < rating ? "fill-turmeric text-turmeric" : "text-gray-300"}
+            className={i < rating ? "fill-yellow-500 text-yellow-500" : "text-gray-300"}
           />
         ))}
       </div>
@@ -541,3 +569,4 @@ const CustomerReview: React.FC<CustomerReviewProps> = ({ name, date, rating, com
 };
 
 export default CustomerFeedback;
+
