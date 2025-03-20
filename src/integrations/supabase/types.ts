@@ -36,6 +36,36 @@ export type Database = {
         }
         Relationships: []
       }
+      business_hours: {
+        Row: {
+          close_time: string
+          created_at: string
+          day_of_week: string
+          id: string
+          is_closed: boolean | null
+          open_time: string
+          updated_at: string
+        }
+        Insert: {
+          close_time: string
+          created_at?: string
+          day_of_week: string
+          id?: string
+          is_closed?: boolean | null
+          open_time: string
+          updated_at?: string
+        }
+        Update: {
+          close_time?: string
+          created_at?: string
+          day_of_week?: string
+          id?: string
+          is_closed?: boolean | null
+          open_time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       checklist_item_logs: {
         Row: {
           checklist_item_id: string | null
@@ -1279,6 +1309,78 @@ export type Database = {
           },
         ]
       }
+      restaurant_branding: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string
+          id: string
+          logo_url: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          updated_at: string
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      restaurant_profile: {
+        Row: {
+          address: string | null
+          created_at: string
+          cuisine_type: string | null
+          description: string | null
+          email: string | null
+          founded_year: number | null
+          id: string
+          name: string
+          phone: string | null
+          tax_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          cuisine_type?: string | null
+          description?: string | null
+          email?: string | null
+          founded_year?: number | null
+          id?: string
+          name: string
+          phone?: string | null
+          tax_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          cuisine_type?: string | null
+          description?: string | null
+          email?: string | null
+          founded_year?: number | null
+          id?: string
+          name?: string
+          phone?: string | null
+          tax_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       restaurant_tables: {
         Row: {
           capacity: number
@@ -1821,6 +1923,133 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      test_123: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_accounts: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          last_login: string | null
+          name: string
+          role_id: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          last_login?: string | null
+          name: string
+          role_id?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          last_login?: string | null
+          name?: string
+          role_id?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_accounts_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "user_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_activity_logs: {
+        Row: {
+          activity: string
+          id: string
+          ip_address: string | null
+          status: string | null
+          timestamp: string
+          user_id: string | null
+        }
+        Insert: {
+          activity: string
+          id?: string
+          ip_address?: string | null
+          status?: string | null
+          timestamp?: string
+          user_id?: string | null
+        }
+        Update: {
+          activity?: string
+          id?: string
+          ip_address?: string | null
+          status?: string | null
+          timestamp?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_activity_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          permissions: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          permissions?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          permissions?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {
