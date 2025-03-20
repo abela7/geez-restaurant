@@ -1948,6 +1948,33 @@ export type Database = {
         }
         Relationships: []
       }
+      translations: {
+        Row: {
+          am: string
+          created_at: string | null
+          en: string
+          id: string
+          key: string
+          updated_at: string | null
+        }
+        Insert: {
+          am: string
+          created_at?: string | null
+          en: string
+          id?: string
+          key: string
+          updated_at?: string | null
+        }
+        Update: {
+          am?: string
+          created_at?: string | null
+          en?: string
+          id?: string
+          key?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       user_accounts: {
         Row: {
           created_at: string

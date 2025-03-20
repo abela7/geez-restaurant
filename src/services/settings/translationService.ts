@@ -26,7 +26,7 @@ export const fetchTranslations = async (): Promise<Record<string, string>> => {
     
     // Convert the array of translation objects to a key-value object
     const translations: Record<string, string> = {};
-    data?.forEach((item: Translation) => {
+    data?.forEach((item: any) => {
       translations[item.key] = item.am;
     });
     
@@ -68,7 +68,7 @@ export const saveTranslation = async (key: string, value: string): Promise<boole
     } else {
       const { error } = await supabase
         .from('translations')
-        .insert({ key, en: key, am: value });
+        .insert([{ key, en: key, am: value }]);
       
       if (error) {
         console.error('Error inserting translation:', error);
