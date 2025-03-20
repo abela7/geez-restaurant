@@ -9,16 +9,23 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Save, UserPlus, Upload } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useForm } from "react-hook-form";
 import { useStaff } from "@/hooks/useStaff";
-import { StaffMember, StaffRole, Department } from "@/types/staff";
+import { StaffMember, StaffRole, Department, StaffRoleEnum } from "@/types/staff";
 import { useToast } from "@/hooks/use-toast";
 
 type StaffFormValues = Omit<StaffMember, 'id'> & {
   hiring_date: string;
+};
+
+const roleMapping: Record<StaffRole, StaffRoleEnum> = {
+  'admin': 'Admin',
+  'waiter': 'Waiter',
+  'chef': 'Kitchen',
+  'dishwasher': 'Kitchen',
+  'manager': 'Admin'
 };
 
 const NewStaff = () => {
@@ -33,6 +40,7 @@ const NewStaff = () => {
       first_name: "",
       last_name: "",
       role: "waiter",
+      staff_role: "Waiter",
       department: "Front of House",
       email: "",
       phone: "",
@@ -52,6 +60,11 @@ const NewStaff = () => {
     console.log("Form data:", data);
     
     try {
+      // Update staff_role based on selected role if not set
+      if (!data.staff_role) {
+        data.staff_role = roleMapping[data.role as StaffRole];
+      }
+      
       // In a real app with auth, we would need to create the user first
       // Since we have a foreign key constraint, we cannot directly insert
       // profiles without associated auth.users records
@@ -74,6 +87,12 @@ const NewStaff = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Handle role change to update staff_role accordingly
+  const handleRoleChange = (role: string) => {
+    form.setValue("role", role as StaffRole);
+    form.setValue("staff_role", roleMapping[role as StaffRole]);
   };
 
   return (
@@ -184,7 +203,7 @@ const NewStaff = () => {
                     <Label htmlFor="role"><T text="Role" /></Label>
                     <Select 
                       defaultValue={form.getValues().role}
-                      onValueChange={(value) => form.setValue("role", value as StaffRole)}
+                      onValueChange={(value) => handleRoleChange(value)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder={t("Select a role")} />
@@ -197,6 +216,27 @@ const NewStaff = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="staff_role"><T text="Staff Category" /></Label>
+                    <Select 
+                      defaultValue={form.getValues().staff_role}
+                      onValueChange={(value) => form.setValue("staff_role", value as StaffRoleEnum)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={t("Select a staff category")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Super Admin"><T text="Super Admin" /></SelectItem>
+                        <SelectItem value="Admin"><T text="Admin" /></SelectItem>
+                        <SelectItem value="Waiter"><T text="Waiter" /></SelectItem>
+                        <SelectItem value="Kitchen"><T text="Kitchen" /></SelectItem>
+                        <SelectItem value="Customer"><T text="Customer" /></SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="department"><T text="Department" /></Label>
                     <Select 
@@ -213,21 +253,20 @@ const NewStaff = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="hourly_rate"><T text="Hourly Rate (£)" /></Label>
-                  <Input 
-                    id="hourly_rate" 
-                    type="number" 
-                    min="0" 
-                    step="0.01"
-                    placeholder="6.00"
-                    {...form.register("hourly_rate", { 
-                      required: true,
-                      valueAsNumber: true 
-                    })}
-                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="hourly_rate"><T text="Hourly Rate (£)" /></Label>
+                    <Input 
+                      id="hourly_rate" 
+                      type="number" 
+                      min="0" 
+                      step="0.01"
+                      placeholder="6.00"
+                      {...form.register("hourly_rate", { 
+                        required: true,
+                        valueAsNumber: true 
+                      })}
+                    />
+                  </div>
                 </div>
                 
                 <div className="space-y-2">

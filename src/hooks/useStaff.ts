@@ -18,7 +18,7 @@ export function useStaff() {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .in('role', ['waiter', 'chef', 'dishwasher', 'manager'])
+        .in('role', ['waiter', 'chef', 'dishwasher', 'manager', 'admin'])
         .order('first_name');
 
       if (error) throw error;
@@ -26,7 +26,8 @@ export function useStaff() {
       // Cast the roles to make TypeScript happy
       const typedData = data?.map(item => ({
         ...item,
-        role: item.role as StaffMember['role']
+        role: item.role as StaffMember['role'],
+        staff_role: item.staff_role as StaffMember['staff_role']
       })) || [];
       
       setStaff(typedData);
@@ -158,7 +159,8 @@ export function useStaff() {
       // Cast the role to make TypeScript happy
       return {
         ...data,
-        role: data.role as StaffMember['role']
+        role: data.role as StaffMember['role'],
+        staff_role: data.staff_role as StaffMember['staff_role']
       } as StaffMember;
     } catch (err) {
       console.error('Error fetching staff member:', err);
