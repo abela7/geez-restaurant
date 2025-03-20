@@ -1,7 +1,6 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { TableGuest } from "./types";
-import { updateTableStatus } from "./tableService";
+import { updateTableStatus, deleteTable } from "./tableService";
 
 export const getTableGuests = async (): Promise<TableGuest[]> => {
   const { data, error } = await supabase
@@ -64,10 +63,8 @@ export const getActiveTableGuestByTableId = async (tableId: string): Promise<Tab
 };
 
 export const createTableGuest = async (guest: { table_id: string; guest_count: number; server_name?: string; notes?: string; status?: 'seated' | 'completed'; seated_at?: string; }): Promise<TableGuest> => {
-  // First, update the table status to occupied
   await updateTableStatus(guest.table_id, 'occupied');
   
-  // Then create the guest record
   const { data, error } = await supabase
     .from('table_guests')
     .insert(guest)
@@ -99,7 +96,6 @@ export const updateTableGuest = async (id: string, guest: Partial<TableGuest>): 
 };
 
 export const completeTableGuest = async (id: string): Promise<void> => {
-  // Get the guest to get the table_id
   const { data: guest, error: guestError } = await supabase
     .from('table_guests')
     .select('table_id')
@@ -111,7 +107,6 @@ export const completeTableGuest = async (id: string): Promise<void> => {
     throw guestError;
   }
   
-  // Update the guest status to completed
   const { error: updateError } = await supabase
     .from('table_guests')
     .update({ status: 'completed' })
@@ -122,6 +117,55 @@ export const completeTableGuest = async (id: string): Promise<void> => {
     throw updateError;
   }
   
-  // Update table status to cleaning
   await updateTableStatus(guest.table_id, 'cleaning');
+};
+
+export const completeTemporaryTable = async (tableId: string): Promise<void> => {
+  try {
+    const { data: table, error: tableError } = await supabase
+      .from('restaurant_tables')
+      .select('*')
+      .eq('id', tableId)
+      .eq('location', 'temporary')
+      .maybeSingle();
+    
+    if (tableError) {
+      console.error('Error fetching temporary table:', tableError);
+      throw tableError;
+    }
+    
+    if (!table) {
+      throw new Error('Table is not a temporary table');
+    }
+    
+    const activeGuest = await getActiveTableGuestByTableId(tableId);
+    
+    if (activeGuest) {
+      await updateTableGuest(activeGuest.id, { status: 'completed' });
+    }
+    
+    await deleteTable(tableId);
+  } catch (error) {
+    console.error('Error completing temporary table:', error);
+    throw error;
+  }
+};
+
+export const checkTemporaryTableUsage = async (): Promise<TableType[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('restaurant_tables')
+      .select('*')
+      .eq('location', 'temporary');
+    
+    if (error) {
+      console.error('Error fetching temporary tables:', error);
+      throw error;
+    }
+    
+    return data as TableType[];
+  } catch (error) {
+    console.error('Error checking temporary tables:', error);
+    throw error;
+  }
 };
