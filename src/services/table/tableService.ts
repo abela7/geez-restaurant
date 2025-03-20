@@ -14,7 +14,7 @@ export const getRooms = async (): Promise<Room[]> => {
     throw error;
   }
   
-  return data || [];
+  return (data || []) as Room[];
 };
 
 export const getRoomById = async (id: string): Promise<Room | null> => {
@@ -29,7 +29,7 @@ export const getRoomById = async (id: string): Promise<Room | null> => {
     throw error;
   }
   
-  return data;
+  return data as Room | null;
 };
 
 export const createRoom = async (room: Omit<Room, 'id' | 'created_at' | 'updated_at'>): Promise<Room> => {
@@ -44,7 +44,7 @@ export const createRoom = async (room: Omit<Room, 'id' | 'created_at' | 'updated
     throw error;
   }
   
-  return data;
+  return data as Room;
 };
 
 export const updateRoom = async (id: string, room: Partial<Room>): Promise<Room> => {
@@ -60,7 +60,7 @@ export const updateRoom = async (id: string, room: Partial<Room>): Promise<Room>
     throw error;
   }
   
-  return data;
+  return data as Room;
 };
 
 export const deleteRoom = async (id: string): Promise<void> => {
@@ -79,7 +79,7 @@ export const deleteRoom = async (id: string): Promise<void> => {
 export const getTables = async (): Promise<Table[]> => {
   const { data, error } = await supabase
     .from('restaurant_tables')
-    .select('*, room:room_id(*)')
+    .select('*, room:rooms(*)') // Use .select('*, room:room_id(*)') if Supabase is configured with foreign keys
     .order('table_number');
   
   if (error) {
@@ -87,13 +87,13 @@ export const getTables = async (): Promise<Table[]> => {
     throw error;
   }
   
-  return data || [];
+  return (data || []) as Table[];
 };
 
 export const getTablesByRoom = async (roomId: string): Promise<Table[]> => {
   const { data, error } = await supabase
     .from('restaurant_tables')
-    .select('*, room:room_id(*)')
+    .select('*, room:rooms(*)')
     .eq('room_id', roomId)
     .order('table_number');
   
@@ -102,13 +102,13 @@ export const getTablesByRoom = async (roomId: string): Promise<Table[]> => {
     throw error;
   }
   
-  return data || [];
+  return (data || []) as Table[];
 };
 
 export const getTableById = async (id: string): Promise<Table | null> => {
   const { data, error } = await supabase
     .from('restaurant_tables')
-    .select('*, room:room_id(*)')
+    .select('*, room:rooms(*)')
     .eq('id', id)
     .maybeSingle();
   
@@ -117,7 +117,7 @@ export const getTableById = async (id: string): Promise<Table | null> => {
     throw error;
   }
   
-  return data;
+  return data as Table | null;
 };
 
 export const createTable = async (table: Omit<Table, 'id' | 'created_at' | 'updated_at'>): Promise<Table> => {
@@ -132,7 +132,7 @@ export const createTable = async (table: Omit<Table, 'id' | 'created_at' | 'upda
     throw error;
   }
   
-  return data;
+  return data as Table;
 };
 
 export const updateTable = async (id: string, table: Partial<Table>): Promise<Table> => {
@@ -148,7 +148,7 @@ export const updateTable = async (id: string, table: Partial<Table>): Promise<Ta
     throw error;
   }
   
-  return data;
+  return data as Table;
 };
 
 export const updateTableStatus = async (id: string, status: Table['status']): Promise<Table> => {
@@ -164,7 +164,7 @@ export const updateTableStatus = async (id: string, status: Table['status']): Pr
     throw error;
   }
   
-  return data;
+  return data as Table;
 };
 
 export const deleteTable = async (id: string): Promise<void> => {
@@ -192,7 +192,7 @@ export const getReservations = async (): Promise<Reservation[]> => {
     throw error;
   }
   
-  return data || [];
+  return (data || []) as Reservation[];
 };
 
 export const getReservationsByDate = async (date: string): Promise<Reservation[]> => {
@@ -207,7 +207,7 @@ export const getReservationsByDate = async (date: string): Promise<Reservation[]
     throw error;
   }
   
-  return data || [];
+  return (data || []) as Reservation[];
 };
 
 export const getReservationById = async (id: string): Promise<Reservation | null> => {
@@ -222,7 +222,7 @@ export const getReservationById = async (id: string): Promise<Reservation | null
     throw error;
   }
   
-  return data;
+  return data as Reservation | null;
 };
 
 export const createReservation = async (reservation: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>): Promise<Reservation> => {
@@ -237,7 +237,7 @@ export const createReservation = async (reservation: Omit<Reservation, 'id' | 'c
     throw error;
   }
   
-  return data;
+  return data as Reservation;
 };
 
 export const updateReservation = async (id: string, reservation: Partial<Reservation>): Promise<Reservation> => {
@@ -253,7 +253,7 @@ export const updateReservation = async (id: string, reservation: Partial<Reserva
     throw error;
   }
   
-  return data;
+  return data as Reservation;
 };
 
 export const deleteReservation = async (id: string): Promise<void> => {
@@ -282,7 +282,7 @@ export const updateTablePosition = async (id: string, position_x: number, positi
     throw error;
   }
   
-  return data;
+  return data as Table;
 };
 
 export const updateTableDimensions = async (id: string, width: number, height: number): Promise<Table> => {
@@ -298,7 +298,7 @@ export const updateTableDimensions = async (id: string, width: number, height: n
     throw error;
   }
   
-  return data;
+  return data as Table;
 };
 
 export const getTableStats = async (): Promise<{ 
