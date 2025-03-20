@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import Layout from '@/components/Layout';
@@ -27,19 +26,6 @@ interface ColumnInfo {
   column_default: string | null;
 }
 
-// Define types for RPC responses
-interface GetTablesResponse {
-  name: string;
-  schema: string;
-}
-
-interface GetColumnsResponse {
-  name: string;
-  data_type: string;
-  is_nullable: boolean;
-  column_default: string | null;
-}
-
 const DatabaseManagement: React.FC = () => {
   const { toast } = useToast();
   const [tables, setTables] = useState<TableInfo[]>([]);
@@ -55,12 +41,12 @@ const DatabaseManagement: React.FC = () => {
   const fetchTables = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.rpc<GetTablesResponse[]>('get_tables');
+      const { data, error } = await supabase.rpc('get_tables');
       
       if (error) throw error;
       
       if (data) {
-        setTables(data);
+        setTables(data as TableInfo[]);
       }
     } catch (error) {
       console.error('Error fetching tables:', error);
@@ -77,7 +63,7 @@ const DatabaseManagement: React.FC = () => {
   const fetchColumns = async (tableName: string, schema: string = 'public') => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.rpc<GetColumnsResponse[]>('get_table_columns', {
+      const { data, error } = await supabase.rpc('get_table_columns', {
         tablename: tableName,
         schema: schema
       });
@@ -85,7 +71,7 @@ const DatabaseManagement: React.FC = () => {
       if (error) throw error;
       
       if (data) {
-        setColumns(data);
+        setColumns(data as ColumnInfo[]);
       }
     } catch (error) {
       console.error('Error fetching columns:', error);
