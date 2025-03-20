@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { BadgeWithStatus } from "@/components/ui/badge-with-status";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Search, Plus, FilePen, DollarSign, ChevronLeft, Trash2, Calculator, Loader2, Utensils } from "lucide-react";
@@ -658,9 +659,9 @@ const FoodManagement = () => {
                                 <TableCell>£{(item.cost || 0).toFixed(2)}</TableCell>
                                 <TableCell>{item.profit_margin || 0}%</TableCell>
                                 <TableCell>
-                                  <Badge variant={item.available ? "success" : "destructive"}>
+                                  <BadgeWithStatus variant={item.available ? "success" : "destructive"}>
                                     {item.available ? <T text="Available" /> : <T text="Unavailable" />}
-                                  </Badge>
+                                  </BadgeWithStatus>
                                 </TableCell>
                                 <TableCell className="text-right">
                                   <div className="flex justify-end gap-2">
