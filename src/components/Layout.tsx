@@ -67,6 +67,10 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
   
   const breadcrumbs = getBreadcrumbs();
 
+  if (contentOnly) {
+    return <>{children}</>;
+  }
+
   if (isMobile) {
     return (
       <div className="flex min-h-screen bg-background">
