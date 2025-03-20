@@ -14,7 +14,7 @@ export const getUserRoles = async (): Promise<UserRole[]> => {
     if (error) throw error;
     
     // Convert the JSON permissions to Record<string, boolean>
-    const formattedData = data?.map(role => ({
+    const formattedData: UserRole[] = data?.map(role => ({
       ...role,
       permissions: role.permissions ? (typeof role.permissions === 'string' ? 
         JSON.parse(role.permissions) : role.permissions) as Record<string, boolean>
@@ -143,7 +143,7 @@ export const getUserAccounts = async (): Promise<UserAccount[]> => {
     if (error) throw error;
     
     // Convert permissions in roles
-    const processedData = data?.map(user => ({
+    const processedData: UserAccount[] = data?.map(user => ({
       ...user,
       role: user.role ? {
         ...user.role,
