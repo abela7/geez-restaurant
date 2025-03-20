@@ -30,7 +30,7 @@ export const addStockItem = async (ingredient: Omit<Ingredient, 'id' | 'created_
   try {
     const { data, error } = await supabase
       .from("ingredients")
-      .insert([ingredient])
+      .insert(ingredient) // Remove the array brackets
       .select()
       .single();
 
@@ -106,7 +106,10 @@ export const adjustStockQuantity = async (
     // Update the stock quantity
     const { error: updateError } = await supabase
       .from("ingredients")
-      .update({ stock_quantity: newQuantity, updated_at: new Date() })
+      .update({ 
+        stock_quantity: newQuantity, 
+        updated_at: new Date().toISOString() // Convert Date to string
+      })
       .eq("id", id);
 
     if (updateError) {
@@ -118,7 +121,7 @@ export const adjustStockQuantity = async (
     // Log the transaction
     const { error: logError } = await supabase
       .from("inventory_transactions")
-      .insert([{
+      .insert({
         ingredient_id: id,
         transaction_type: transactionType,
         quantity: adjustmentQuantity,
@@ -127,7 +130,7 @@ export const adjustStockQuantity = async (
         unit: ingredient.unit,
         notes: reason,
         created_by: "admin" // Would be replaced with actual user ID in production
-      }]);
+      });
 
     if (logError) {
       console.error("Error logging transaction:", logError);
