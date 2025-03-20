@@ -10,7 +10,10 @@ import {
   ShoppingBag, 
   ClipboardList, 
   CreditCard,
-  Table
+  Table,
+  Plus,
+  Search,
+  ListChecks
 } from "lucide-react";
 
 export const TableActionsSection: React.FC = () => {
@@ -20,15 +23,9 @@ export const TableActionsSection: React.FC = () => {
   const mainActions = [
     {
       name: "New Order",
-      icon: <UtensilsCrossed />,
-      onClick: () => navigate('/waiter/orders'),
+      icon: <Plus />,
+      onClick: () => navigate('/waiter/orders/new'),
       color: "primary"
-    },
-    {
-      name: "Takeout",
-      icon: <Package />,
-      onClick: () => navigate('/waiter/orders?type=takeout'),
-      color: "secondary"
     },
     {
       name: "Manage Orders",
@@ -40,26 +37,50 @@ export const TableActionsSection: React.FC = () => {
       name: "Process Payment",
       icon: <CreditCard />,
       onClick: () => navigate('/waiter/payments'),
+      color: "secondary"
+    },
+    {
+      name: "Takeout",
+      icon: <Package />,
+      onClick: () => navigate('/waiter/orders/new?type=takeout'),
       color: "outline"
     },
     {
-      name: "View Tables",
+      name: "Delivery",
+      icon: <ShoppingBag />,
+      onClick: () => navigate('/waiter/orders/new?type=delivery'),
+      color: "outline"
+    },
+    {
+      name: "Tables",
       icon: <Table />,
       onClick: () => navigate('/waiter/tables'),
-      color: "outline"
-    },
-    {
-      name: "Deliveries",
-      icon: <ShoppingBag />,
-      onClick: () => navigate('/waiter/orders?type=delivery'),
       color: "outline"
     }
   ];
   
   return (
     <Card className="mb-6">
-      <div className="p-4 border-b">
-        <h3 className="font-medium text-lg"><T text="Quick Actions" /></h3>
+      <div className="p-4 border-b flex justify-between items-center">
+        <h3 className="font-medium text-lg"><T text="POS Actions" /></h3>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => navigate('/waiter/orders/search')}
+          >
+            <Search className="h-4 w-4 mr-2" />
+            <T text="Search Orders" />
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => navigate('/waiter/tasks')}
+          >
+            <ListChecks className="h-4 w-4 mr-2" />
+            <T text="My Tasks" />
+          </Button>
+        </div>
       </div>
       
       <div className="p-4">

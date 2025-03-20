@@ -6,13 +6,12 @@ import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/card-stat";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Clock, UtensilsCrossed, DollarSign, Table } from "lucide-react";
+import { Clock, UtensilsCrossed, DollarSign, Table, Plus } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useWaiterInfo } from "@/hooks/useWaiterInfo";
-import { QuickOrdersSection } from "@/components/waiter/QuickOrdersSection";
 import { TableActionsSection } from "@/components/waiter/TableActionsSection";
 import { RecentOrdersSection } from "@/components/waiter/RecentOrdersSection";
+import { QuickOrdersSection } from "@/components/waiter/QuickOrdersSection";
 
 const WaiterDashboard = () => {
   const { t } = useLanguage();
@@ -23,8 +22,20 @@ const WaiterDashboard = () => {
     <div className="container mx-auto p-4 md:p-6">
       <PageHeader 
         title={waiter ? `${t("Hello")}, ${waiter.name}` : t("Waiter Dashboard")} 
-        description={t("Manage your tables, orders, and tasks")}
+        description={t("Manage orders, tables, and tasks")}
+        actions={
+          <Button onClick={() => navigate('/waiter/orders/new')}>
+            <Plus className="mr-2 h-4 w-4" />
+            <T text="New Order" />
+          </Button>
+        }
       />
+
+      {/* POS Actions Section - Main focus */}
+      <TableActionsSection />
+
+      {/* Quick Order Section - Right below main actions for easy access */}
+      <QuickOrdersSection />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <StatCard 
@@ -49,11 +60,8 @@ const WaiterDashboard = () => {
         />
       </div>
 
-      <TableActionsSection />
-      
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <QuickOrdersSection />
           <RecentOrdersSection />
         </div>
 

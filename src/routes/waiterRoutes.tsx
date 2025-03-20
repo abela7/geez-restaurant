@@ -25,6 +25,8 @@ const WaiterRoutes = () => {
         <Route index element={<WaiterDashboard />} />
         <Route path="tables" element={<TableManagement />} />
         <Route path="orders" element={<OrderManagement />} />
+        <Route path="orders/new" element={<OrderManagement newOrder={true} />} />
+        <Route path="orders/search" element={<OrderManagement search={true} />} />
         <Route path="payments" element={<PaymentProcessing />} />
         <Route path="tasks" element={<WaiterTasks />} />
         <Route path="food-safety" element={<WaiterFoodSafety />} />
