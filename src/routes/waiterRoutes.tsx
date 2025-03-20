@@ -1,5 +1,5 @@
 
-import { Route, Routes, Navigate } from "react-router-dom";
+import { Route, Routes, Navigate, Outlet } from "react-router-dom";
 import Layout from "@/components/Layout";
 import WaiterDashboard from "@/pages/waiter/WaiterDashboard";
 import TableManagement from "@/pages/waiter/TableManagement";
@@ -22,7 +22,7 @@ const WaiterRoutes = () => {
 
   return (
     <Routes>
-      <Route element={<Layout interface="waiter" />}>
+      <Route element={<Layout interface="waiter"><Outlet /></Layout>}>
         <Route index element={<WaiterDashboard />} />
         <Route path="tables" element={<TableManagement />} />
         <Route path="orders" element={<OrderManagement />} />

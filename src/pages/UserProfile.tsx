@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
@@ -7,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge-extended";
 import { 
   User, Clock, DollarSign, Calendar, Mail, Phone, 
   MapPin, Award, ArrowLeft
@@ -17,7 +16,6 @@ const UserProfile = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   
-  // In a real app, this would be fetched from the logged-in user's profile
   const userProfile = {
     id: "1",
     firstName: "Dawit",
@@ -33,21 +31,18 @@ const UserProfile = () => {
     imageUrl: "/placeholder.svg"
   };
 
-  // Sample work schedule
   const workSchedule = [
     { id: 1, date: "Today", time: "5:00 PM - 11:00 PM", type: "Dinner Service" },
     { id: 2, date: "Tomorrow", time: "11:00 AM - 3:00 PM", type: "Lunch Service" },
     { id: 3, date: "Jul 15", time: "5:00 PM - 11:00 PM", type: "Dinner Service" },
   ];
 
-  // Sample payroll history
   const payrollHistory = [
     { id: 1, period: "Jun 1 - Jun 15, 2023", amount: "$850.00", status: "Paid" },
     { id: 2, period: "May 16 - May 31, 2023", amount: "$920.00", status: "Paid" },
     { id: 3, period: "May 1 - May 15, 2023", amount: "$780.00", status: "Paid" },
   ];
 
-  // Sample performance metrics
   const performanceMetrics = [
     { metric: "Average Service Time", value: "22 mins" },
     { metric: "Orders Per Shift", value: "32" },
@@ -183,7 +178,7 @@ const UserProfile = () => {
                           <p className="font-medium">{payment.period}</p>
                           <p className="text-sm text-muted-foreground">{payment.amount}</p>
                         </div>
-                        <Badge variant={payment.status === "Paid" ? "success" : "outline"}>
+                        <Badge variant={payment.status === "Paid" ? "default" : "outline"}>
                           {t(payment.status)}
                         </Badge>
                       </div>
