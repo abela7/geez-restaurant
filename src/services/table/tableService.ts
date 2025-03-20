@@ -359,7 +359,8 @@ export const getTablesWithDetails = async (): Promise<TableWithDetails[]> => {
     // Find reservation for this table
     const reservation = reservations?.find(r => r.table_id === table.id);
     if (reservation && table.status === 'reserved') {
-      tableWithDetails.reservedFor = reservation.customer_name;
+      // Only include reservation time, no customer info
+      tableWithDetails.reservedFor = `${reservation.party_size} guests`;
       tableWithDetails.reservationTime = `${reservation.reservation_date} ${reservation.start_time}`;
     }
     

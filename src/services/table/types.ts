@@ -28,8 +28,6 @@ export interface Table {
 export interface TableWithDetails extends Table {
   currentGuests?: number;
   occupiedSince?: string;
-  reservedFor?: string;
-  reservationTime?: string;
   server?: string;
 }
 
@@ -51,7 +49,6 @@ export interface TableGuest {
 
 export interface Reservation {
   id: string;
-  customer_id?: string;
   table_id?: string;
   reservation_date: string;
   start_time: string;
@@ -61,8 +58,6 @@ export interface Reservation {
   status: 'confirmed' | 'pending' | 'cancelled' | 'completed';
   created_at?: string;
   updated_at?: string;
-  customer_name?: string;
-  contact_number?: string;
   table_number?: number;
   table?: {
     table_number: number;
