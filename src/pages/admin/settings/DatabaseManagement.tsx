@@ -30,6 +30,11 @@ interface DbColumn {
   column_default: string | null;
 }
 
+interface SqlResponse {
+  success: boolean;
+  error?: string;
+}
+
 const DatabaseManagement: React.FC = () => {
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -112,7 +117,10 @@ const DatabaseManagement: React.FC = () => {
     
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      // For type safety, we need to use a different approach
+      // Instead of directly passing the dynamic tableName, we'll use any type to bypass type checking
+      // in a real production app, you might want to create a more type-safe approach
+      const { data, error } = await (supabase as any)
         .from(tableName)
         .select('*')
         .limit(100);
@@ -175,7 +183,7 @@ const DatabaseManagement: React.FC = () => {
         setNewTableColumns([{ name: 'id', type: 'uuid', nullable: false, default: 'uuid_generate_v4()' }]);
         setIsNewTableDialogOpen(false);
         fetchTables();
-      } else {
+      } else if (data) {
         throw new Error(data.error || 'Unknown error');
       }
     } catch (error) {
@@ -249,7 +257,7 @@ const DatabaseManagement: React.FC = () => {
         setNewColumnDefault('');
         setIsNewColumnDialogOpen(false);
         fetchColumns(selectedTable, selectedSchema);
-      } else {
+      } else if (data) {
         throw new Error(data.error || 'Unknown error');
       }
     } catch (error) {
@@ -296,7 +304,7 @@ const DatabaseManagement: React.FC = () => {
         setColumns([]);
         setDataRows([]);
         fetchTables();
-      } else {
+      } else if (data) {
         throw new Error(data.error || 'Unknown error');
       }
     } catch (error) {
@@ -329,7 +337,7 @@ const DatabaseManagement: React.FC = () => {
       <div className="container mx-auto p-4">
         <PageHeader
           heading="Database Management"
-          subheading="Manage database tables, columns, and data"
+          description="Manage database tables, columns, and data"
           action={
             <Dialog open={isNewTableDialogOpen} onOpenChange={setIsNewTableDialogOpen}>
               <DialogTrigger asChild>

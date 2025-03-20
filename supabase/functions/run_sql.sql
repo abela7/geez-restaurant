@@ -52,7 +52,7 @@ END;
 $$;
 
 -- Function to get columns for a table
-CREATE OR REPLACE FUNCTION public.get_table_columns()
+CREATE OR REPLACE FUNCTION public.get_table_columns(tableName text, schema text)
 RETURNS TABLE (
   name text,
   data_type text,
@@ -72,7 +72,8 @@ BEGIN
   FROM 
     information_schema.columns
   WHERE 
-    table_schema = current_setting('request.jwt.claims', true)::json->>'role'
+    table_name = tableName
+    AND table_schema = schema
   ORDER BY 
     ordinal_position;
 END;
