@@ -13,6 +13,7 @@ export type RecentOrder = {
   total_amount: number;
   items_count: number;
   created_at: string;
+  table_number?: number | null; // Add table number directly in the RecentOrder type
 };
 
 export const useRecentOrders = (waiterId?: string) => {
@@ -39,7 +40,13 @@ export const useRecentOrders = (waiterId?: string) => {
       
       if (error) throw error;
       
-      setOrders(data as any[]);
+      // Process the data to extract table_number from the joins
+      const processedData = data.map(order => ({
+        ...order,
+        table_number: order.restaurant_tables?.table_number || null,
+      }));
+      
+      setOrders(processedData as RecentOrder[]);
     } catch (err: any) {
       console.error('Error fetching recent orders:', err);
       setError(err.message || 'Failed to load recent orders');

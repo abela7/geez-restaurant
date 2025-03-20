@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { 
-  Utensils, 
-  TakeoutDining, 
+  UtensilsCrossed, 
+  Package, 
   ShoppingBag, 
   ClipboardList, 
   CreditCard,
-  TableRestaurant
-} from "@mui/icons-material";
+  Table
+} from "lucide-react";
 
 export const TableActionsSection: React.FC = () => {
   const { t } = useLanguage();
@@ -20,13 +20,13 @@ export const TableActionsSection: React.FC = () => {
   const mainActions = [
     {
       name: "New Order",
-      icon: <Utensils />,
+      icon: <UtensilsCrossed />,
       onClick: () => navigate('/waiter/orders'),
       color: "primary"
     },
     {
       name: "Takeout",
-      icon: <TakeoutDining />,
+      icon: <Package />,
       onClick: () => navigate('/waiter/orders?type=takeout'),
       color: "secondary"
     },
@@ -44,7 +44,7 @@ export const TableActionsSection: React.FC = () => {
     },
     {
       name: "View Tables",
-      icon: <TableRestaurant />,
+      icon: <Table />,
       onClick: () => navigate('/waiter/tables'),
       color: "outline"
     },

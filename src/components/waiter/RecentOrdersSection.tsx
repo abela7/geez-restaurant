@@ -52,8 +52,8 @@ export const RecentOrdersSection: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <h4 className="font-medium">
-                    {order.restaurant_tables ? 
-                      t("Table") + " " + order.restaurant_tables.table_number : 
+                    {order.table_number ? 
+                      t("Table") + " " + order.table_number : 
                       t(order.order_type)}
                   </h4>
                   <Badge 

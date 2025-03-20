@@ -7,7 +7,7 @@ import { StatCard } from "@/components/ui/card-stat";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Clock, Utensils, DollarSign, TableRestaurant } from "lucide-react";
+import { Clock, UtensilsCrossed, DollarSign, Table } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useWaiterInfo } from "@/hooks/useWaiterInfo";
 import { QuickOrdersSection } from "@/components/waiter/QuickOrdersSection";
@@ -30,12 +30,12 @@ const WaiterDashboard = () => {
         <StatCard 
           title={t("Active Tables")} 
           value="4" 
-          icon={<TableRestaurant size={18} />}
+          icon={<Table size={18} />}
         />
         <StatCard 
           title={t("Pending Orders")} 
           value="3" 
-          icon={<Utensils size={18} />}
+          icon={<UtensilsCrossed size={18} />}
         />
         <StatCard 
           title={t("Today's Sales")} 
