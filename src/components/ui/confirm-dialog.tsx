@@ -20,7 +20,6 @@ interface ConfirmDialogProps {
   description: string;
   confirmLabel?: string;
   cancelLabel?: string;
-  isDangerous?: boolean;
 }
 
 const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
@@ -31,7 +30,6 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   description,
   confirmLabel,
   cancelLabel,
-  isDangerous = false,
 }) => {
   const { t } = useLanguage();
   
@@ -49,7 +47,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>{cancelLabel || t("Cancel")}</AlertDialogCancel>
-          <AlertDialogAction onClick={handleConfirm} className={isDangerous ? "bg-destructive hover:bg-destructive/90" : ""}>
+          <AlertDialogAction onClick={handleConfirm}>
             {confirmLabel || t("Confirm")}
           </AlertDialogAction>
         </AlertDialogFooter>
