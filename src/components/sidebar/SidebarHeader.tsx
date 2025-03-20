@@ -14,22 +14,20 @@ const SidebarHeader: React.FC<SidebarHeaderProps> = ({ collapsed, toggleCollapse
   const { t } = useLanguage();
   
   return (
-    <div className="p-4 h-16 flex items-center justify-between border-b border-gray-200">
-      <Link to="/" className="text-xl font-bold text-amber-500">
+    <div className="p-4 h-16 flex items-center justify-between border-b border-border">
+      <Link to="/" className="text-xl font-bold text-amber-500 whitespace-nowrap overflow-hidden">
         {!collapsed ? "Habesha" : "H"}
       </Link>
       
-      <div className="flex items-center gap-2">
-        <Button
-          onClick={toggleCollapse}
-          variant="ghost"
-          size="icon"
-          className="w-8 h-8 hover:bg-gray-100"
-          aria-label={t(collapsed ? "Expand sidebar" : "Collapse sidebar")}
-        >
-          {collapsed ? <PanelRight size={18} /> : <PanelLeft size={18} />}
-        </Button>
-      </div>
+      <Button
+        onClick={toggleCollapse}
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 hover:bg-amber-100 text-amber-700"
+        aria-label={t(collapsed ? "Expand sidebar" : "Collapse sidebar")}
+      >
+        {collapsed ? <PanelRight size={18} /> : <PanelLeft size={18} />}
+      </Button>
     </div>
   );
 };
