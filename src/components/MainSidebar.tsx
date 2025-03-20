@@ -326,3 +326,22 @@ export const getNavSections = (
       return [];
   }
 };
+
+export const MainSidebar: React.FC<{
+  open: boolean;
+  onToggle: () => void;
+  interface: "admin" | "waiter" | "kitchen" | "customer" | "system";
+}> = ({ open, onToggle, interface: interfaceType }) => {
+  // This is just a placeholder for the actual sidebar component
+  // In a real implementation, this would contain the sidebar UI
+  return (
+    <div className="fixed inset-y-0 left-0 z-50 w-64 bg-background border-r">
+      <div className="flex h-screen flex-col">
+        <div className="px-3 py-2 flex h-14 items-center border-b">
+          <h2 className="text-lg font-semibold">Restaurant Manager</h2>
+        </div>
+        {/* Navigation items would go here */}
+      </div>
+    </div>
+  );
+};
