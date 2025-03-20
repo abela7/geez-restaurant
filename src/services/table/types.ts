@@ -10,8 +10,8 @@ export interface Table {
   height?: number;
   rotation?: number;
   shape?: 'rectangle' | 'circle' | 'square';
-  room_id?: string;
-  group_id?: string;
+  room_id?: string | null;
+  group_id?: string | null;
   location?: string;
   created_at?: string;
   updated_at?: string;
@@ -40,7 +40,7 @@ export interface TableGroup {
   id: string;
   name: string;
   description?: string;
-  room_id?: string;
+  room_id?: string | null;
   room?: Room;
   created_at?: string;
   updated_at?: string;

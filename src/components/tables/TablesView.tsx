@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage, T } from "@/contexts/LanguageContext";
@@ -6,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table";
-import { Plus, Pencil, Trash2, LayoutGrid } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 
 import { Table as TableType, Room, TableGroup } from "@/services/table/types";
 import { getTables, createTable, updateTable, deleteTable } from "@/services/table/tableService";
@@ -119,6 +120,7 @@ const TablesView = () => {
           description: t("Table created successfully."),
         });
       }
+      setIsTableDialogOpen(false);
     } catch (error: any) {
       console.error("Error saving table:", error);
       toast({
@@ -126,8 +128,6 @@ const TablesView = () => {
         description: t("Failed to save table. Please try again."),
         variant: "destructive",
       });
-    } finally {
-      setIsTableDialogOpen(false);
     }
   };
 
@@ -143,7 +143,7 @@ const TablesView = () => {
 
   return (
     <Card>
-      <CardHeader className="flex justify-between">
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle><T text="Tables" /></CardTitle>
         <Button onClick={handleCreateTable}>
           <Plus className="mr-2 h-4 w-4" />
@@ -214,13 +214,15 @@ const TablesView = () => {
               {isEditMode ? <T text="Edit Table" /> : <T text="Create Table" />}
             </DialogTitle>
           </DialogHeader>
-          <TableForm
-            initialData={selectedTable || {}}
-            onSubmit={handleTableFormSubmit}
-            onCancel={() => setIsTableDialogOpen(false)}
-            roomOptions={roomOptions}
-            groupOptions={groupOptions}
-          />
+          {isTableDialogOpen && (
+            <TableForm
+              initialData={selectedTable || {}}
+              onSubmit={handleTableFormSubmit}
+              onCancel={() => setIsTableDialogOpen(false)}
+              roomOptions={roomOptions}
+              groupOptions={groupOptions}
+            />
+          )}
         </DialogContent>
       </Dialog>
 

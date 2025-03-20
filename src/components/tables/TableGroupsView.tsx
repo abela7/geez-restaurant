@@ -9,12 +9,10 @@ import {
 } from "@/components/ui/table";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 
-import { TableGroup, Room } from "@/services/table/types";
+import { TableGroup } from "@/services/table/types";
 import { getTableGroups, createTableGroup, updateTableGroup, deleteTableGroup } from "@/services/table/tableGroupService";
-import { getRooms } from "@/services/table/roomService";
 
 import NoData from "@/components/ui/no-data";
-import TableGroupForm from "./TableGroupForm";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -22,28 +20,19 @@ const TableGroupsView = () => {
   const { toast } = useToast();
   const { t } = useLanguage();
   const [tableGroups, setTableGroups] = useState<TableGroup[]>([]);
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedGroup, setSelectedGroup] = useState<TableGroup | null>(null);
-  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const [groupsData, roomsData] = await Promise.all([
-          getTableGroups(),
-          getRooms()
-        ]);
-        setTableGroups(groupsData);
-        setRooms(roomsData);
+        const tableGroupsData = await getTableGroups();
+        setTableGroups(tableGroupsData);
       } catch (error: any) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching table groups:", error);
         toast({
           title: t("Error"),
-          description: t("Failed to load data. Please try again."),
+          description: t("Failed to load table groups. Please try again."),
           variant: "destructive",
         });
       } finally {
@@ -54,98 +43,20 @@ const TableGroupsView = () => {
     fetchData();
   }, [toast, t]);
 
-  const handleCreateGroup = () => {
-    setIsEditMode(false);
-    setSelectedGroup(null);
-    setIsGroupDialogOpen(true);
-  };
-
-  const handleEditGroup = (group: TableGroup) => {
-    setIsEditMode(true);
-    setSelectedGroup(group);
-    setIsGroupDialogOpen(true);
-  };
-
-  const handleDeleteGroup = (group: TableGroup) => {
-    setSelectedGroup(group);
-    setIsDeleteConfirmationOpen(true);
-  };
-
-  const confirmDeleteGroup = async () => {
-    if (selectedGroup) {
-      try {
-        await deleteTableGroup(selectedGroup.id);
-        setTableGroups(tableGroups.filter((group) => group.id !== selectedGroup.id));
-        toast({
-          title: t("Success"),
-          description: t("Table group deleted successfully."),
-        });
-      } catch (error: any) {
-        console.error("Error deleting table group:", error);
-        toast({
-          title: t("Error"),
-          description: t("Failed to delete table group. Please try again."),
-          variant: "destructive",
-        });
-      } finally {
-        setIsDeleteConfirmationOpen(false);
-        setSelectedGroup(null);
-      }
-    }
-  };
-
-  const handleGroupFormSubmit = async (data: TableGroup) => {
-    try {
-      if (isEditMode && selectedGroup) {
-        // Update existing group
-        const updatedGroup = await updateTableGroup(selectedGroup.id, data);
-        setTableGroups(
-          tableGroups.map((group) => (group.id === selectedGroup.id ? updatedGroup : group))
-        );
-        toast({
-          title: t("Success"),
-          description: t("Table group updated successfully."),
-        });
-      } else {
-        // Create new group
-        const newGroup = await createTableGroup(data);
-        setTableGroups([...tableGroups, newGroup]);
-        toast({
-          title: t("Success"),
-          description: t("Table group created successfully."),
-        });
-      }
-    } catch (error: any) {
-      console.error("Error saving table group:", error);
-      toast({
-        title: t("Error"),
-        description: t("Failed to save table group. Please try again."),
-        variant: "destructive",
-      });
-    } finally {
-      setIsGroupDialogOpen(false);
-    }
-  };
-
-  const roomOptions = rooms.map((room) => ({
-    value: room.id,
-    label: room.name,
-  }));
-
   return (
     <Card>
-      <CardHeader className="flex justify-between">
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle><T text="Table Groups" /></CardTitle>
-        <Button onClick={handleCreateGroup}>
+        <Button>
           <Plus className="mr-2 h-4 w-4" />
-          <T text="Add Table Group" />
+          <T text="Add Group" />
         </Button>
       </CardHeader>
       <CardContent>
         {isLoading ? (
           <p><T text="Loading table groups..." /></p>
         ) : tableGroups.length === 0 ? (
-          <NoData message={t("No table groups found. Add a table group to get started.")} />
+          <NoData message={t("No table groups found. Add a group to get started.")} />
         ) : (
           <Table>
             <TableHeader>
@@ -157,57 +68,27 @@ const TableGroupsView = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tableGroups.map((group) => {
-                const room = rooms.find(r => r.id === group.room_id);
-                
-                return (
-                  <TableRow key={group.id}>
-                    <TableCell>{group.name}</TableCell>
-                    <TableCell>{group.description || '-'}</TableCell>
-                    <TableCell>{room ? room.name : '-'}</TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" onClick={() => handleEditGroup(group)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        <T text="Edit" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDeleteGroup(group)}>
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        <T text="Delete" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+              {tableGroups.map((group) => (
+                <TableRow key={group.id}>
+                  <TableCell className="font-medium">{group.name}</TableCell>
+                  <TableCell>{group.description || '-'}</TableCell>
+                  <TableCell>{group.room ? group.room.name : '-'}</TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="sm">
+                      <Pencil className="mr-2 h-4 w-4" />
+                      <T text="Edit" />
+                    </Button>
+                    <Button variant="ghost" size="sm">
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      <T text="Delete" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         )}
       </CardContent>
-
-      {/* Table Group Form Dialog */}
-      <Dialog open={isGroupDialogOpen} onOpenChange={setIsGroupDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {isEditMode ? <T text="Edit Table Group" /> : <T text="Create Table Group" />}
-            </DialogTitle>
-          </DialogHeader>
-          <TableGroupForm
-            initialData={selectedGroup || {}}
-            onSubmit={handleGroupFormSubmit}
-            onCancel={() => setIsGroupDialogOpen(false)}
-            roomOptions={roomOptions}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <ConfirmDialog
-        isOpen={isDeleteConfirmationOpen}
-        onClose={() => setIsDeleteConfirmationOpen(false)}
-        onConfirm={confirmDeleteGroup}
-        title={t("Delete Table Group")}
-        description={t("Are you sure you want to delete this table group? This action cannot be undone.")}
-      />
     </Card>
   );
 };

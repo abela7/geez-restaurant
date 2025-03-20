@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -9,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
 import { Table } from "@/services/table/types";
 
@@ -22,15 +23,15 @@ interface TableFormProps {
 }
 
 const tableSchema = z.object({
-  table_number: z.number().min(1, {
+  table_number: z.coerce.number().min(1, {
     message: "Table number must be at least 1.",
   }),
-  capacity: z.number().min(1, {
+  capacity: z.coerce.number().min(1, {
     message: "Capacity must be at least 1.",
   }),
   status: z.enum(["available", "occupied", "reserved", "cleaning"]),
-  room_id: z.string().optional(),
-  group_id: z.string().optional(),
+  room_id: z.string().optional().nullable(),
+  group_id: z.string().optional().nullable(),
   position_x: z.number().optional(),
   position_y: z.number().optional(),
   width: z.number().optional(),
@@ -39,8 +40,10 @@ const tableSchema = z.object({
   shape: z.enum(['rectangle', 'circle', 'square']).optional(),
 });
 
+type FormValues = z.infer<typeof tableSchema>;
+
 const TableForm = ({ 
-  initialData, 
+  initialData = {}, 
   onSubmit, 
   onCancel,
   roomOptions,
@@ -49,43 +52,40 @@ const TableForm = ({
   const { toast } = useToast();
   const { t } = useLanguage();
   
-  const form = useForm<z.infer<typeof tableSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(tableSchema),
     defaultValues: {
-      table_number: initialData?.table_number || 1,
-      capacity: initialData?.capacity || 2,
-      status: initialData?.status || "available",
-      room_id: initialData?.room_id || "",
-      group_id: initialData?.group_id || "",
-      position_x: initialData?.position_x || 0,
-      position_y: initialData?.position_y || 0,
-      width: initialData?.width || 100,
-      height: initialData?.height || 100,
-      rotation: initialData?.rotation || 0,
-      shape: initialData?.shape || 'rectangle',
+      table_number: initialData.table_number || 1,
+      capacity: initialData.capacity || 2,
+      status: initialData.status || "available",
+      room_id: initialData.room_id || null,
+      group_id: initialData.group_id || null,
+      position_x: initialData.position_x || 0,
+      position_y: initialData.position_y || 0,
+      width: initialData.width || 100,
+      height: initialData.height || 100,
+      rotation: initialData.rotation || 0,
+      shape: initialData.shape || 'rectangle',
     },
   });
   
-  const { handleSubmit, control, setValue } = form;
-  
-  const handleInputChange = (name: string, value: any) => {
-    setValue(name as any, value);
+  const handleFormSubmit = (values: FormValues) => {
+    onSubmit(values as Table);
   };
   
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <div className="space-y-2">
-          <Label htmlFor="table_number"><T text="Table Number" /></Label>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
-            control={control}
+            control={form.control}
             name="table_number"
             render={({ field }) => (
               <FormItem>
+                <FormLabel><T text="Table Number" /></FormLabel>
                 <FormControl>
                   <Input 
                     type="number" 
-                    id="table_number" 
                     placeholder={t("Enter table number")} 
                     {...field} 
                   />
@@ -94,19 +94,16 @@ const TableForm = ({
               </FormItem>
             )}
           />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="capacity"><T text="Capacity" /></Label>
+          
           <FormField
-            control={control}
+            control={form.control}
             name="capacity"
             render={({ field }) => (
               <FormItem>
+                <FormLabel><T text="Capacity" /></FormLabel>
                 <FormControl>
                   <Input 
                     type="number" 
-                    id="capacity" 
                     placeholder={t("Enter capacity")} 
                     {...field} 
                   />
@@ -115,22 +112,22 @@ const TableForm = ({
               </FormItem>
             )}
           />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="status"><T text="Status" /></Label>
+          
           <FormField
-            control={control}
+            control={form.control}
             name="status"
             render={({ field }) => (
               <FormItem>
+                <FormLabel><T text="Status" /></FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("Select a status")} />
-                  </SelectTrigger>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t("Select a status")} />
+                    </SelectTrigger>
+                  </FormControl>
                   <SelectContent>
                     <SelectItem value="available"><T text="Available" /></SelectItem>
                     <SelectItem value="occupied"><T text="Occupied" /></SelectItem>
@@ -142,58 +139,78 @@ const TableForm = ({
               </FormItem>
             )}
           />
+          
+          <FormField
+            control={form.control}
+            name="room_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel><T text="Room" /></FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value || ""}
+                  value={field.value || ""}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t("Select a room")} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value=""><T text="None" /></SelectItem>
+                    {roomOptions.map((room) => (
+                      <SelectItem key={room.value} value={room.value}>
+                        {room.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="group_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel><T text="Table Group" /></FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value || ""}
+                  value={field.value || ""}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t("Select a group")} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value=""><T text="None" /></SelectItem>
+                    {groupOptions.map((group) => (
+                      <SelectItem key={group.value} value={group.value}>
+                        {group.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
         
-        <div className="space-y-2">
-          <Label htmlFor="room_id"><T text="Room" /></Label>
-          <Select
-            value={initialData?.room_id || ""}
-            onValueChange={(value) => handleInputChange('room_id', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={t("Select a room")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value=""><T text="None" /></SelectItem>
-              {roomOptions.map((room) => (
-                <SelectItem key={room.value} value={room.value}>
-                  {room.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex justify-end space-x-2">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            <T text="Cancel" />
+          </Button>
+          <Button type="submit">
+            <T text="Save" />
+          </Button>
         </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="group_id"><T text="Table Group" /></Label>
-          <Select
-            value={initialData?.group_id || ""}
-            onValueChange={(value) => handleInputChange('group_id', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={t("Select a group")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value=""><T text="None" /></SelectItem>
-              {groupOptions.map((group) => (
-                <SelectItem key={group.value} value={group.value}>
-                  {group.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      
-      <div className="flex justify-end space-x-2">
-        <Button variant="ghost" onClick={onCancel}>
-          <T text="Cancel" />
-        </Button>
-        <Button type="submit">
-          <T text="Save" />
-        </Button>
-      </div>
-    </form>
+      </form>
+    </Form>
   );
 };
 
