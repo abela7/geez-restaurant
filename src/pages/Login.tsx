@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -50,7 +49,15 @@ const Login: React.FC = () => {
           title: "Login successful",
           description: `Welcome back, ${username}!`,
         });
-        navigate('/');
+        
+        // Redirect based on user role
+        if (user.role === 'waiter') {
+          navigate('/waiter');
+        } else if (user.role === 'kitchen') {
+          navigate('/kitchen');
+        } else {
+          navigate('/');
+        }
       } else {
         toast({
           title: "Login failed",
