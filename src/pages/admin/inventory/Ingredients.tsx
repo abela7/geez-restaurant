@@ -230,9 +230,6 @@ const Ingredients = () => {
                         <TableHead><T text="Type" /></TableHead>
                         <TableHead><T text="Stock" /></TableHead>
                         <TableHead><T text="Cost" /></TableHead>
-                        <TableHead><T text="Supplier" /></TableHead>
-                        <TableHead><T text="Allergens" /></TableHead>
-                        <TableHead><T text="Origin" /></TableHead>
                         <TableHead className="text-right"><T text="Actions" /></TableHead>
                       </TableRow>
                     </TableHeader>
@@ -255,19 +252,6 @@ const Ingredients = () => {
                             <TableCell>
                               {ingredient.cost ? `$${ingredient.cost.toFixed(2)}/${ingredient.unit}` : "—"}
                             </TableCell>
-                            <TableCell>{ingredient.supplier || "—"}</TableCell>
-                            <TableCell>
-                              {ingredient.allergens && ingredient.allergens.length > 0 ? (
-                                ingredient.allergens.map(allergen => (
-                                  <Badge key={allergen} variant="outline" className="mr-1">
-                                    {allergen}
-                                  </Badge>
-                                ))
-                              ) : (
-                                <span className="text-muted-foreground text-sm">None</span>
-                              )}
-                            </TableCell>
-                            <TableCell>{ingredient.origin || "—"}</TableCell>
                             <TableCell className="text-right">
                               <Button 
                                 variant="ghost" 
@@ -290,7 +274,7 @@ const Ingredients = () => {
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                             <T text="No ingredients found" />
                           </TableCell>
                         </TableRow>
@@ -312,7 +296,6 @@ const Ingredients = () => {
                       <TableHead><T text="Category" /></TableHead>
                       <TableHead><T text="Stock" /></TableHead>
                       <TableHead><T text="Cost" /></TableHead>
-                      <TableHead><T text="Supplier" /></TableHead>
                       <TableHead className="text-right"><T text="Actions" /></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -324,7 +307,6 @@ const Ingredients = () => {
                           <TableCell>{ingredient.category || "—"}</TableCell>
                           <TableCell>{ingredient.stock_quantity} {ingredient.unit}</TableCell>
                           <TableCell>{ingredient.cost ? `$${ingredient.cost.toFixed(2)}/${ingredient.unit}` : "—"}</TableCell>
-                          <TableCell>{ingredient.supplier || "—"}</TableCell>
                           <TableCell className="text-right">
                             <Button 
                               variant="ghost" 
