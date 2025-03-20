@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { MainSidebar } from './MainSidebar';
@@ -22,20 +21,23 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'admin' }) => {
-  // Sidebar is closed by default
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useIsMobile();
   const location = useLocation();
   
   useEffect(() => {
-    // Close sidebar when location changes on mobile
-    if (isMobile) {
-      setSidebarOpen(false);
+    const storedCollapsed = localStorage.getItem('sidebarCollapsed');
+    if (storedCollapsed !== null) {
+      setSidebarCollapsed(storedCollapsed === 'true');
     }
-  }, [location, isMobile]);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('sidebarCollapsed', sidebarCollapsed.toString());
+  }, [sidebarCollapsed]);
   
   const toggleSidebar = () => {
-    setSidebarOpen(prev => !prev);
+    setSidebarCollapsed(prev => !prev);
   };
 
   const getBreadcrumbs = () => {
@@ -63,32 +65,88 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
   
   const breadcrumbs = getBreadcrumbs();
 
+  if (isMobile) {
+    return (
+      <div className="flex min-h-screen bg-background">
+        <div className="fixed inset-0 z-20 bg-black/60 lg:hidden" 
+          style={{ display: !sidebarCollapsed ? 'block' : 'none' }}
+          onClick={toggleSidebar}
+        />
+        
+        <div className={cn(
+          "fixed inset-y-0 left-0 z-30 w-64 transition-transform duration-300 ease-in-out transform",
+          sidebarCollapsed ? "-translate-x-full" : "translate-x-0"
+        )}>
+          <MainSidebar
+            collapsed={sidebarCollapsed}
+            toggleCollapse={toggleSidebar}
+            interface={userInterface}
+          />
+        </div>
+        
+        <div className="flex-1 flex flex-col w-full">
+          <Header toggleSidebar={toggleSidebar} interface={userInterface} />
+          
+          <main className="flex-1 overflow-auto p-4 md:p-6">
+            <div className="mb-4">
+              <Breadcrumb>
+                <BreadcrumbList>
+                  {breadcrumbs.map((crumb, index) => (
+                    <React.Fragment key={crumb.path}>
+                      {index < breadcrumbs.length - 1 ? (
+                        <>
+                          <BreadcrumbItem>
+                            <BreadcrumbLink asChild>
+                              <Link to={crumb.path}>
+                                <T text={crumb.label} />
+                              </Link>
+                            </BreadcrumbLink>
+                          </BreadcrumbItem>
+                          <BreadcrumbSeparator />
+                        </>
+                      ) : (
+                        <BreadcrumbItem>
+                          <BreadcrumbPage>
+                            <T text={crumb.label} />
+                          </BreadcrumbPage>
+                        </BreadcrumbItem>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+            
+            {children}
+          </main>
+          
+          <footer className="p-3 border-t border-border text-center text-xs text-muted-foreground bg-card/50">
+            <p><T text="© 2023 Habesha Restaurant. All rights reserved." /></p>
+          </footer>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Overlay for sidebar */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-20 bg-black/60"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-      
-      {/* Sidebar - fixed position with transform to hide/show */}
-      <div 
-        className={cn(
-          "fixed left-0 top-0 h-screen z-30 transition-transform duration-300 ease-in-out",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        )}
-      >
-        <MainSidebar open={sidebarOpen} onToggle={toggleSidebar} interface={userInterface} />
+      <div className={cn(
+        "w-64 flex-shrink-0 transition-all duration-300 ease-in-out",
+        sidebarCollapsed && "w-16"
+      )}>
+        <div className="fixed top-0 left-0 h-screen">
+          <MainSidebar
+            collapsed={sidebarCollapsed}
+            toggleCollapse={toggleSidebar}
+            interface={userInterface}
+          />
+        </div>
       </div>
       
-      {/* Main content */}
-      <div className="flex-1 flex flex-col w-full transition-all duration-300">
+      <div className="flex-1 flex flex-col w-full transition-all duration-300 ease-in-out">
         <Header toggleSidebar={toggleSidebar} interface={userInterface} />
         
         <main className="flex-1 overflow-auto p-4 md:p-6">
-          {/* Breadcrumbs */}
           <div className="mb-4">
             <Breadcrumb>
               <BreadcrumbList>

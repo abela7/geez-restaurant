@@ -10,27 +10,13 @@ import SidebarHeader from './sidebar/SidebarHeader';
 import { getNavSections, getInterfaceTitle, NavSection } from './sidebar/SidebarNavData';
 
 export const MainSidebar: React.FC<{
-  open: boolean;
-  onToggle: () => void;
+  collapsed: boolean;
+  toggleCollapse: () => void;
   interface: "admin" | "waiter" | "kitchen" | "customer" | "system";
-}> = ({ open, onToggle, interface: interfaceType }) => {
+}> = ({ collapsed, toggleCollapse, interface: interfaceType }) => {
   const location = useLocation();
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const { t } = useLanguage();
-  const [collapsed, setCollapsed] = useState(false);
-
-  useEffect(() => {
-    // Check if there's a stored value for sidebar collapsed state
-    const storedCollapsed = localStorage.getItem('sidebarCollapsed');
-    if (storedCollapsed !== null) {
-      setCollapsed(storedCollapsed === 'true');
-    }
-  }, []);
-
-  useEffect(() => {
-    // Save collapsed state to localStorage when it changes
-    localStorage.setItem('sidebarCollapsed', collapsed.toString());
-  }, [collapsed]);
 
   const toggleSection = (e: React.MouseEvent, section: string) => {
     e.preventDefault();
@@ -39,10 +25,6 @@ export const MainSidebar: React.FC<{
         ? prev.filter(item => item !== section) 
         : [...prev, section]
     );
-  };
-
-  const toggleCollapse = () => {
-    setCollapsed(prev => !prev);
   };
 
   const navSections = getNavSections(interfaceType);
