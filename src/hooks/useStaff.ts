@@ -23,11 +23,21 @@ export function useStaff() {
 
       if (error) throw error;
 
-      // Cast the roles to make TypeScript happy
+      // Map the database role to a more user-friendly staff_role
+      const roleMapping: Record<string, any> = {
+        'admin': 'Admin',
+        'waiter': 'Waiter',
+        'chef': 'Kitchen',
+        'dishwasher': 'Kitchen',
+        'manager': 'Admin'
+      };
+
+      // Cast the data and add staff_role property based on role
       const typedData = data?.map(item => ({
         ...item,
         role: item.role as StaffMember['role'],
-        staff_role: item.staff_role as StaffMember['staff_role']
+        // Set staff_role based on role if it doesn't exist in the database
+        staff_role: roleMapping[item.role] || 'Customer'
       })) || [];
       
       setStaff(typedData);
@@ -156,11 +166,20 @@ export function useStaff() {
 
       if (error) throw error;
       
-      // Cast the role to make TypeScript happy
+      // Create a roleMapping to set staff_role based on role
+      const roleMapping: Record<string, any> = {
+        'admin': 'Admin',
+        'waiter': 'Waiter',
+        'chef': 'Kitchen',
+        'dishwasher': 'Kitchen',
+        'manager': 'Admin'
+      };
+      
+      // Cast and return with staff_role added
       return {
         ...data,
         role: data.role as StaffMember['role'],
-        staff_role: data.staff_role as StaffMember['staff_role']
+        staff_role: roleMapping[data.role] || 'Customer'
       } as StaffMember;
     } catch (err) {
       console.error('Error fetching staff member:', err);
