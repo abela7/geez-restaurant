@@ -4,8 +4,8 @@ import { Room, Table, Reservation } from "./types";
 
 // Room functions
 export const getRooms = async (): Promise<Room[]> => {
-  // Since 'rooms' isn't in the Supabase types, we'll use a more generic approach
-  const { data, error } = await supabase
+  // Use type assertion to bypass TypeScript checking for table names
+  const { data, error } = await (supabase as any)
     .from('rooms')
     .select('*')
     .order('name');
@@ -15,12 +15,11 @@ export const getRooms = async (): Promise<Room[]> => {
     throw error;
   }
   
-  // Explicitly cast the data to Room[] to ensure type safety
   return (data || []) as unknown as Room[];
 };
 
 export const getRoomById = async (id: string): Promise<Room | null> => {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('rooms')
     .select('*')
     .eq('id', id)
@@ -35,7 +34,7 @@ export const getRoomById = async (id: string): Promise<Room | null> => {
 };
 
 export const createRoom = async (room: Omit<Room, 'id' | 'created_at' | 'updated_at'>): Promise<Room> => {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('rooms')
     .insert(room)
     .select()
@@ -50,7 +49,7 @@ export const createRoom = async (room: Omit<Room, 'id' | 'created_at' | 'updated
 };
 
 export const updateRoom = async (id: string, room: Partial<Room>): Promise<Room> => {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('rooms')
     .update(room)
     .eq('id', id)
@@ -66,7 +65,7 @@ export const updateRoom = async (id: string, room: Partial<Room>): Promise<Room>
 };
 
 export const deleteRoom = async (id: string): Promise<void> => {
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from('rooms')
     .delete()
     .eq('id', id);
