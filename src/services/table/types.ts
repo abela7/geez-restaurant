@@ -48,4 +48,8 @@ export interface Reservation {
   customer_name?: string;
   contact_number?: string;
   table_number?: number;
+  table?: {
+    table_number: number;
+    [key: string]: any;
+  };
 }

@@ -4,71 +4,72 @@ import { Room, Table, Reservation } from "./types";
 
 // Room functions
 export const getRooms = async (): Promise<Room[]> => {
-  // Use an explicit cast with 'as any' to bypass TypeScript checking for table names
-  const { data, error } = await (supabase
-    .from('rooms' as any)
+  // Since 'rooms' isn't in the Supabase types, we'll use a more generic approach
+  const { data, error } = await supabase
+    .from('rooms')
     .select('*')
-    .order('name'));
+    .order('name');
   
   if (error) {
     console.error('Error fetching rooms:', error);
     throw error;
   }
   
-  return (data || []) as Room[];
+  // Explicitly cast the data to Room[] to ensure type safety
+  return (data || []) as unknown as Room[];
 };
 
 export const getRoomById = async (id: string): Promise<Room | null> => {
-  const { data, error } = await (supabase
-    .from('rooms' as any)
+  const { data, error } = await supabase
+    .from('rooms')
     .select('*')
     .eq('id', id)
-    .maybeSingle());
+    .maybeSingle();
   
   if (error) {
     console.error('Error fetching room:', error);
     throw error;
   }
   
-  return data as Room | null;
+  return data as unknown as Room | null;
 };
 
 export const createRoom = async (room: Omit<Room, 'id' | 'created_at' | 'updated_at'>): Promise<Room> => {
-  const { data, error } = await (supabase
-    .from('rooms' as any)
+  const { data, error } = await supabase
+    .from('rooms')
     .insert(room)
     .select()
-    .single());
+    .single();
   
   if (error) {
     console.error('Error creating room:', error);
     throw error;
   }
   
-  return data as Room;
+  return data as unknown as Room;
 };
 
 export const updateRoom = async (id: string, room: Partial<Room>): Promise<Room> => {
-  const { data, error } = await (supabase
-    .from('rooms' as any)
+  const { data, error } = await supabase
+    .from('rooms')
     .update(room)
     .eq('id', id)
     .select()
-    .single());
+    .single();
   
   if (error) {
     console.error('Error updating room:', error);
     throw error;
   }
   
-  return data as Room;
+  return data as unknown as Room;
 };
 
 export const deleteRoom = async (id: string): Promise<void> => {
-  const { error } = await (supabase
-    .from('rooms' as any)
+  const { error } = await supabase
+    .from('rooms')
     .delete()
-    .eq('id', id));
+    .eq('id', id);
   
   if (error) {
     console.error('Error deleting room:', error);
@@ -78,8 +79,6 @@ export const deleteRoom = async (id: string): Promise<void> => {
 
 // Table functions
 export const getTables = async (): Promise<Table[]> => {
-  // For table queries, we cannot use the room relationship directly due to type issues
-  // We'll fetch the data and manually cast it
   const { data, error } = await supabase
     .from('restaurant_tables')
     .select('*');
@@ -89,8 +88,6 @@ export const getTables = async (): Promise<Table[]> => {
     throw error;
   }
   
-  // If we need rooms data, we could fetch rooms separately and join them manually
-  // For simplicity, we'll just return the tables and handle the room relationship on the client
   return (data || []) as unknown as Table[];
 };
 
@@ -274,9 +271,14 @@ export const deleteReservation = async (id: string): Promise<void> => {
 
 // Table layout functions
 export const updateTablePosition = async (id: string, position_x: number, position_y: number): Promise<Table> => {
+  const updateData = { 
+    position_x, 
+    position_y 
+  } as any; // Use type assertion to bypass strict type checking
+  
   const { data, error } = await supabase
     .from('restaurant_tables')
-    .update({ position_x, position_y } as any) // Use 'as any' to bypass type checking
+    .update(updateData)
     .eq('id', id)
     .select()
     .single();
@@ -290,9 +292,14 @@ export const updateTablePosition = async (id: string, position_x: number, positi
 };
 
 export const updateTableDimensions = async (id: string, width: number, height: number): Promise<Table> => {
+  const updateData = { 
+    width, 
+    height 
+  } as any; // Use type assertion to bypass strict type checking
+  
   const { data, error } = await supabase
     .from('restaurant_tables')
-    .update({ width, height } as any) // Use 'as any' to bypass type checking
+    .update(updateData)
     .eq('id', id)
     .select()
     .single();
