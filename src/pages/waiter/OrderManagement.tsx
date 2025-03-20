@@ -17,9 +17,14 @@ import {
   Filter,
   ShoppingBag,
   Package,
-  UtensilsCrossed
+  UtensilsCrossed,
+  Grid3X3,
+  Building
 } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getActiveRooms, getTableGroups, getTablesByRoomId, getTablesByGroupId } from "@/services/table";
+import { Room, TableGroup, Table as TableType } from "@/services/table/types";
 
 const orders = [
   { id: 1, table: "Table 5", items: 4, total: "$86.50", status: "Pending", time: "5 mins ago", special: false },
@@ -40,6 +45,14 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder = false, sea
   const location = useLocation();
   const [orderType, setOrderType] = useState<string>("dine-in");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedRoom, setSelectedRoom] = useState<string>("");
+  const [selectedGroup, setSelectedGroup] = useState<string>("");
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [tableGroups, setTableGroups] = useState<TableGroup[]>([]);
+  const [tables, setTables] = useState<TableType[]>([]);
+  const [filterType, setFilterType] = useState<"room" | "group">("room");
+  const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false);
+  const [selectedTable, setSelectedTable] = useState<string>("");
   
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -47,7 +60,44 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder = false, sea
     if (typeParam) {
       setOrderType(typeParam);
     }
+    
+    const fetchInitialData = async () => {
+      try {
+        const roomsData = await getActiveRooms();
+        setRooms(roomsData);
+        
+        const groupsData = await getTableGroups();
+        setTableGroups(groupsData);
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+      }
+    };
+    
+    fetchInitialData();
   }, [location]);
+  
+  useEffect(() => {
+    const fetchTables = async () => {
+      try {
+        if (filterType === "room" && selectedRoom) {
+          const tablesData = await getTablesByRoomId(selectedRoom);
+          setTables(tablesData);
+        } else if (filterType === "group" && selectedGroup) {
+          const tablesData = await getTablesByGroupId(selectedGroup);
+          setTables(tablesData);
+        }
+      } catch (error) {
+        console.error("Error fetching tables:", error);
+      }
+    };
+    
+    fetchTables();
+  }, [selectedRoom, selectedGroup, filterType]);
+  
+  const handleTableClick = (tableId: string) => {
+    setSelectedTable(tableId);
+    setIsMenuVisible(true);
+  };
   
   if (newOrder) {
     return (
@@ -62,7 +112,10 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder = false, sea
         
         <Card className="mb-6">
           <div className="p-4 border-b">
-            <Tabs value={orderType} onValueChange={setOrderType}>
+            <Tabs value={orderType} onValueChange={(value) => {
+              setOrderType(value);
+              setIsMenuVisible(false);
+            }}>
               <TabsList>
                 <TabsTrigger value="dine-in">
                   <UtensilsCrossed className="h-4 w-4 mr-2" />
@@ -76,21 +129,91 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder = false, sea
             </Tabs>
           </div>
           
-          {orderType === "dine-in" && (
+          {orderType === "dine-in" && !isMenuVisible && (
             <div className="p-4">
-              <h3 className="font-medium mb-4"><T text="Select a Table" /></h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                {Array.from({ length: 12 }, (_, i) => (
-                  <Card key={i} className={`p-3 cursor-pointer hover:bg-primary/5 ${i === 4 || i === 7 ? 'bg-amber-100/50 border-amber-500' : ''}`}>
-                    <div className="text-center">
-                      <p className="font-medium">Table {i + 1}</p>
-                      {(i === 4 || i === 7) && (
-                        <p className="text-xs text-muted-foreground mt-1"><T text="Occupied" /></p>
-                      )}
-                    </div>
-                  </Card>
-                ))}
+              <div className="mb-4">
+                <h3 className="font-medium mb-3"><T text="Filter Tables By" /></h3>
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex-1">
+                    <Tabs value={filterType} onValueChange={(value: "room" | "group") => setFilterType(value)}>
+                      <TabsList className="w-full">
+                        <TabsTrigger value="room" className="flex-1">
+                          <Building className="h-4 w-4 mr-2" />
+                          <T text="Room" />
+                        </TabsTrigger>
+                        <TabsTrigger value="group" className="flex-1">
+                          <Grid3X3 className="h-4 w-4 mr-2" />
+                          <T text="Group" />
+                        </TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="room">
+                        <Select value={selectedRoom} onValueChange={setSelectedRoom}>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t("Select a room")} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {rooms.map(room => (
+                              <SelectItem key={room.id} value={room.id}>
+                                {room.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TabsContent>
+                      
+                      <TabsContent value="group">
+                        <Select value={selectedGroup} onValueChange={setSelectedGroup}>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t("Select a table group")} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {tableGroups.map(group => (
+                              <SelectItem key={group.id} value={group.id}>
+                                {group.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TabsContent>
+                    </Tabs>
+                  </div>
+                </div>
               </div>
+              
+              <h3 className="font-medium mb-4"><T text="Select a Table" /></h3>
+              {(filterType === "room" && !selectedRoom) || (filterType === "group" && !selectedGroup) ? (
+                <div className="text-center p-4 text-muted-foreground">
+                  <T text={filterType === "room" ? "Please select a room first" : "Please select a table group first"} />
+                </div>
+              ) : tables.length === 0 ? (
+                <div className="text-center p-4 text-muted-foreground">
+                  <T text="No tables found" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                  {tables.map((table) => (
+                    <Card 
+                      key={table.id} 
+                      className={`p-3 cursor-pointer hover:bg-primary/5 ${
+                        table.status === 'occupied' ? 'bg-amber-100/50 border-amber-500' : 
+                        table.status === 'reserved' ? 'bg-blue-100/50 border-blue-500' : 
+                        table.status === 'cleaning' ? 'bg-gray-100/50 border-gray-500' : ''
+                      }`}
+                      onClick={() => table.status === 'available' ? handleTableClick(table.id) : null}
+                    >
+                      <div className="text-center">
+                        <p className="font-medium">Table {table.table_number}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          <T text={table.status === 'available' ? 'Available' : 
+                                   table.status === 'occupied' ? 'Occupied' : 
+                                   table.status === 'reserved' ? 'Reserved' : 'Cleaning'} />
+                        </p>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
           )}
           
@@ -99,33 +222,48 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder = false, sea
               <h3 className="font-medium mb-4"><T text="Takeout Information" /></h3>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium mb-2 block"><T text="Phone Number" /></label>
-                  <Input placeholder={t("Enter phone number")} />
+                   <label className="text-sm font-medium mb-2 block"><T text="Phone Number" /></label>
+                   <Input placeholder={t("Enter phone number")} />
                 </div>
                 <div>
                   <label className="text-sm font-medium mb-2 block"><T text="Pickup Time" /></label>
                   <Input type="time" defaultValue={new Date().toTimeString().slice(0, 5)} />
                 </div>
+                <Button 
+                  className="mt-2" 
+                  onClick={() => setIsMenuVisible(true)}
+                >
+                  <T text="Continue to Menu" />
+                </Button>
               </div>
             </div>
           )}
         </Card>
         
-        <Card>
-          <div className="p-4 border-b flex justify-between items-center">
-            <h3 className="font-medium text-lg"><T text="Menu Items" /></h3>
-            <div className="relative w-64">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder={t("Search menu...")} 
-                className="pl-9 w-full"
-              />
+        {isMenuVisible && (
+          <Card>
+            <div className="p-4 border-b flex justify-between items-center">
+              <h3 className="font-medium text-lg">
+                {orderType === "dine-in" ? 
+                  <T text={`Menu Items - Table ${tables.find(t => t.id === selectedTable)?.table_number || ""}`} /> : 
+                  <T text="Menu Items - Takeout" />
+                }
+              </h3>
+              <div className="relative w-64">
+                <div className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground">
+                  <Search className="h-4 w-4" />
+                </div>
+                <Input 
+                  placeholder={t("Search menu...")} 
+                  className="pl-9 w-full"
+                />
+              </div>
             </div>
-          </div>
-          <div className="p-4 text-center text-muted-foreground">
-            <T text="Select menu items to add to the order" />
-          </div>
-        </Card>
+            <div className="p-4 text-center text-muted-foreground">
+              <T text="Select menu items to add to the order" />
+            </div>
+          </Card>
+        )}
       </div>
     );
   }
