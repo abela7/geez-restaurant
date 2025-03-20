@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Expense, ExpenseWithCategory } from "./types";
+import { Expense, ExpenseWithCategory, Ingredient } from "./types";
 
 /**
  * Fetches expenses with optional filters
@@ -81,4 +81,108 @@ export const deleteExpense = async (id: string): Promise<void> => {
     console.error("Error deleting expense:", error);
     throw new Error(error.message);
   }
+};
+
+/**
+ * Fetches all ingredients from the database
+ */
+export const fetchIngredients = async (): Promise<Ingredient[]> => {
+  const { data, error } = await supabase
+    .from("ingredients")
+    .select("*")
+    .order("name");
+
+  if (error) {
+    console.error("Error fetching ingredients:", error);
+    throw new Error(error.message);
+  }
+
+  return data;
+};
+
+/**
+ * Fetches ingredients filtered by category
+ */
+export const fetchIngredientsByCategory = async (category: string): Promise<Ingredient[]> => {
+  const { data, error } = await supabase
+    .from("ingredients")
+    .select("*")
+    .eq("category", category)
+    .order("name");
+
+  if (error) {
+    console.error("Error fetching ingredients by category:", error);
+    throw new Error(error.message);
+  }
+
+  return data;
+};
+
+/**
+ * Gets a single ingredient by ID
+ */
+export const getIngredientById = async (id: string): Promise<Ingredient | null> => {
+  const { data, error } = await supabase
+    .from("ingredients")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    console.error("Error fetching ingredient:", error);
+    return null;
+  }
+
+  return data;
+};
+
+/**
+ * Updates inventory quantity after an expense
+ */
+export const updateIngredientQuantity = async (
+  ingredientId: string, 
+  quantity: number
+): Promise<void> => {
+  // Get current ingredient
+  const { data: currentIngredient, error: getError } = await supabase
+    .from("ingredients")
+    .select("stock_quantity")
+    .eq("id", ingredientId)
+    .single();
+  
+  if (getError) {
+    console.error("Error fetching current ingredient quantity:", getError);
+    throw new Error(getError.message);
+  }
+  
+  // Calculate new quantity
+  const newQuantity = (currentIngredient.stock_quantity || 0) + quantity;
+  
+  // Update the ingredient
+  const { error: updateError } = await supabase
+    .from("ingredients")
+    .update({ stock_quantity: newQuantity })
+    .eq("id", ingredientId);
+  
+  if (updateError) {
+    console.error("Error updating ingredient quantity:", updateError);
+    throw new Error(updateError.message);
+  }
+};
+
+/**
+ * Maps expense categories to ingredient categories
+ * Used to determine which ingredients to show for a given expense category
+ */
+export const getCategoryIngredientMapping = (): Record<string, string> => {
+  return {
+    "Food": "Food",
+    "Beverage": "Beverage",
+    "Kitchen Supplies": "Kitchen",
+    "Utilities": "Equipment",
+    "Meat": "Meat",
+    "Produce": "Vegetables",
+    "Dairy": "Dairy"
+    // Add more mappings as needed
+  };
 };

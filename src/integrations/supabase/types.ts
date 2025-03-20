@@ -337,9 +337,12 @@ export type Database = {
           date: string
           description: string | null
           id: string
+          ingredient_id: string | null
           payee: string
           payment_method: string
+          quantity: number | null
           reference: string | null
+          unit: string | null
           updated_at: string
         }
         Insert: {
@@ -349,9 +352,12 @@ export type Database = {
           date?: string
           description?: string | null
           id?: string
+          ingredient_id?: string | null
           payee: string
           payment_method: string
+          quantity?: number | null
           reference?: string | null
+          unit?: string | null
           updated_at?: string
         }
         Update: {
@@ -361,9 +367,12 @@ export type Database = {
           date?: string
           description?: string | null
           id?: string
+          ingredient_id?: string | null
           payee?: string
           payment_method?: string
+          quantity?: number | null
           reference?: string | null
+          unit?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -372,6 +381,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "expense_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
             referencedColumns: ["id"]
           },
         ]
@@ -1413,7 +1429,43 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      expense_inventory_view: {
+        Row: {
+          amount: number | null
+          category_id: string | null
+          category_name: string | null
+          category_type: string | null
+          created_at: string | null
+          date: string | null
+          description: string | null
+          id: string | null
+          ingredient_id: string | null
+          ingredient_name: string | null
+          ingredient_unit: string | null
+          payee: string | null
+          payment_method: string | null
+          quantity: number | null
+          reference: string | null
+          unit: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "expense_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
