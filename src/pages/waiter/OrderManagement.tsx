@@ -148,11 +148,13 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder = false, sea
         <Card>
           <div className="p-4 border-b flex justify-between items-center">
             <h3 className="font-medium text-lg"><T text="Menu Items" /></h3>
-            <Input 
-              placeholder={t("Search menu...")} 
-              className="w-64"
-              prefix={<Search className="h-4 w-4 text-muted-foreground" />}
-            />
+            <div className="relative w-64">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder={t("Search menu...")} 
+                className="pl-9 w-full"
+              />
+            </div>
           </div>
           <div className="p-4 text-center text-muted-foreground">
             <T text="Select menu items to add to the order" />
