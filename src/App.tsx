@@ -144,6 +144,7 @@ const App = () => (
               <Route path="/admin/staff/performance" element={<StaffPerformance />} />
               <Route path="/admin/staff/new" element={<NewStaff />} />
               <Route path="/admin/staff/directory" element={<Directory />} />
+              <Route path="/admin/staff/edit/:id" element={<EditStaff />} />
               <Route path="/admin/staff/tasks" element={<StaffTaskManagement />} />
               <Route path="/admin/staff/payroll" element={<Payroll />} />
               

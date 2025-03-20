@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,91 +8,154 @@ import { Input } from "@/components/ui/input";
 import { Avatar } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Search, ChevronRight, Phone, Mail, FilterX } from "lucide-react";
+import { Search, ChevronRight, Phone, Mail, FilterX, Trash2, AlertCircle } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
-// Sample staff data - using the same data structure as in other staff pages
-const staffMembers = [
-  { 
-    id: 1, 
-    name: "Abebe Kebede", 
-    role: "Chef", 
-    department: "Kitchen",
-    email: "abebe.k@habesha.com",
-    phone: "+251 911 234 567",
-    attendance: "Present", 
-    performance: 95, 
-    wage: 6,
-    hourlyRate: "£6.00/hr",
-    image: "/placeholder.svg",
-    joinDate: "2021-03-15" 
-  },
-  { 
-    id: 2, 
-    name: "Makeda Haile", 
-    role: "Chef", 
-    department: "Kitchen",
-    email: "makeda.h@habesha.com",
-    phone: "+251 922 345 678",
-    attendance: "Late", 
-    performance: 88, 
-    wage: 6,
-    hourlyRate: "£6.00/hr",
-    image: "/placeholder.svg",
-    joinDate: "2021-06-22" 
-  },
-  { 
-    id: 3, 
-    name: "Dawit Tadesse", 
-    role: "Waiter", 
-    department: "Front of House",
-    email: "dawit.t@habesha.com",
-    phone: "+251 933 456 789",
-    attendance: "Present", 
-    performance: 92, 
-    wage: 6,
-    hourlyRate: "£6.00/hr",
-    image: "/placeholder.svg",
-    joinDate: "2022-01-10" 
-  },
-  { 
-    id: 4, 
-    name: "Sara Mengistu", 
-    role: "Manager", 
-    department: "Management",
-    email: "sara.m@habesha.com",
-    phone: "+251 944 567 890",
-    attendance: "Present", 
-    performance: 98, 
-    wage: 8,
-    hourlyRate: "£8.00/hr",
-    image: "/placeholder.svg",
-    joinDate: "2020-11-05" 
-  },
-];
+// Define the staff member type based on the profiles table schema
+type StaffMember = {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+  phone: string | null;
+  role: string;
+  department: string | null;
+  attendance: string | null;
+  performance: number | null;
+  hourly_rate: number | null;
+  image_url: string | null;
+  hiring_date: string | null;
+};
 
 const Directory = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
-  
+  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [staffToDelete, setStaffToDelete] = useState<string | null>(null);
+
+  const fetchStaff = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*');
+      
+      if (error) {
+        throw error;
+      }
+      
+      setStaffMembers(data || []);
+    } catch (err: any) {
+      console.error('Error fetching staff:', err);
+      setError(err.message || 'Failed to load staff data');
+      toast({
+        title: "Error",
+        description: `Failed to load staff data: ${err.message}`,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStaff();
+  }, []);
+
   const filteredStaff = staffMembers.filter(staff => {
+    const fullName = `${staff.first_name || ""} ${staff.last_name || ""}`.toLowerCase();
     const matchesSearch = 
-      staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      staff.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      staff.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      staff.phone.toLowerCase().includes(searchTerm.toLowerCase());
+      fullName.includes(searchTerm.toLowerCase()) ||
+      (staff.role || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (staff.email || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (staff.phone || "").toLowerCase().includes(searchTerm.toLowerCase());
     
     if (activeTab === "all") return matchesSearch;
-    return matchesSearch && staff.department.toLowerCase() === activeTab.toLowerCase();
+    return matchesSearch && (staff.department || "").toLowerCase() === activeTab.toLowerCase();
   });
 
-  const handleViewStaff = (id: number) => {
+  const handleViewStaff = (id: string) => {
     navigate(`/admin/staff/profile/${id}`);
+  };
+
+  const handleEditStaff = (id: string) => {
+    navigate(`/admin/staff/edit/${id}`);
+  };
+
+  const confirmDeleteStaff = (id: string) => {
+    setStaffToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteStaff = async () => {
+    if (!staffToDelete) return;
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', staffToDelete);
+      
+      if (error) {
+        throw error;
+      }
+      
+      setStaffMembers(staffMembers.filter(staff => staff.id !== staffToDelete));
+      
+      toast({
+        title: "Success",
+        description: "Staff member has been deleted",
+      });
+    } catch (err: any) {
+      console.error('Error deleting staff:', err);
+      toast({
+        title: "Error",
+        description: `Failed to delete staff: ${err.message}`,
+        variant: "destructive"
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setStaffToDelete(null);
+    }
+  };
+
+  const getFullName = (staff: StaffMember) => {
+    return `${staff.first_name || ""} ${staff.last_name || ""}`.trim() || "No Name";
+  };
+
+  const getAttendanceVariant = (attendance: string | null) => {
+    switch (attendance) {
+      case "Present":
+        return "default";
+      case "Late":
+        return "secondary";
+      case "Absent":
+        return "destructive";
+      default:
+        return "outline";
+    }
   };
 
   return (
@@ -106,6 +169,15 @@ const Directory = () => {
           </Button>
         }
       />
+
+      {error && (
+        <Card className="mb-6 border-red-300 bg-red-50 dark:bg-red-950/20">
+          <CardContent className="p-4 flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-red-500" />
+            <p className="text-red-500">{error}</p>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4">
@@ -144,7 +216,31 @@ const Directory = () => {
         </div>
       </div>
 
-      {filteredStaff.length === 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((n) => (
+            <Card key={n} className="p-6">
+              <div className="animate-pulse">
+                <div className="flex items-center space-x-4">
+                  <div className="rounded-full bg-gray-200 dark:bg-gray-700 h-12 w-12"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                  </div>
+                </div>
+                <div className="mt-4 space-y-2">
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
+                </div>
+                <div className="mt-4 flex justify-between">
+                  <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                  <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : filteredStaff.length === 0 ? (
         <Card className="p-8 text-center">
           <div className="flex flex-col items-center justify-center">
             <FilterX className="h-12 w-12 text-muted-foreground mb-4" />
@@ -169,61 +265,93 @@ const Directory = () => {
                   <div className="flex items-center gap-3 sm:gap-4">
                     <Avatar className="h-12 w-12 sm:h-16 sm:w-16 flex-shrink-0">
                       <img 
-                        src={staff.image} 
-                        alt={staff.name} 
+                        src={staff.image_url || "/placeholder.svg"} 
+                        alt={getFullName(staff)} 
                         className="aspect-square h-full w-full object-cover"
                       />
                     </Avatar>
                     <div>
-                      <h3 className="font-semibold text-base sm:text-lg">{staff.name}</h3>
+                      <h3 className="font-semibold text-base sm:text-lg">{getFullName(staff)}</h3>
                       <p className="text-muted-foreground text-sm">{staff.role}</p>
-                      <Badge 
-                        variant="outline" 
-                        className="mt-1"
-                      >
-                        {staff.department}
-                      </Badge>
+                      {staff.department && (
+                        <Badge 
+                          variant="outline" 
+                          className="mt-1"
+                        >
+                          {staff.department}
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </div>
                 
                 <div className="space-y-2 mb-4">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <span className="text-sm truncate">{staff.email}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <span className="text-sm">{staff.phone}</span>
-                  </div>
+                  {staff.email && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <span className="text-sm truncate">{staff.email}</span>
+                    </div>
+                  )}
+                  {staff.phone && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <span className="text-sm">{staff.phone}</span>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="flex items-center justify-between mt-4">
                   <div>
-                    <Badge 
-                      variant={
-                        staff.attendance === "Present" ? "default" : 
-                        staff.attendance === "Late" ? "secondary" : 
-                        "destructive"
-                      }
-                    >
-                      {staff.attendance}
-                    </Badge>
+                    {staff.attendance && (
+                      <Badge variant={getAttendanceVariant(staff.attendance)}>
+                        {staff.attendance}
+                      </Badge>
+                    )}
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => handleViewStaff(staff.id)}
-                  >
-                    <T text="View Profile" />
-                    <ChevronRight className="ml-1 h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        confirmDeleteStaff(staff.id);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleViewStaff(staff.id)}
+                    >
+                      <T text="View Profile" />
+                      <ChevronRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle><T text="Are you sure?" /></AlertDialogTitle>
+            <AlertDialogDescription>
+              <T text="This action cannot be undone. This will permanently delete the staff member from the system." />
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel><T text="Cancel" /></AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteStaff} className="bg-red-500 hover:bg-red-600">
+              <T text="Delete" />
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 };

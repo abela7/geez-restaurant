@@ -1,6 +1,6 @@
 
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,10 +29,12 @@ type StaffFormValues = {
   gender: string;
 };
 
-const NewStaff = () => {
+const EditStaff = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -51,15 +53,64 @@ const NewStaff = () => {
     }
   });
 
+  useEffect(() => {
+    const fetchStaffMember = async () => {
+      if (!id) return;
+      
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', id)
+          .single();
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (data) {
+          form.reset({
+            first_name: data.first_name || "",
+            last_name: data.last_name || "",
+            role: data.role || "",
+            department: data.department || "",
+            email: data.email || "",
+            phone: data.phone || "",
+            address: data.address || "",
+            hourly_rate: data.hourly_rate?.toString() || "",
+            bio: data.bio || "",
+            gender: data.gender || ""
+          });
+        }
+      } catch (err: any) {
+        console.error('Error fetching staff member:', err);
+        setError(err.message || 'Failed to load staff member data');
+        toast({
+          title: "Error",
+          description: `Failed to load staff member: ${err.message}`,
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchStaffMember();
+  }, [id, form, toast]);
+
   const onSubmit = async (data: StaffFormValues) => {
+    if (!id) return;
+    
     setIsSaving(true);
     setError(null);
     
     try {
-      // Create a new staff member in the profiles table
-      const { data: newStaff, error } = await supabase
+      const { error } = await supabase
         .from('profiles')
-        .insert({
+        .update({
           first_name: data.first_name,
           last_name: data.last_name,
           role: data.role,
@@ -70,13 +121,9 @@ const NewStaff = () => {
           hourly_rate: data.hourly_rate ? parseFloat(data.hourly_rate) : null,
           bio: data.bio,
           gender: data.gender,
-          attendance: "Present", // Default attendance
-          performance: 90, // Default performance
-          hiring_date: new Date().toISOString().split('T')[0],
-          created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
-        .select();
+        .eq('id', id);
       
       if (error) {
         throw error;
@@ -84,16 +131,16 @@ const NewStaff = () => {
       
       toast({
         title: "Success",
-        description: "New staff member created successfully",
+        description: "Staff member updated successfully",
       });
       
       navigate("/admin/staff/directory");
     } catch (err: any) {
-      console.error('Error creating staff member:', err);
-      setError(err.message || 'Failed to create staff member');
+      console.error('Error updating staff member:', err);
+      setError(err.message || 'Failed to update staff member');
       toast({
         title: "Error",
-        description: `Failed to create staff member: ${err.message}`,
+        description: `Failed to update staff member: ${err.message}`,
         variant: "destructive"
       });
     } finally {
@@ -101,18 +148,31 @@ const NewStaff = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <Layout interface="admin">
+        <div className="flex items-center justify-center p-12">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground"><T text="Loading staff member..." /></p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout interface="admin">
       <PageHeader 
-        heading={<T text="Add New Staff" />}
-        description={<T text="Create a new staff record" />}
+        heading={<T text="Edit Staff Member" />}
+        description={<T text="Update staff member information" />}
         actions={
           <Button 
             variant="outline"
             onClick={() => navigate("/admin/staff/directory")}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            <T text="Back to Staff" />
+            <T text="Back to Directory" />
           </Button>
         }
       />
@@ -177,10 +237,11 @@ const NewStaff = () => {
                     {...form.register("address")}
                   />
                 </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="gender"><T text="Gender" /></Label>
                   <Select 
+                    value={form.watch("gender")}
                     onValueChange={(value) => form.setValue("gender", value)}
                   >
                     <SelectTrigger>
@@ -217,6 +278,7 @@ const NewStaff = () => {
                   <div className="space-y-2">
                     <Label htmlFor="role"><T text="Role" /></Label>
                     <Select 
+                      value={form.watch("role")}
                       onValueChange={(value) => form.setValue("role", value)}
                     >
                       <SelectTrigger>
@@ -235,6 +297,7 @@ const NewStaff = () => {
                   <div className="space-y-2">
                     <Label htmlFor="department"><T text="Department" /></Label>
                     <Select 
+                      value={form.watch("department")}
                       onValueChange={(value) => form.setValue("department", value)}
                     >
                       <SelectTrigger>
@@ -314,12 +377,12 @@ const NewStaff = () => {
             {isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                <T text="Creating..." />
+                <T text="Saving..." />
               </>
             ) : (
               <>
-                <UserPlus className="mr-2 h-4 w-4" />
-                <T text="Create Staff Record" />
+                <Save className="mr-2 h-4 w-4" />
+                <T text="Save Changes" />
               </>
             )}
           </Button>
@@ -329,4 +392,4 @@ const NewStaff = () => {
   );
 };
 
-export default NewStaff;
+export default EditStaff;
