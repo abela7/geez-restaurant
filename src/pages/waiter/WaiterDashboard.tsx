@@ -1,13 +1,13 @@
 
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/card-stat";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Clock, Calendar, Utensils, DollarSign, Users, Bell, ClipboardList } from "lucide-react";
+import { Clock, Utensils, DollarSign, Users, Bell, ClipboardList, User as UserIcon } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 
 // Sample active orders data
@@ -24,21 +24,24 @@ const notifications = [
   { id: 3, message: "New task assigned: End of day report", time: "15 mins ago", type: "Task" },
 ];
 
-// Sample upcoming shifts
-const shifts = [
-  { id: 1, date: "Today", time: "5:00 PM - 11:00 PM", type: "Dinner Service" },
-  { id: 2, date: "Tomorrow", time: "11:00 AM - 3:00 PM", type: "Lunch Service" },
-  { id: 3, date: "Jul 15", time: "5:00 PM - 11:00 PM", type: "Dinner Service" },
-];
-
 const WaiterDashboard = () => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   
   return (
     <div className="container mx-auto p-4 md:p-6">
       <PageHeader 
         title={t("Waiter Dashboard")} 
         description={t("Manage your tables, orders, and tasks")}
+        actions={
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/waiter/profile')}
+          >
+            <UserIcon className="mr-2 h-4 w-4" />
+            <T text="My Profile" />
+          </Button>
+        }
       />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -64,12 +67,12 @@ const WaiterDashboard = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-3">
           <Card className="mb-6">
             <div className="p-4 border-b flex justify-between items-center">
               <h3 className="font-medium text-lg"><T text="Active Orders" /></h3>
-              <Button size="sm" onClick={() => window.location.href = '/waiter/orders'}>
+              <Button size="sm" onClick={() => navigate('/waiter/orders')}>
                 <T text="View All Orders" />
               </Button>
             </div>
@@ -136,7 +139,7 @@ const WaiterDashboard = () => {
                       <p className="font-medium">Table 2</p>
                       <Badge variant="outline" className="mt-1">{t("Occupied")}</Badge>
                       <p className="text-xs text-muted-foreground mt-2">4 {t("guests")} • 32m</p>
-                      <Button size="sm" className="w-full mt-3" onClick={() => window.location.href = '/waiter/tables'}>
+                      <Button size="sm" className="w-full mt-3" onClick={() => navigate('/waiter/tables')}>
                         <T text="View" />
                       </Button>
                     </div>
@@ -147,7 +150,7 @@ const WaiterDashboard = () => {
                       <p className="font-medium">Table 5</p>
                       <Badge variant="outline" className="mt-1">{t("Order Ready")}</Badge>
                       <p className="text-xs text-muted-foreground mt-2">2 {t("guests")} • 15m</p>
-                      <Button size="sm" className="w-full mt-3" onClick={() => window.location.href = '/waiter/tables'}>
+                      <Button size="sm" className="w-full mt-3" onClick={() => navigate('/waiter/tables')}>
                         <T text="View" />
                       </Button>
                     </div>
@@ -158,7 +161,7 @@ const WaiterDashboard = () => {
                       <p className="font-medium">Table 7</p>
                       <Badge variant="outline" className="mt-1">{t("Occupied")}</Badge>
                       <p className="text-xs text-muted-foreground mt-2">6 {t("guests")} • 45m</p>
-                      <Button size="sm" className="w-full mt-3" onClick={() => window.location.href = '/waiter/tables'}>
+                      <Button size="sm" className="w-full mt-3" onClick={() => navigate('/waiter/tables')}>
                         <T text="View" />
                       </Button>
                     </div>
@@ -169,7 +172,7 @@ const WaiterDashboard = () => {
                       <p className="font-medium">Table 8</p>
                       <Badge variant="secondary" className="mt-1">{t("Preparing")}</Badge>
                       <p className="text-xs text-muted-foreground mt-2">3 {t("guests")} • 22m</p>
-                      <Button size="sm" className="w-full mt-3" onClick={() => window.location.href = '/waiter/tables'}>
+                      <Button size="sm" className="w-full mt-3" onClick={() => navigate('/waiter/tables')}>
                         <T text="View" />
                       </Button>
                     </div>
@@ -180,7 +183,7 @@ const WaiterDashboard = () => {
                       <p className="font-medium">Table 1</p>
                       <Badge variant="secondary" className="mt-1">{t("Available")}</Badge>
                       <p className="text-xs text-muted-foreground mt-2">4 {t("seats")}</p>
-                      <Button size="sm" variant="outline" className="w-full mt-3" onClick={() => window.location.href = '/waiter/tables'}>
+                      <Button size="sm" variant="outline" className="w-full mt-3" onClick={() => navigate('/waiter/tables')}>
                         <T text="Assign" />
                       </Button>
                     </div>
@@ -193,7 +196,7 @@ const WaiterDashboard = () => {
               <Card>
                 <div className="p-4 border-b flex justify-between items-center">
                   <h3 className="font-medium"><T text="Today's Tasks" /></h3>
-                  <Button variant="outline" size="sm" onClick={() => window.location.href = '/waiter/tasks'}>
+                  <Button variant="outline" size="sm" onClick={() => navigate('/waiter/tasks')}>
                     <T text="All Tasks" />
                   </Button>
                 </div>
@@ -236,38 +239,6 @@ const WaiterDashboard = () => {
 
         <div className="lg:col-span-1">
           <Card className="mb-6">
-            <div className="p-4 border-b flex items-center justify-between">
-              <h3 className="font-medium"><T text="My Profile" /></h3>
-              <Button variant="ghost" size="sm">
-                <T text="Edit" />
-              </Button>
-            </div>
-            
-            <div className="p-4 flex flex-col items-center">
-              <Avatar className="h-20 w-20 mb-4">
-                <img src="/placeholder.svg" alt="Dawit Tadesse" />
-              </Avatar>
-              <h3 className="font-medium text-lg">Dawit Tadesse</h3>
-              <p className="text-sm text-muted-foreground">{t("Senior Waiter")}</p>
-              
-              <div className="grid grid-cols-3 gap-2 w-full mt-6 text-center">
-                <div className="p-2 rounded-md bg-muted">
-                  <p className="text-lg font-bold">12</p>
-                  <p className="text-xs text-muted-foreground"><T text="Tables" /></p>
-                </div>
-                <div className="p-2 rounded-md bg-muted">
-                  <p className="text-lg font-bold">95%</p>
-                  <p className="text-xs text-muted-foreground"><T text="Rating" /></p>
-                </div>
-                <div className="p-2 rounded-md bg-muted">
-                  <p className="text-lg font-bold">$145</p>
-                  <p className="text-xs text-muted-foreground"><T text="Tips" /></p>
-                </div>
-              </div>
-            </div>
-          </Card>
-          
-          <Card className="mb-6">
             <div className="p-4 border-b">
               <h3 className="font-medium"><T text="Notifications" /></h3>
             </div>
@@ -288,33 +259,6 @@ const WaiterDashboard = () => {
               <Button variant="ghost" size="sm">
                 <Bell className="mr-2 h-4 w-4" />
                 <T text="View All Notifications" />
-              </Button>
-            </div>
-          </Card>
-          
-          <Card>
-            <div className="p-4 border-b">
-              <h3 className="font-medium"><T text="Upcoming Shifts" /></h3>
-            </div>
-            
-            <div className="divide-y">
-              {shifts.map((shift) => (
-                <div key={shift.id} className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-medium">{shift.date}</p>
-                      <p className="text-sm text-muted-foreground">{shift.time}</p>
-                    </div>
-                    <Badge variant="outline">{t(shift.type)}</Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            <div className="p-3 text-center border-t">
-              <Button variant="ghost" size="sm">
-                <Calendar className="mr-2 h-4 w-4" />
-                <T text="View Schedule" />
               </Button>
             </div>
           </Card>
