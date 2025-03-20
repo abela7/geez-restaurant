@@ -11,8 +11,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Download, Upload, Search, Save, Plus, CheckCircle, Languages } from 'lucide-react';
+import { Download, Upload, Search, Save, Plus, CheckCircle, Languages, Database, RefreshCw } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from "sonner";
 
 // For mock data - in a real app, this would be aggregated from UI components
 const mockUITexts = [
@@ -39,12 +41,13 @@ const mockUITexts = [
 ];
 
 const LanguageManagement: React.FC = () => {
-  const { translations, setTranslations } = useLanguage();
+  const { translations, setTranslations, isLoading, saveAllTranslations } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [uiTexts, setUiTexts] = useState<Array<{ id: number; key: string; en: string; am: string }>>([]);
   const [newKey, setNewKey] = useState('');
   const [newTranslation, setNewTranslation] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveInProgress, setSaveInProgress] = useState(false);
 
   useEffect(() => {
     // Initialize the UI texts with the mock data and any saved translations
@@ -67,22 +70,31 @@ const LanguageManagement: React.FC = () => {
     );
   };
 
-  const handleSaveAll = () => {
-    const newTranslations = { ...translations };
-    
-    uiTexts.forEach(text => {
-      if (text.am) {
-        newTranslations[text.key] = text.am;
-      }
-    });
-    
-    setTranslations(newTranslations);
-    setSaveSuccess(true);
-    
-    // Hide the success message after 3 seconds
-    setTimeout(() => {
-      setSaveSuccess(false);
-    }, 3000);
+  const handleSaveAll = async () => {
+    setSaveInProgress(true);
+    try {
+      // First update the translations in context
+      const newTranslations = { ...translations };
+      uiTexts.forEach(text => {
+        if (text.am) {
+          newTranslations[text.key] = text.am;
+        }
+      });
+      setTranslations(newTranslations);
+      
+      // Then save to database
+      await saveAllTranslations();
+      
+      setSaveSuccess(true);
+      setTimeout(() => {
+        setSaveSuccess(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Error saving translations:', error);
+      toast.error("Failed to save translations");
+    } finally {
+      setSaveInProgress(false);
+    }
   };
 
   const handleAddNewTranslation = () => {
@@ -126,6 +138,30 @@ const LanguageManagement: React.FC = () => {
     linkElement.click();
   };
 
+  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const importedTranslations = JSON.parse(e.target?.result as string);
+        setTranslations(prevTranslations => ({
+          ...prevTranslations,
+          ...importedTranslations
+        }));
+        toast.success("Translations imported successfully");
+      } catch (error) {
+        console.error('Error parsing imported translations:', error);
+        toast.error("Failed to import translations. Invalid file format.");
+      }
+    };
+    reader.readAsText(file);
+    
+    // Reset the input so the same file can be selected again
+    event.target.value = '';
+  };
+
   // Filter texts based on search term
   const filteredTexts = uiTexts.filter(text => 
     text.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -136,17 +172,30 @@ const LanguageManagement: React.FC = () => {
   return (
     <Layout interface="admin">
       <PageHeader 
-        title="Language Management" 
-        description="Manage translations for the Habesha Restaurant System"
+        heading={<T text="Language Management" />}
+        description={<T text="Manage translations for the Habesha Restaurant System" />}
+        icon={<Languages className="h-6 w-6" />}
         actions={
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleExport}>
               <Download className="mr-2 h-4 w-4" />
               <T text="Export" />
             </Button>
-            <Button onClick={handleSaveAll}>
-              <Save className="mr-2 h-4 w-4" />
-              <T text="Save All" />
+            <Button 
+              onClick={handleSaveAll} 
+              disabled={saveInProgress || isLoading}
+            >
+              {saveInProgress ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  <T text="Saving..." />
+                </>
+              ) : (
+                <>
+                  <Database className="mr-2 h-4 w-4" />
+                  <T text="Save to Database" />
+                </>
+              )}
             </Button>
           </div>
         }
@@ -192,39 +241,51 @@ const LanguageManagement: React.FC = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-[600px] rounded-md border">
-                <Table>
-                  <TableHeader className="sticky top-0 bg-background">
-                    <TableRow>
-                      <TableHead className="w-[30%]"><T text="Key" /></TableHead>
-                      <TableHead className="w-[35%]"><T text="English" /></TableHead>
-                      <TableHead className="w-[35%]"><T text="Amharic" /></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredTexts.map((text) => (
-                      <TableRow key={text.id}>
-                        <TableCell className="font-medium">{text.key}</TableCell>
-                        <TableCell>{text.en}</TableCell>
-                        <TableCell>
-                          <Input 
-                            value={text.am} 
-                            onChange={(e) => handleTranslationChange(text.id, e.target.value)}
-                            placeholder="Add Amharic translation..."
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {filteredTexts.length === 0 && (
+              {isLoading ? (
+                <div className="space-y-4">
+                  {Array(8).fill(0).map((_, index) => (
+                    <div key={index} className="flex space-x-4">
+                      <Skeleton className="h-12 w-1/3" />
+                      <Skeleton className="h-12 w-1/3" />
+                      <Skeleton className="h-12 w-1/3" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <ScrollArea className="h-[600px] rounded-md border">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-background z-10">
                       <TableRow>
-                        <TableCell colSpan={3} className="text-center py-4">
-                          <T text="No results found. Try a different search term." />
-                        </TableCell>
+                        <TableHead className="w-[30%]"><T text="Key" /></TableHead>
+                        <TableHead className="w-[35%]"><T text="English" /></TableHead>
+                        <TableHead className="w-[35%]"><T text="Amharic" /></TableHead>
                       </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredTexts.map((text) => (
+                        <TableRow key={text.id}>
+                          <TableCell className="font-medium">{text.key}</TableCell>
+                          <TableCell>{text.en}</TableCell>
+                          <TableCell>
+                            <Input 
+                              value={text.am} 
+                              onChange={(e) => handleTranslationChange(text.id, e.target.value)}
+                              placeholder="Add Amharic translation..."
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {filteredTexts.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={3} className="text-center py-4">
+                            <T text="No results found. Try a different search term." />
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </ScrollArea>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -302,10 +363,18 @@ const LanguageManagement: React.FC = () => {
                       <T text="Upload a JSON file with translations" />
                     </p>
                   </div>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <Upload size={16} />
-                    <T text="Upload File" />
-                  </Button>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept=".json"
+                      onChange={handleImport}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                    <Button variant="outline" className="flex items-center gap-2">
+                      <Upload size={16} />
+                      <T text="Upload File" />
+                    </Button>
+                  </div>
                 </div>
                 
                 <Separator />

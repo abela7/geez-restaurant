@@ -1,5 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { fetchTranslations, saveTranslation, saveTranslations } from '@/services/settings/translationService';
+import { toast } from "sonner";
 
 type LanguageContextType = {
   translations: Record<string, string>;
@@ -7,7 +9,9 @@ type LanguageContextType = {
   currentLanguage: 'en' | 'am';
   setCurrentLanguage: React.Dispatch<React.SetStateAction<'en' | 'am'>>;
   t: (key: string) => string;
-  addTranslation: (key: string, value: string) => void;
+  addTranslation: (key: string, value: string) => Promise<void>;
+  saveAllTranslations: () => Promise<void>;
+  isLoading: boolean;
 };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -16,52 +20,64 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [currentLanguage, setCurrentLanguage] = useState<'en' | 'am'>('en');
   const [initialized, setInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Load translations from database when component mounts
   useEffect(() => {
-    // Load translations from localStorage if they exist
-    try {
-      const savedTranslations = localStorage.getItem('translations');
-      if (savedTranslations) {
-        setTranslations(JSON.parse(savedTranslations));
+    const loadTranslations = async () => {
+      try {
+        setIsLoading(true);
+        
+        // First try to load from Supabase
+        const dbTranslations = await fetchTranslations();
+        
+        // Then get any saved translations from localStorage as a backup
+        const savedTranslations = localStorage.getItem('translations');
+        let localTranslations = {};
+        if (savedTranslations) {
+          localTranslations = JSON.parse(savedTranslations);
+        }
+        
+        // Merge both sources, with DB translations taking precedence
+        const mergedTranslations = { ...localTranslations, ...dbTranslations };
+        setTranslations(mergedTranslations);
+        
+        // Load language preference
+        const savedLanguage = localStorage.getItem('language') as 'en' | 'am';
+        if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'am')) {
+          setCurrentLanguage(savedLanguage);
+        }
+        
+        setInitialized(true);
+      } catch (error) {
+        console.error('Error loading translations:', error);
+        toast.error("Failed to load translations");
+      } finally {
+        setIsLoading(false);
       }
-
-      // Load language preference from localStorage if it exists
-      const savedLanguage = localStorage.getItem('language') as 'en' | 'am';
-      if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'am')) {
-        setCurrentLanguage(savedLanguage);
-      }
-      
-      setInitialized(true);
-    } catch (error) {
-      console.error('Error loading language settings:', error);
-      setInitialized(true);
-    }
+    };
+    
+    loadTranslations();
   }, []);
 
+  // Save translations to localStorage whenever they change
   useEffect(() => {
-    // Only save to localStorage after initial load
     if (initialized) {
       try {
-        // Save translations to localStorage whenever they change
         localStorage.setItem('translations', JSON.stringify(translations));
       } catch (error) {
-        console.error('Error saving translations:', error);
+        console.error('Error saving translations to localStorage:', error);
       }
     }
   }, [translations, initialized]);
 
+  // Save language preference to localStorage
   useEffect(() => {
-    // Only save to localStorage after initial load
     if (initialized) {
       try {
-        // Save language preference to localStorage whenever it changes
         localStorage.setItem('language', currentLanguage);
-        
-        // Update document attributes for better accessibility
         document.documentElement.lang = currentLanguage;
-        document.documentElement.dir = 'ltr'; // Both English and Amharic are left-to-right
-        
-        // Add a data attribute for potential CSS customization
+        document.documentElement.dir = 'ltr';
         document.documentElement.setAttribute('data-language', currentLanguage);
       } catch (error) {
         console.error('Error saving language preference:', error);
@@ -76,10 +92,40 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return translations[key] || key;
   };
 
-  // Add new translation
-  const addTranslation = (key: string, value: string) => {
+  // Add new translation - saves to database and local state
+  const addTranslation = async (key: string, value: string) => {
     if (key && value) {
-      setTranslations(prev => ({ ...prev, [key]: value }));
+      try {
+        // Save to local state first for immediate feedback
+        setTranslations(prev => ({ ...prev, [key]: value }));
+        
+        // Save to database in the background
+        const success = await saveTranslation(key, value);
+        if (!success) {
+          toast.warning("Translation saved locally but failed to save to database");
+        }
+      } catch (error) {
+        console.error('Error adding translation:', error);
+        toast.error("Failed to save translation");
+      }
+    }
+  };
+
+  // Save all translations to database
+  const saveAllTranslations = async () => {
+    try {
+      setIsLoading(true);
+      const success = await saveTranslations(translations);
+      if (success) {
+        toast.success("All translations saved to database");
+      } else {
+        toast.error("Failed to save translations to database");
+      }
+    } catch (error) {
+      console.error('Error saving all translations:', error);
+      toast.error("Failed to save translations to database");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -91,7 +137,9 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         currentLanguage, 
         setCurrentLanguage, 
         t,
-        addTranslation
+        addTranslation,
+        saveAllTranslations,
+        isLoading
       }}
     >
       {children}
