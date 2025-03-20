@@ -1,16 +1,15 @@
-
 import React from 'react';
 import { 
   LayoutDashboard, DollarSign, Users, Package, BarChart, 
   User, Settings, ClipboardList, Languages, LogOut, 
-  Menu as MenuIcon, Settings2, MapPin, Utensils
+  Menu as MenuIcon, Settings2, MapPin, Utensils, Receipt
 } from 'lucide-react';
 
 export interface NavSection {
   label: string;
   icon: React.ReactNode;
   path: string;
-  to?: string; // Added the 'to' property to fix type errors
+  to?: string;
   submenu?: { to: string; label: string }[];
 }
 
@@ -29,6 +28,7 @@ export const getNavSections = (interfaceType: 'admin' | 'waiter' | 'kitchen' | '
         { to: "daily-sales", label: "Daily Sales" },
         { to: "financial-reports", label: "Financial Reports" },
         { to: "payment-management", label: "Payment Management" },
+        { to: "expenses", label: "Expenses" },
         { to: "budgeting", label: "Budgeting" }
       ]
     },

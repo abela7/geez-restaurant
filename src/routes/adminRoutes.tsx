@@ -1,3 +1,4 @@
+
 import { Route, Routes } from "react-router-dom";
 
 // Administrative Portal
@@ -25,6 +26,7 @@ import Dishes from "../pages/admin/menu/Dishes";
 import DailySales from "../pages/admin/finance/DailySales";
 import FinancialReports from "../pages/admin/finance/FinancialReports";
 import PaymentManagement from "../pages/admin/finance/PaymentManagement";
+import Expenses from "../pages/admin/finance/Expenses";
 import Budgeting from "../pages/admin/finance/Budgeting";
 
 // Inventory Subpages
@@ -96,6 +98,7 @@ const AdminRoutes = () => {
       <Route path="/admin/finance/daily-sales" element={<DailySales />} />
       <Route path="/admin/finance/financial-reports" element={<FinancialReports />} />
       <Route path="/admin/finance/payment-management" element={<PaymentManagement />} />
+      <Route path="/admin/finance/expenses" element={<Expenses />} />
       <Route path="/admin/finance/budgeting" element={<Budgeting />} />
       
       {/* Staff Management */}
@@ -166,4 +169,3 @@ const AdminRoutes = () => {
 };
 
 export default AdminRoutes;
-
