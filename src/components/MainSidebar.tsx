@@ -1,5 +1,7 @@
 
 import React from "react";
+import { useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   BarChart4,
   DollarSign,
@@ -21,9 +23,9 @@ import {
   MapPin,
   ReceiptText,
   FileQuestion,
-  ClipboardCheck
+  ClipboardCheck,
+  ChevronDown
 } from "lucide-react";
-import { Location } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 // This type represents a section in the sidebar nav
@@ -332,15 +334,72 @@ export const MainSidebar: React.FC<{
   onToggle: () => void;
   interface: "admin" | "waiter" | "kitchen" | "customer" | "system";
 }> = ({ open, onToggle, interface: interfaceType }) => {
-  // This is just a placeholder for the actual sidebar component
-  // In a real implementation, this would contain the sidebar UI
+  const location = useLocation();
+  const navSections = getNavSections(interfaceType, location);
+  const { t } = useLanguage();
+  
   return (
     <div className="fixed inset-y-0 left-0 z-50 w-64 bg-background border-r">
       <div className="flex h-screen flex-col">
         <div className="px-3 py-2 flex h-14 items-center border-b">
           <h2 className="text-lg font-semibold">Restaurant Manager</h2>
         </div>
-        {/* Navigation items would go here */}
+        
+        <div className="flex-1 overflow-auto py-2">
+          <nav className="space-y-1 px-2">
+            {navSections.map((section, index) => (
+              <div key={index} className="py-1">
+                <Link
+                  to={section.href}
+                  className={`flex items-center px-3 py-2 text-sm rounded-md transition-colors ${
+                    section.active
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  }`}
+                >
+                  <span className="mr-3 h-4 w-4">{section.icon}</span>
+                  <span>{section.title}</span>
+                  {section.routes && (
+                    <ChevronDown className="ml-auto h-4 w-4" />
+                  )}
+                </Link>
+                
+                {section.routes && section.active && (
+                  <div className="mt-1 ml-6 space-y-1">
+                    {section.routes.map((route, routeIndex) => (
+                      <Link
+                        key={routeIndex}
+                        to={route.href}
+                        className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                          location.pathname === route.href
+                            ? "bg-accent text-accent-foreground"
+                            : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground"
+                        }`}
+                      >
+                        {route.title}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </nav>
+        </div>
+        
+        <div className="border-t p-3">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              <User className="h-4 w-4" />
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <p className="text-sm font-medium leading-none truncate">Admin User</p>
+              <p className="text-xs text-muted-foreground truncate">admin@restaurant.com</p>
+            </div>
+            <button className="text-muted-foreground hover:text-foreground">
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
