@@ -10,6 +10,7 @@ export interface NavSection {
   label: string;
   icon: React.ReactNode;
   path: string;
+  to?: string; // Added the 'to' property to fix type errors
   submenu?: { to: string; label: string }[];
 }
 
@@ -140,35 +141,35 @@ export const getNavSections = (interfaceType: 'admin' | 'waiter' | 'kitchen' | '
   ];
 
   const waiterLinks: NavSection[] = [
-    { to: "/waiter", label: "Dashboard", icon: <LayoutDashboard size={20} />, path: "/waiter" },
-    { to: "/waiter/tables", label: "Table Management", icon: <MapPin size={20} />, path: "/waiter/tables" },
-    { to: "/waiter/orders", label: "Order Management", icon: <ClipboardList size={20} />, path: "/waiter/orders" },
-    { to: "/waiter/payments", label: "Payment Processing", icon: <DollarSign size={20} />, path: "/waiter/payments" },
-    { to: "/waiter/tasks", label: "Tasks", icon: <ClipboardList size={20} />, path: "/waiter/tasks" },
-    { to: "/login", label: "Logout", icon: <LogOut size={20} />, path: "/login" },
+    { label: "Dashboard", icon: <LayoutDashboard size={20} />, path: "/waiter" },
+    { label: "Table Management", icon: <MapPin size={20} />, path: "/waiter/tables" },
+    { label: "Order Management", icon: <ClipboardList size={20} />, path: "/waiter/orders" },
+    { label: "Payment Processing", icon: <DollarSign size={20} />, path: "/waiter/payments" },
+    { label: "Tasks", icon: <ClipboardList size={20} />, path: "/waiter/tasks" },
+    { label: "Logout", icon: <LogOut size={20} />, path: "/login" },
   ];
 
   const kitchenLinks: NavSection[] = [
-    { to: "/kitchen", label: "Dashboard", icon: <LayoutDashboard size={20} />, path: "/kitchen" },
-    { to: "/kitchen/recipes", label: "Recipe Viewer", icon: <MenuIcon size={20} />, path: "/kitchen/recipes" },
-    { to: "/kitchen/inventory", label: "Inventory Check", icon: <Package size={20} />, path: "/kitchen/inventory" },
-    { to: "/kitchen/tasks", label: "Tasks", icon: <ClipboardList size={20} />, path: "/kitchen/tasks" },
-    { to: "/login", label: "Logout", icon: <LogOut size={20} />, path: "/login" },
+    { label: "Dashboard", icon: <LayoutDashboard size={20} />, path: "/kitchen" },
+    { label: "Recipe Viewer", icon: <MenuIcon size={20} />, path: "/kitchen/recipes" },
+    { label: "Inventory Check", icon: <Package size={20} />, path: "/kitchen/inventory" },
+    { label: "Tasks", icon: <ClipboardList size={20} />, path: "/kitchen/tasks" },
+    { label: "Logout", icon: <LogOut size={20} />, path: "/login" },
   ];
 
   const customerLinks: NavSection[] = [
-    { to: "/menu", label: "Menu", icon: <MenuIcon size={20} />, path: "/menu" },
-    { to: "/feedback", label: "Feedback", icon: <ClipboardList size={20} />, path: "/feedback" },
-    { to: "/promotions", label: "Promotions", icon: <DollarSign size={20} />, path: "/promotions" },
-    { to: "/login", label: "Logout", icon: <LogOut size={20} />, path: "/login" },
+    { label: "Menu", icon: <MenuIcon size={20} />, path: "/menu" },
+    { label: "Feedback", icon: <ClipboardList size={20} />, path: "/feedback" },
+    { label: "Promotions", icon: <DollarSign size={20} />, path: "/promotions" },
+    { label: "Logout", icon: <LogOut size={20} />, path: "/login" },
   ];
 
   const systemLinks: NavSection[] = [
-    { to: "/system", label: "Dashboard", icon: <LayoutDashboard size={20} />, path: "/system" },
-    { to: "/system/errors", label: "Error Logs", icon: <ClipboardList size={20} />, path: "/system/errors" },
-    { to: "/system/users", label: "User Management", icon: <Users size={20} />, path: "/system/users" },
-    { to: "/system/docs", label: "Documentation", icon: <ClipboardList size={20} />, path: "/system/docs" },
-    { to: "/login", label: "Logout", icon: <LogOut size={20} />, path: "/login" },
+    { label: "Dashboard", icon: <LayoutDashboard size={20} />, path: "/system" },
+    { label: "Error Logs", icon: <ClipboardList size={20} />, path: "/system/errors" },
+    { label: "User Management", icon: <Users size={20} />, path: "/system/users" },
+    { label: "Documentation", icon: <ClipboardList size={20} />, path: "/system/docs" },
+    { label: "Logout", icon: <LogOut size={20} />, path: "/login" },
   ];
 
   switch (interfaceType) {

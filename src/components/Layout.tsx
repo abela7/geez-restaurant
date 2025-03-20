@@ -97,8 +97,10 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
                     {index < breadcrumbs.length - 1 ? (
                       <>
                         <BreadcrumbItem>
-                          <BreadcrumbLink as={Link} to={crumb.path}>
-                            <T text={crumb.label} />
+                          <BreadcrumbLink asChild>
+                            <Link to={crumb.path}>
+                              <T text={crumb.label} />
+                            </Link>
                           </BreadcrumbLink>
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
