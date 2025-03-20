@@ -6,8 +6,6 @@ import { cn } from '@/lib/utils';
 import { useLanguage, T } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import Header from './Header';
-import { Menu } from 'lucide-react'; 
-import { Button } from './ui/button';
 
 import { 
   Breadcrumb, 
@@ -24,10 +22,17 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'admin' }) => {
-  // Set default sidebar state to closed on initial load
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const location = useLocation();
+  // Set default sidebar state to closed on initial load for mobile and open for desktop
   const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const location = useLocation();
+  
+  useEffect(() => {
+    // Close sidebar on mobile when location changes
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [location, isMobile]);
   
   const toggleSidebar = () => {
     setSidebarOpen(prev => !prev);
@@ -57,24 +62,27 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
   };
   
   const breadcrumbs = getBreadcrumbs();
+  
+  // Calculate sidebar width based on state
+  const sidebarWidth = sidebarOpen ? "w-64" : "w-16";
 
   return (
     <div className="flex min-h-screen bg-background">
       {/* Overlay for mobile sidebar */}
-      {sidebarOpen && (
+      {sidebarOpen && isMobile && (
         <div
           className="fixed inset-0 z-20 bg-black/60 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
       
-      {/* Sidebar - updated with fixed position and always visible on larger screens */}
+      {/* Sidebar - fixed position for desktop */}
       <div 
         className={cn(
-          "fixed left-0 top-0 h-screen z-30 w-64",
-          "transition-transform duration-300 ease-in-out",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full",
-          "md:translate-x-0"
+          "fixed left-0 top-0 h-screen z-30",
+          sidebarWidth,
+          "transition-all duration-300 ease-in-out",
+          isMobile && !sidebarOpen ? "-translate-x-full" : "translate-x-0"
         )}
       >
         <MainSidebar open={sidebarOpen} onToggle={toggleSidebar} interface={userInterface} />
@@ -83,7 +91,8 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
       {/* Main content - adjusted with padding to account for fixed sidebar */}
       <div className={cn(
         "flex-1 flex flex-col w-full",
-        "md:ml-64" // Add margin to account for sidebar width
+        sidebarOpen ? "md:ml-64" : "md:ml-16", // Adjust margin based on sidebar width
+        "transition-all duration-300" // Smooth transition for the margin
       )}>
         <div className="sticky top-0 z-10 bg-background border-b border-border">
           <div className="flex items-center h-16 px-4">

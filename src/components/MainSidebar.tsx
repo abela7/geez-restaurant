@@ -5,7 +5,8 @@ import { useLanguage, T } from '@/contexts/LanguageContext';
 import { 
   LayoutDashboard, DollarSign, Users, Package, BarChart, 
   User, Settings, ClipboardList, ChevronDown, ChevronRight, Languages,
-  LogOut, ChevronLeft, Menu as MenuIcon, Settings2, MapPin, Utensils
+  LogOut, ChevronLeft, Menu as MenuIcon, Settings2, MapPin, Utensils,
+  PanelLeft, PanelRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -305,31 +306,31 @@ export const MainSidebar: React.FC<{
     <div className="h-full flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
       <div className="p-4 flex justify-between items-center h-16 border-b border-sidebar-border">
         <div className="text-xl font-bold text-amber-500 flex-1 text-center">
-          Habesha
+          {open ? "Habesha" : "H"}
         </div>
         
-        {isMobile && (
-          <Button
-            onClick={onToggle}
-            variant="outline"
-            size="icon"
-            className="w-8 h-8 bg-amber-400 hover:bg-amber-500 border-amber-500 text-amber-800"
-            aria-label={t("Toggle sidebar")}
-          >
-            <ChevronLeft size={18} />
-          </Button>
-        )}
+        <Button
+          onClick={onToggle}
+          variant="ghost"
+          size="icon"
+          className="w-8 h-8 hover:bg-amber-100 hover:text-amber-800"
+          aria-label={t(open ? "Collapse sidebar" : "Expand sidebar")}
+        >
+          {open ? <PanelLeft size={18} /> : <PanelRight size={18} />}
+        </Button>
       </div>
       
       <div className="flex-1 py-4 px-2 overflow-y-auto">
         <div className="mb-4 px-3 py-1">
-          <h2 className="text-xs uppercase font-semibold text-sidebar-foreground/70">
-            <T text={interfaceType === 'admin' ? 'Administrative Portal' : 
-                    interfaceType === 'waiter' ? 'Waiter Interface' :
-                    interfaceType === 'kitchen' ? 'Kitchen Staff Interface' :
-                    interfaceType === 'customer' ? 'Customer Interface' :
-                    'System Administration'} />
-          </h2>
+          {open && (
+            <h2 className="text-xs uppercase font-semibold text-sidebar-foreground/70">
+              <T text={interfaceType === 'admin' ? 'Administrative Portal' : 
+                      interfaceType === 'waiter' ? 'Waiter Interface' :
+                      interfaceType === 'kitchen' ? 'Kitchen Staff Interface' :
+                      interfaceType === 'customer' ? 'Customer Interface' :
+                      'System Administration'} />
+            </h2>
+          )}
         </div>
         
         <nav className="space-y-0.5">
@@ -376,18 +377,26 @@ export const MainSidebar: React.FC<{
       </div>
       
       <div className="border-t p-3">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-            <User className="h-4 w-4" />
+        {open ? (
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              <User className="h-4 w-4" />
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <p className="text-sm font-medium leading-none truncate">Admin User</p>
+              <p className="text-xs text-muted-foreground truncate">admin@restaurant.com</p>
+            </div>
+            <button className="text-muted-foreground hover:text-foreground">
+              <LogOut className="h-4 w-4" />
+            </button>
           </div>
-          <div className="flex-1 overflow-hidden">
-            <p className="text-sm font-medium leading-none truncate">Admin User</p>
-            <p className="text-xs text-muted-foreground truncate">admin@restaurant.com</p>
+        ) : (
+          <div className="flex justify-center">
+            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              <User className="h-4 w-4" />
+            </div>
           </div>
-          <button className="text-muted-foreground hover:text-foreground">
-            <LogOut className="h-4 w-4" />
-          </button>
-        </div>
+        )}
       </div>
     </div>
   );
