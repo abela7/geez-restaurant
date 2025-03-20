@@ -1,12 +1,11 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { Table, TableWithDetails, Room, TableGuest, Reservation } from "./types";
+import { Table, TableWithDetails, Room, TableGuest, Reservation, TableGroup, TableLayout } from "./types";
 
 // Table functions
 export const getTables = async (): Promise<Table[]> => {
   const { data, error } = await supabase
     .from('restaurant_tables')
-    .select('*, room:rooms(*)');
+    .select('*, room:rooms(*), group:table_groups(*)');
   
   if (error) {
     console.error('Error fetching tables:', error);
@@ -16,10 +15,38 @@ export const getTables = async (): Promise<Table[]> => {
   return (data || []) as Table[];
 };
 
+export const getTablesByRoomId = async (roomId: string): Promise<Table[]> => {
+  const { data, error } = await supabase
+    .from('restaurant_tables')
+    .select('*, room:rooms(*), group:table_groups(*)')
+    .eq('room_id', roomId);
+  
+  if (error) {
+    console.error('Error fetching tables by room:', error);
+    throw error;
+  }
+  
+  return (data || []) as Table[];
+};
+
+export const getTablesByGroupId = async (groupId: string): Promise<Table[]> => {
+  const { data, error } = await supabase
+    .from('restaurant_tables')
+    .select('*, room:rooms(*), group:table_groups(*)')
+    .eq('group_id', groupId);
+  
+  if (error) {
+    console.error('Error fetching tables by group:', error);
+    throw error;
+  }
+  
+  return (data || []) as Table[];
+};
+
 export const getTableById = async (id: string): Promise<Table | null> => {
   const { data, error } = await supabase
     .from('restaurant_tables')
-    .select('*, room:rooms(*)')
+    .select('*, room:rooms(*), group:table_groups(*)')
     .eq('id', id)
     .maybeSingle();
   
@@ -72,6 +99,70 @@ export const updateTableStatus = async (id: string, status: Table['status']): Pr
   
   if (error) {
     console.error('Error updating table status:', error);
+    throw error;
+  }
+  
+  return data as Table;
+};
+
+export const moveTable = async (id: string, position_x: number, position_y: number): Promise<Table> => {
+  const { data, error } = await supabase
+    .from('restaurant_tables')
+    .update({ position_x, position_y })
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error moving table:', error);
+    throw error;
+  }
+  
+  return data as Table;
+};
+
+export const resizeTable = async (id: string, width: number, height: number): Promise<Table> => {
+  const { data, error } = await supabase
+    .from('restaurant_tables')
+    .update({ width, height })
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error resizing table:', error);
+    throw error;
+  }
+  
+  return data as Table;
+};
+
+export const rotateTable = async (id: string, rotation: number): Promise<Table> => {
+  const { data, error } = await supabase
+    .from('restaurant_tables')
+    .update({ rotation })
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error rotating table:', error);
+    throw error;
+  }
+  
+  return data as Table;
+};
+
+export const changeTableShape = async (id: string, shape: Table['shape']): Promise<Table> => {
+  const { data, error } = await supabase
+    .from('restaurant_tables')
+    .update({ shape })
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error changing table shape:', error);
     throw error;
   }
   
@@ -187,6 +278,79 @@ export const deleteRoom = async (id: string): Promise<void> => {
   
   if (error) {
     console.error('Error deleting room:', error);
+    throw error;
+  }
+};
+
+// Table Group functions
+export const getTableGroups = async (): Promise<TableGroup[]> => {
+  const { data, error } = await supabase
+    .from('table_groups')
+    .select('*, room:rooms(*)')
+    .order('name');
+  
+  if (error) {
+    console.error('Error fetching table groups:', error);
+    throw error;
+  }
+  
+  return (data || []) as TableGroup[];
+};
+
+export const getTableGroupsByRoomId = async (roomId: string): Promise<TableGroup[]> => {
+  const { data, error } = await supabase
+    .from('table_groups')
+    .select('*, room:rooms(*)')
+    .eq('room_id', roomId)
+    .order('name');
+  
+  if (error) {
+    console.error('Error fetching table groups by room:', error);
+    throw error;
+  }
+  
+  return (data || []) as TableGroup[];
+};
+
+export const createTableGroup = async (group: Omit<TableGroup, 'id' | 'created_at' | 'updated_at'>): Promise<TableGroup> => {
+  const { data, error } = await supabase
+    .from('table_groups')
+    .insert(group)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error creating table group:', error);
+    throw error;
+  }
+  
+  return data as TableGroup;
+};
+
+export const updateTableGroup = async (id: string, group: Partial<TableGroup>): Promise<TableGroup> => {
+  const { data, error } = await supabase
+    .from('table_groups')
+    .update(group)
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error updating table group:', error);
+    throw error;
+  }
+  
+  return data as TableGroup;
+};
+
+export const deleteTableGroup = async (id: string): Promise<void> => {
+  const { error } = await supabase
+    .from('table_groups')
+    .delete()
+    .eq('id', id);
+  
+  if (error) {
+    console.error('Error deleting table group:', error);
     throw error;
   }
 };
@@ -368,4 +532,111 @@ export const getTablesWithDetails = async (): Promise<TableWithDetails[]> => {
   });
   
   return tablesWithDetails;
+};
+
+// Table Layout functions
+export const getLayouts = async (): Promise<TableLayout[]> => {
+  const { data, error } = await supabase
+    .from('table_layouts')
+    .select('*, room:rooms(*)')
+    .order('name');
+  
+  if (error) {
+    console.error('Error fetching layouts:', error);
+    throw error;
+  }
+  
+  return (data || []) as TableLayout[];
+};
+
+export const getActiveLayout = async (roomId?: string): Promise<TableLayout | null> => {
+  let query = supabase
+    .from('table_layouts')
+    .select('*, room:rooms(*)')
+    .eq('is_active', true);
+    
+  if (roomId) {
+    query = query.eq('room_id', roomId);
+  }
+  
+  const { data, error } = await query.maybeSingle();
+  
+  if (error) {
+    console.error('Error fetching active layout:', error);
+    throw error;
+  }
+  
+  return data as TableLayout | null;
+};
+
+export const createLayout = async (layout: Omit<TableLayout, 'id' | 'created_at' | 'updated_at'>): Promise<TableLayout> => {
+  const { data, error } = await supabase
+    .from('table_layouts')
+    .insert(layout)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error creating layout:', error);
+    throw error;
+  }
+  
+  return data as TableLayout;
+};
+
+export const updateLayout = async (id: string, layout: Partial<TableLayout>): Promise<TableLayout> => {
+  const { data, error } = await supabase
+    .from('table_layouts')
+    .update(layout)
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error updating layout:', error);
+    throw error;
+  }
+  
+  return data as TableLayout;
+};
+
+export const activateLayout = async (id: string, roomId?: string): Promise<void> => {
+  // First, deactivate all existing active layouts for the room
+  let deactivateQuery = supabase
+    .from('table_layouts')
+    .update({ is_active: false });
+    
+  if (roomId) {
+    deactivateQuery = deactivateQuery.eq('room_id', roomId);
+  }
+  
+  const { error: deactivateError } = await deactivateQuery;
+  
+  if (deactivateError) {
+    console.error('Error deactivating layouts:', deactivateError);
+    throw deactivateError;
+  }
+  
+  // Then, activate the specified layout
+  const { error: activateError } = await supabase
+    .from('table_layouts')
+    .update({ is_active: true })
+    .eq('id', id);
+  
+  if (activateError) {
+    console.error('Error activating layout:', activateError);
+    throw activateError;
+  }
+};
+
+export const deleteLayout = async (id: string): Promise<void> => {
+  const { error } = await supabase
+    .from('table_layouts')
+    .delete()
+    .eq('id', id);
+  
+  if (error) {
+    console.error('Error deleting layout:', error);
+    throw error;
+  }
 };

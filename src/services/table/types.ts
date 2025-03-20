@@ -8,6 +8,16 @@ export interface Room {
   updated_at?: string;
 }
 
+export interface TableGroup {
+  id: string;
+  name: string;
+  description?: string;
+  room_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  room?: Room;
+}
+
 export interface Table {
   id: string;
   table_number: number;
@@ -15,14 +25,17 @@ export interface Table {
   status: 'available' | 'occupied' | 'reserved' | 'cleaning';
   location?: string;
   room_id?: string;
+  group_id?: string;
   position_x?: number;
   position_y?: number;
   width?: number;
   height?: number;
-  shape?: string;
+  shape?: 'rectangle' | 'circle' | 'square' | 'oval';
+  rotation?: number;
   created_at?: string;
   updated_at?: string;
   room?: Room;
+  group?: TableGroup;
 }
 
 export interface TableWithDetails extends Table {
@@ -65,4 +78,14 @@ export interface Reservation {
     table_number: number;
     [key: string]: any;
   };
+}
+
+export interface TableLayout {
+  id: string;
+  name: string;
+  room_id?: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+  room?: Room;
 }
