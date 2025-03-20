@@ -170,12 +170,25 @@ const FoodManagement = () => {
         profitMargin = calculateProfitMargin(newItem.price, newItem.cost);
       }
       
+      // Create a new object with the correct structure for Supabase
+      const foodItemData = {
+        name: newItem.name,
+        description: newItem.description || null,
+        price: newItem.price,
+        cost: newItem.cost || null,
+        profit_margin: profitMargin,
+        image_url: newItem.image_url || null,
+        category_id: newItem.category_id || null,
+        available: newItem.available,
+        is_vegetarian: newItem.is_vegetarian,
+        is_vegan: newItem.is_vegan,
+        is_gluten_free: newItem.is_gluten_free,
+        is_spicy: newItem.is_spicy
+      };
+      
       const { data, error } = await supabase
         .from('food_items')
-        .insert({
-          ...newItem,
-          profit_margin: profitMargin
-        })
+        .insert(foodItemData)
         .select()
         .single();
       
