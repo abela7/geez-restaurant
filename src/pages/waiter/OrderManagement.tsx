@@ -21,11 +21,13 @@ const orders = [
 ];
 
 const OrderManagement = () => {
+  const { t } = useLanguage();
+  
   return (
     <div className="container mx-auto p-4 md:p-6">
       <PageHeader 
-        title="Order Management" 
-        description="Track and manage customer orders"
+        title={t("Order Management")} 
+        description={t("Track and manage customer orders")}
         actions={
           <Button>
             <Plus className="mr-2 h-4 w-4" />
@@ -39,7 +41,7 @@ const OrderManagement = () => {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search orders..."
+            placeholder={t("Search orders...")}
             className="pl-9 w-full"
           />
         </div>
@@ -80,11 +82,11 @@ const OrderManagement = () => {
                     <TableCell>#{order.id}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {order.table}
+                        {t(order.table)}
                         {order.special && (
-                          <div className="flex items-center">
+                          <div className="flex items-center" title={t("Special requests")}>
                             <AlertCircle className="h-4 w-4 text-amber-500" />
-                            <span className="sr-only">Special requests</span>
+                            <span className="sr-only">{t("Special requests")}</span>
                           </div>
                         )}
                       </div>
@@ -100,7 +102,7 @@ const OrderManagement = () => {
                           "default"
                         }
                       >
-                        {order.status}
+                        {t(order.status)}
                       </Badge>
                     </TableCell>
                     <TableCell>
