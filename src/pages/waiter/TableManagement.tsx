@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Layout from '@/components/Layout';
 import { useLanguage, T } from '@/contexts/LanguageContext';
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -22,11 +22,18 @@ import {
 
 import {
   getTables,
-  getRooms,
   updateTableStatus,
   getTableStats
 } from "@/services/table/tableService";
 import type { Table, TableWithDetails } from "@/services/table/types";
+
+// Mock data for areas/locations since we no longer have rooms
+const mockLocations = [
+  { id: 'main', name: 'Main Area' },
+  { id: 'bar', name: 'Bar Area' },
+  { id: 'patio', name: 'Patio' },
+  { id: 'private', name: 'Private Room' }
+];
 
 interface TableActionProps {
   table: TableWithDetails;
@@ -230,10 +237,10 @@ const TableCard: React.FC<{
         </div>
       )}
 
-      {/* Room label in top-right corner */}
-      {table.room?.name && (
+      {/* Location label in top-right corner */}
+      {table.location && (
         <div className="absolute top-2 right-2 text-xs px-2 py-0.5 rounded-full bg-background/80">
-          {table.room.name}
+          {table.location}
         </div>
       )}
     </div>
@@ -267,7 +274,7 @@ const TableRow: React.FC<{
     <tr className="border-b cursor-pointer hover:bg-muted/50" onClick={onClick}>
       <td className="py-3 pl-4 font-medium">{t("Table")} {table.table_number}</td>
       <td className="py-3">{table.capacity} <T text="guests" /></td>
-      <td className="py-3">{table.room?.name || table.location || "-"}</td>
+      <td className="py-3">{table.location || "-"}</td>
       <td className="py-3">{getStatusBadge(table.status)}</td>
       <td className="py-3">
         {table.status === 'occupied' && table.currentGuests && (
@@ -304,7 +311,7 @@ const TableManagement: React.FC = () => {
   const queryClient = useQueryClient();
   const [tableView, setTableView] = useState<'grid' | 'list'>('grid');
   const [selectedTable, setSelectedTable] = useState<TableWithDetails | null>(null);
-  const [selectedRoomFilter, setSelectedRoomFilter] = useState<string>("all");
+  const [selectedLocationFilter, setSelectedLocationFilter] = useState<string>("all");
   const [currentTab, setCurrentTab] = useState<string>("all-tables");
 
   // Fetch tables
@@ -314,15 +321,6 @@ const TableManagement: React.FC = () => {
   } = useQuery({
     queryKey: ['tables'],
     queryFn: getTables
-  });
-
-  // Fetch rooms
-  const {
-    data: rooms = [],
-    isLoading: isLoadingRooms
-  } = useQuery({
-    queryKey: ['rooms'],
-    queryFn: getRooms
   });
 
   // Fetch table statistics
@@ -379,15 +377,15 @@ const TableManagement: React.FC = () => {
     return tableWithDetails;
   });
 
-  // Filter tables based on the current tab and room filter
+  // Filter tables based on the current tab and location filter
   const filteredTables = enhancedTables.filter(table => {
     // Filter by status tab
     if (currentTab !== 'all-tables' && table.status !== currentTab) {
       return false;
     }
     
-    // Filter by room
-    if (selectedRoomFilter !== 'all' && table.room_id !== selectedRoomFilter) {
+    // Filter by location
+    if (selectedLocationFilter !== 'all' && table.location !== selectedLocationFilter) {
       return false;
     }
     
@@ -419,7 +417,7 @@ const TableManagement: React.FC = () => {
   };
 
   // Loading state
-  const isLoading = isLoadingTables || isLoadingRooms || isLoadingStats;
+  const isLoading = isLoadingTables || isLoadingStats;
   
   if (isLoading) {
     return (
@@ -512,26 +510,27 @@ const TableManagement: React.FC = () => {
         </Card>
       </div>
 
-      {/* Room filter */}
+      {/* Location filter */}
       <div className="mb-4">
-        <Select value={selectedRoomFilter} onValueChange={setSelectedRoomFilter}>
+        <Select value={selectedLocationFilter} onValueChange={setSelectedLocationFilter}>
           <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder={t("Filter by room")} />
+            <SelectValue placeholder={t("Filter by location")} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">
               <div className="flex items-center">
                 <Home className="mr-2 h-4 w-4" />
-                <T text="All Rooms" />
+                <T text="All Areas" />
               </div>
             </SelectItem>
-            {rooms.map(room => (
-              <SelectItem key={room.id} value={room.id}>
+            {mockLocations.map(location => (
+              <SelectItem key={location.id} value={location.id}>
                 <div className="flex items-center">
-                  {room.name === 'Main' && <LayoutGrid className="mr-2 h-4 w-4" />}
-                  {room.name === 'Bar' && <Utensils className="mr-2 h-4 w-4" />}
-                  {room.name === 'Coffee Room' && <Coffee className="mr-2 h-4 w-4" />}
-                  {room.name}
+                  {location.name === 'Main Area' && <LayoutGrid className="mr-2 h-4 w-4" />}
+                  {location.name === 'Bar Area' && <Utensils className="mr-2 h-4 w-4" />}
+                  {location.name === 'Patio' && <Coffee className="mr-2 h-4 w-4" />}
+                  {location.name === 'Private Room' && <Grid3X3 className="mr-2 h-4 w-4" />}
+                  {location.name}
                 </div>
               </SelectItem>
             ))}
@@ -579,7 +578,7 @@ const TableManagement: React.FC = () => {
                       <tr className="text-left text-sm">
                         <th className="pb-3 pl-4"><T text="Table" /></th>
                         <th className="pb-3"><T text="Capacity" /></th>
-                        <th className="pb-3"><T text="Room" /></th>
+                        <th className="pb-3"><T text="Area" /></th>
                         <th className="pb-3"><T text="Status" /></th>
                         <th className="pb-3"><T text="Details" /></th>
                         <th className="pb-3 text-right pr-4"><T text="Actions" /></th>
@@ -637,7 +636,7 @@ const TableManagement: React.FC = () => {
                       <tr className="text-left text-sm">
                         <th className="pb-3 pl-4"><T text="Table" /></th>
                         <th className="pb-3"><T text="Capacity" /></th>
-                        <th className="pb-3"><T text="Room" /></th>
+                        <th className="pb-3"><T text="Area" /></th>
                         <th className="pb-3"><T text="Status" /></th>
                         <th className="pb-3"><T text="Details" /></th>
                         <th className="pb-3 text-right pr-4"><T text="Actions" /></th>
@@ -695,7 +694,7 @@ const TableManagement: React.FC = () => {
                       <tr className="text-left text-sm">
                         <th className="pb-3 pl-4"><T text="Table" /></th>
                         <th className="pb-3"><T text="Capacity" /></th>
-                        <th className="pb-3"><T text="Room" /></th>
+                        <th className="pb-3"><T text="Area" /></th>
                         <th className="pb-3"><T text="Status" /></th>
                         <th className="pb-3"><T text="Details" /></th>
                         <th className="pb-3 text-right pr-4"><T text="Actions" /></th>
@@ -753,7 +752,7 @@ const TableManagement: React.FC = () => {
                       <tr className="text-left text-sm">
                         <th className="pb-3 pl-4"><T text="Table" /></th>
                         <th className="pb-3"><T text="Capacity" /></th>
-                        <th className="pb-3"><T text="Room" /></th>
+                        <th className="pb-3"><T text="Area" /></th>
                         <th className="pb-3"><T text="Status" /></th>
                         <th className="pb-3"><T text="Details" /></th>
                         <th className="pb-3 text-right pr-4"><T text="Actions" /></th>
@@ -808,7 +807,7 @@ const TableManagement: React.FC = () => {
                   </Badge>
                 </DialogTitle>
                 <DialogDescription>
-                  <T text="Capacity" />: {selectedTable.capacity} <T text="guests" /> | {selectedTable.room?.name || selectedTable.location || t("No room assigned")}
+                  <T text="Capacity" />: {selectedTable.capacity} <T text="guests" /> | {selectedTable.location || t("No location assigned")}
                 </DialogDescription>
               </DialogHeader>
               
