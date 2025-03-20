@@ -6,7 +6,7 @@ import { useLanguage, T } from '@/contexts/LanguageContext';
 import { 
   LayoutDashboard, DollarSign, Users, Package, BarChart, 
   User, Settings, ClipboardList, ChevronDown, ChevronRight, Languages,
-  LogOut, ChevronLeft, Menu as MenuIcon, Settings2, MapPin
+  LogOut, ChevronLeft, Menu as MenuIcon, Settings2, MapPin, Utensils
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -144,7 +144,7 @@ export const MainSidebar: React.FC<{
         { to: "directory", label: "Staff Directory" },
         { to: "performance", label: "Performance" },
         { to: "attendance", label: "Attendance" },
-        { to: "tasks", label: "Tasks" }, // Tasks moved under Staff as requested
+        { to: "tasks", label: "Tasks" }, // Tasks under Staff as requested
         { to: "payroll", label: "Payroll" }
       ]
     },
@@ -171,6 +171,17 @@ export const MainSidebar: React.FC<{
         { to: "recipes", label: "Recipes" },
         { to: "suppliers", label: "Suppliers" },
         { to: "purchase-orders", label: "Purchase Orders" }
+      ]
+    },
+    { 
+      label: "Food Hygiene", 
+      icon: <Utensils size={20} />, 
+      path: "/admin/food-safety",
+      submenu: [
+        { to: "checklists", label: "Safety Checklists" },
+        { to: "temperature", label: "Temperature Logs" },
+        { to: "inspections", label: "Inspections" },
+        { to: "training", label: "Staff Training" }
       ]
     },
     { 

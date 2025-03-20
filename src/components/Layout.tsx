@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { MainSidebar } from './MainSidebar';
@@ -85,15 +84,6 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
       <div className="flex-1 flex flex-col w-full">
         <div className="sticky top-0 z-10 bg-background border-b border-border">
           <div className="flex items-center h-16 px-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="mr-4"
-              onClick={toggleSidebar}
-            >
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle menu</span>
-            </Button>
             <div className="flex-1">
               <Header toggleSidebar={toggleSidebar} interface={userInterface} />
             </div>
