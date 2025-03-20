@@ -35,94 +35,131 @@ const RecipeManagement = () => {
   const [newIngredientId, setNewIngredientId] = useState("");
   const [newIngredientQuantity, setNewIngredientQuantity] = useState("");
   const [newIngredientUnit, setNewIngredientUnit] = useState("kg");
+  const [menuCategories, setMenuCategories] = useState([]);
   
   const foodId = searchParams.get("foodId");
   
-  // Load recipes data from Supabase
+  // Load data from Supabase
   useEffect(() => {
-    async function fetchRecipes() {
+    const loadInitialData = async () => {
       try {
         setIsLoading(true);
-        const { data, error } = await supabase
-          .from('recipes')
-          .select(`
-            id, 
-            name, 
-            serves, 
-            total_cost, 
-            cost_per_serving,
-            food_item_id,
-            food_items (
-              id,
-              name,
-              category_id,
-              menu_categories (
-                name
-              )
-            )
-          `);
-        
-        if (error) throw error;
-        
-        const formattedRecipes = data.map(recipe => ({
-          id: recipe.id,
-          name: recipe.name,
-          foodItemId: recipe.food_item_id,
-          foodName: recipe.food_items?.name || recipe.name,
-          category: recipe.food_items?.menu_categories?.name || "Uncategorized",
-          serves: recipe.serves,
-          totalCost: recipe.total_cost,
-          costPerServing: recipe.cost_per_serving
-        }));
-        
-        setRecipes(formattedRecipes);
-        
-        // If a foodId is provided, find the corresponding recipe and select it
-        if (foodId) {
-          const recipe = formattedRecipes.find(r => r.foodItemId === foodId);
-          if (recipe) {
-            setSelectedRecipe(recipe);
-            setActiveTab("ingredients");
-            // Load recipe ingredients
-            fetchRecipeIngredients(recipe.id);
-          }
-        }
+        await Promise.all([
+          loadRecipes(),
+          loadIngredients(),
+          loadMenuCategories()
+        ]);
       } catch (error) {
-        console.error('Error fetching recipes:', error);
-        toast.error('Failed to load recipes');
+        console.error('Error loading initial data:', error);
+        toast.error('Failed to load data');
       } finally {
         setIsLoading(false);
       }
-    }
+    };
     
-    async function fetchIngredients() {
-      try {
-        const { data, error } = await supabase
-          .from('ingredients')
-          .select('id, name, category, cost, unit, stock_quantity');
-        
-        if (error) throw error;
-        
-        setIngredients(data.map(ingredient => ({
-          id: ingredient.id,
-          name: ingredient.name,
-          category: ingredient.category,
-          cost: ingredient.cost,
-          unit: ingredient.unit,
-          stock: ingredient.stock_quantity
-        })));
-      } catch (error) {
-        console.error('Error fetching ingredients:', error);
-        toast.error('Failed to load ingredients');
-      }
-    }
-    
-    fetchRecipes();
-    fetchIngredients();
+    loadInitialData();
   }, [foodId]);
   
+  // Load recipes data from Supabase
+  const loadRecipes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('recipes')
+        .select(`
+          id, 
+          name, 
+          serves, 
+          total_cost, 
+          cost_per_serving,
+          food_item_id,
+          food_items (
+            id,
+            name,
+            category_id,
+            menu_categories (
+              id,
+              name
+            )
+          )
+        `);
+      
+      if (error) throw error;
+      
+      const formattedRecipes = data.map(recipe => ({
+        id: recipe.id,
+        name: recipe.name,
+        foodItemId: recipe.food_item_id,
+        foodName: recipe.food_items?.name || recipe.name,
+        category: recipe.food_items?.menu_categories?.name || "Uncategorized",
+        categoryId: recipe.food_items?.menu_categories?.id || null,
+        serves: recipe.serves,
+        totalCost: recipe.total_cost,
+        costPerServing: recipe.cost_per_serving
+      }));
+      
+      setRecipes(formattedRecipes);
+      
+      // If a foodId is provided, find the corresponding recipe and select it
+      if (foodId) {
+        const recipe = formattedRecipes.find(r => r.foodItemId === foodId);
+        if (recipe) {
+          setSelectedRecipe(recipe);
+          setActiveTab("ingredients");
+          // Load recipe ingredients
+          loadRecipeIngredients(recipe.id);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching recipes:', error);
+      toast.error('Failed to load recipes');
+      throw error;
+    }
+  };
+  
+  // Load ingredients data from Supabase
+  const loadIngredients = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('ingredients')
+        .select('id, name, category, unit, stock_quantity');
+      
+      if (error) throw error;
+      
+      // Notice we're not trying to access 'cost' here since it doesn't exist in the database
+      setIngredients(data.map(ingredient => ({
+        id: ingredient.id,
+        name: ingredient.name,
+        category: ingredient.category,
+        unit: ingredient.unit,
+        stock: ingredient.stock_quantity
+      })));
+    } catch (error) {
+      console.error('Error fetching ingredients:', error);
+      toast.error('Failed to load ingredients');
+      throw error;
+    }
+  };
+  
+  // Load menu categories from Supabase
+  const loadMenuCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('menu_categories')
+        .select('id, name')
+        .eq('active', true);
+      
+      if (error) throw error;
+      
+      setMenuCategories(data);
+    } catch (error) {
+      console.error('Error fetching menu categories:', error);
+      toast.error('Failed to load menu categories');
+      throw error;
+    }
+  };
+  
   // Fetch recipe ingredients when a recipe is selected
-  async function fetchRecipeIngredients(recipeId) {
+  const loadRecipeIngredients = async (recipeId) => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
@@ -157,7 +194,7 @@ const RecipeManagement = () => {
     } finally {
       setIsLoading(false);
     }
-  }
+  };
   
   // Handle creating a new recipe
   const handleCreateRecipe = async () => {
@@ -231,7 +268,7 @@ const RecipeManagement = () => {
       setActiveTab("ingredients");
       
       // Reload all recipes to get the complete data
-      await fetchRecipes();
+      await loadRecipes();
       
     } catch (error) {
       console.error('Error creating recipe:', error);
@@ -251,15 +288,11 @@ const RecipeManagement = () => {
     try {
       setIsLoading(true);
       
-      // Find the ingredient to calculate cost
-      const ingredient = ingredients.find(i => i.id === newIngredientId);
-      if (!ingredient) {
-        throw new Error('Ingredient not found');
-      }
-      
-      // Calculate ingredient cost
+      // We'll calculate the cost based on the quantity and a fixed unit price
+      // since the ingredients table doesn't have a cost field
       const quantity = parseFloat(newIngredientQuantity);
-      const ingredientCost = quantity * (ingredient.cost || 0);
+      const unitPrice = 10; // Default unit price in dollars per kg/liter/unit
+      const ingredientCost = quantity * unitPrice;
       
       // Add the ingredient to the recipe
       const { data, error } = await supabase
@@ -282,7 +315,7 @@ const RecipeManagement = () => {
       await updateRecipeCost(selectedRecipe.id);
       
       // Reload ingredients for this recipe
-      await fetchRecipeIngredients(selectedRecipe.id);
+      await loadRecipeIngredients(selectedRecipe.id);
       
       // Reset form
       setNewIngredientId("");
@@ -369,7 +402,7 @@ const RecipeManagement = () => {
       await updateRecipeCost(selectedRecipe.id);
       
       // Reload ingredients for this recipe
-      await fetchRecipeIngredients(selectedRecipe.id);
+      await loadRecipeIngredients(selectedRecipe.id);
       
     } catch (error) {
       console.error('Error removing ingredient:', error);
@@ -433,12 +466,11 @@ const RecipeManagement = () => {
                             <SelectValue placeholder={t("Select category")} />
                           </SelectTrigger>
                           <SelectContent>
-                            {/* We'll fetch these from the database once we have the categories table */}
-                            <SelectItem value="Main Dishes">Main Dishes</SelectItem>
-                            <SelectItem value="Vegetarian">Vegetarian</SelectItem>
-                            <SelectItem value="Appetizers">Appetizers</SelectItem>
-                            <SelectItem value="Beverages">Beverages</SelectItem>
-                            <SelectItem value="Desserts">Desserts</SelectItem>
+                            {menuCategories.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -527,7 +559,7 @@ const RecipeManagement = () => {
                               onClick={() => {
                                 setSelectedRecipe(recipe);
                                 setActiveTab("ingredients");
-                                fetchRecipeIngredients(recipe.id);
+                                loadRecipeIngredients(recipe.id);
                               }}
                             >
                               <Edit className="h-4 w-4 mr-2" />
