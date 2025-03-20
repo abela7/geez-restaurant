@@ -31,11 +31,11 @@ export const MainSidebar: React.FC<{
   const interfaceTitle = getInterfaceTitle(interfaceType);
 
   return (
-    <div className="h-full flex flex-col bg-white text-gray-800 border-r border-gray-200 w-64 transition-all duration-300 ease-in-out">
+    <div className="h-full flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border w-64 transition-all duration-300 ease-in-out">
       <div className="flex flex-col h-full">
         <SidebarHeader collapsed={collapsed} toggleCollapse={toggleCollapse} />
         
-        <div className="px-4 py-3 uppercase text-xs font-semibold text-gray-500">
+        <div className="px-4 py-3 uppercase text-xs font-semibold text-sidebar-foreground/70">
           <span><T text={interfaceTitle} /></span>
         </div>
         
