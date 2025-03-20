@@ -105,9 +105,10 @@ export const createCustomerFeedback = async (feedback: Omit<CustomerFeedback, 'i
   return data;
 };
 
-// Promotions functions
+// Promotions functions - fixed with explicit type casting
 export const getPromotions = async (): Promise<Promotion[]> => {
   console.log('Fetching promotions');
+  // Use `from` with a generic type to tell TypeScript what we expect
   const { data, error } = await supabase
     .from('promotions')
     .select('*')
@@ -118,9 +119,12 @@ export const getPromotions = async (): Promise<Promotion[]> => {
     throw error;
   }
   
+  // Process the data with proper type assertions
+  const promotionsData = data as unknown as Promotion[];
+  
   // Update status based on dates
   const today = new Date();
-  return (data || []).map(promo => {
+  return (promotionsData || []).map(promo => {
     const startDate = new Date(promo.start_date);
     const endDate = new Date(promo.end_date);
     
@@ -135,7 +139,7 @@ export const getPromotions = async (): Promise<Promotion[]> => {
     }
     
     return promo;
-  }) as Promotion[];
+  });
 };
 
 export const createPromotion = async (promotion: Omit<Promotion, 'id' | 'created_at' | 'updated_at'>): Promise<Promotion> => {
@@ -150,7 +154,7 @@ export const createPromotion = async (promotion: Omit<Promotion, 'id' | 'created
     throw error;
   }
   
-  return data as Promotion;
+  return data as unknown as Promotion;
 };
 
 export const updatePromotion = async (id: string, promotion: Partial<Promotion>): Promise<Promotion> => {
@@ -166,7 +170,7 @@ export const updatePromotion = async (id: string, promotion: Partial<Promotion>)
     throw error;
   }
   
-  return data as Promotion;
+  return data as unknown as Promotion;
 };
 
 export const deletePromotion = async (id: string): Promise<void> => {
