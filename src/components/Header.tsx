@@ -65,7 +65,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, interface: userInterface
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="outline" size="icon" className="size-9">
+                <Button variant="outline" size="icon" className="size-9 relative">
                   <Bell className="size-5" />
                   <span className="sr-only">{t("Notifications")}</span>
                   <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
@@ -85,7 +85,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, interface: userInterface
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="outline" size="icon" className="size-9">
+                <Button variant="outline" size="icon" className="size-9 relative">
                   <User className="size-5" />
                   <span className="sr-only">{t("User menu")}</span>
                 </Button>
