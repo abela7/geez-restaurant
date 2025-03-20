@@ -21,7 +21,7 @@ export type StaffMember = {
 };
 
 export const useStaffMembers = () => {
-  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
+  const [data, setData] = useState<StaffMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -38,7 +38,7 @@ export const useStaffMembers = () => {
         throw error;
       }
       
-      setStaffMembers(data as StaffMember[] || []);
+      setData(data as StaffMember[] || []);
     } catch (err: any) {
       console.error('Error fetching staff:', err);
       setError(err.message || 'Failed to load staff data');
@@ -57,7 +57,7 @@ export const useStaffMembers = () => {
   }, []);
 
   return {
-    staffMembers,
+    data,
     isLoading,
     error,
     fetchStaffData,

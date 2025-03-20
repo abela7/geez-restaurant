@@ -11,6 +11,7 @@ import AdminTaskManagement from "../pages/admin/TaskManagement";
 import Communication from "../pages/admin/Communication";
 import FinancialManagement from "../pages/admin/FinancialManagement";
 import LanguageManagement from "../pages/admin/LanguageManagement";
+import FoodSafety from "../pages/admin/FoodSafety";
 
 // Menu Management Subpages
 import RecipeManagement from "../pages/admin/menu/RecipeManagement";
@@ -32,6 +33,10 @@ import Ingredients from "../pages/admin/inventory/Ingredients";
 import Recipes from "../pages/admin/inventory/Recipes";
 import Suppliers from "../pages/admin/inventory/Suppliers";
 import PurchaseOrders from "../pages/admin/inventory/PurchaseOrders";
+
+// Food Safety Subpages
+import Checklists from "../pages/admin/food-safety/Checklists";
+import NewChecklist from "../pages/admin/food-safety/NewChecklist";
 
 // New Admin Routes
 import AdminCustomers from "../pages/admin/Customers";
@@ -123,6 +128,11 @@ const AdminRoutes = () => {
       
       {/* Tasks */}
       <Route path="/admin/tasks" element={<AdminTaskManagement />} />
+      
+      {/* Food Safety */}
+      <Route path="/admin/food-safety" element={<FoodSafety />} />
+      <Route path="/admin/food-safety/checklists" element={<Checklists />} />
+      <Route path="/admin/food-safety/checklists/new" element={<NewChecklist />} />
       
       {/* Communication */}
       <Route path="/admin/communication" element={<Communication />} />
