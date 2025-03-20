@@ -257,6 +257,51 @@ export type Database = {
           },
         ]
       }
+      customer_promotions: {
+        Row: {
+          created_at: string | null
+          customer_id: string
+          id: string
+          promotion_id: string
+          redeemed: boolean
+          redeemed_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id: string
+          id?: string
+          promotion_id: string
+          redeemed?: boolean
+          redeemed_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string
+          id?: string
+          promotion_id?: string
+          redeemed?: boolean
+          redeemed_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_promotions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_promotions_promotion_id_fkey"
+            columns: ["promotion_id"]
+            isOneToOne: false
+            referencedRelation: "promotions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           address: string | null
@@ -933,6 +978,54 @@ export type Database = {
           skills?: string[] | null
           start_date?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      promotions: {
+        Row: {
+          created_at: string | null
+          description: string
+          discount_type: string
+          discount_value: number
+          end_date: string
+          id: string
+          min_purchase: number | null
+          name: string
+          start_date: string
+          status: string
+          updated_at: string | null
+          usage_count: number | null
+          usage_limit: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          discount_type: string
+          discount_value: number
+          end_date: string
+          id?: string
+          min_purchase?: number | null
+          name: string
+          start_date: string
+          status?: string
+          updated_at?: string | null
+          usage_count?: number | null
+          usage_limit?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          discount_type?: string
+          discount_value?: number
+          end_date?: string
+          id?: string
+          min_purchase?: number | null
+          name?: string
+          start_date?: string
+          status?: string
+          updated_at?: string | null
+          usage_count?: number | null
+          usage_limit?: number | null
         }
         Relationships: []
       }

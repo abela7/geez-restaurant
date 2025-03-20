@@ -105,10 +105,10 @@ export const createCustomerFeedback = async (feedback: Omit<CustomerFeedback, 'i
   return data;
 };
 
-// Promotions functions - fixed with explicit type casting
+// Promotions functions
 export const getPromotions = async (): Promise<Promotion[]> => {
   console.log('Fetching promotions');
-  // Use `from` with a generic type to tell TypeScript what we expect
+
   const { data, error } = await supabase
     .from('promotions')
     .select('*')
@@ -119,12 +119,9 @@ export const getPromotions = async (): Promise<Promotion[]> => {
     throw error;
   }
   
-  // Process the data with proper type assertions
-  const promotionsData = data as unknown as Promotion[];
-  
   // Update status based on dates
   const today = new Date();
-  return (promotionsData || []).map(promo => {
+  return (data || []).map(promo => {
     const startDate = new Date(promo.start_date);
     const endDate = new Date(promo.end_date);
     
@@ -154,7 +151,7 @@ export const createPromotion = async (promotion: Omit<Promotion, 'id' | 'created
     throw error;
   }
   
-  return data as unknown as Promotion;
+  return data;
 };
 
 export const updatePromotion = async (id: string, promotion: Partial<Promotion>): Promise<Promotion> => {
@@ -170,7 +167,7 @@ export const updatePromotion = async (id: string, promotion: Partial<Promotion>)
     throw error;
   }
   
-  return data as unknown as Promotion;
+  return data;
 };
 
 export const deletePromotion = async (id: string): Promise<void> => {
@@ -222,4 +219,65 @@ export const getCustomerStats = async () => {
       total: bronzeMembers + silverMembers + goldMembers
     }
   };
+};
+
+// Customer Promotions
+export const getCustomerPromotions = async (customerId: string): Promise<CustomerPromotion[]> => {
+  const { data, error } = await supabase
+    .from('customer_promotions')
+    .select('*, promotion:promotion_id(*)')
+    .eq('customer_id', customerId);
+  
+  if (error) {
+    console.error('Error fetching customer promotions:', error);
+    throw error;
+  }
+  
+  return data || [];
+};
+
+export const assignPromotionToCustomer = async (customerId: string, promotionId: string): Promise<CustomerPromotion> => {
+  const { data, error } = await supabase
+    .from('customer_promotions')
+    .insert({
+      customer_id: customerId,
+      promotion_id: promotionId,
+      redeemed: false
+    })
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error assigning promotion to customer:', error);
+    throw error;
+  }
+  
+  return data;
+};
+
+export const redeemPromotion = async (id: string): Promise<CustomerPromotion> => {
+  const { data, error } = await supabase
+    .from('customer_promotions')
+    .update({
+      redeemed: true,
+      redeemed_at: new Date().toISOString()
+    })
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error redeeming promotion:', error);
+    throw error;
+  }
+  
+  // Also update the usage count on the promotion
+  const promotionId = data.promotion_id;
+  await supabase
+    .rpc('increment_promotion_usage', { promotion_id: promotionId })
+    .catch(error => {
+      console.error('Error incrementing promotion usage count:', error);
+    });
+  
+  return data;
 };
