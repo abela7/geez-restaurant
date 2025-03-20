@@ -68,12 +68,13 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
   const breadcrumbs = getBreadcrumbs();
 
   if (contentOnly) {
-    return <>{children}</>;
+    return <div className="compact-layout compact-ui">{children}</div>;
   }
 
+  // Mobile layout
   if (isMobile) {
     return (
-      <div className="flex min-h-screen bg-background">
+      <div className="flex min-h-screen bg-background compact-layout compact-ui">
         <div className="fixed inset-0 z-20 bg-black/60 lg:hidden" 
           style={{ display: !sidebarCollapsed ? 'block' : 'none' }}
           onClick={toggleSidebar}
@@ -93,11 +94,11 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
         <div className="flex-1 flex flex-col w-full">
           <Header toggleSidebar={toggleSidebar} interface={userInterface} />
           
-          <main className="flex-1 overflow-auto p-4 md:p-6">
+          <main className="flex-1 overflow-auto p-2">
             {!contentOnly && (
-              <div className="mb-4">
+              <div className="mb-2">
                 <Breadcrumb>
-                  <BreadcrumbList>
+                  <BreadcrumbList className="text-xs">
                     {breadcrumbs.map((crumb, index) => (
                       <React.Fragment key={crumb.path}>
                         {index < breadcrumbs.length - 1 ? (
@@ -128,16 +129,17 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
             {children}
           </main>
           
-          <footer className="p-3 border-t border-border text-center text-xs text-muted-foreground bg-card/50">
-            <p><T text="© 2023 Habesha Restaurant. All rights reserved." /></p>
+          <footer className="p-2 border-t border-border text-center text-xs text-muted-foreground bg-card/50">
+            <T text="© 2023 Habesha Restaurant. All rights reserved." />
           </footer>
         </div>
       </div>
     );
   }
 
+  // Desktop layout
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-background compact-layout compact-ui">
       {!sidebarCollapsed && (
         <div className="w-64 flex-shrink-0 transition-all duration-300 ease-in-out">
           <div className="fixed top-0 left-0 h-screen">
@@ -156,9 +158,9 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
       )}>
         <Header toggleSidebar={toggleSidebar} interface={userInterface} />
         
-        <main className="flex-1 overflow-auto p-4 md:p-6">
+        <main className="flex-1 overflow-auto p-3">
           {!contentOnly && (
-            <div className="mb-4">
+            <div className="mb-3">
               <Breadcrumb>
                 <BreadcrumbList>
                   {breadcrumbs.map((crumb, index) => (
@@ -191,8 +193,8 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
           {children}
         </main>
         
-        <footer className="p-3 border-t border-border text-center text-xs text-muted-foreground bg-card/50">
-          <p><T text="© 2023 Habesha Restaurant. All rights reserved." /></p>
+        <footer className="p-2 border-t border-border text-center text-xs text-muted-foreground bg-card/50">
+          <T text="© 2023 Habesha Restaurant. All rights reserved." />
         </footer>
       </div>
     </div>

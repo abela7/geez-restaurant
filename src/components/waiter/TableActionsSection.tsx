@@ -23,80 +23,80 @@ export const TableActionsSection: React.FC = () => {
   const mainActions = [
     {
       name: "New Order",
-      icon: <Plus className="h-5 w-5" />,
+      icon: <Plus className="h-4 w-4" />,
       onClick: () => navigate('/waiter/orders/new'),
       color: "primary"
     },
     {
       name: "Manage Orders",
-      icon: <ClipboardList className="h-5 w-5" />,
+      icon: <ClipboardList className="h-4 w-4" />,
       onClick: () => navigate('/waiter/orders'),
       color: "default"
     },
     {
       name: "Process Payment",
-      icon: <CreditCard className="h-5 w-5" />,
+      icon: <CreditCard className="h-4 w-4" />,
       onClick: () => navigate('/waiter/payments'),
       color: "secondary"
     },
     {
       name: "Takeout",
-      icon: <Package className="h-5 w-5" />,
+      icon: <Package className="h-4 w-4" />,
       onClick: () => navigate('/waiter/orders/new?type=takeout'),
       color: "outline"
     },
     {
       name: "Delivery",
-      icon: <ShoppingBag className="h-5 w-5" />,
+      icon: <ShoppingBag className="h-4 w-4" />,
       onClick: () => navigate('/waiter/orders/new?type=delivery'),
       color: "outline"
     },
     {
       name: "Tables",
-      icon: <Table className="h-5 w-5" />,
+      icon: <Table className="h-4 w-4" />,
       onClick: () => navigate('/waiter/tables'),
       color: "outline"
     }
   ];
   
   return (
-    <Card className="mb-6 border-border">
-      <div className="p-4 border-b flex justify-between items-center">
-        <h3 className="font-medium text-lg"><T text="Quick Actions" /></h3>
-        <div className="flex gap-2">
+    <Card className="mb-3 border-border">
+      <div className="px-3 py-2 border-b flex justify-between items-center">
+        <h3 className="font-medium text-base"><T text="Quick Actions" /></h3>
+        <div className="flex gap-1.5">
           <Button 
             variant="outline" 
             size="sm" 
             onClick={() => navigate('/waiter/orders/search')}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 h-7 text-xs"
           >
-            <Search className="h-4 w-4" />
+            <Search className="h-3.5 w-3.5" />
             <span className="hidden sm:inline"><T text="Search Orders" /></span>
           </Button>
           <Button 
             variant="outline" 
             size="sm" 
             onClick={() => navigate('/waiter/tasks')}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 h-7 text-xs"
           >
-            <ListChecks className="h-4 w-4" />
+            <ListChecks className="h-3.5 w-3.5" />
             <span className="hidden sm:inline"><T text="My Tasks" /></span>
           </Button>
         </div>
       </div>
       
-      <div className="p-4">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="p-3">
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-1.5">
           {mainActions.map((action, idx) => (
             <Card 
               key={idx} 
-              className="p-4 flex flex-col items-center justify-center text-center hover:shadow-md transition-all duration-200 cursor-pointer border-border"
+              className="p-2 flex flex-col items-center justify-center text-center hover:shadow-sm transition-all duration-200 cursor-pointer border-border"
               onClick={action.onClick}
             >
-              <div className={`w-12 h-12 rounded-full ${action.color === "primary" ? "bg-primary text-primary-foreground" : "bg-muted"} flex items-center justify-center mb-2`}>
+              <div className={`w-9 h-9 rounded-full ${action.color === "primary" ? "bg-primary text-primary-foreground" : "bg-muted"} flex items-center justify-center mb-1.5`}>
                 {action.icon}
               </div>
-              <span className="text-sm font-medium mb-1">{t(action.name)}</span>
+              <span className="text-xs font-medium">{t(action.name)}</span>
             </Card>
           ))}
         </div>

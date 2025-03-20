@@ -13,7 +13,8 @@ interface PageHeaderProps {
   icon?: React.ReactNode;
   actions?: React.ReactNode;
   className?: string;
-  backHref?: string; // Added backHref prop
+  backHref?: string;
+  compact?: boolean; // Added compact prop
 }
 
 export function PageHeader({
@@ -24,15 +25,20 @@ export function PageHeader({
   actions,
   className,
   backHref,
+  compact = false, // Default to false for backward compatibility
 }: PageHeaderProps) {
   // Use heading if provided, otherwise fall back to title
   const displayHeading = heading || title;
 
   return (
-    <div className={cn("flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4", className)}>
-      <div className="flex items-center gap-3">
+    <div className={cn(
+      "flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2", 
+      compact ? "mb-3" : "mb-6",
+      className
+    )}>
+      <div className="flex items-center gap-2">
         {backHref && (
-          <Button variant="ghost" size="icon" asChild className="mr-2">
+          <Button variant="ghost" size="icon" asChild className="mr-1">
             <Link to={backHref}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
@@ -40,11 +46,11 @@ export function PageHeader({
         )}
         {icon && <div className="flex-shrink-0 text-primary">{icon}</div>}
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className={cn("font-bold tracking-tight", compact ? "text-xl" : "text-2xl")}>
             {displayHeading}
           </h1>
           {description && (
-            <p className="text-muted-foreground mt-1">
+            <p className="text-muted-foreground text-sm">
               {description}
             </p>
           )}

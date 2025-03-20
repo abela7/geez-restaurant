@@ -32,34 +32,34 @@ const IngredientItem: React.FC<IngredientItemProps> = ({
   const { t } = useLanguage();
   
   return (
-    <Card className="p-4 flex flex-col md:flex-row justify-between items-start md:items-center">
+    <Card className="p-3 flex flex-col md:flex-row justify-between items-start md:items-center">
       <div className="mb-2 md:mb-0">
-        <h3 className="font-medium">{name}</h3>
-        <div className="flex flex-wrap gap-2 mt-1">
-          {category && <Badge variant="outline">{category}</Badge>}
-          <Badge variant="secondary" className="text-xs">
+        <h3 className="font-medium text-sm">{name}</h3>
+        <div className="flex flex-wrap gap-1.5 mt-1">
+          {category && <Badge variant="outline" className="text-xs px-1.5 py-0">{category}</Badge>}
+          <Badge variant="secondary" className="text-xs px-1.5 py-0">
             {stock !== undefined ? (
               <><T text="Stock" />: {stock} {unit}</>
             ) : (
               <>{quantity} {unit}</>
             )}
           </Badge>
-          <Badge variant="outline" className="text-xs">
+          <Badge variant="outline" className="text-xs px-1.5 py-0">
             ${cost.toFixed(2)}/{unit}
           </Badge>
         </div>
       </div>
-      <div className="flex items-center gap-2 mt-2 md:mt-0">
+      <div className="flex items-center gap-1 mt-2 md:mt-0">
         {onEdit && (
-          <Button variant="ghost" size="sm" onClick={() => onEdit(id)}>
-            <Edit className="h-4 w-4 mr-2" />
-            <T text="Edit" />
+          <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => onEdit(id)}>
+            <Edit className="h-3.5 w-3.5 mr-1.5" />
+            <span className="text-xs"><T text="Edit" /></span>
           </Button>
         )}
         {onDelete && (
-          <Button variant="ghost" size="sm" className="text-destructive" onClick={() => onDelete(id)}>
-            <Trash2 className="h-4 w-4 mr-2" />
-            <T text="Delete" />
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-destructive" onClick={() => onDelete(id)}>
+            <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+            <span className="text-xs"><T text="Delete" /></span>
           </Button>
         )}
       </div>

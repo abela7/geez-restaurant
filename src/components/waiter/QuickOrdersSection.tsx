@@ -40,7 +40,7 @@ export const QuickOrdersSection: React.FC<QuickOrdersSectionProps> = ({
   
   if (isLoading) {
     return (
-      <Card className="p-4 h-64 flex justify-center items-center">
+      <Card className="p-3 h-48 flex justify-center items-center">
         <div className="animate-pulse">
           <T text="Loading quick orders..." />
         </div>
@@ -50,7 +50,7 @@ export const QuickOrdersSection: React.FC<QuickOrdersSectionProps> = ({
   
   if (error) {
     return (
-      <Card className="p-4 h-64 flex justify-center items-center text-destructive">
+      <Card className="p-3 h-48 flex justify-center items-center text-destructive">
         <T text="Failed to load quick orders" />
       </Card>
     );
@@ -58,10 +58,10 @@ export const QuickOrdersSection: React.FC<QuickOrdersSectionProps> = ({
 
   if (!orders || orders.length === 0) {
     return (
-      <Card className="p-6 flex flex-col items-center justify-center">
-        <SearchX className="h-12 w-12 text-muted-foreground mb-2" />
-        <h3 className="font-medium text-lg mb-1"><T text="No Orders Available" /></h3>
-        <p className="text-muted-foreground text-center">
+      <Card className="p-4 flex flex-col items-center justify-center">
+        <SearchX className="h-10 w-10 text-muted-foreground mb-2" />
+        <h3 className="font-medium text-base mb-0.5"><T text="No Orders Available" /></h3>
+        <p className="text-muted-foreground text-center text-sm">
           <T text="There are currently no quick orders available." />
         </p>
       </Card>
@@ -70,15 +70,15 @@ export const QuickOrdersSection: React.FC<QuickOrdersSectionProps> = ({
   
   return (
     <Card className="overflow-hidden border-border">
-      <div className="p-4 border-b">
-        <h3 className="font-medium text-lg"><T text="Quick Orders" /></h3>
+      <div className="px-3 py-2 border-b">
+        <h3 className="font-medium text-base"><T text="Quick Orders" /></h3>
       </div>
       
-      <div className="p-4">
+      <div className="p-3">
         <Tabs defaultValue="All">
-          <TabsList className="mb-4 flex overflow-auto hide-scrollbar">
+          <TabsList className="mb-3 flex overflow-auto hide-scrollbar h-8">
             {categories.map(category => (
-              <TabsTrigger key={category} value={category} className="whitespace-nowrap">
+              <TabsTrigger key={category} value={category} className="whitespace-nowrap h-7 text-xs">
                 {t(category)}
               </TabsTrigger>
             ))}
@@ -86,8 +86,8 @@ export const QuickOrdersSection: React.FC<QuickOrdersSectionProps> = ({
           
           {categories.map(category => (
             <TabsContent key={category} value={category}>
-              <ScrollArea className={compact ? "h-[300px]" : "h-[calc(100vh-400px)]"}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-1">
+              <ScrollArea className={compact ? "h-[300px]" : "h-[calc(100vh-350px)]"}>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 p-0.5">
                   {orders
                     .filter(order => category === 'All' || order.category === category)
                     .map(order => (

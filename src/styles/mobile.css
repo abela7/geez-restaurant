@@ -47,31 +47,37 @@
   
   /* Improve spacing for mobile */
   .container {
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
   }
 }
 
-/* Improve mobile UI */
+/* Improve mobile UI with more compact spacing */
 @media (max-width: 640px) {
   .grid {
-    gap: 0.75rem !important;
+    gap: 0.5rem !important;
   }
   
   main {
-    padding: 0.75rem !important;
+    padding: 0.5rem !important;
   }
   
   .card-padding {
-    padding: 0.75rem !important;
+    padding: 0.5rem !important;
   }
   
   h1 {
-    font-size: 1.5rem !important;
+    font-size: 1.25rem !important;
+    margin-bottom: 0.5rem !important;
   }
   
   h2 {
-    font-size: 1.25rem !important;
+    font-size: 1.125rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  p {
+    margin-bottom: 0.5rem !important;
   }
   
   .hide-on-mobile {
@@ -80,18 +86,48 @@
   
   /* Optimize cards for mobile */
   .card {
-    border-radius: 0.5rem;
+    border-radius: 0.375rem;
+    margin-bottom: 0.5rem !important;
   }
   
   /* Optimize form elements for mobile */
   .input, .select, .textarea {
     font-size: 16px !important; /* Prevents iOS zoom on focus */
+    padding-top: 0.375rem !important;
+    padding-bottom: 0.375rem !important;
   }
   
   /* Optimize buttons for mobile touch */
   .button {
-    min-height: 2.5rem;
+    min-height: 2.25rem;
   }
+}
+
+/* Compact spacing for all screen sizes */
+.compact-layout main {
+  padding-top: 0.75rem !important;
+  padding-bottom: 0.75rem !important;
+}
+
+.compact-layout .card {
+  margin-bottom: 0.75rem;
+}
+
+.compact-layout h1, 
+.compact-layout h2 {
+  margin-bottom: 0.5rem;
+}
+
+.compact-layout .mb-6 {
+  margin-bottom: 0.75rem !important;
+}
+
+.compact-layout .p-4 {
+  padding: 0.75rem !important;
+}
+
+.compact-layout .gap-4 {
+  gap: 0.75rem !important;
 }
 
 /* Side modal enhancements */
