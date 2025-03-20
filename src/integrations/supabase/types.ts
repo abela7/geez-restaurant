@@ -475,7 +475,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_table_columns: {
+        Args: {
+          tablename: string
+          schema: string
+        }
+        Returns: {
+          name: string
+          data_type: string
+          is_nullable: boolean
+          column_default: string
+        }[]
+      }
+      get_tables: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          name: string
+          schema: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

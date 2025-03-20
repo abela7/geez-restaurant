@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import Layout from '@/components/Layout';
@@ -26,6 +27,19 @@ interface ColumnInfo {
   column_default: string | null;
 }
 
+// Define types for RPC responses
+interface GetTablesResponse {
+  name: string;
+  schema: string;
+}
+
+interface GetColumnsResponse {
+  name: string;
+  data_type: string;
+  is_nullable: boolean;
+  column_default: string | null;
+}
+
 const DatabaseManagement: React.FC = () => {
   const { toast } = useToast();
   const [tables, setTables] = useState<TableInfo[]>([]);
@@ -41,8 +55,7 @@ const DatabaseManagement: React.FC = () => {
   const fetchTables = async () => {
     setIsLoading(true);
     try {
-      const result = await supabase.rpc('get_tables') as any;
-      const { data, error } = result;
+      const { data, error } = await supabase.rpc<GetTablesResponse[]>('get_tables');
       
       if (error) throw error;
       
@@ -64,11 +77,10 @@ const DatabaseManagement: React.FC = () => {
   const fetchColumns = async (tableName: string, schema: string = 'public') => {
     setIsLoading(true);
     try {
-      const result = await supabase.rpc('get_table_columns', {
+      const { data, error } = await supabase.rpc<GetColumnsResponse[]>('get_table_columns', {
         tablename: tableName,
         schema: schema
-      }) as any;
-      const { data, error } = result;
+      });
       
       if (error) throw error;
       
