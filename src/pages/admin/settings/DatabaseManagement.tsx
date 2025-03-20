@@ -1,140 +1,94 @@
 
 import React, { useState, useEffect } from 'react';
-import { useLanguage, T } from '@/contexts/LanguageContext';
-import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
+import Layout from '@/components/Layout';
 import { PageHeader } from '@/components/ui/page-header';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
-} from '@/components/ui/dialog';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue
-} from '@/components/ui/select';
-import { toast } from 'sonner';
-import { Database as DatabaseIcon, PlusCircle, Trash2, Edit, Table as TableIcon } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Plus, Trash, Edit, Database, Table as TableIcon, Columns, LayoutList, RefreshCw } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
-type DatabaseTable = {
+interface DbTable {
   name: string;
   schema: string;
 }
 
-type TableColumn = {
+interface DbColumn {
   name: string;
   data_type: string;
   is_nullable: boolean;
   column_default: string | null;
 }
 
-const DATA_TYPES = [
-  'text',
-  'varchar',
-  'integer',
-  'bigint',
-  'numeric',
-  'boolean',
-  'date',
-  'time',
-  'timestamp',
-  'timestamptz',
-  'uuid',
-  'jsonb'
-];
-
 const DatabaseManagement: React.FC = () => {
+  const { toast } = useToast();
   const { t } = useLanguage();
-  const [tables, setTables] = useState<DatabaseTable[]>([]);
-  const [selectedTable, setSelectedTable] = useState<string | null>(null);
-  const [columns, setColumns] = useState<TableColumn[]>([]);
-  const [tableData, setTableData] = useState<any[]>([]);
+  const [tables, setTables] = useState<DbTable[]>([]);
+  const [columns, setColumns] = useState<DbColumn[]>([]);
+  const [selectedTable, setSelectedTable] = useState<string>('');
+  const [selectedSchema, setSelectedSchema] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Dialog states
-  const [isNewTableDialogOpen, setIsNewTableDialogOpen] = useState(false);
-  const [isNewColumnDialogOpen, setIsNewColumnDialogOpen] = useState(false);
-  const [isAddRowDialogOpen, setIsAddRowDialogOpen] = useState(false);
-  
-  // Form data
+  const [dataRows, setDataRows] = useState<any[]>([]);
+
+  // New table form state
   const [newTableName, setNewTableName] = useState('');
-  const [newColumnData, setNewColumnData] = useState<{
-    name: string;
-    data_type: string;
-    is_nullable: boolean;
-    default_value: string;
-  }>({
-    name: '',
-    data_type: 'text',
-    is_nullable: true,
-    default_value: ''
-  });
-  
-  const [newRowData, setNewRowData] = useState<Record<string, any>>({});
-  
-  // Fetch tables when component mounts
-  useEffect(() => {
-    fetchTables();
-  }, []);
-  
-  // Fetch columns and data when a table is selected
-  useEffect(() => {
-    if (selectedTable) {
-      fetchTableColumns(selectedTable);
-      fetchTableData(selectedTable);
-    }
-  }, [selectedTable]);
-  
+  const [newTableSchema, setNewTableSchema] = useState('public');
+  const [newTableColumns, setNewTableColumns] = useState<{name: string, type: string, nullable: boolean, default: string}[]>(
+    [{ name: 'id', type: 'uuid', nullable: false, default: 'uuid_generate_v4()' }]
+  );
+  const [isNewTableDialogOpen, setIsNewTableDialogOpen] = useState(false);
+
+  // New column form state
+  const [newColumnName, setNewColumnName] = useState('');
+  const [newColumnType, setNewColumnType] = useState('text');
+  const [newColumnNullable, setNewColumnNullable] = useState(true);
+  const [newColumnDefault, setNewColumnDefault] = useState('');
+  const [isNewColumnDialogOpen, setIsNewColumnDialogOpen] = useState(false);
+
+  // Get all tables
   const fetchTables = async () => {
     setIsLoading(true);
     try {
-      // Fetch tables from public schema
-      const { data, error } = await supabase
-        .rpc('get_tables')
-        .eq('table_schema', 'public');
-        
+      const { data, error } = await supabase.rpc('get_tables');
+      
       if (error) throw error;
       
       if (data) {
         setTables(data);
-        // If we have tables and none selected, select the first one
-        if (data.length > 0 && !selectedTable) {
-          setSelectedTable(data[0].name);
-        }
       }
     } catch (error) {
       console.error('Error fetching tables:', error);
-      toast.error(t("Failed to fetch database tables"));
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch database tables',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
   };
-  
-  const fetchTableColumns = async (tableName: string) => {
+
+  // Get columns for a table
+  const fetchColumns = async (tableName: string, schema: string) => {
+    if (!tableName) return;
+    
+    setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .rpc('get_table_columns')
-        .eq('table_name', tableName)
-        .eq('table_schema', 'public');
-        
+      const { data, error } = await supabase.rpc('get_table_columns', {
+        tableName: tableName,
+        schema: schema
+      });
+      
       if (error) throw error;
       
       if (data) {
@@ -142,480 +96,662 @@ const DatabaseManagement: React.FC = () => {
       }
     } catch (error) {
       console.error('Error fetching columns:', error);
-      toast.error(t("Failed to fetch table columns"));
+      toast({
+        title: 'Error',
+        description: `Failed to fetch columns for table: ${tableName}`,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
-  
-  const fetchTableData = async (tableName: string) => {
+
+  // Fetch table data
+  const fetchTableData = async (tableName: string, schema: string) => {
+    if (!tableName) return;
+    
+    setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from(tableName)
         .select('*')
         .limit(100);
-        
+      
       if (error) throw error;
       
       if (data) {
-        setTableData(data);
+        setDataRows(data);
       }
     } catch (error) {
       console.error('Error fetching table data:', error);
-      toast.error(t("Failed to fetch table data"));
+      toast({
+        title: 'Error',
+        description: `Failed to fetch data for table: ${tableName}`,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
-  
+
+  // Create new table
   const handleCreateTable = async () => {
-    if (!newTableName.trim()) {
-      toast.error(t("Table name cannot be empty"));
+    if (!newTableName) {
+      toast({
+        title: 'Error',
+        description: 'Table name is required',
+        variant: 'destructive',
+      });
       return;
     }
-    
+
+    setIsLoading(true);
     try {
-      const sql = `
-        CREATE TABLE public.${newTableName} (
-          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        );
-        
-        ALTER TABLE public.${newTableName} ENABLE ROW LEVEL SECURITY;
-      `;
+      // Build the CREATE TABLE SQL query
+      let columnsSQL = newTableColumns.map(col => {
+        let colDef = `"${col.name}" ${col.type}`;
+        if (!col.nullable) colDef += ' NOT NULL';
+        if (col.default) colDef += ` DEFAULT ${col.default}`;
+        return colDef;
+      }).join(', ');
+
+      const createTableSQL = `CREATE TABLE IF NOT EXISTS "${newTableSchema}"."${newTableName}" (${columnsSQL})`;
       
-      const { error } = await supabase.rpc('run_sql', { query: sql });
+      // Execute the SQL via the run_sql RPC function
+      const { data, error } = await supabase.rpc('run_sql', {
+        query: createTableSQL
+      });
       
       if (error) throw error;
       
-      toast.success(t("Table created successfully"));
-      setIsNewTableDialogOpen(false);
-      setNewTableName('');
-      await fetchTables();
-      setSelectedTable(newTableName);
+      if (data && data.success) {
+        toast({
+          title: 'Success',
+          description: `Table "${newTableName}" created successfully`,
+        });
+        
+        // Reset form and refresh tables
+        setNewTableName('');
+        setNewTableColumns([{ name: 'id', type: 'uuid', nullable: false, default: 'uuid_generate_v4()' }]);
+        setIsNewTableDialogOpen(false);
+        fetchTables();
+      } else {
+        throw new Error(data.error || 'Unknown error');
+      }
     } catch (error) {
       console.error('Error creating table:', error);
-      toast.error(t("Failed to create table"));
+      toast({
+        title: 'Error',
+        description: `Failed to create table: ${(error as Error).message}`,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
-  
+
+  // Add column to new table form
+  const addNewTableColumn = () => {
+    setNewTableColumns([...newTableColumns, { name: '', type: 'text', nullable: true, default: '' }]);
+  };
+
+  // Update new table column definition
+  const updateNewTableColumn = (index: number, field: string, value: string | boolean) => {
+    const updatedColumns = [...newTableColumns];
+    updatedColumns[index] = { ...updatedColumns[index], [field]: value };
+    setNewTableColumns(updatedColumns);
+  };
+
+  // Remove column from new table form
+  const removeNewTableColumn = (index: number) => {
+    const updatedColumns = [...newTableColumns];
+    updatedColumns.splice(index, 1);
+    setNewTableColumns(updatedColumns);
+  };
+
+  // Add new column to existing table
   const handleAddColumn = async () => {
-    if (!selectedTable || !newColumnData.name.trim()) {
-      toast.error(t("Column name cannot be empty"));
+    if (!selectedTable || !newColumnName || !newColumnType) {
+      toast({
+        title: 'Error',
+        description: 'Table, column name, and type are required',
+        variant: 'destructive',
+      });
       return;
     }
-    
+
+    setIsLoading(true);
     try {
-      let defaultClause = '';
-      if (newColumnData.default_value.trim()) {
-        defaultClause = ` DEFAULT ${newColumnData.default_value}`;
-      }
+      // Build the ALTER TABLE SQL query
+      let columnDef = `"${newColumnName}" ${newColumnType}`;
+      if (!newColumnNullable) columnDef += ' NOT NULL';
+      if (newColumnDefault) columnDef += ` DEFAULT ${newColumnDefault}`;
+
+      const alterTableSQL = `ALTER TABLE "${selectedSchema}"."${selectedTable}" ADD COLUMN ${columnDef}`;
       
-      const nullableClause = newColumnData.is_nullable ? '' : ' NOT NULL';
-      
-      const sql = `
-        ALTER TABLE public.${selectedTable} 
-        ADD COLUMN ${newColumnData.name} ${newColumnData.data_type}${nullableClause}${defaultClause};
-      `;
-      
-      const { error } = await supabase.rpc('run_sql', { query: sql });
+      // Execute the SQL via the run_sql RPC function
+      const { data, error } = await supabase.rpc('run_sql', {
+        query: alterTableSQL
+      });
       
       if (error) throw error;
       
-      toast.success(t("Column added successfully"));
-      setIsNewColumnDialogOpen(false);
-      setNewColumnData({
-        name: '',
-        data_type: 'text',
-        is_nullable: true,
-        default_value: ''
-      });
-      await fetchTableColumns(selectedTable);
+      if (data && data.success) {
+        toast({
+          title: 'Success',
+          description: `Column "${newColumnName}" added to table "${selectedTable}"`,
+        });
+        
+        // Reset form and refresh columns
+        setNewColumnName('');
+        setNewColumnType('text');
+        setNewColumnNullable(true);
+        setNewColumnDefault('');
+        setIsNewColumnDialogOpen(false);
+        fetchColumns(selectedTable, selectedSchema);
+      } else {
+        throw new Error(data.error || 'Unknown error');
+      }
     } catch (error) {
       console.error('Error adding column:', error);
-      toast.error(t("Failed to add column"));
+      toast({
+        title: 'Error',
+        description: `Failed to add column: ${(error as Error).message}`,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
-  
-  const handleAddRow = async () => {
+
+  // Drop table
+  const handleDropTable = async () => {
     if (!selectedTable) {
+      toast({
+        title: 'Error',
+        description: 'No table selected',
+        variant: 'destructive',
+      });
       return;
     }
-    
+
+    setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from(selectedTable)
-        .insert(newRowData)
-        .select();
+      const dropTableSQL = `DROP TABLE "${selectedSchema}"."${selectedTable}"`;
+      
+      const { data, error } = await supabase.rpc('run_sql', {
+        query: dropTableSQL
+      });
+      
+      if (error) throw error;
+      
+      if (data && data.success) {
+        toast({
+          title: 'Success',
+          description: `Table "${selectedTable}" dropped successfully`,
+        });
         
-      if (error) throw error;
-      
-      toast.success(t("Row added successfully"));
-      setIsAddRowDialogOpen(false);
-      setNewRowData({});
-      await fetchTableData(selectedTable);
-    } catch (error) {
-      console.error('Error adding row:', error);
-      toast.error(t("Failed to add row"));
-    }
-  };
-  
-  const handleDeleteTable = async (tableName: string) => {
-    if (!confirm(t(`Are you sure you want to delete the table '${tableName}'? This action cannot be undone.`))) {
-      return;
-    }
-    
-    try {
-      const sql = `DROP TABLE public.${tableName};`;
-      
-      const { error } = await supabase.rpc('run_sql', { query: sql });
-      
-      if (error) throw error;
-      
-      toast.success(t("Table deleted successfully"));
-      await fetchTables();
-      setSelectedTable(null);
-    } catch (error) {
-      console.error('Error deleting table:', error);
-      toast.error(t("Failed to delete table"));
-    }
-  };
-  
-  const prepareNewRowForm = () => {
-    const initialData: Record<string, any> = {};
-    columns.forEach(column => {
-      // Skip id and created_at columns as they have defaults
-      if (column.name !== 'id' && column.name !== 'created_at') {
-        initialData[column.name] = '';
+        // Reset selection and refresh tables
+        setSelectedTable('');
+        setColumns([]);
+        setDataRows([]);
+        fetchTables();
+      } else {
+        throw new Error(data.error || 'Unknown error');
       }
-    });
-    setNewRowData(initialData);
-    setIsAddRowDialogOpen(true);
+    } catch (error) {
+      console.error('Error dropping table:', error);
+      toast({
+        title: 'Error',
+        description: `Failed to drop table: ${(error as Error).message}`,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
-  
+
+  // Load tables on initial render
+  useEffect(() => {
+    fetchTables();
+  }, []);
+
+  // Handle table selection
+  const handleTableSelect = (tableName: string, schema: string) => {
+    setSelectedTable(tableName);
+    setSelectedSchema(schema);
+    fetchColumns(tableName, schema);
+    fetchTableData(tableName, schema);
+  };
+
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <PageHeader 
-        title={<T text="Database Management" />}
-        description={<T text="Manage your database tables, columns, and data" />}
-        icon={<DatabaseIcon className="h-6 w-6" />}
-      />
-      
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Tables List */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle><T text="Tables" /></CardTitle>
-            <CardDescription><T text="Manage database tables" /></CardDescription>
-            <Button 
-              size="sm" 
-              onClick={() => setIsNewTableDialogOpen(true)} 
-              className="mt-2"
-            >
-              <PlusCircle className="mr-2 h-4 w-4" />
-              <T text="New Table" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="py-4 text-center text-muted-foreground">
-                <T text="Loading tables..." />
-              </div>
-            ) : tables.length === 0 ? (
-              <div className="py-4 text-center text-muted-foreground">
-                <T text="No tables found" />
-              </div>
-            ) : (
-              <ul className="space-y-1">
-                {tables.map((table) => (
-                  <li key={table.name} className="flex items-center justify-between">
-                    <button
-                      onClick={() => setSelectedTable(table.name)}
-                      className={`flex items-center py-2 px-2 rounded-md w-full text-left ${
-                        selectedTable === table.name 
-                          ? 'bg-primary/10 font-medium' 
-                          : 'hover:bg-muted'
-                      }`}
-                    >
-                      <TableIcon className="mr-2 h-4 w-4" />
-                      {table.name}
-                    </button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteTable(table.name)}
-                      className="h-8 w-8 text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-        
-        {/* Table Details */}
-        {selectedTable ? (
-          <Card className="lg:col-span-3">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>{selectedTable}</span>
-                <div className="flex gap-2">
-                  <Button 
-                    size="sm" 
-                    onClick={() => setIsNewColumnDialogOpen(true)}
-                  >
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    <T text="Add Column" />
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    onClick={prepareNewRowForm}
-                  >
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    <T text="Add Row" />
+    <Layout>
+      <div className="container mx-auto p-4">
+        <PageHeader
+          heading="Database Management"
+          subheading="Manage database tables, columns, and data"
+          action={
+            <Dialog open={isNewTableDialogOpen} onOpenChange={setIsNewTableDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="ml-auto">
+                  <Plus className="mr-2 h-4 w-4" /> Create Table
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[600px]">
+                <DialogHeader>
+                  <DialogTitle>Create New Table</DialogTitle>
+                  <DialogDescription>
+                    Define the structure of your new database table
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="tableName" className="text-right">
+                      Table Name
+                    </Label>
+                    <Input
+                      id="tableName"
+                      value={newTableName}
+                      onChange={(e) => setNewTableName(e.target.value)}
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="tableSchema" className="text-right">
+                      Schema
+                    </Label>
+                    <Input
+                      id="tableSchema"
+                      value={newTableSchema}
+                      onChange={(e) => setNewTableSchema(e.target.value)}
+                      className="col-span-3"
+                    />
+                  </div>
+                  
+                  <Separator className="my-2" />
+                  <div className="mb-2">
+                    <h4 className="text-sm font-medium">Columns</h4>
+                  </div>
+                  
+                  <ScrollArea className="h-[200px]">
+                    {newTableColumns.map((column, index) => (
+                      <div key={index} className="grid grid-cols-12 gap-2 mb-2">
+                        <Input
+                          value={column.name}
+                          onChange={(e) => updateNewTableColumn(index, 'name', e.target.value)}
+                          placeholder="Name"
+                          className="col-span-3"
+                        />
+                        <Select
+                          value={column.type}
+                          onValueChange={(value) => updateNewTableColumn(index, 'type', value)}
+                        >
+                          <SelectTrigger className="col-span-3">
+                            <SelectValue placeholder="Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="text">Text</SelectItem>
+                            <SelectItem value="integer">Integer</SelectItem>
+                            <SelectItem value="boolean">Boolean</SelectItem>
+                            <SelectItem value="uuid">UUID</SelectItem>
+                            <SelectItem value="timestamp with time zone">Timestamp</SelectItem>
+                            <SelectItem value="jsonb">JSONB</SelectItem>
+                            <SelectItem value="numeric">Numeric</SelectItem>
+                            <SelectItem value="varchar(255)">Varchar(255)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Select
+                          value={column.nullable ? "true" : "false"}
+                          onValueChange={(value) => updateNewTableColumn(index, 'nullable', value === "true")}
+                        >
+                          <SelectTrigger className="col-span-2">
+                            <SelectValue placeholder="Nullable" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="true">Nullable</SelectItem>
+                            <SelectItem value="false">Not Null</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          value={column.default || ''}
+                          onChange={(e) => updateNewTableColumn(index, 'default', e.target.value)}
+                          placeholder="Default"
+                          className="col-span-3"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeNewTableColumn(index)}
+                          disabled={index === 0 && newTableColumns.length === 1}
+                          className="h-10 w-10"
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </ScrollArea>
+                  
+                  <Button variant="outline" onClick={addNewTableColumn} type="button">
+                    <Plus className="mr-2 h-4 w-4" /> Add Column
                   </Button>
                 </div>
+                <DialogFooter>
+                  <Button
+                    variant="outline" 
+                    onClick={() => setIsNewTableDialogOpen(false)}
+                    disabled={isLoading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleCreateTable}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Creating...' : 'Create Table'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          }
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6">
+          <Card className="md:col-span-1">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Database className="h-5 w-5 mr-2" />
+                Tables
               </CardTitle>
               <CardDescription>
-                <T text="Manage table structure and data" />
+                Database tables in the system
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue="structure">
-                <TabsList className="mb-4">
-                  <TabsTrigger value="structure"><T text="Structure" /></TabsTrigger>
-                  <TabsTrigger value="data"><T text="Data" /></TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="structure">
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead><T text="Column Name" /></TableHead>
-                          <TableHead><T text="Data Type" /></TableHead>
-                          <TableHead><T text="Nullable" /></TableHead>
-                          <TableHead><T text="Default Value" /></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {columns.length === 0 ? (
+              <div className="flex justify-end mb-3">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={fetchTables}
+                  disabled={isLoading}
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </div>
+              <ScrollArea className="h-[500px]">
+                <div className="space-y-1">
+                  {tables.map((table) => (
+                    <Button
+                      key={`${table.schema}.${table.name}`}
+                      variant={selectedTable === table.name ? "default" : "ghost"}
+                      className="w-full justify-start text-left"
+                      onClick={() => handleTableSelect(table.name, table.schema)}
+                    >
+                      <TableIcon className="h-4 w-4 mr-2" />
+                      {table.name}
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        ({table.schema})
+                      </span>
+                    </Button>
+                  ))}
+                  {tables.length === 0 && !isLoading && (
+                    <div className="text-center text-sm text-muted-foreground p-4">
+                      No tables found
+                    </div>
+                  )}
+                  {isLoading && (
+                    <div className="text-center text-sm text-muted-foreground p-4">
+                      Loading tables...
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
+          <Card className="md:col-span-3">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center">
+                  {selectedTable ? (
+                    <>
+                      <TableIcon className="h-5 w-5 mr-2" />
+                      {selectedTable}
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">
+                        ({selectedSchema})
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <TableIcon className="h-5 w-5 mr-2" />
+                      Select a table
+                    </>
+                  )}
+                </CardTitle>
+                {selectedTable && (
+                  <div className="flex space-x-2">
+                    <Dialog open={isNewColumnDialogOpen} onOpenChange={setIsNewColumnDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Plus className="h-4 w-4 mr-2" /> Add Column
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Add Column to {selectedTable}</DialogTitle>
+                          <DialogDescription>
+                            Define a new column for this table
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="columnName" className="text-right">
+                              Column Name
+                            </Label>
+                            <Input
+                              id="columnName"
+                              value={newColumnName}
+                              onChange={(e) => setNewColumnName(e.target.value)}
+                              className="col-span-3"
+                            />
+                          </div>
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="columnType" className="text-right">
+                              Type
+                            </Label>
+                            <Select
+                              value={newColumnType}
+                              onValueChange={setNewColumnType}
+                            >
+                              <SelectTrigger className="col-span-3">
+                                <SelectValue placeholder="Type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="text">Text</SelectItem>
+                                <SelectItem value="integer">Integer</SelectItem>
+                                <SelectItem value="boolean">Boolean</SelectItem>
+                                <SelectItem value="uuid">UUID</SelectItem>
+                                <SelectItem value="timestamp with time zone">Timestamp</SelectItem>
+                                <SelectItem value="jsonb">JSONB</SelectItem>
+                                <SelectItem value="numeric">Numeric</SelectItem>
+                                <SelectItem value="varchar(255)">Varchar(255)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="columnNullable" className="text-right">
+                              Nullable
+                            </Label>
+                            <Select
+                              value={newColumnNullable ? "true" : "false"}
+                              onValueChange={(value) => setNewColumnNullable(value === "true")}
+                            >
+                              <SelectTrigger className="col-span-3">
+                                <SelectValue placeholder="Nullable" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="true">Nullable</SelectItem>
+                                <SelectItem value="false">Not Null</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="columnDefault" className="text-right">
+                              Default Value
+                            </Label>
+                            <Input
+                              id="columnDefault"
+                              value={newColumnDefault}
+                              onChange={(e) => setNewColumnDefault(e.target.value)}
+                              className="col-span-3"
+                              placeholder="Leave empty for no default"
+                            />
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button variant="outline" onClick={() => setIsNewColumnDialogOpen(false)}>
+                            Cancel
+                          </Button>
+                          <Button onClick={handleAddColumn} disabled={isLoading}>
+                            {isLoading ? 'Adding...' : 'Add Column'}
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                    
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                          <Trash className="h-4 w-4 mr-2" /> Drop Table
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the table
+                            "{selectedTable}" and all its data from the database.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleDropTable}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Drop Table
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                )}
+              </div>
+              <CardDescription>
+                {selectedTable 
+                  ? "View and manage table structure and data" 
+                  : "Select a table from the list to view and manage it"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {selectedTable ? (
+                <Tabs defaultValue="structure">
+                  <TabsList className="mb-4">
+                    <TabsTrigger value="structure">
+                      <Columns className="h-4 w-4 mr-2" />
+                      Structure
+                    </TabsTrigger>
+                    <TabsTrigger value="data">
+                      <LayoutList className="h-4 w-4 mr-2" />
+                      Data
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="structure">
+                    <ScrollArea className="h-[400px]">
+                      <Table>
+                        <TableHeader>
                           <TableRow>
-                            <TableCell colSpan={4} className="text-center py-4">
-                              <T text="No columns found" />
-                            </TableCell>
+                            <TableHead>Column</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Nullable</TableHead>
+                            <TableHead>Default</TableHead>
                           </TableRow>
-                        ) : (
-                          columns.map((column) => (
+                        </TableHeader>
+                        <TableBody>
+                          {columns.map((column) => (
                             <TableRow key={column.name}>
-                              <TableCell>{column.name}</TableCell>
+                              <TableCell className="font-medium">{column.name}</TableCell>
                               <TableCell>{column.data_type}</TableCell>
                               <TableCell>{column.is_nullable ? 'Yes' : 'No'}</TableCell>
                               <TableCell>{column.column_default || '-'}</TableCell>
                             </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="data">
-                  <div className="rounded-md border overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          {columns.map((column) => (
-                            <TableHead key={column.name}>{column.name}</TableHead>
                           ))}
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {tableData.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={columns.length} className="text-center py-4">
-                              <T text="No data found" />
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          tableData.map((row, index) => (
-                            <TableRow key={index}>
-                              {columns.map((column) => (
-                                <TableCell key={column.name}>
-                                  {row[column.name] !== null 
-                                    ? typeof row[column.name] === 'object' 
-                                      ? JSON.stringify(row[column.name]) 
-                                      : String(row[column.name])
-                                    : '-'}
-                                </TableCell>
+                          {columns.length === 0 && !isLoading && (
+                            <TableRow>
+                              <TableCell colSpan={4} className="text-center">
+                                No columns found
+                              </TableCell>
+                            </TableRow>
+                          )}
+                          {isLoading && (
+                            <TableRow>
+                              <TableCell colSpan={4} className="text-center">
+                                Loading columns...
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </ScrollArea>
+                  </TabsContent>
+                  
+                  <TabsContent value="data">
+                    <ScrollArea className="h-[400px]">
+                      {dataRows.length > 0 ? (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              {Object.keys(dataRows[0]).map((key) => (
+                                <TableHead key={key}>{key}</TableHead>
                               ))}
                             </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="lg:col-span-3">
-            <CardContent className="flex items-center justify-center h-64">
-              <div className="text-center text-muted-foreground">
-                <DatabaseIcon className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                <h3 className="text-lg font-medium mb-2">
-                  <T text="No Table Selected" />
-                </h3>
-                <p>
-                  <T text="Select a table from the list or create a new one" />
-                </p>
-                <Button 
-                  className="mt-4" 
-                  onClick={() => setIsNewTableDialogOpen(true)}
-                >
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  <T text="Create Table" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-      
-      {/* Create Table Dialog */}
-      <Dialog open={isNewTableDialogOpen} onOpenChange={setIsNewTableDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle><T text="Create New Table" /></DialogTitle>
-            <DialogDescription>
-              <T text="Enter the details for the new table" />
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="tableName"><T text="Table Name" /></Label>
-              <Input
-                id="tableName"
-                value={newTableName}
-                onChange={(e) => setNewTableName(e.target.value)}
-                placeholder={t("Enter table name")}
-              />
-              <p className="text-xs text-muted-foreground">
-                <T text="The table will be created with id (UUID) and created_at (timestamp) columns" />
-              </p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsNewTableDialogOpen(false)}>
-              <T text="Cancel" />
-            </Button>
-            <Button onClick={handleCreateTable}>
-              <T text="Create Table" />
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Add Column Dialog */}
-      <Dialog open={isNewColumnDialogOpen} onOpenChange={setIsNewColumnDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle><T text="Add New Column" /></DialogTitle>
-            <DialogDescription>
-              <T text="Enter the details for the new column" />
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="columnName"><T text="Column Name" /></Label>
-              <Input
-                id="columnName"
-                value={newColumnData.name}
-                onChange={(e) => setNewColumnData({...newColumnData, name: e.target.value})}
-                placeholder={t("Enter column name")}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="dataType"><T text="Data Type" /></Label>
-              <Select 
-                value={newColumnData.data_type} 
-                onValueChange={(value) => setNewColumnData({...newColumnData, data_type: value})}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t("Select data type")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {DATA_TYPES.map(type => (
-                    <SelectItem key={type} value={type}>{type}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="nullable"
-                checked={newColumnData.is_nullable}
-                onChange={(e) => setNewColumnData({...newColumnData, is_nullable: e.target.checked})}
-                className="h-4 w-4 rounded border-gray-300"
-              />
-              <Label htmlFor="nullable"><T text="Nullable" /></Label>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="defaultValue"><T text="Default Value" /></Label>
-              <Input
-                id="defaultValue"
-                value={newColumnData.default_value}
-                onChange={(e) => setNewColumnData({...newColumnData, default_value: e.target.value})}
-                placeholder={t("Enter default value (optional)")}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsNewColumnDialogOpen(false)}>
-              <T text="Cancel" />
-            </Button>
-            <Button onClick={handleAddColumn}>
-              <T text="Add Column" />
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Add Row Dialog */}
-      <Dialog open={isAddRowDialogOpen} onOpenChange={setIsAddRowDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle><T text="Add New Row" /></DialogTitle>
-            <DialogDescription>
-              <T text="Enter the data for the new row" />
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-            {columns
-              .filter(col => col.name !== 'id' && col.name !== 'created_at')
-              .map((column) => (
-                <div key={column.name} className="space-y-2">
-                  <Label htmlFor={column.name}>{column.name}</Label>
-                  <Input
-                    id={column.name}
-                    value={newRowData[column.name] || ''}
-                    onChange={(e) => setNewRowData({...newRowData, [column.name]: e.target.value})}
-                    placeholder={t("Enter value")}
-                  />
+                          </TableHeader>
+                          <TableBody>
+                            {dataRows.map((row, rowIndex) => (
+                              <TableRow key={rowIndex}>
+                                {Object.keys(row).map((key) => (
+                                  <TableCell key={key}>
+                                    {typeof row[key] === 'object' 
+                                      ? JSON.stringify(row[key]) 
+                                      : String(row[key] !== null ? row[key] : '')}
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      ) : (
+                        <div className="text-center py-4">
+                          {isLoading ? 'Loading data...' : 'No data found'}
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </TabsContent>
+                </Tabs>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-[400px] text-center">
+                  <Database className="h-10 w-10 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium">No Table Selected</h3>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Select a table from the list or create a new one to get started
+                  </p>
                 </div>
-              ))}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddRowDialogOpen(false)}>
-              <T text="Cancel" />
-            </Button>
-            <Button onClick={handleAddRow}>
-              <T text="Add Row" />
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </Layout>
   );
 };
 
