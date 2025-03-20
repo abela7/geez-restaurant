@@ -63,7 +63,7 @@ export const QuickOrdersSection: React.FC<QuickOrdersSectionProps> = ({
       
       <div className="p-4">
         <Tabs defaultValue="All">
-          <TabsList className="mb-4 flex overflow-auto pb-1">
+          <TabsList className="mb-4 flex overflow-auto hide-scrollbar">
             {categories.map(category => (
               <TabsTrigger key={category} value={category}>
                 {t(category)}
@@ -73,7 +73,7 @@ export const QuickOrdersSection: React.FC<QuickOrdersSectionProps> = ({
           
           {categories.map(category => (
             <TabsContent key={category} value={category}>
-              <ScrollArea className="h-80">
+              <ScrollArea className="h-[calc(100vh-400px)]">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-1">
                   {orders
                     .filter(order => category === 'All' || order.category === category)

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -14,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Search, Plus, Minus, Trash2, Check, ChevronsUp, ChevronsDown, UserRound, Loader2 } from "lucide-react";
+import { Search, Plus, Minus, Trash2, Check, UserRound, Loader2, Tag } from "lucide-react";
 
 interface OrderManagementProps {
   newOrder?: boolean;
@@ -286,8 +287,27 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
     }, {} as Record<string, FoodItem[]>);
   }, [menuItems, searchQuery, selectedCategory]);
 
+  // Handle adding from quick orders component
+  const handleQuickOrderAdd = (quickOrder: any) => {
+    // Create a food item from quick order
+    const foodItem: FoodItem = {
+      id: quickOrder.id,
+      name: quickOrder.name,
+      description: quickOrder.description,
+      price: quickOrder.price,
+      category_id: null,
+      is_vegetarian: false,
+      is_vegan: false,
+      is_gluten_free: false,
+      is_spicy: false,
+      categoryName: quickOrder.category
+    };
+    
+    handleAddToOrder(foodItem);
+  };
+
   return (
-    <Layout interface="waiter">
+    <Layout interface="waiter" contentOnly={true}>
       <div className="container mx-auto p-4 pb-24">
         <PageHeader
           title={<T text={newOrder ? "New Order" : search ? "Search Orders" : "Order Management"} />}
@@ -311,25 +331,27 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
                   </div>
                 </div>
 
-                <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar mb-4">
-                  <Button 
-                    key="all" 
-                    variant={selectedCategory === "all" ? "default" : "outline"} 
-                    size="sm"
-                    onClick={() => setSelectedCategory("all")}
-                  >
-                    <T text="All Categories" />
-                  </Button>
-                  {categories.map((category) => (
+                <div className="scrollbar-thin overflow-x-auto pb-2 mb-4">
+                  <div className="flex gap-2 min-w-max">
                     <Button 
-                      key={category.id} 
-                      variant={selectedCategory === category.name ? "default" : "outline"} 
+                      key="all" 
+                      variant={selectedCategory === "all" ? "default" : "outline"} 
                       size="sm"
-                      onClick={() => setSelectedCategory(category.name)}
+                      onClick={() => setSelectedCategory("all")}
                     >
-                      {category.name}
+                      <T text="All Categories" />
                     </Button>
-                  ))}
+                    {categories.map((category) => (
+                      <Button 
+                        key={category.id} 
+                        variant={selectedCategory === category.name ? "default" : "outline"} 
+                        size="sm"
+                        onClick={() => setSelectedCategory(category.name)}
+                      >
+                        {category.name}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
 
                 {isLoading ? (
@@ -349,15 +371,18 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
                           <T text="No menu items found matching your criteria" />
                         </div>
                       ) : (
-                        <ScrollArea className="h-[400px]">
+                        <ScrollArea className="h-[calc(100vh-350px)]">
                           {Object.entries(itemsByCategory).map(([category, items]) => (
                             <div key={category} className="mb-6">
-                              <h3 className="font-medium text-lg mb-3">{category}</h3>
+                              <h3 className="font-medium text-lg mb-3 flex items-center">
+                                <Tag className="h-4 w-4 mr-2 text-primary" />
+                                {category}
+                              </h3>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 {items.map((item) => (
                                   <div key={item.id} className="border rounded-md p-3 hover:bg-accent/5 transition-colors">
                                     <div className="flex justify-between">
-                                      <div>
+                                      <div className="flex-1">
                                         <h4 className="font-medium">{item.name}</h4>
                                         {item.description && (
                                           <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{item.description}</p>
@@ -369,11 +394,12 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
                                           {item.is_spicy && <Badge variant="outline" className="bg-red-50 text-red-800">Spicy</Badge>}
                                         </div>
                                       </div>
-                                      <div className="flex flex-col items-end">
+                                      <div className="flex flex-col items-end ml-3">
                                         <span className="font-bold mb-2">${item.price.toFixed(2)}</span>
                                         <Button 
                                           size="sm" 
                                           onClick={() => handleAddToOrder(item)}
+                                          className="w-full"
                                         >
                                           <Plus className="h-4 w-4 mr-1" />
                                           <T text="Add" />
@@ -390,7 +416,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
                     </TabsContent>
                     
                     <TabsContent value="quick">
-                      <QuickOrdersSection />
+                      <QuickOrdersSection onAddToOrder={handleQuickOrderAdd} />
                     </TabsContent>
                   </Tabs>
                 )}
@@ -401,7 +427,10 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
           <div className="lg:col-span-1">
             <Card className="sticky top-20">
               <CardContent className="p-4">
-                <h3 className="font-medium text-lg mb-3"><T text="Order Summary" /></h3>
+                <h3 className="font-medium text-lg mb-3 flex items-center">
+                  <T text="Order Summary" />
+                  <Badge variant="outline" className="ml-2">{orderItems.length}</Badge>
+                </h3>
                 
                 <div className="space-y-4 mb-4">
                   <div className="grid grid-cols-2 gap-3">
@@ -431,11 +460,14 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
                             <SelectValue placeholder={t("Select table")} />
                           </SelectTrigger>
                           <SelectContent>
-                            {tables.map((table) => (
-                              <SelectItem key={table.id} value={table.id}>
-                                Table {table.table_number} ({table.capacity} seats)
-                              </SelectItem>
-                            ))}
+                            {tables
+                              .sort((a, b) => a.table_number - b.table_number)
+                              .map((table) => (
+                                <SelectItem key={table.id} value={table.id}>
+                                  Table {table.table_number} ({table.capacity} seats)
+                                </SelectItem>
+                              ))
+                            }
                           </SelectContent>
                         </Select>
                       </div>
@@ -498,45 +530,47 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
                       <T text="No items added yet" />
                     </div>
                   ) : (
-                    <div className="space-y-3 max-h-[300px] overflow-y-auto">
-                      {orderItems.map((item) => (
-                        <div key={item.id} className="flex justify-between items-start border-b pb-3">
-                          <div className="flex-1">
-                            <div className="flex justify-between">
-                              <span className="font-medium">{item.foodItem.name}</span>
-                              <span className="font-bold">${(item.foodItem.price * item.quantity).toFixed(2)}</span>
-                            </div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-6 w-6"
-                                onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                              >
-                                <Minus className="h-3 w-3" />
-                              </Button>
-                              <span className="w-8 text-center">{item.quantity}</span>
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-6 w-6"
-                                onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                              >
-                                <Plus className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 ml-auto text-destructive"
-                                onClick={() => handleRemoveItem(item.id)}
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
+                    <ScrollArea className="max-h-[300px]">
+                      <div className="space-y-3">
+                        {orderItems.map((item) => (
+                          <div key={item.id} className="flex justify-between items-start border-b pb-3">
+                            <div className="flex-1">
+                              <div className="flex justify-between">
+                                <span className="font-medium">{item.foodItem.name}</span>
+                                <span className="font-bold">${(item.foodItem.price * item.quantity).toFixed(2)}</span>
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                                <span className="w-6 text-center">{item.quantity}</span>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 ml-auto text-destructive"
+                                  onClick={() => handleRemoveItem(item.id)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
                   )}
                 </div>
                 

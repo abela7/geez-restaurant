@@ -19,9 +19,10 @@ import {
 interface LayoutProps {
   children: React.ReactNode;
   interface?: 'admin' | 'waiter' | 'kitchen' | 'customer' | 'system';
+  contentOnly?: boolean;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'admin' }) => {
+const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'admin', contentOnly = false }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useIsMobile();
   const location = useLocation();
@@ -89,34 +90,36 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
           <Header toggleSidebar={toggleSidebar} interface={userInterface} />
           
           <main className="flex-1 overflow-auto p-4 md:p-6">
-            <div className="mb-4">
-              <Breadcrumb>
-                <BreadcrumbList>
-                  {breadcrumbs.map((crumb, index) => (
-                    <React.Fragment key={crumb.path}>
-                      {index < breadcrumbs.length - 1 ? (
-                        <>
+            {!contentOnly && (
+              <div className="mb-4">
+                <Breadcrumb>
+                  <BreadcrumbList>
+                    {breadcrumbs.map((crumb, index) => (
+                      <React.Fragment key={crumb.path}>
+                        {index < breadcrumbs.length - 1 ? (
+                          <>
+                            <BreadcrumbItem>
+                              <BreadcrumbLink asChild>
+                                <Link to={crumb.path}>
+                                  <T text={crumb.label} />
+                                </Link>
+                              </BreadcrumbLink>
+                            </BreadcrumbItem>
+                            <BreadcrumbSeparator />
+                          </>
+                        ) : (
                           <BreadcrumbItem>
-                            <BreadcrumbLink asChild>
-                              <Link to={crumb.path}>
-                                <T text={crumb.label} />
-                              </Link>
-                            </BreadcrumbLink>
+                            <BreadcrumbPage>
+                              <T text={crumb.label} />
+                            </BreadcrumbPage>
                           </BreadcrumbItem>
-                          <BreadcrumbSeparator />
-                        </>
-                      ) : (
-                        <BreadcrumbItem>
-                          <BreadcrumbPage>
-                            <T text={crumb.label} />
-                          </BreadcrumbPage>
-                        </BreadcrumbItem>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </BreadcrumbList>
-              </Breadcrumb>
-            </div>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </BreadcrumbList>
+                </Breadcrumb>
+              </div>
+            )}
             
             {children}
           </main>
@@ -150,34 +153,36 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
         <Header toggleSidebar={toggleSidebar} interface={userInterface} />
         
         <main className="flex-1 overflow-auto p-4 md:p-6">
-          <div className="mb-4">
-            <Breadcrumb>
-              <BreadcrumbList>
-                {breadcrumbs.map((crumb, index) => (
-                  <React.Fragment key={crumb.path}>
-                    {index < breadcrumbs.length - 1 ? (
-                      <>
+          {!contentOnly && (
+            <div className="mb-4">
+              <Breadcrumb>
+                <BreadcrumbList>
+                  {breadcrumbs.map((crumb, index) => (
+                    <React.Fragment key={crumb.path}>
+                      {index < breadcrumbs.length - 1 ? (
+                        <>
+                          <BreadcrumbItem>
+                            <BreadcrumbLink asChild>
+                              <Link to={crumb.path}>
+                                <T text={crumb.label} />
+                              </Link>
+                            </BreadcrumbLink>
+                          </BreadcrumbItem>
+                          <BreadcrumbSeparator />
+                        </>
+                      ) : (
                         <BreadcrumbItem>
-                          <BreadcrumbLink asChild>
-                            <Link to={crumb.path}>
-                              <T text={crumb.label} />
-                            </Link>
-                          </BreadcrumbLink>
+                          <BreadcrumbPage>
+                            <T text={crumb.label} />
+                          </BreadcrumbPage>
                         </BreadcrumbItem>
-                        <BreadcrumbSeparator />
-                      </>
-                    ) : (
-                      <BreadcrumbItem>
-                        <BreadcrumbPage>
-                          <T text={crumb.label} />
-                        </BreadcrumbPage>
-                      </BreadcrumbItem>
-                    )}
-                  </React.Fragment>
-                ))}
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+          )}
           
           {children}
         </main>
