@@ -23,7 +23,7 @@ const expenseByCategory = [
 
 // Sample expense data by month
 const expenseByMonth = [
-  { name: "Jan", fixed: 2800, variable: 2200, operational: 1500, total: 6500 },
+  { name: "Jan", fixed: 2800, variable: 2100, operational: 1500, total: 6500 },
   { name: "Feb", fixed: 2800, variable: 2100, operational: 1600, total: 6500 },
   { name: "Mar", fixed: 2800, variable: 2300, operational: 1700, total: 6800 },
   { name: "Apr", fixed: 2800, variable: 2400, operational: 1800, total: 7000 },
@@ -51,6 +51,12 @@ const COLORS = ['#DAA520', '#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#a4de6c'
 const ExpenseReporting: React.FC = () => {
   const { t } = useLanguage();
   const [timePeriod, setTimePeriod] = useState("year");
+  
+  // Helper function to capitalize strings safely
+  const capitalize = (str: string | number): string => {
+    const text = String(str);
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  };
   
   return (
     <Card className="p-5">
@@ -182,7 +188,7 @@ const ExpenseReporting: React.FC = () => {
                 <YAxis yAxisId="right" orientation="right" />
                 <Tooltip formatter={(value, name) => [
                   name === "margin" ? `${value}%` : `£${value}`,
-                  name === "margin" ? t("Profit Margin") : t(name.charAt(0).toUpperCase() + name.slice(1))
+                  name === "margin" ? t("Profit Margin") : t(typeof name === 'string' ? capitalize(name) : String(name))
                 ]} />
                 <Legend />
                 <Line yAxisId="left" type="monotone" dataKey="revenue" name={t("Revenue")} stroke="#DAA520" activeDot={{ r: 8 }} />
