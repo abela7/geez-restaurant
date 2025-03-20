@@ -1,42 +1,34 @@
+
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { PageHeader } from "@/components/ui/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
-  Search, Plus, CheckCircle2, Clock, AlertCircle, ListChecks, Calendar, 
-  Calendar as CalendarIcon, Filter, PlusCircle, X, 
-  CheckCircle, Users, Download, Printer, Loader2 
+  Plus, ListChecks, Filter, Calendar as CalendarIcon, Users, Loader2 
 } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import TasksList from "@/components/staff/TasksList";
 import { StaffTask } from "@/hooks/useStaffTasks";
 import useStaffMembers from "@/hooks/useStaffMembers";
-import { format } from "date-fns";
 
-type TaskCategory = {
-  id: string;
-  name: string;
-  color: string;
-};
+// Import components
+import TasksList from "@/components/staff/TasksList";
+import TaskFilters from "@/components/staff/TaskFilters";
+import TaskCreateDialog, { NewTaskFormData } from "@/components/staff/TaskCreateDialog";
+import TaskCategoryView from "@/components/staff/TaskCategoryView";
+import TaskAssigneeView from "@/components/staff/TaskAssigneeView";
+import TaskCalendarView from "@/components/staff/TaskCalendarView";
 
-const taskCategories: TaskCategory[] = [
-  { id: "1", name: "Kitchen", color: "bg-amber-500" },
-  { id: "2", name: "Service", color: "bg-blue-500" },
-  { id: "3", name: "Cleaning", color: "bg-green-500" },
-  { id: "4", name: "Inventory", color: "bg-purple-500" },
-  { id: "5", name: "Administration", color: "bg-slate-500" },
-];
+// Import utilities
+import { 
+  getStaffNamesMap, 
+  getStaffInitialsMap, 
+  getStaffImagesMap, 
+  createCSVExport 
+} from "@/utils/taskUtils";
 
 const TaskManagement = () => {
   const { t } = useLanguage();
@@ -48,10 +40,9 @@ const TaskManagement = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showCompleted, setShowCompleted] = useState(true);
   const [newTaskDialogOpen, setNewTaskDialogOpen] = useState(false);
-  const [viewMode, setViewMode] = useState("list");
   const { staffMembers, isLoading: staffLoading } = useStaffMembers();
   
-  const [newTask, setNewTask] = useState({
+  const [newTask, setNewTask] = useState<NewTaskFormData>({
     title: "",
     description: "",
     staff_id: "",
@@ -107,50 +98,6 @@ const TaskManagement = () => {
     
     return matchesSearch && matchesStatus && matchesCategory && isVisible;
   });
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "Completed":
-        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
-      case "In Progress":
-        return <Clock className="h-4 w-4 text-amber-500" />;
-      case "Pending":
-        return <AlertCircle className="h-4 w-4 text-blue-500" />;
-      default:
-        return null;
-    }
-  };
-
-  const getStaffName = (id: string) => {
-    const staff = staffMembers.find(staff => staff.id === id);
-    return staff ? `${staff.first_name || ''} ${staff.last_name || ''}`.trim() : "Unassigned";
-  };
-
-  const getStaffInitials = (id: string) => {
-    const staff = staffMembers.find(staff => staff.id === id);
-    if (!staff) return "NA";
-    
-    const firstName = staff.first_name || '';
-    const lastName = staff.last_name || '';
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-  };
-
-  const getStaffImageUrl = (id: string) => {
-    const staff = staffMembers.find(staff => staff.id === id);
-    return staff?.image_url;
-  };
-
-  const getCategoryName = (id?: string | null) => {
-    if (!id) return "";
-    const category = taskCategories.find(category => category.id === id);
-    return category ? category.name : "";
-  };
-
-  const getCategoryColor = (id?: string | null) => {
-    if (!id) return "bg-gray-500";
-    const category = taskCategories.find(category => category.id === id);
-    return category ? category.color : "bg-gray-500";
-  };
 
   const handleCreateTask = async () => {
     try {
@@ -266,24 +213,6 @@ const TaskManagement = () => {
     }
   };
 
-  const groupTasksByCategory = () => {
-    const grouped = taskCategories.map(category => ({
-      ...category,
-      tasks: filteredTasks.filter(task => task.category === category.id)
-    }));
-    
-    return grouped;
-  };
-
-  const groupTasksByAssignee = () => {
-    if (staffLoading) return [];
-    
-    return staffMembers.map(staff => ({
-      ...staff,
-      tasks: filteredTasks.filter(task => task.staff_id === staff.id)
-    })).filter(staff => staff.tasks.length > 0);
-  };
-
   const exportToCSV = () => {
     if (!filteredTasks.length) {
       toast({
@@ -294,32 +223,7 @@ const TaskManagement = () => {
       return;
     }
 
-    const headers = ['Title', 'Description', 'Assigned To', 'Priority', 'Status', 'Due Date', 'Due Time', 'Category'];
-    const csvRows = [
-      headers.join(','),
-      ...filteredTasks.map(task => [
-        `"${task.title}"`,
-        `"${task.description || ''}"`,
-        `"${getStaffName(task.staff_id)}"`,
-        `"${task.priority}"`,
-        `"${task.status}"`,
-        task.due_date ? `"${format(new Date(task.due_date), 'MMM dd, yyyy')}"` : '""',
-        task.due_time ? `"${task.due_time}"` : '""',
-        `"${getCategoryName(task.category)}"` 
-      ].join(','))
-    ];
-    
-    const csvContent = csvRows.join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `Tasks_Export_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    createCSVExport(filteredTasks, getStaffNamesMap(staffMembers));
     
     toast({
       title: "Success",
@@ -327,13 +231,18 @@ const TaskManagement = () => {
     });
   };
 
-  const getStaffNamesMap = () => {
-    const namesMap: Record<string, string> = {};
-    staffMembers.forEach(staff => {
-      namesMap[staff.id] = `${staff.first_name || ''} ${staff.last_name || ''}`.trim();
-    });
-    return namesMap;
+  const openNewTaskDialog = (prefillData?: { staffId?: string, categoryId?: string }) => {
+    setNewTask(prev => ({
+      ...prev,
+      staff_id: prefillData?.staffId || "",
+      category: prefillData?.categoryId || "1"
+    }));
+    setNewTaskDialogOpen(true);
   };
+
+  const staffNamesMap = getStaffNamesMap(staffMembers);
+  const staffInitialsMap = getStaffInitialsMap(staffMembers);
+  const staffImagesMap = getStaffImagesMap(staffMembers);
 
   return (
     <Layout interface="admin">
@@ -342,193 +251,25 @@ const TaskManagement = () => {
         description={<T text="Assign and manage tasks for your restaurant staff" />}
         icon={<ListChecks size={28} />}
         actions={
-          <Dialog open={newTaskDialogOpen} onOpenChange={setNewTaskDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                <T text="Create Task" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle><T text="Create New Task" /></DialogTitle>
-                <DialogDescription>
-                  <T text="Assign a new task to a staff member" />
-                </DialogDescription>
-              </DialogHeader>
-              
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="title"><T text="Task Title" /></Label>
-                  <Input 
-                    id="title" 
-                    value={newTask.title}
-                    onChange={(e) => setNewTask({...newTask, title: e.target.value})}
-                    placeholder={t("Enter task title")}
-                    required
-                  />
-                </div>
-                
-                <div className="grid gap-2">
-                  <Label htmlFor="description"><T text="Description" /></Label>
-                  <Textarea 
-                    id="description" 
-                    value={newTask.description}
-                    onChange={(e) => setNewTask({...newTask, description: e.target.value})}
-                    placeholder={t("Describe the task details")}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="assignee"><T text="Assign To" /></Label>
-                    <Select 
-                      value={newTask.staff_id}
-                      onValueChange={(value) => setNewTask({...newTask, staff_id: value})}
-                    >
-                      <SelectTrigger id="assignee">
-                        <SelectValue placeholder={t("Select staff member")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {staffMembers.map((staff) => (
-                          <SelectItem key={staff.id} value={staff.id}>
-                            {`${staff.first_name || ''} ${staff.last_name || ''}`.trim()} ({staff.role})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="grid gap-2">
-                    <Label htmlFor="category"><T text="Category" /></Label>
-                    <Select 
-                      value={newTask.category}
-                      onValueChange={(value) => setNewTask({...newTask, category: value})}
-                    >
-                      <SelectTrigger id="category">
-                        <SelectValue placeholder={t("Select category")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {taskCategories.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            <div className="flex items-center gap-2">
-                              <div className={`w-2 h-2 rounded-full ${category.color}`}></div>
-                              <span>{category.name}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="dueDate"><T text="Due Date" /></Label>
-                    <Input 
-                      id="dueDate" 
-                      type="date" 
-                      value={newTask.due_date}
-                      onChange={(e) => setNewTask({...newTask, due_date: e.target.value})}
-                    />
-                  </div>
-                  
-                  <div className="grid gap-2">
-                    <Label htmlFor="dueTime"><T text="Due Time" /> (optional)</Label>
-                    <Input 
-                      id="dueTime" 
-                      type="time" 
-                      value={newTask.due_time}
-                      onChange={(e) => setNewTask({...newTask, due_time: e.target.value})}
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid gap-2">
-                  <Label htmlFor="priority"><T text="Priority" /></Label>
-                  <Select 
-                    value={newTask.priority}
-                    onValueChange={(value) => setNewTask({...newTask, priority: value})}
-                  >
-                    <SelectTrigger id="priority">
-                      <SelectValue placeholder={t("Select priority")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="High"><T text="High" /></SelectItem>
-                      <SelectItem value="Medium"><T text="Medium" /></SelectItem>
-                      <SelectItem value="Low"><T text="Low" /></SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setNewTaskDialogOpen(false)}>
-                  <T text="Cancel" />
-                </Button>
-                <Button onClick={handleCreateTask}>
-                  <T text="Create Task" />
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={() => openNewTaskDialog()}>
+            <Plus className="mr-2 h-4 w-4" />
+            <T text="Create Task" />
+          </Button>
         }
       />
 
-      <div className="mb-6 flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder={t("Search tasks...")}
-            className="w-full pl-9"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Select defaultValue="all" onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[150px]">
-              <Filter className="mr-2 h-4 w-4" />
-              <SelectValue placeholder={t("Filter by status")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all"><T text="All Status" /></SelectItem>
-              <SelectItem value="completed"><T text="Completed" /></SelectItem>
-              <SelectItem value="in progress"><T text="In Progress" /></SelectItem>
-              <SelectItem value="pending"><T text="Pending" /></SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Select defaultValue="all" onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-full sm:w-[150px]">
-              <SelectValue placeholder={t("Filter by category")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all"><T text="All Categories" /></SelectItem>
-              {taskCategories.map((category) => (
-                <SelectItem key={category.id} value={category.id}>
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${category.color}`}></div>
-                    <span>{category.name}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          <Button variant="outline" className="w-full sm:w-auto" onClick={() => setShowCompleted(!showCompleted)}>
-            {showCompleted ? <X className="mr-2 h-4 w-4" /> : <CheckCircle className="mr-2 h-4 w-4" />}
-            {showCompleted ? <T text="Hide Completed" /> : <T text="Show Completed" />}
-          </Button>
-          
-          <Button variant="outline" className="w-full sm:w-auto" onClick={exportToCSV} disabled={filteredTasks.length === 0}>
-            <Download className="mr-2 h-4 w-4" />
-            <T text="Export" />
-          </Button>
-        </div>
-      </div>
+      <TaskFilters 
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        categoryFilter={categoryFilter}
+        setCategoryFilter={setCategoryFilter}
+        showCompleted={showCompleted}
+        setShowCompleted={setShowCompleted}
+        exportToCSV={exportToCSV}
+        hasFilteredTasks={filteredTasks.length > 0}
+      />
       
       <Tabs defaultValue="list">
         <TabsList className="mb-4">
@@ -563,7 +304,7 @@ const TaskManagement = () => {
                 onUpdateStatus={handleUpdateTaskStatus}
                 onDelete={handleDeleteTask}
                 showStaffInfo={true}
-                staffNames={getStaffNamesMap()}
+                staffNames={staffNamesMap}
                 maxHeight="600px"
               />
             )}
@@ -571,221 +312,42 @@ const TaskManagement = () => {
         </TabsContent>
         
         <TabsContent value="category">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {groupTasksByCategory().map((category) => (
-              <Card key={category.id} className="overflow-hidden">
-                <CardHeader className={`${category.color} bg-opacity-10 pb-2`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-3 h-3 rounded-full ${category.color}`}></div>
-                      <CardTitle className="text-lg">{category.name}</CardTitle>
-                    </div>
-                    <Badge variant="outline">
-                      {category.tasks.length} <T text="tasks" />
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-4 max-h-[400px] overflow-auto">
-                  {category.tasks.length > 0 ? (
-                    <div className="space-y-3">
-                      {category.tasks.map((task) => (
-                        <div key={task.id} className="p-3 border rounded-md hover:bg-accent/50 transition-colors">
-                          <div className="flex justify-between items-start">
-                            <div className="font-medium">{task.title}</div>
-                            <div className="flex items-center gap-2">
-                              {getStatusIcon(task.status)}
-                            </div>
-                          </div>
-                          <div className="text-sm text-muted-foreground mt-1">{task.description}</div>
-                          <div className="flex items-center justify-between mt-2 text-sm">
-                            <div className="flex items-center gap-1">
-                              <Avatar className="h-5 w-5">
-                                {getStaffImageUrl(task.staff_id) ? (
-                                  <AvatarImage src={getStaffImageUrl(task.staff_id)} alt={getStaffName(task.staff_id)} />
-                                ) : (
-                                  <AvatarFallback>{getStaffInitials(task.staff_id)}</AvatarFallback>
-                                )}
-                              </Avatar>
-                              <span>{getStaffName(task.staff_id)}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-3 w-3 text-muted-foreground" />
-                              <span>
-                                {task.due_date 
-                                  ? format(new Date(task.due_date), 'MMM dd, yyyy') 
-                                  : '-'}
-                                {task.due_time && ` ${task.due_time}`}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex justify-end mt-2 gap-2">
-                            {task.status !== 'Completed' && (
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => handleUpdateTaskStatus(task.id, 'Completed')}
-                              >
-                                <CheckCircle className="h-3 w-3 mr-1" />
-                                <T text="Complete" />
-                              </Button>
-                            )}
-                            <Button 
-                              variant="destructive" 
-                              size="sm" 
-                              onClick={() => handleDeleteTask(task.id)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-4 text-muted-foreground">
-                      <T text="No tasks in this category" />
-                    </div>
-                  )}
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="w-full mt-3" 
-                    onClick={() => {
-                      setNewTask({...newTask, category: category.id});
-                      setNewTaskDialogOpen(true);
-                    }}
-                  >
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    <T text="Add Task" />
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <TaskCategoryView 
+            filteredTasks={filteredTasks}
+            staffNamesMap={staffNamesMap}
+            staffInitialsMap={staffInitialsMap}
+            staffImagesMap={staffImagesMap}
+            handleUpdateTaskStatus={handleUpdateTaskStatus}
+            handleDeleteTask={handleDeleteTask}
+            openNewTaskDialog={(categoryId) => openNewTaskDialog({ categoryId })}
+          />
         </TabsContent>
         
         <TabsContent value="assignee">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {isLoading || staffLoading ? (
-              <div className="flex items-center justify-center py-8 col-span-full">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : (
-              groupTasksByAssignee().map((staff) => (
-                <Card key={staff.id} className="overflow-hidden">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                          {staff.image_url ? (
-                            <AvatarImage src={staff.image_url} alt={`${staff.first_name || ''} ${staff.last_name || ''}`.trim()} />
-                          ) : (
-                            <AvatarFallback>{`${(staff.first_name || '').charAt(0)}${(staff.last_name || '').charAt(0)}`.toUpperCase()}</AvatarFallback>
-                          )}
-                        </Avatar>
-                        <div>
-                          <CardTitle className="text-lg">{`${staff.first_name || ''} ${staff.last_name || ''}`.trim()}</CardTitle>
-                          <div className="text-sm text-muted-foreground">{staff.role}</div>
-                        </div>
-                      </div>
-                      <Badge variant="outline">
-                        {staff.tasks.length} <T text="tasks" />
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-4 max-h-[400px] overflow-auto">
-                    <div className="space-y-3">
-                      {staff.tasks.map((task) => (
-                        <div key={task.id} className="p-3 border rounded-md hover:bg-accent/50 transition-colors">
-                          <div className="flex justify-between items-start">
-                            <div className="font-medium">{task.title}</div>
-                            <Badge 
-                              variant={
-                                task.priority === "High" ? "destructive" : 
-                                task.priority === "Medium" ? "default" : 
-                                "outline"
-                              }
-                            >
-                              {task.priority}
-                            </Badge>
-                          </div>
-                          <div className="text-sm text-muted-foreground mt-1">{task.description}</div>
-                          <div className="flex items-center justify-between mt-2 text-sm">
-                            <div className="flex items-center gap-2">
-                              <div className={`w-2 h-2 rounded-full ${getCategoryColor(task.category)}`}></div>
-                              <span>{getCategoryName(task.category)}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-3 w-3 text-muted-foreground" />
-                              <span>
-                                {task.due_date 
-                                  ? format(new Date(task.due_date), 'MMM dd, yyyy') 
-                                  : '-'}
-                                {task.due_time && ` ${task.due_time}`}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              {getStatusIcon(task.status)}
-                              <span>{task.status}</span>
-                            </div>
-                          </div>
-                          <div className="flex justify-end mt-2 gap-2">
-                            {task.status !== 'Completed' && (
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => handleUpdateTaskStatus(task.id, 'Completed')}
-                              >
-                                <CheckCircle className="h-3 w-3 mr-1" />
-                                <T text="Complete" />
-                              </Button>
-                            )}
-                            <Button 
-                              variant="destructive" 
-                              size="sm" 
-                              onClick={() => handleDeleteTask(task.id)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="w-full mt-3" 
-                      onClick={() => {
-                        setNewTask({...newTask, staff_id: staff.id});
-                        setNewTaskDialogOpen(true);
-                      }}
-                    >
-                      <PlusCircle className="h-4 w-4 mr-2" />
-                      <T text="Add Task" />
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
+          <TaskAssigneeView 
+            filteredTasks={filteredTasks}
+            staffMembers={staffMembers}
+            isLoading={isLoading}
+            staffLoading={staffLoading}
+            handleUpdateTaskStatus={handleUpdateTaskStatus}
+            handleDeleteTask={handleDeleteTask}
+            openNewTaskDialog={(staffId) => openNewTaskDialog({ staffId })}
+          />
         </TabsContent>
         
         <TabsContent value="calendar">
-          <Card>
-            <CardHeader>
-              <CardTitle><T text="Task Calendar" /></CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12">
-                <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2"><T text="Calendar View Coming Soon" /></h3>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                  <T text="The calendar view for task management is currently under development. Please check back soon." />
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <TaskCalendarView />
         </TabsContent>
       </Tabs>
+
+      <TaskCreateDialog 
+        open={newTaskDialogOpen}
+        onOpenChange={setNewTaskDialogOpen}
+        newTask={newTask}
+        setNewTask={setNewTask}
+        handleCreateTask={handleCreateTask}
+        staffMembers={staffMembers}
+      />
     </Layout>
   );
 };
