@@ -40,7 +40,7 @@ const TaskManagement = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showCompleted, setShowCompleted] = useState(true);
   const [newTaskDialogOpen, setNewTaskDialogOpen] = useState(false);
-  const { data: staffMembers, isLoading: staffLoading } = useStaffMembers();
+  const { staffMembers, isLoading: staffLoading } = useStaffMembers();
   
   const [newTask, setNewTask] = useState<NewTaskFormData>({
     title: "",

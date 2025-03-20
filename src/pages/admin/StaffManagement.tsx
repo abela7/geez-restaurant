@@ -23,7 +23,7 @@ const StaffManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   
   // Use our custom hook to fetch staff data
-  const { data: staffMembers, isLoading, error } = useStaffMembers();
+  const { staffMembers, isLoading, error } = useStaffMembers();
   
   // Filter staff based on search term
   const filteredStaff = staffMembers.filter(staff => {

@@ -46,7 +46,7 @@ const Payroll = () => {
   
   // Fetch staff and payroll data
   const { 
-    data: staffMembers, 
+    staffMembers, 
     isLoading: isStaffLoading, 
     error: staffError 
   } = useStaffMembers();

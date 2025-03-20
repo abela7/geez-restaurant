@@ -2,9 +2,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { useLanguage, T } from '@/contexts/LanguageContext';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 interface PageHeaderProps {
   heading?: React.ReactNode;
@@ -13,7 +10,6 @@ interface PageHeaderProps {
   icon?: React.ReactNode;
   actions?: React.ReactNode;
   className?: string;
-  backHref?: string; // Added backHref prop
 }
 
 export function PageHeader({
@@ -23,7 +19,6 @@ export function PageHeader({
   icon,
   actions,
   className,
-  backHref,
 }: PageHeaderProps) {
   // Use heading if provided, otherwise fall back to title
   const displayHeading = heading || title;
@@ -31,13 +26,6 @@ export function PageHeader({
   return (
     <div className={cn("flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4", className)}>
       <div className="flex items-center gap-3">
-        {backHref && (
-          <Button variant="ghost" size="icon" asChild className="mr-2">
-            <Link to={backHref}>
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-        )}
         {icon && <div className="flex-shrink-0 text-primary">{icon}</div>}
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
