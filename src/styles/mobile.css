@@ -16,6 +16,12 @@
     z-index: 35;
   }
   
+  /* Make sure side modals display properly on mobile */
+  [data-state="open"] > .fixed.inset-y-0.right-0 {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
   /* Language-specific adjustments for mobile */
   [data-language="am"] h1,
   [data-language="am"] h2,
@@ -62,3 +68,23 @@
     display: none !important;
   }
 }
+
+/* Side modal enhancements */
+.side-modal-enter {
+  transform: translateX(100%);
+}
+
+.side-modal-enter-active {
+  transform: translateX(0);
+  transition: transform 300ms ease-in-out;
+}
+
+.side-modal-exit {
+  transform: translateX(0);
+}
+
+.side-modal-exit-active {
+  transform: translateX(100%);
+  transition: transform 300ms ease-in-out;
+}
+

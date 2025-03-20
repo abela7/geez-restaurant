@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,7 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { SideModal } from "@/components/ui/side-modal";
 import { IngredientForm } from "@/components/inventory/IngredientForm";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchStock, addStockItem, updateStockItem } from "@/services/inventory";
@@ -58,10 +59,10 @@ const Ingredients = () => {
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("All");
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedIngredient, setSelectedIngredient] = useState<Ingredient | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   // Load ingredients data
   const loadIngredients = async () => {
@@ -90,8 +91,12 @@ const Ingredients = () => {
   const handleAddIngredient = async (data: Omit<Ingredient, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       await addStockItem(data);
-      setIsAddDialogOpen(false);
+      setIsAddModalOpen(false);
       loadIngredients(); // Reload ingredients after adding
+      toast({
+        title: t("Success"),
+        description: t("Ingredient added successfully"),
+      });
     } catch (error) {
       console.error("Error adding ingredient:", error);
       toast({
@@ -108,8 +113,12 @@ const Ingredients = () => {
     
     try {
       await updateStockItem(selectedIngredient.id, data);
-      setIsEditDialogOpen(false);
+      setIsEditModalOpen(false);
       loadIngredients(); // Reload ingredients after updating
+      toast({
+        title: t("Success"),
+        description: t("Ingredient updated successfully"),
+      });
     } catch (error) {
       console.error("Error updating ingredient:", error);
       toast({
@@ -123,13 +132,13 @@ const Ingredients = () => {
   // Open edit dialog for an ingredient
   const handleEditClick = (ingredient: Ingredient) => {
     setSelectedIngredient(ingredient);
-    setIsEditDialogOpen(true);
+    setIsEditModalOpen(true);
   };
 
   // Open details dialog for an ingredient
   const handleDetailsClick = (ingredient: Ingredient) => {
     setSelectedIngredient(ingredient);
-    setIsDetailsDialogOpen(true);
+    setIsDetailsModalOpen(true);
   };
 
   // Filter ingredients based on search term and category
@@ -160,7 +169,7 @@ const Ingredients = () => {
                 <FileDown className="mr-2 h-4 w-4" />
                 <T text="Export" />
               </Button>
-              <Button onClick={() => setIsAddDialogOpen(true)}>
+              <Button onClick={() => setIsAddModalOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 <T text="Add Ingredient" />
               </Button>
@@ -366,128 +375,148 @@ const Ingredients = () => {
         </Tabs>
       </div>
 
-      {/* Add Ingredient Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle><T text="Add New Ingredient" /></DialogTitle>
-          </DialogHeader>
+      {/* Add Ingredient Modal */}
+      <SideModal
+        open={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        title={<T text="Add New Ingredient" />}
+        width="lg"
+      >
+        <IngredientForm
+          onSubmit={handleAddIngredient}
+          onCancel={() => setIsAddModalOpen(false)}
+          isLoading={isLoading}
+        />
+      </SideModal>
+
+      {/* Edit Ingredient Modal */}
+      <SideModal
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+        title={<T text="Edit Ingredient" />}
+        width="lg"
+      >
+        {selectedIngredient && (
           <IngredientForm
-            onSubmit={handleAddIngredient}
-            onCancel={() => setIsAddDialogOpen(false)}
+            initialData={selectedIngredient}
+            onSubmit={handleUpdateIngredient}
+            onCancel={() => setIsEditModalOpen(false)}
             isLoading={isLoading}
           />
-        </DialogContent>
-      </Dialog>
+        )}
+      </SideModal>
 
-      {/* Edit Ingredient Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle><T text="Edit Ingredient" /></DialogTitle>
-          </DialogHeader>
-          {selectedIngredient && (
-            <IngredientForm
-              initialData={selectedIngredient}
-              onSubmit={handleUpdateIngredient}
-              onCancel={() => setIsEditDialogOpen(false)}
-              isLoading={isLoading}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Ingredient Details Dialog */}
-      <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle><T text="Ingredient Details" /></DialogTitle>
-          </DialogHeader>
-          {selectedIngredient && (
-            <div className="space-y-4 mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground"><T text="Name" /></h3>
-                  <p>{selectedIngredient.name}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground"><T text="Category" /></h3>
-                  <p>{selectedIngredient.category || "—"}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground"><T text="Type" /></h3>
-                  <p>{selectedIngredient.type || "—"}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground"><T text="Origin" /></h3>
-                  <p>{selectedIngredient.origin || "—"}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground"><T text="Stock Quantity" /></h3>
-                  <p>{selectedIngredient.stock_quantity} {selectedIngredient.unit}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground"><T text="Reorder Level" /></h3>
-                  <p>{selectedIngredient.reorder_level || "—"} {selectedIngredient.unit}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground"><T text="Cost" /></h3>
-                  <p>{selectedIngredient.cost ? `$${selectedIngredient.cost.toFixed(2)}/${selectedIngredient.unit}` : "—"}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground"><T text="Supplier" /></h3>
-                  <p>{selectedIngredient.supplier || "—"}</p>
-                </div>
-              </div>
-              
+      {/* Ingredient Details Modal */}
+      <SideModal
+        open={isDetailsModalOpen}
+        onOpenChange={setIsDetailsModalOpen}
+        title={<T text="Ingredient Details" />}
+        width="md"
+      >
+        {selectedIngredient && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground"><T text="Allergens" /></h3>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {selectedIngredient.allergens && selectedIngredient.allergens.length > 0 ? (
-                    selectedIngredient.allergens.map(allergen => (
-                      <Badge key={allergen} variant="outline">
-                        {allergen}
-                      </Badge>
-                    ))
-                  ) : (
-                    <p className="text-muted-foreground"><T text="None" /></p>
-                  )}
-                </div>
+                <h3 className="text-sm font-medium text-muted-foreground"><T text="Name" /></h3>
+                <p className="text-lg font-medium">{selectedIngredient.name}</p>
               </div>
-              
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground"><T text="Dietary Information" /></h3>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {selectedIngredient.dietary && selectedIngredient.dietary.length > 0 ? (
-                    selectedIngredient.dietary.map(diet => (
-                      <Badge key={diet} variant="secondary">
-                        {diet}
-                      </Badge>
-                    ))
-                  ) : (
-                    <p className="text-muted-foreground"><T text="None" /></p>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button 
-                  onClick={() => handleEditClick(selectedIngredient)}
-                >
-                  <Edit className="mr-2 h-4 w-4" />
-                  <T text="Edit" />
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsDetailsDialogOpen(false)}
-                >
-                  <T text="Close" />
-                </Button>
+                <h3 className="text-sm font-medium text-muted-foreground"><T text="Category" /></h3>
+                <p className="text-lg font-medium">{selectedIngredient.category || "—"}</p>
               </div>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground"><T text="Type" /></h3>
+                <p>{selectedIngredient.type || "—"}</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground"><T text="Origin" /></h3>
+                <p>{selectedIngredient.origin || "—"}</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground"><T text="Stock Quantity" /></h3>
+                <div className="flex items-center">
+                  <p className="text-lg font-semibold">{selectedIngredient.stock_quantity} {selectedIngredient.unit}</p>
+                  {selectedIngredient.reorder_level && selectedIngredient.stock_quantity !== undefined && 
+                   selectedIngredient.stock_quantity <= (selectedIngredient.reorder_level || 0) && (
+                    <Badge variant="destructive" className="ml-2">
+                      <T text="Low Stock" />
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground"><T text="Reorder Level" /></h3>
+                <p>{selectedIngredient.reorder_level || "—"} {selectedIngredient.unit}</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground"><T text="Cost" /></h3>
+                <p className="text-lg font-medium">{selectedIngredient.cost ? `$${selectedIngredient.cost.toFixed(2)}/${selectedIngredient.unit}` : "—"}</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground"><T text="Supplier" /></h3>
+                <p>{selectedIngredient.supplier || "—"}</p>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-2"><T text="Allergens" /></h3>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {selectedIngredient.allergens && selectedIngredient.allergens.length > 0 ? (
+                  selectedIngredient.allergens.map(allergen => (
+                    <Badge key={allergen} variant="outline">
+                      {allergen}
+                    </Badge>
+                  ))
+                ) : (
+                  <p className="text-muted-foreground"><T text="None" /></p>
+                )}
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-2"><T text="Dietary Information" /></h3>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {selectedIngredient.dietary && selectedIngredient.dietary.length > 0 ? (
+                  selectedIngredient.dietary.map(diet => (
+                    <Badge key={diet} variant="secondary">
+                      {diet}
+                    </Badge>
+                  ))
+                ) : (
+                  <p className="text-muted-foreground"><T text="None" /></p>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button 
+                onClick={() => {
+                  setIsDetailsModalOpen(false);
+                  handleEditClick(selectedIngredient);
+                }}
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                <T text="Edit" />
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setIsDetailsModalOpen(false)}
+              >
+                <T text="Close" />
+              </Button>
+            </div>
+          </div>
+        )}
+      </SideModal>
     </AppLayout>
   );
 };
