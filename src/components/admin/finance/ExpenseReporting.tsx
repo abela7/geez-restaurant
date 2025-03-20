@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,11 @@ import { BarChart, LineChart, PieChart as RechartsPieChart, Pie, Cell, Responsiv
 import { Calendar, Download, PieChart, BarChart as BarChartIcon, TrendingUp } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
-import { getExpensesGroupedByCategory, getExpensesByMonth, getProfitMarginData } from "@/services/expenseService";
+import { 
+  getExpensesGroupedByCategory, 
+  getExpensesByMonth, 
+  getProfitMarginData 
+} from "@/services/finance";
 
 // Colors for the pie chart
 const COLORS = ['#DAA520', '#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#a4de6c', '#d0ed57', '#83a6ed', '#8dd1e1'];

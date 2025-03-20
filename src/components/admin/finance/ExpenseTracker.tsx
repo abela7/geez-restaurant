@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -13,7 +12,14 @@ import { Plus, X, Search } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
-import { fetchExpenses, fetchExpenseCategories, addExpense, deleteExpense, ExpenseCategory, ExpenseWithCategory } from "@/services/expenseService";
+import { 
+  ExpenseCategory, 
+  ExpenseWithCategory,
+  fetchExpenses, 
+  fetchExpenseCategories, 
+  addExpense, 
+  deleteExpense 
+} from "@/services/finance";
 
 const paymentMethods = ["Cash", "Credit Card", "Bank Transfer", "Cheque", "Direct Debit"];
 
@@ -42,7 +48,6 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
     description: ""
   });
 
-  // Load expenses and categories on mount
   useEffect(() => {
     loadData();
   }, [searchTerm, categoryFilter, dateFilter]);
@@ -79,7 +84,6 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
         return;
       }
 
-      // Convert date string to ISO string for database
       const dateWithTime = new Date(newExpense.date);
       
       const addedExpense = await addExpense({
@@ -92,14 +96,12 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
         description: "Expense added successfully."
       });
       
-      // Reload data to include the new expense
       await loadData();
       
       if (onExpenseAdded) {
         onExpenseAdded(addedExpense);
       }
       
-      // Reset form
       setNewExpense({
         date: new Date().toISOString().split('T')[0],
         category_id: "",
@@ -128,7 +130,6 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
         title: "Success",
         description: "Expense deleted successfully."
       });
-      // Remove expense from local state
       setExpenses(expenses.filter(expense => expense.id !== id));
     } catch (error) {
       console.error("Error deleting expense:", error);
