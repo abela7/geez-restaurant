@@ -6,6 +6,8 @@ import { cn } from '@/lib/utils';
 import { useLanguage, T } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import Header from './Header';
+import { Menu } from 'lucide-react'; 
+import { Button } from './ui/button';
 
 import { 
   Breadcrumb, 
@@ -22,7 +24,8 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'admin' }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Set default sidebar state to closed on initial load
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const isMobile = useIsMobile();
   
@@ -55,20 +58,12 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
   
   const breadcrumbs = getBreadcrumbs();
 
-  const contentClasses = cn(
-    "flex-1 flex flex-col w-full transition-all duration-300",
-    sidebarOpen && !isMobile ? "ml-64" : "ml-0"
-  );
-
   return (
-    <div className="flex min-h-screen relative bg-background">
+    <div className="flex min-h-screen bg-background">
       {/* Overlay for mobile sidebar */}
-      {isMobile && (
+      {sidebarOpen && (
         <div
-          className={cn(
-            "fixed inset-0 z-20 bg-black/60 md:hidden transition-opacity duration-300",
-            sidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-          )}
+          className="fixed inset-0 z-20 bg-black/60 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -76,20 +71,34 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
       {/* Sidebar */}
       <div 
         className={cn(
-          "md:relative top-0 left-0 h-screen z-30",
-          "transition-all duration-300 ease-in-out",
-          "w-64 shrink-0",
-          isMobile ? (sidebarOpen ? "translate-x-0" : "-translate-x-full") : ""
+          "fixed top-0 left-0 h-screen z-30 w-64",
+          "transition-transform duration-300 ease-in-out",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full",
+          "md:relative md:translate-x-0",
+          !sidebarOpen && "md:hidden"
         )}
       >
-        <div className="h-full">
-          <MainSidebar open={sidebarOpen} onToggle={toggleSidebar} interface={userInterface} />
-        </div>
+        <MainSidebar open={sidebarOpen} onToggle={toggleSidebar} interface={userInterface} />
       </div>
       
       {/* Main content */}
-      <div className={contentClasses}>
-        <Header toggleSidebar={toggleSidebar} interface={userInterface} />
+      <div className="flex-1 flex flex-col w-full">
+        <div className="sticky top-0 z-10 bg-background border-b border-border">
+          <div className="flex items-center h-16 px-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="mr-4"
+              onClick={toggleSidebar}
+            >
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle menu</span>
+            </Button>
+            <div className="flex-1">
+              <Header toggleSidebar={toggleSidebar} interface={userInterface} />
+            </div>
+          </div>
+        </div>
         
         {location.pathname !== '/' && (
           <div className="px-4 md:px-6 py-2 bg-background/50 border-b border-border/50">

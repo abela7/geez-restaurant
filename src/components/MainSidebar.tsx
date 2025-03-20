@@ -6,8 +6,7 @@ import { useLanguage, T } from '@/contexts/LanguageContext';
 import { 
   LayoutDashboard, DollarSign, Users, Package, BarChart, 
   User, Settings, ClipboardList, ChevronDown, ChevronRight, Languages,
-  BookUser, ListChecks, BadgeDollarSign, Menu as MenuIcon, LogOut, 
-  ChevronLeft, MapPin, ClipboardCheck, FileText
+  LogOut, ChevronLeft, Menu as MenuIcon, Settings2, MapPin
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -119,177 +118,156 @@ export const MainSidebar: React.FC<{
     );
   };
 
-  // Navigation sections for admin interface
-  const getAdminSections = () => {
-    return [
-      { 
-        label: "Dashboard", 
-        icon: <LayoutDashboard size={20} />, 
-        path: "/"
-      },
-      { 
-        label: "Reports", 
-        icon: <BarChart size={20} />, 
-        path: "/admin/reports",
-        submenu: [
-          { to: "sales", label: "Sales Analytics" },
-          { to: "staff", label: "Staff Reports" },
-          { to: "inventory", label: "Inventory Reports" },
-          { to: "customers", label: "Customer Insights" },
-          { to: "custom", label: "Custom Reports" }
-        ]
-      },
-      { 
-        label: "Staff", 
-        icon: <Users size={20} />, 
-        path: "/admin/staff",
-        submenu: [
-          { to: "directory", label: "Staff Directory" },
-          { to: "attendance", label: "Attendance" },
-          { to: "performance", label: "Performance" },
-          { to: "tasks", label: "Tasks" },
-          { to: "payroll", label: "Payroll" }
-        ]
-      },
-      { 
-        label: "Inventory", 
-        icon: <Package size={20} />, 
-        path: "/admin/inventory",
-        submenu: [
-          { to: "stock", label: "Stock Levels" },
-          { to: "ingredients", label: "Ingredients" },
-          { to: "recipes", label: "Recipes" },
-          { to: "suppliers", label: "Suppliers" },
-          { to: "purchase-orders", label: "Purchase Orders" }
-        ]
-      },
-      { 
-        label: "Menu", 
-        icon: <MenuIcon size={20} />, 
-        path: "/admin/menu",
-        submenu: [
-          { to: "food", label: "Food Items" },
-          { to: "categories", label: "Categories" },
-          { to: "recipes", label: "Recipes" },
-          { to: "modifiers", label: "Modifiers" },
-          { to: "pricing", label: "Pricing" },
-          { to: "design", label: "Menu Design" }
-        ]
-      },
-      { 
-        label: "Tasks", 
-        icon: <ClipboardList size={20} />, 
-        path: "/admin/tasks"
-      },
-      { 
-        label: "Food Safety", 
-        icon: <ClipboardCheck size={20} />, 
-        path: "/admin/food-safety",
-        submenu: [
-          { to: "checklists", label: "Checklists" }
-        ]
-      },
-      { 
-        label: "Finance", 
-        icon: <DollarSign size={20} />, 
-        path: "/admin/finance",
-        submenu: [
-          { to: "daily-sales", label: "Daily Sales" },
-          { to: "financial-reports", label: "Financial Reports" },
-          { to: "payment-management", label: "Payment Management" },
-          { to: "budgeting", label: "Budgeting" }
-        ]
-      },
-      { 
-        label: "Customers", 
-        icon: <User size={20} />, 
-        path: "/admin/customers",
-        submenu: [
-          { to: "database", label: "Customer Database" },
-          { to: "feedback", label: "Feedback" },
-          { to: "promotions", label: "Promotions" },
-          { to: "loyalty", label: "Loyalty Program" }
-        ]
-      },
-      { 
-        label: "Communication", 
-        icon: <FileText size={20} />, 
-        path: "/admin/communication"
-      },
-      {
-        label: "General",
-        icon: <Settings size={20} />,
-        path: "/admin/general",
-        submenu: [
-          { to: "table-management", label: "Table Management" }
-        ]
-      },
-      { 
-        label: "Settings", 
-        icon: <Settings size={20} />, 
-        path: "/admin/settings",
-        submenu: [
-          { to: "profile", label: "Restaurant Profile" },
-          { to: "users", label: "User Access" },
-          { to: "devices", label: "Printers & Devices" },
-          { to: "logs", label: "System Logs" },
-          { to: "integrations", label: "Integrations" }
-        ]
-      },
-      { 
-        label: "Activity Log", 
-        icon: <ClipboardList size={20} />, 
-        path: "/admin/activity"
-      },
-      { 
-        label: "Language Management", 
-        icon: <Languages size={20} />, 
-        path: "/admin/language"
-      }
-    ];
-  };
+  // Navigation sections for admin interface - reordered as requested
+  const adminSections: NavSection[] = [
+    { 
+      label: "Dashboard", 
+      icon: <LayoutDashboard size={20} />, 
+      path: "/"
+    },
+    { 
+      label: "Sales & Finance", 
+      icon: <DollarSign size={20} />, 
+      path: "/admin/finance",
+      submenu: [
+        { to: "daily-sales", label: "Daily Sales" },
+        { to: "financial-reports", label: "Financial Reports" },
+        { to: "payment-management", label: "Payment Management" },
+        { to: "budgeting", label: "Budgeting" }
+      ]
+    },
+    { 
+      label: "Staff Management", 
+      icon: <Users size={20} />, 
+      path: "/admin/staff",
+      submenu: [
+        { to: "directory", label: "Staff Directory" },
+        { to: "performance", label: "Performance" },
+        { to: "attendance", label: "Attendance" },
+        { to: "tasks", label: "Tasks" }, // Tasks moved under Staff as requested
+        { to: "payroll", label: "Payroll" }
+      ]
+    },
+    { 
+      label: "Menu Management", 
+      icon: <MenuIcon size={20} />, 
+      path: "/admin/menu",
+      submenu: [
+        { to: "food", label: "Food Items" },
+        { to: "categories", label: "Categories" },
+        { to: "recipes", label: "Recipes" },
+        { to: "modifiers", label: "Modifiers" },
+        { to: "pricing", label: "Pricing" },
+        { to: "design", label: "Menu Design" }
+      ]
+    },
+    { 
+      label: "Inventory", 
+      icon: <Package size={20} />, 
+      path: "/admin/inventory",
+      submenu: [
+        { to: "stock", label: "Stock Levels" },
+        { to: "ingredients", label: "Ingredients" },
+        { to: "recipes", label: "Recipes" },
+        { to: "suppliers", label: "Suppliers" },
+        { to: "purchase-orders", label: "Purchase Orders" }
+      ]
+    },
+    { 
+      label: "Reports", 
+      icon: <BarChart size={20} />, 
+      path: "/admin/reports",
+      submenu: [
+        { to: "sales", label: "Sales Analytics" },
+        { to: "staff", label: "Staff Reports" },
+        { to: "inventory", label: "Inventory Reports" },
+        { to: "customers", label: "Customer Insights" },
+        { to: "custom", label: "Custom Reports" }
+      ]
+    },
+    { 
+      label: "Customers", 
+      icon: <User size={20} />, 
+      path: "/admin/customers",
+      submenu: [
+        { to: "database", label: "Customer Database" },
+        { to: "feedback", label: "Feedback" },
+        { to: "promotions", label: "Promotions" },
+        { to: "loyalty", label: "Loyalty Program" }
+      ]
+    },
+    {
+      label: "General", 
+      icon: <Settings2 size={20} />, 
+      path: "/admin/general",
+      submenu: [
+        { to: "table-management", label: "Table Management" }
+      ]
+    },
+    { 
+      label: "Settings", 
+      icon: <Settings size={20} />, 
+      path: "/admin/settings",
+      submenu: [
+        { to: "profile", label: "Restaurant Profile" },
+        { to: "users", label: "User Access" },
+        { to: "devices", label: "Printers & Devices" },
+        { to: "logs", label: "System Logs" },
+        { to: "integrations", label: "Integrations" }
+      ]
+    },
+    { 
+      label: "Activity Log", 
+      icon: <ClipboardList size={20} />, 
+      path: "/admin/activity"
+    },
+    { 
+      label: "Language Management", 
+      icon: <Languages size={20} />, 
+      path: "/admin/language"
+    },
+    { 
+      label: "Logout", 
+      icon: <LogOut size={20} />, 
+      path: "/login"
+    }
+  ];
 
   // Navigation sections for waiter interface
-  const getWaiterSections = () => {
-    return [
-      { to: "/waiter", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
-      { to: "/waiter/tables", label: "Table Management", icon: <MapPin size={20} /> },
-      { to: "/waiter/orders", label: "Order Management", icon: <ClipboardList size={20} /> },
-      { to: "/waiter/payments", label: "Payment Processing", icon: <DollarSign size={20} /> },
-      { to: "/waiter/tasks", label: "Tasks", icon: <ClipboardList size={20} /> },
-      { to: "/waiter/food-safety", label: "Food Safety", icon: <ClipboardCheck size={20} /> }
-    ];
-  };
+  const waiterLinks = [
+    { to: "/waiter", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
+    { to: "/waiter/tables", label: "Table Management", icon: <MapPin size={20} /> },
+    { to: "/waiter/orders", label: "Order Management", icon: <ClipboardList size={20} /> },
+    { to: "/waiter/payments", label: "Payment Processing", icon: <DollarSign size={20} /> },
+    { to: "/waiter/tasks", label: "Tasks", icon: <ClipboardList size={20} /> },
+    { to: "/login", label: "Logout", icon: <LogOut size={20} /> },
+  ];
 
   // Navigation sections for kitchen interface
-  const getKitchenSections = () => {
-    return [
-      { to: "/kitchen", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
-      { to: "/kitchen/recipes", label: "Recipe Viewer", icon: <MenuIcon size={20} /> },
-      { to: "/kitchen/inventory", label: "Inventory Check", icon: <Package size={20} /> },
-      { to: "/kitchen/tasks", label: "Tasks", icon: <ClipboardList size={20} /> },
-      { to: "/kitchen/food-safety", label: "Food Safety", icon: <ClipboardCheck size={20} /> }
-    ];
-  };
+  const kitchenLinks = [
+    { to: "/kitchen", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
+    { to: "/kitchen/recipes", label: "Recipe Viewer", icon: <MenuIcon size={20} /> },
+    { to: "/kitchen/inventory", label: "Inventory Check", icon: <Package size={20} /> },
+    { to: "/kitchen/tasks", label: "Tasks", icon: <ClipboardList size={20} /> },
+    { to: "/login", label: "Logout", icon: <LogOut size={20} /> },
+  ];
 
   // Navigation sections for customer interface
-  const getCustomerSections = () => {
-    return [
-      { to: "/menu", label: "Menu", icon: <MenuIcon size={20} /> },
-      { to: "/feedback", label: "Feedback", icon: <ClipboardList size={20} /> },
-      { to: "/promotions", label: "Promotions", icon: <DollarSign size={20} /> }
-    ];
-  };
+  const customerLinks = [
+    { to: "/menu", label: "Menu", icon: <MenuIcon size={20} /> },
+    { to: "/feedback", label: "Feedback", icon: <ClipboardList size={20} /> },
+    { to: "/promotions", label: "Promotions", icon: <DollarSign size={20} /> },
+    { to: "/login", label: "Logout", icon: <LogOut size={20} /> },
+  ];
 
   // Navigation sections for system admin interface
-  const getSystemSections = () => {
-    return [
-      { to: "/system", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
-      { to: "/system/errors", label: "Error Logs", icon: <ClipboardList size={20} /> },
-      { to: "/system/users", label: "User Management", icon: <Users size={20} /> },
-      { to: "/system/docs", label: "Documentation", icon: <ClipboardList size={20} /> }
-    ];
-  };
+  const systemLinks = [
+    { to: "/system", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
+    { to: "/system/errors", label: "Error Logs", icon: <ClipboardList size={20} /> },
+    { to: "/system/users", label: "User Management", icon: <Users size={20} /> },
+    { to: "/system/docs", label: "Documentation", icon: <ClipboardList size={20} /> },
+    { to: "/login", label: "Logout", icon: <LogOut size={20} /> },
+  ];
 
   // Get the appropriate navigation sections based on interface type
   let navSections: any[] = [];
@@ -297,30 +275,30 @@ export const MainSidebar: React.FC<{
   
   switch (interfaceType) {
     case 'waiter':
-      navSections = getWaiterSections();
+      navSections = waiterLinks;
       interfaceTitle = "Waiter Interface";
       break;
     case 'kitchen':
-      navSections = getKitchenSections();
+      navSections = kitchenLinks;
       interfaceTitle = "Kitchen Staff Interface";
       break;
     case 'customer':
-      navSections = getCustomerSections();
+      navSections = customerLinks;
       interfaceTitle = "Menu & Feedback";
       break;
     case 'system':
-      navSections = getSystemSections();
+      navSections = systemLinks;
       interfaceTitle = "System Administration";
       break;
     default:
-      navSections = getAdminSections();
+      navSections = adminSections;
       interfaceTitle = "Administrative Portal";
   }
 
   return (
     <div className="h-full flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
       <div className="p-4 flex justify-between items-center h-16 border-b border-sidebar-border">
-        <div className="text-xl font-bold text-primary">
+        <div className="text-xl font-bold text-amber-500">
           Habesha
         </div>
         
@@ -344,7 +322,7 @@ export const MainSidebar: React.FC<{
         
         <nav className="space-y-0.5">
           {interfaceType === 'admin' ? (
-            navSections.map((section: NavSection) => (
+            adminSections.map((section: NavSection) => (
               <React.Fragment key={section.path}>
                 <SidebarLink
                   to={section.submenu ? '#' : section.path}
