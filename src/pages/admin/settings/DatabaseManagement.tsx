@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import Layout from '@/components/Layout';
@@ -27,12 +26,6 @@ interface ColumnInfo {
   column_default: string | null;
 }
 
-// Define a type for RPC response
-interface RpcResponse<T> {
-  data: T | null;
-  error: Error | null;
-}
-
 const DatabaseManagement: React.FC = () => {
   const { toast } = useToast();
   const [tables, setTables] = useState<TableInfo[]>([]);
@@ -45,15 +38,11 @@ const DatabaseManagement: React.FC = () => {
   const [isNewRowDialogOpen, setIsNewRowDialogOpen] = useState(false);
   const [currentRow, setCurrentRow] = useState<any>(null);
   
-  // Get all tables using the RPC function
   const fetchTables = async () => {
     setIsLoading(true);
     try {
-      // Type assertion for RPC call
-      const { data, error } = await supabase.rpc('get_tables') as {
-        data: TableInfo[] | null;
-        error: Error | null;
-      };
+      const result = await supabase.rpc('get_tables') as any;
+      const { data, error } = result;
       
       if (error) throw error;
       
@@ -72,18 +61,14 @@ const DatabaseManagement: React.FC = () => {
     }
   };
 
-  // Get columns for a table using the RPC function
   const fetchColumns = async (tableName: string, schema: string = 'public') => {
     setIsLoading(true);
     try {
-      // Type assertion for RPC call with parameters
-      const { data, error } = await supabase.rpc('get_table_columns', {
+      const result = await supabase.rpc('get_table_columns', {
         tablename: tableName,
         schema: schema
-      }) as {
-        data: ColumnInfo[] | null;
-        error: Error | null;
-      };
+      }) as any;
+      const { data, error } = result;
       
       if (error) throw error;
       
@@ -102,13 +87,11 @@ const DatabaseManagement: React.FC = () => {
     }
   };
 
-  // Fetch table data - using type assertion to handle dynamic table names
   const fetchTableData = async (tableName: string) => {
     if (!tableName) return;
     
     setIsLoading(true);
     try {
-      // Use type assertion to treat tableName as a known table
       const { data, error } = await supabase
         .from(tableName as any)
         .select('*')
@@ -131,7 +114,6 @@ const DatabaseManagement: React.FC = () => {
     }
   };
 
-  // Insert new row - using type assertion for dynamic table
   const insertRow = async (rowData: any) => {
     if (!selectedTable) return;
     
@@ -163,7 +145,6 @@ const DatabaseManagement: React.FC = () => {
     }
   };
 
-  // Update row - using type assertion for dynamic table
   const updateRow = async (id: string, rowData: any) => {
     if (!selectedTable) return;
     
@@ -195,7 +176,6 @@ const DatabaseManagement: React.FC = () => {
     }
   };
 
-  // Delete row - using type assertion for dynamic table
   const deleteRow = async (id: string) => {
     if (!selectedTable) return;
     
@@ -226,19 +206,16 @@ const DatabaseManagement: React.FC = () => {
     }
   };
 
-  // Load tables on initial render
   useEffect(() => {
     fetchTables();
   }, []);
 
-  // Handle table selection
   const handleTableSelect = (tableName: string) => {
     setSelectedTable(tableName);
     fetchColumns(tableName, selectedSchema);
     fetchTableData(tableName);
   };
 
-  // Edit form
   const EditForm = ({ row }: { row: any }) => {
     const form = useForm({
       defaultValues: { ...row }
@@ -279,7 +256,6 @@ const DatabaseManagement: React.FC = () => {
     );
   };
 
-  // New Row form
   const NewRowForm = () => {
     const initialValues: any = {};
     columns.forEach(column => {
@@ -291,12 +267,10 @@ const DatabaseManagement: React.FC = () => {
     });
     
     const onSubmit = (data: any) => {
-      // Remove id if it's blank (for auto-generated IDs)
       if (data.id === '') {
         delete data.id;
       }
       
-      // Remove any blank fields that should be null
       Object.keys(data).forEach(key => {
         if (data[key] === '') {
           data[key] = null;
@@ -508,7 +482,6 @@ const DatabaseManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
