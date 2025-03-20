@@ -39,7 +39,7 @@ export const fetchExpenseCategories = async (): Promise<ExpenseCategory[]> => {
     throw new Error(error.message);
   }
 
-  // Add default type if not present
+  // Add default type if not present (shouldn't be needed anymore after migration)
   return data.map(category => ({
     ...category,
     type: category.type || "operational"
@@ -252,10 +252,12 @@ export const getExpensesByMonth = async (): Promise<any[]> => {
     const categoryName = expense.category?.name || "";
     const amount = parseFloat(String(expense.amount));
     
-    // Categorize expenses (simplified for demo)
-    if (categoryName === "Rent" || categoryName === "Licenses") {
+    // Categorize expenses based on category type
+    const categoryType = expense.category?.type || "operational";
+    
+    if (categoryType === "fixed") {
       months[monthKey].fixed += amount;
-    } else if (categoryName === "Ingredients" || categoryName === "Transport") {
+    } else if (categoryType === "variable") {
       months[monthKey].variable += amount;
     } else {
       months[monthKey].operational += amount;
