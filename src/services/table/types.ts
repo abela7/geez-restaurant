@@ -53,3 +53,15 @@ export interface TableStats {
   reserved: number;
   cleaning: number;
 }
+
+export interface TableGuest {
+  id: string;
+  table_id: string;
+  guest_count: number;
+  server_name?: string;
+  notes?: string;
+  status: 'seated' | 'completed';
+  seated_at?: string;
+  created_at?: string;
+  updated_at?: string;
+}

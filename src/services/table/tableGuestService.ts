@@ -63,7 +63,7 @@ export const getActiveTableGuestByTableId = async (tableId: string): Promise<Tab
   return data as TableGuest | null;
 };
 
-export const createTableGuest = async (guest: Omit<TableGuest, 'id' | 'created_at' | 'updated_at'>): Promise<TableGuest> => {
+export const createTableGuest = async (guest: { table_id: string; guest_count: number; server_name?: string; notes?: string; status?: 'seated' | 'completed'; seated_at?: string; }): Promise<TableGuest> => {
   // First, update the table status to occupied
   await updateTableStatus(guest.table_id, 'occupied');
   

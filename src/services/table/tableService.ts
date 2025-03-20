@@ -186,6 +186,5 @@ export const deleteTable = async (id: string): Promise<void> => {
 export * from './roomService';
 export * from './tableGroupService';
 export * from './tableGuestService';
-export * from './layoutService';
 export * from './tableStatsService';
 export * from './tableDetailsService';

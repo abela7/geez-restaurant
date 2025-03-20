@@ -6,7 +6,7 @@ import { getTablesWithDetails } from "@/services/table/tableDetailsService";
 import TableStat from "@/components/tables/TableStat";
 import { getTableStats } from "@/services/table/tableStatsService";
 import TableGrid from "@/components/tables/TableGrid";
-import { Loader2 } from "lucide-react";
+import { Loader2, LayoutGrid } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 
