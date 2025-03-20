@@ -11,9 +11,9 @@ export type StaffTask = {
   priority: string;
   status: string;
   due_date: string | null;
-  due_time: string | null;
+  due_time: string | null; // Added due_time field
   completed_at: string | null;
-  category?: string | null;
+  category: string | null; // Added category field
 };
 
 export const useStaffTasks = (staffId: string) => {
@@ -36,7 +36,8 @@ export const useStaffTasks = (staffId: string) => {
         throw error;
       }
       
-      setTasks(data as StaffTask[] || []);
+      // Ensure the data is properly typed as StaffTask[]
+      setTasks((data || []) as StaffTask[]);
     } catch (err: any) {
       console.error('Error fetching tasks:', err);
       setError(err.message || 'Failed to load tasks');
@@ -77,7 +78,7 @@ export const useStaffTasks = (staffId: string) => {
         description: "Task added successfully"
       });
       
-      return data;
+      return data as StaffTask;
     } catch (err: any) {
       console.error('Error adding task:', err);
       toast({
@@ -117,7 +118,7 @@ export const useStaffTasks = (staffId: string) => {
         description: `Task ${updates.status === 'Completed' ? 'marked as completed' : 'updated'} successfully`
       });
       
-      return data;
+      return data as StaffTask;
     } catch (err: any) {
       console.error('Error updating task:', err);
       toast({

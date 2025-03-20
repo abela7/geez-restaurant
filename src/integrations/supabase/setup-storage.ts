@@ -26,8 +26,13 @@ export const setupStorage = async () => {
       console.log('staff_images bucket already exists');
     }
 
-    // Check and create policies for the bucket
-    // These will be handled by Supabase automatically when setting public: true
+    // Set up storage policies
+    try {
+      // We don't need to create policies here anymore as they're created in the SQL migration
+      // This helps avoid errors when the policies already exist
+    } catch (policyError) {
+      console.error('Error setting up storage policies:', policyError);
+    }
     
   } catch (error) {
     console.error('Error setting up storage buckets:', error);

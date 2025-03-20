@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { PageHeader } from "@/components/ui/page-header";
@@ -25,7 +24,6 @@ import { StaffTask } from "@/hooks/useStaffTasks";
 import useStaffMembers from "@/hooks/useStaffMembers";
 import { format } from "date-fns";
 
-// Task category types and colors
 type TaskCategory = {
   id: string;
   name: string;
@@ -63,7 +61,6 @@ const TaskManagement = () => {
     category: "1"
   });
   
-  // Fetch all tasks
   const fetchTasks = async () => {
     setIsLoading(true);
     try {
@@ -76,7 +73,7 @@ const TaskManagement = () => {
         throw error;
       }
       
-      setTasks(data as StaffTask[] || []);
+      setTasks((data || []) as StaffTask[]);
     } catch (err: any) {
       console.error('Error fetching tasks:', err);
       toast({
@@ -89,7 +86,6 @@ const TaskManagement = () => {
     }
   };
   
-  // Initial data fetch
   useEffect(() => {
     fetchTasks();
   }, []);
@@ -186,7 +182,6 @@ const TaskManagement = () => {
       
       if (error) throw error;
       
-      // Add the new task to the list
       setTasks(prev => [...prev, data as StaffTask]);
       
       toast({
@@ -194,7 +189,6 @@ const TaskManagement = () => {
         description: "Task created successfully"
       });
       
-      // Reset form and close dialog
       setNewTask({
         title: "",
         description: "",
@@ -231,7 +225,6 @@ const TaskManagement = () => {
       
       if (error) throw error;
       
-      // Update the task in the list
       setTasks(prev => prev.map(task => task.id === taskId ? (data as StaffTask) : task));
       
       toast({
@@ -257,7 +250,6 @@ const TaskManagement = () => {
       
       if (error) throw error;
       
-      // Remove the task from the list
       setTasks(prev => prev.filter(task => task.id !== taskId));
       
       toast({
@@ -292,7 +284,6 @@ const TaskManagement = () => {
     })).filter(staff => staff.tasks.length > 0);
   };
 
-  // Function to export tasks to CSV
   const exportToCSV = () => {
     if (!filteredTasks.length) {
       toast({
@@ -322,7 +313,6 @@ const TaskManagement = () => {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     
-    // Create a link to download
     const link = document.createElement('a');
     link.setAttribute('href', url);
     link.setAttribute('download', `Tasks_Export_${new Date().toISOString().split('T')[0]}.csv`);

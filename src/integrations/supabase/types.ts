@@ -974,10 +974,12 @@ export type Database = {
       }
       staff_tasks: {
         Row: {
+          category: string | null
           completed_at: string | null
           created_at: string | null
           description: string | null
           due_date: string | null
+          due_time: string | null
           id: string
           priority: string | null
           staff_id: string
@@ -986,10 +988,12 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          category?: string | null
           completed_at?: string | null
           created_at?: string | null
           description?: string | null
           due_date?: string | null
+          due_time?: string | null
           id?: string
           priority?: string | null
           staff_id: string
@@ -998,10 +1002,12 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          category?: string | null
           completed_at?: string | null
           created_at?: string | null
           description?: string | null
           due_date?: string | null
+          due_time?: string | null
           id?: string
           priority?: string | null
           staff_id?: string

@@ -59,8 +59,8 @@ const WaiterTasks = () => {
         throw error;
       }
       
-      setTasks(data as StaffTask[] || []);
-      setFilteredTasks(data as StaffTask[] || []);
+      setTasks((data || []) as StaffTask[]);
+      setFilteredTasks((data || []) as StaffTask[]);
     } catch (err: any) {
       console.error('Error fetching tasks:', err);
       toast({
