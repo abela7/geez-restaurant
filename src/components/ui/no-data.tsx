@@ -1,17 +1,19 @@
 
 import React from "react";
-import { LayoutGrid } from "lucide-react";
+import { FolderX } from "lucide-react";
 
 interface NoDataProps {
   message: string;
   icon?: React.ReactNode;
 }
 
-const NoData = ({ message, icon }: NoDataProps) => {
+const NoData: React.FC<NoDataProps> = ({ message, icon }) => {
   return (
     <div className="flex flex-col items-center justify-center p-8 text-center">
-      {icon || <LayoutGrid className="h-12 w-12 text-muted-foreground mb-2" />}
-      <p className="text-muted-foreground mt-2">{message}</p>
+      <div className="mb-4 text-muted-foreground">
+        {icon || <FolderX className="h-12 w-12" />}
+      </div>
+      <p className="text-muted-foreground">{message}</p>
     </div>
   );
 };

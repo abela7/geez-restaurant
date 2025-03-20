@@ -8,7 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
@@ -30,8 +29,8 @@ const tableSchema = z.object({
     message: "Capacity must be at least 1.",
   }),
   status: z.enum(["available", "occupied", "reserved", "cleaning"]),
-  room_id: z.string().optional().nullable(),
-  group_id: z.string().optional().nullable(),
+  room_id: z.string().nullable(),
+  group_id: z.string().nullable(),
   position_x: z.number().optional(),
   position_y: z.number().optional(),
   width: z.number().optional(),
@@ -58,8 +57,8 @@ const TableForm = ({
       table_number: initialData.table_number || 1,
       capacity: initialData.capacity || 2,
       status: initialData.status || "available",
-      room_id: initialData.room_id || null,
-      group_id: initialData.group_id || null,
+      room_id: initialData.room_id === undefined ? null : initialData.room_id,
+      group_id: initialData.group_id === undefined ? null : initialData.group_id,
       position_x: initialData.position_x || 0,
       position_y: initialData.position_y || 0,
       width: initialData.width || 100,
@@ -69,8 +68,17 @@ const TableForm = ({
     },
   });
   
-  const handleFormSubmit = (values: FormValues) => {
-    onSubmit(values as Table);
+  const handleFormSubmit = async (values: FormValues) => {
+    try {
+      await onSubmit(values as Table);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast({
+        title: t("Error"),
+        description: t("Failed to save table. Please try again."),
+        variant: "destructive",
+      });
+    }
   };
   
   return (
@@ -147,9 +155,8 @@ const TableForm = ({
               <FormItem>
                 <FormLabel><T text="Room" /></FormLabel>
                 <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value || ""}
-                  value={field.value || ""}
+                  onValueChange={(value) => field.onChange(value || null)}
+                  value={field.value || "null"}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -157,7 +164,7 @@ const TableForm = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value=""><T text="None" /></SelectItem>
+                    <SelectItem value="null"><T text="None" /></SelectItem>
                     {roomOptions.map((room) => (
                       <SelectItem key={room.value} value={room.value}>
                         {room.label}
@@ -177,9 +184,8 @@ const TableForm = ({
               <FormItem>
                 <FormLabel><T text="Table Group" /></FormLabel>
                 <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value || ""}
-                  value={field.value || ""}
+                  onValueChange={(value) => field.onChange(value || null)}
+                  value={field.value || "null"}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -187,7 +193,7 @@ const TableForm = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value=""><T text="None" /></SelectItem>
+                    <SelectItem value="null"><T text="None" /></SelectItem>
                     {groupOptions.map((group) => (
                       <SelectItem key={group.value} value={group.value}>
                         {group.label}

@@ -101,9 +101,19 @@ const TablesView = () => {
 
   const handleTableFormSubmit = async (data: TableType) => {
     try {
+      console.log("Form data received:", data);
+      
+      // Process form values to ensure proper types
+      const tableData = {
+        ...data,
+        // Convert string "null" to actual null
+        room_id: data.room_id === "null" ? null : data.room_id,
+        group_id: data.group_id === "null" ? null : data.group_id
+      };
+      
       if (isEditMode && selectedTable) {
         // Update existing table
-        const updatedTable = await updateTable(selectedTable.id, data);
+        const updatedTable = await updateTable(selectedTable.id, tableData);
         setTables(
           tables.map((table) => (table.id === selectedTable.id ? updatedTable : table))
         );
@@ -113,7 +123,7 @@ const TablesView = () => {
         });
       } else {
         // Create new table
-        const newTable = await createTable(data);
+        const newTable = await createTable(tableData);
         setTables([...tables, newTable]);
         toast({
           title: t("Success"),
@@ -214,15 +224,13 @@ const TablesView = () => {
               {isEditMode ? <T text="Edit Table" /> : <T text="Create Table" />}
             </DialogTitle>
           </DialogHeader>
-          {isTableDialogOpen && (
-            <TableForm
-              initialData={selectedTable || {}}
-              onSubmit={handleTableFormSubmit}
-              onCancel={() => setIsTableDialogOpen(false)}
-              roomOptions={roomOptions}
-              groupOptions={groupOptions}
-            />
-          )}
+          <TableForm
+            initialData={selectedTable || {}}
+            onSubmit={handleTableFormSubmit}
+            onCancel={() => setIsTableDialogOpen(false)}
+            roomOptions={roomOptions}
+            groupOptions={groupOptions}
+          />
         </DialogContent>
       </Dialog>
 
