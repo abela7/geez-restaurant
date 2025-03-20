@@ -12,7 +12,7 @@ export const getTables = async (): Promise<Table[]> => {
     throw error;
   }
   
-  return (data || []) as Table[];
+  return (data || []) as unknown as Table[];
 };
 
 export const getTablesByRoomId = async (roomId: string): Promise<Table[]> => {
@@ -26,7 +26,7 @@ export const getTablesByRoomId = async (roomId: string): Promise<Table[]> => {
     throw error;
   }
   
-  return (data || []) as Table[];
+  return (data || []) as unknown as Table[];
 };
 
 export const getTablesByGroupId = async (groupId: string): Promise<Table[]> => {
@@ -40,7 +40,7 @@ export const getTablesByGroupId = async (groupId: string): Promise<Table[]> => {
     throw error;
   }
   
-  return (data || []) as Table[];
+  return (data || []) as unknown as Table[];
 };
 
 export const getTableById = async (id: string): Promise<Table | null> => {
@@ -55,7 +55,7 @@ export const getTableById = async (id: string): Promise<Table | null> => {
     throw error;
   }
   
-  return data as Table | null;
+  return data as unknown as Table | null;
 };
 
 export const createTable = async (table: Omit<Table, 'id' | 'created_at' | 'updated_at'>): Promise<Table> => {
@@ -286,8 +286,7 @@ export const deleteRoom = async (id: string): Promise<void> => {
 export const getTableGroups = async (): Promise<TableGroup[]> => {
   const { data, error } = await supabase
     .from('table_groups')
-    .select('*, room:rooms(*)')
-    .order('name');
+    .select('*, room:rooms(*)');
   
   if (error) {
     console.error('Error fetching table groups:', error);
@@ -301,8 +300,7 @@ export const getTableGroupsByRoomId = async (roomId: string): Promise<TableGroup
   const { data, error } = await supabase
     .from('table_groups')
     .select('*, room:rooms(*)')
-    .eq('room_id', roomId)
-    .order('name');
+    .eq('room_id', roomId);
   
   if (error) {
     console.error('Error fetching table groups by room:', error);
@@ -538,15 +536,14 @@ export const getTablesWithDetails = async (): Promise<TableWithDetails[]> => {
 export const getLayouts = async (): Promise<TableLayout[]> => {
   const { data, error } = await supabase
     .from('table_layouts')
-    .select('*, room:rooms(*)')
-    .order('name');
+    .select('*, room:rooms(*)');
   
   if (error) {
     console.error('Error fetching layouts:', error);
     throw error;
   }
   
-  return (data || []) as TableLayout[];
+  return (data || []) as unknown as TableLayout[];
 };
 
 export const getActiveLayout = async (roomId?: string): Promise<TableLayout | null> => {
@@ -566,7 +563,7 @@ export const getActiveLayout = async (roomId?: string): Promise<TableLayout | nu
     throw error;
   }
   
-  return data as TableLayout | null;
+  return data as unknown as TableLayout | null;
 };
 
 export const createLayout = async (layout: Omit<TableLayout, 'id' | 'created_at' | 'updated_at'>): Promise<TableLayout> => {
@@ -587,7 +584,11 @@ export const createLayout = async (layout: Omit<TableLayout, 'id' | 'created_at'
 export const updateLayout = async (id: string, layout: Partial<TableLayout>): Promise<TableLayout> => {
   const { data, error } = await supabase
     .from('table_layouts')
-    .update(layout)
+    .update({
+      name: layout.name,
+      room_id: layout.room_id,
+      is_active: layout.is_active
+    })
     .eq('id', id)
     .select()
     .single();
@@ -597,7 +598,7 @@ export const updateLayout = async (id: string, layout: Partial<TableLayout>): Pr
     throw error;
   }
   
-  return data as TableLayout;
+  return data as unknown as TableLayout;
 };
 
 export const activateLayout = async (id: string, roomId?: string): Promise<void> => {

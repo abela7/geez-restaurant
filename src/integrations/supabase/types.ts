@@ -1283,12 +1283,14 @@ export type Database = {
         Row: {
           capacity: number
           created_at: string | null
+          group_id: string | null
           height: number | null
           id: string
           location: string | null
           position_x: number | null
           position_y: number | null
           room_id: string | null
+          rotation: number | null
           shape: string | null
           status: string | null
           table_number: number
@@ -1298,12 +1300,14 @@ export type Database = {
         Insert: {
           capacity: number
           created_at?: string | null
+          group_id?: string | null
           height?: number | null
           id?: string
           location?: string | null
           position_x?: number | null
           position_y?: number | null
           room_id?: string | null
+          rotation?: number | null
           shape?: string | null
           status?: string | null
           table_number: number
@@ -1313,12 +1317,14 @@ export type Database = {
         Update: {
           capacity?: number
           created_at?: string | null
+          group_id?: string | null
           height?: number | null
           id?: string
           location?: string | null
           position_x?: number | null
           position_y?: number | null
           room_id?: string | null
+          rotation?: number | null
           shape?: string | null
           status?: string | null
           table_number?: number
@@ -1326,6 +1332,13 @@ export type Database = {
           width?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "restaurant_tables_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "table_groups"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "restaurant_tables_room_id_fkey"
             columns: ["room_id"]
@@ -1695,6 +1708,41 @@ export type Database = {
         }
         Relationships: []
       }
+      table_groups: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          room_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          room_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          room_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "table_groups_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       table_guests: {
         Row: {
           created_at: string | null
@@ -1735,6 +1783,41 @@ export type Database = {
             columns: ["table_id"]
             isOneToOne: false
             referencedRelation: "restaurant_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      table_layouts: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          room_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          room_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          room_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "table_layouts_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
             referencedColumns: ["id"]
           },
         ]
