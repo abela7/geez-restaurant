@@ -1163,6 +1163,96 @@ export type Database = {
           },
         ]
       }
+      quick_orders: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_available: boolean | null
+          name: string
+          price: number
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean | null
+          name: string
+          price: number
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean | null
+          name?: string
+          price?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      recent_orders: {
+        Row: {
+          created_at: string | null
+          customer_name: string | null
+          id: string
+          items_count: number
+          order_type: string
+          status: string
+          table_id: string | null
+          total_amount: number
+          updated_at: string | null
+          waiter_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_name?: string | null
+          id?: string
+          items_count: number
+          order_type: string
+          status: string
+          table_id?: string | null
+          total_amount: number
+          updated_at?: string | null
+          waiter_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_name?: string | null
+          id?: string
+          items_count?: number
+          order_type?: string
+          status?: string
+          table_id?: string | null
+          total_amount?: number
+          updated_at?: string | null
+          waiter_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recent_orders_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant_tables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recent_orders_waiter_id_fkey"
+            columns: ["waiter_id"]
+            isOneToOne: false
+            referencedRelation: "waiters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recipe_ingredients: {
         Row: {
           cost: number | null
@@ -2075,6 +2165,36 @@ export type Database = {
           name?: string
           permissions?: Json | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      waiters: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          id: string
+          name: string
+          role: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          name: string
+          role?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          role?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }

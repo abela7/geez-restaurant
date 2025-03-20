@@ -7,7 +7,6 @@ import OrderManagement from "@/pages/waiter/OrderManagement";
 import PaymentProcessing from "@/pages/waiter/PaymentProcessing";
 import WaiterTasks from "@/pages/waiter/WaiterTasks";
 import WaiterFoodSafety from "@/pages/waiter/WaiterFoodSafety";
-import UserProfile from "@/pages/UserProfile";
 import NotFound from "@/pages/NotFound";
 
 // Protected route component
@@ -30,7 +29,6 @@ const WaiterRoutes = () => {
         <Route path="tasks" element={<WaiterTasks />} />
         <Route path="food-safety" element={<WaiterFoodSafety />} />
       </Route>
-      <Route path="profile" element={<UserProfile />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
