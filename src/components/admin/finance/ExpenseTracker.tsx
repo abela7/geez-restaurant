@@ -76,7 +76,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
           const filtered = ingredients.filter(ing => ing.category === ingredientCategory);
           setFilteredIngredients(filtered);
         } else {
-          setFilteredIngredients(ingredients);
+          setFilteredIngredients([]);
         }
       }
     } else {
@@ -95,6 +95,8 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
           unit: ingredient.unit
         }));
       }
+    } else {
+      setSelectedIngredient(null);
     }
   }, [newExpense.ingredient_id, ingredients]);
 
