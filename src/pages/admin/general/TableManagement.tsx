@@ -32,18 +32,22 @@ type Room = {
   created_at: string;
 }
 
+// Updated Table type to match what's coming from Supabase
+type TableStatus = 'available' | 'occupied' | 'reserved' | 'needs_cleaning';
+
 type Table = {
   id: string;
   table_number: number;
   room_id: string | null;
   name: string;
   capacity: number;
-  status: 'available' | 'occupied' | 'reserved' | 'needs_cleaning';
+  status: TableStatus;
   is_guest_table: boolean;
   x_position: number | null;
   y_position: number | null;
   is_active: boolean;
   created_at: string;
+  updated_at: string;
 }
 
 const TableManagement: React.FC = () => {
@@ -76,7 +80,7 @@ const TableManagement: React.FC = () => {
     room_id: '',
     name: '',
     capacity: 4,
-    status: 'available' as const,
+    status: 'available' as TableStatus,
     is_guest_table: false,
     x_position: 0,
     y_position: 0,
@@ -112,7 +116,21 @@ const TableManagement: React.FC = () => {
         if (tablesError) throw tablesError;
         
         setRooms(roomsData || []);
-        setTables(tablesData || []);
+        
+        // Process the tables data to ensure it conforms to the Table type
+        const processedTablesData = (tablesData || []).map(table => {
+          // Make sure status is one of the allowed values
+          const validStatus: TableStatus = 
+            ['available', 'occupied', 'reserved', 'needs_cleaning'].includes(table.status) ? 
+            (table.status as TableStatus) : 'available';
+            
+          return {
+            ...table,
+            status: validStatus
+          } as Table;
+        });
+        
+        setTables(processedTablesData);
       } catch (error) {
         console.error('Error fetching data:', error);
         toast({
@@ -318,11 +336,20 @@ const TableManagement: React.FC = () => {
           
         if (error) throw error;
         
-        setTables(tables.map(table => table.id === tableFormData.id ? data[0] : table));
-        toast({
-          title: t("Success"),
-          description: t("Table updated successfully"),
-        });
+        if (data && data.length > 0) {
+          // Ensure the returned data conforms to Table type
+          const updatedTable = {
+            ...data[0],
+            status: data[0].status as TableStatus
+          } as Table;
+          
+          setTables(tables.map(table => table.id === tableFormData.id ? updatedTable : table));
+          
+          toast({
+            title: t("Success"),
+            description: t("Table updated successfully"),
+          });
+        }
       } else {
         const { data, error } = await supabase
           .from('tables')
@@ -341,11 +368,20 @@ const TableManagement: React.FC = () => {
           
         if (error) throw error;
         
-        setTables([...tables, data[0]]);
-        toast({
-          title: t("Success"),
-          description: t("Table added successfully"),
-        });
+        if (data && data.length > 0) {
+          // Ensure the returned data conforms to Table type
+          const newTable = {
+            ...data[0],
+            status: data[0].status as TableStatus
+          } as Table;
+          
+          setTables([...tables, newTable]);
+          
+          toast({
+            title: t("Success"),
+            description: t("Table added successfully"),
+          });
+        }
       }
       
       setIsTableDialogOpen(false);
@@ -386,7 +422,7 @@ const TableManagement: React.FC = () => {
     }
   };
   
-  const handleChangeTableStatus = async (tableId: string, newStatus: 'available' | 'occupied' | 'reserved' | 'needs_cleaning') => {
+  const handleChangeTableStatus = async (tableId: string, newStatus: TableStatus) => {
     try {
       const { data, error } = await supabase
         .from('tables')
@@ -396,11 +432,20 @@ const TableManagement: React.FC = () => {
         
       if (error) throw error;
       
-      setTables(tables.map(table => table.id === tableId ? data[0] : table));
-      toast({
-        title: t("Success"),
-        description: t(`Table status updated to ${newStatus}`),
-      });
+      if (data && data.length > 0) {
+        // Ensure the returned data conforms to Table type
+        const updatedTable = {
+          ...data[0],
+          status: data[0].status as TableStatus
+        } as Table;
+        
+        setTables(tables.map(table => table.id === tableId ? updatedTable : table));
+        
+        toast({
+          title: t("Success"),
+          description: t(`Table status updated to ${newStatus}`),
+        });
+      }
     } catch (error) {
       console.error('Error updating table status:', error);
       toast({
