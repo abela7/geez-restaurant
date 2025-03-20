@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export type ExpenseCategory = {
@@ -220,7 +219,7 @@ export const getExpensesByMonth = async (): Promise<any[]> => {
     .select(`
       amount,
       date,
-      category:expense_categories(id, name)
+      category:expense_categories(id, name, type)
     `)
     .gte("date", eightMonthsAgo.toISOString())
     .order("date");
