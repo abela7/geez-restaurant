@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PhoneCall, Mail, Calendar, DollarSign } from "lucide-react";
 import { StaffMember } from "@/hooks/useStaffMembers";
@@ -13,8 +13,17 @@ type ProfileSidebarProps = {
 };
 
 const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ staffMember }) => {
+  const { t } = useLanguage();
+  
   const getFullName = () => {
     return `${staffMember.first_name || ""} ${staffMember.last_name || ""}`.trim() || "No Name";
+  };
+
+  // Get first letter of first and last name for avatar fallback
+  const getInitials = () => {
+    const firstName = staffMember.first_name || "";
+    const lastName = staffMember.last_name || "";
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
 
   return (
@@ -23,11 +32,14 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ staffMember }) => {
         <CardContent className="pt-6">
           <div className="flex flex-col items-center text-center">
             <Avatar className="h-24 w-24 mb-4">
-              <img
-                src={staffMember.image_url || "/placeholder.svg"}
-                alt={getFullName()}
-                className="aspect-square h-full w-full object-cover"
-              />
+              {staffMember.image_url ? (
+                <AvatarImage
+                  src={staffMember.image_url}
+                  alt={getFullName()}
+                />
+              ) : (
+                <AvatarFallback>{getInitials()}</AvatarFallback>
+              )}
             </Avatar>
             <h2 className="text-xl font-bold">{getFullName()}</h2>
             <div className="mt-1 flex items-center">
@@ -72,16 +84,8 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ staffMember }) => {
           <CardTitle><T text="Skills & Expertise" /></CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            {staffMember.skills && staffMember.skills.length > 0 ? (
-              staffMember.skills.map((skill, index) => (
-                <Badge key={index} variant="outline" className="mr-2 mb-2">
-                  {skill}
-                </Badge>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground">No skills listed</p>
-            )}
+          <div className="text-center py-2">
+            <p className="text-sm text-muted-foreground"><T text="Coming Soon" /></p>
           </div>
         </CardContent>
       </Card>

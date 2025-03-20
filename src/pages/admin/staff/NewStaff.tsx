@@ -9,12 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Save, UserPlus, Upload, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, UserPlus, Upload, Loader2, AlertCircle } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 type StaffFormValues = {
   first_name: string;
@@ -35,6 +35,8 @@ const NewStaff = () => {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   
   const form = useForm<StaffFormValues>({
     defaultValues: {
@@ -51,13 +53,63 @@ const NewStaff = () => {
     }
   });
 
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+    }
+  };
+
+  // Get initials for Avatar fallback
+  const getInitials = () => {
+    const firstName = form.watch("first_name") || "";
+    const lastName = form.watch("last_name") || "";
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  };
+
+  const uploadProfileImage = async (staffId: string): Promise<string | null> => {
+    if (!selectedImage) return null;
+    
+    setUploadingImage(true);
+    
+    try {
+      // Create a unique file name using timestamp and original file name
+      const fileExt = selectedImage.name.split('.').pop();
+      const fileName = `${staffId}-${Date.now()}.${fileExt}`;
+      const filePath = `staff_images/${fileName}`;
+      
+      // Upload image to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('staff_images')
+        .upload(filePath, selectedImage);
+      
+      if (uploadError) throw uploadError;
+      
+      // Get public URL for the uploaded image
+      const { data } = supabase.storage
+        .from('staff_images')
+        .getPublicUrl(filePath);
+      
+      return data.publicUrl;
+    } catch (err: any) {
+      console.error('Error uploading image:', err);
+      toast({
+        title: "Warning",
+        description: `Failed to upload profile image: ${err.message}`,
+      });
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const onSubmit = async (data: StaffFormValues) => {
     setIsSaving(true);
     setError(null);
     
     try {
       // Create a new staff member in the profiles table
-      const { data: newStaff, error } = await supabase
+      const { data: newStaff, error: insertError } = await supabase
         .from('profiles')
         .insert({
           first_name: data.first_name,
@@ -78,8 +130,27 @@ const NewStaff = () => {
         })
         .select();
       
-      if (error) {
-        throw error;
+      if (insertError) {
+        throw insertError;
+      }
+      
+      const staffId = newStaff[0].id;
+      
+      // Upload profile image if selected
+      if (selectedImage) {
+        const imageUrl = await uploadProfileImage(staffId);
+        
+        if (imageUrl) {
+          // Update the staff record with the image URL
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ image_url: imageUrl })
+            .eq('id', staffId);
+          
+          if (updateError) {
+            console.error('Error updating staff with image URL:', updateError);
+          }
+        }
       }
       
       toast({
@@ -271,29 +342,59 @@ const NewStaff = () => {
                 <CardDescription><T text="Upload a staff photo" /></CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 flex flex-col items-center justify-center text-center">
-                  <div className="mb-4 bg-primary/10 p-3 rounded-full">
-                    <Upload className="h-6 w-6 text-primary" />
+                {selectedImage ? (
+                  <div className="flex flex-col items-center justify-center space-y-4">
+                    <Avatar className="h-32 w-32">
+                      <AvatarFallback>{getInitials()}</AvatarFallback>
+                    </Avatar>
+                    <p className="text-sm text-center">
+                      {selectedImage.name} ({Math.round(selectedImage.size / 1024)} KB)
+                    </p>
+                    <div className="flex space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => document.getElementById("profile-picture")?.click()}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        <T text="Change" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setSelectedImage(null)}
+                      >
+                        <AlertCircle className="h-4 w-4 mr-2" />
+                        <T text="Remove" />
+                      </Button>
+                    </div>
                   </div>
-                  <h3 className="font-medium"><T text="Upload an image" /></h3>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    <T text="Drag and drop or click to browse" />
-                  </p>
-                  <input
-                    type="file"
-                    className="hidden"
-                    id="profile-picture"
-                    accept="image/*"
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-4"
-                    onClick={() => document.getElementById("profile-picture")?.click()}
-                  >
-                    <T text="Select Image" />
-                  </Button>
-                </div>
+                ) : (
+                  <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 flex flex-col items-center justify-center text-center">
+                    <div className="mb-4 bg-primary/10 p-3 rounded-full">
+                      <Upload className="h-6 w-6 text-primary" />
+                    </div>
+                    <h3 className="font-medium"><T text="Upload an image" /></h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      <T text="Drag and drop or click to browse" />
+                    </p>
+                    <input
+                      type="file"
+                      className="hidden"
+                      id="profile-picture"
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-4"
+                      onClick={() => document.getElementById("profile-picture")?.click()}
+                    >
+                      <T text="Select Image" />
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
