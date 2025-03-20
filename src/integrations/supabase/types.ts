@@ -300,6 +300,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "orders_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "tables"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "orders_waiter_id_fkey"
             columns: ["waiter_id"]
             isOneToOne: false
@@ -391,10 +398,10 @@ export type Database = {
           name: string
         }
         Insert: {
-          capacity: number
+          capacity?: number
           created_at?: string
           description?: string | null
-          floor: number
+          floor?: number
           id?: string
           is_active?: boolean
           name: string
