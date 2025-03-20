@@ -35,7 +35,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, interface: userInterface
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <T text="Open Menu" />
+              <T text="Toggle Menu" />
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

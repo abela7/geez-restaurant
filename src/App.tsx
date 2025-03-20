@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -101,6 +100,10 @@ import Documentation from "./pages/system/Documentation";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
+// General Section
+import TableManagement from "./pages/admin/general/TableManagement";
+import TaskManagement from "./pages/admin/staff/TaskManagement";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -140,7 +143,7 @@ const App = () => (
               <Route path="/admin/staff/performance" element={<StaffPerformance />} />
               <Route path="/admin/staff/new" element={<NewStaff />} />
               <Route path="/admin/staff/directory" element={<Directory />} />
-              <Route path="/admin/staff/tasks" element={<Tasks />} />
+              <Route path="/admin/staff/tasks" element={<TaskManagement />} />
               <Route path="/admin/staff/payroll" element={<Payroll />} />
               
               {/* Inventory Management */}
@@ -210,6 +213,9 @@ const App = () => (
               <Route path="/system/errors" element={<ErrorLogs />} />
               <Route path="/system/users" element={<UserManagement />} />
               <Route path="/system/docs" element={<Documentation />} />
+              
+              {/* General Section */}
+              <Route path="/admin/general/table-management" element={<TableManagement />} />
               
               {/* Catch All */}
               <Route path="*" element={<NotFound />} />

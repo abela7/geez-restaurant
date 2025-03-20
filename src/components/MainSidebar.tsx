@@ -6,7 +6,7 @@ import {
   LayoutDashboard, DollarSign, Users, Package, BarChart, 
   User, Settings, ClipboardList, ChevronDown, ChevronRight, Languages,
   BookUser, ListChecks, BadgeDollarSign, Menu as MenuIcon, LogOut, 
-  ChevronLeft, Utensils
+  ChevronLeft, Utensils, LayoutGrid, Settings2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -155,7 +155,7 @@ export const MainSidebar: React.FC<MainSidebarProps> = ({
         { to: "directory", label: "Staff Directory" },
         { to: "performance", label: "Performance Tracking" },
         { to: "attendance", label: "Time & Attendance" },
-        { to: "tasks", label: "Task Assignment" },
+        { to: "tasks", label: "Task Management" },
         { to: "payroll", label: "Payroll" }
       ]
     },
@@ -205,6 +205,14 @@ export const MainSidebar: React.FC<MainSidebarProps> = ({
         { to: "database", label: "Customer Database" },
         { to: "promotions", label: "Promotions" },
         { to: "loyalty", label: "Loyalty Program" }
+      ]
+    },
+    {
+      label: "General",
+      icon: <Settings2 size={20} />,
+      path: "/admin/general",
+      submenu: [
+        { to: "table-management", label: "Table Management" }
       ]
     },
     { 
@@ -318,7 +326,11 @@ export const MainSidebar: React.FC<MainSidebarProps> = ({
       <div className="flex-1 py-4 px-2 overflow-y-auto">
         <div className="mb-4 px-3 py-1">
           <h2 className="text-xs uppercase font-semibold text-sidebar-foreground/70">
-            <T text={interfaceTitle} />
+            <T text={userInterface === 'admin' ? 'Administrative Portal' : 
+                   userInterface === 'waiter' ? 'Waiter Interface' :
+                   userInterface === 'kitchen' ? 'Kitchen Staff Interface' :
+                   userInterface === 'customer' ? 'Customer Interface' :
+                   'System Administration'} />
           </h2>
         </div>
         

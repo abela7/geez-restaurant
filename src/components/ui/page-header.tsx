@@ -5,7 +5,7 @@ import { useLanguage, T } from '@/contexts/LanguageContext';
 
 interface PageHeaderProps {
   heading?: React.ReactNode;
-  title?: React.ReactNode; // Add title prop for backward compatibility
+  title?: React.ReactNode; // For backward compatibility
   description?: React.ReactNode;
   icon?: React.ReactNode;
   actions?: React.ReactNode;
@@ -14,7 +14,7 @@ interface PageHeaderProps {
 
 export function PageHeader({
   heading,
-  title, // Add title prop in the function parameters
+  title, // For backward compatibility
   description,
   icon,
   actions,
