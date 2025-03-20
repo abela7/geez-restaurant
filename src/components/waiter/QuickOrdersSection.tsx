@@ -8,7 +8,13 @@ import { QuickOrderCard } from './QuickOrderCard';
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 
-export const QuickOrdersSection: React.FC = () => {
+interface QuickOrdersSectionProps {
+  onAddToOrder?: (order: QuickOrder) => void;
+}
+
+export const QuickOrdersSection: React.FC<QuickOrdersSectionProps> = ({ 
+  onAddToOrder 
+}) => {
   const { t } = useLanguage();
   const { orders, isLoading, error } = useQuickOrders();
   
@@ -21,8 +27,12 @@ export const QuickOrdersSection: React.FC = () => {
   }, [orders]);
   
   const handleAddOrder = (order: QuickOrder) => {
-    toast.success(`${order.name} added to order`);
-    // In a real app, this would add the item to the current order
+    if (onAddToOrder) {
+      onAddToOrder(order);
+    } else {
+      toast.success(`${order.name} added to order`);
+      // In a real app without the callback, this might add to a global order state
+    }
   };
   
   if (isLoading) {
@@ -46,7 +56,7 @@ export const QuickOrdersSection: React.FC = () => {
   }
   
   return (
-    <Card className="mb-6 overflow-hidden">
+    <Card className="overflow-hidden">
       <div className="p-4 border-b">
         <h3 className="font-medium text-lg"><T text="Quick Orders" /></h3>
       </div>
