@@ -139,7 +139,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder = false, sea
                       <TabsList className="w-full">
                         <TabsTrigger value="room" className="flex-1">
                           <Building className="h-4 w-4 mr-2" />
-                          <T text="Room" />
+                          <T text="Guest Tables" />
                         </TabsTrigger>
                         <TabsTrigger value="group" className="flex-1">
                           <Grid3X3 className="h-4 w-4 mr-2" />
