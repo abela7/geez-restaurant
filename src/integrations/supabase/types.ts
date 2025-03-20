@@ -317,26 +317,59 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
+          attendance: string | null
+          bio: string | null
           created_at: string
+          department: string | null
+          email: string | null
           first_name: string | null
+          gender: string | null
+          hiring_date: string | null
+          hourly_rate: number | null
           id: string
+          image_url: string | null
           last_name: string | null
+          performance: number | null
+          phone: string | null
           role: string
           updated_at: string
         }
         Insert: {
+          address?: string | null
+          attendance?: string | null
+          bio?: string | null
           created_at?: string
+          department?: string | null
+          email?: string | null
           first_name?: string | null
+          gender?: string | null
+          hiring_date?: string | null
+          hourly_rate?: number | null
           id: string
+          image_url?: string | null
           last_name?: string | null
+          performance?: number | null
+          phone?: string | null
           role: string
           updated_at?: string
         }
         Update: {
+          address?: string | null
+          attendance?: string | null
+          bio?: string | null
           created_at?: string
+          department?: string | null
+          email?: string | null
           first_name?: string | null
+          gender?: string | null
+          hiring_date?: string | null
+          hourly_rate?: number | null
           id?: string
+          image_url?: string | null
           last_name?: string | null
+          performance?: number | null
+          phone?: string | null
           role?: string
           updated_at?: string
         }
