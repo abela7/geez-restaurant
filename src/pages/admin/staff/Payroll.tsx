@@ -5,33 +5,17 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DollarSign, Calendar, User, Clock, Download, Search, ArrowUpDown, Filter, PieChart, AlertCircle, Loader2 } from "lucide-react";
+import { Calendar, DownloadIcon, Filter, PieChart, Printer, Search, ArrowUpDown } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import ErrorDisplay from "@/components/staff/ErrorDisplay";
+import PayrollList from "@/components/staff/PayrollList";
+import useStaffMembers from "@/hooks/useStaffMembers";
+import useStaffPayroll, { PayrollRecord } from "@/hooks/useStaffPayroll";
 import { useToast } from "@/hooks/use-toast";
-
-// Define the staff member type
-type StaffMember = {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  role: string;
-  department: string | null;
-  hourly_rate: number | null;
-  image_url: string | null;
-  hours_worked?: number;
-  regular_hours?: number;
-  overtime_hours?: number;
-  total_pay?: number;
-  payment_status?: "Paid" | "Pending";
-};
 
 // Payroll period type
 type PayrollPeriod = {
@@ -56,143 +40,58 @@ const Payroll = () => {
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'ascending' | 'descending' } | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedPeriod, setSelectedPeriod] = useState("2");
-  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [newPayrollDialog, setNewPayrollDialog] = useState(false);
+  const [selectedStaff, setSelectedStaff] = useState("");
   
-  // Function to fetch staff data from the database
-  const fetchStaffData = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*');
-      
-      if (error) {
-        throw error;
-      }
-      
-      // Enhance the data with additional payroll metrics
-      // In a real app, these would come from proper payroll/timesheet tables
-      const enhancedData = (data || []).map(staff => {
-        const hourlyRate = staff.hourly_rate || 0;
-        
-        // Generate random but realistic work hours
-        const regularHours = Math.floor(35 + Math.random() * 5);
-        const overtimeHours = Math.floor(Math.random() * 6);
-        const hoursWorked = regularHours + overtimeHours;
-        
-        // Calculate pay
-        const totalPay = regularHours * hourlyRate + overtimeHours * hourlyRate * 1.5;
-        
-        // Random payment status
-        const paymentStatus = Math.random() > 0.5 ? "Paid" : "Pending";
-        
-        return {
-          ...staff,
-          hours_worked: hoursWorked,
-          regular_hours: regularHours,
-          overtime_hours: overtimeHours,
-          total_pay: totalPay,
-          payment_status: paymentStatus as "Paid" | "Pending"
-        };
-      });
-      
-      setStaffMembers(enhancedData);
-    } catch (err: any) {
-      console.error('Error fetching staff:', err);
-      setError(err.message || 'Failed to load staff data');
-      toast({
-        title: "Error",
-        description: `Failed to load staff data: ${err.message}`,
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Fetch staff and payroll data
+  const { 
+    staffMembers, 
+    isLoading: isStaffLoading, 
+    error: staffError 
+  } = useStaffMembers();
+  
+  const { 
+    payrollRecords, 
+    isLoading: isPayrollLoading, 
+    error: payrollError,
+    addPayrollRecord,
+    updatePayrollRecord,
+    fetchPayrollData 
+  } = useStaffPayroll();
+  
+  // Create a map of staff IDs to names for display
+  const staffNames = staffMembers.reduce((acc, staff) => {
+    const fullName = `${staff.first_name || ""} ${staff.last_name || ""}`.trim() || "No Name";
+    acc[staff.id] = fullName;
+    return acc;
+  }, {} as Record<string, string>);
 
-  // Function to update staff payment status
-  const updatePaymentStatus = async (staffId: string, status: "Paid" | "Pending") => {
-    try {
-      // In a real app, this would update a payroll records table
-      // For now, we'll just update the local state
-      setStaffMembers(staffMembers.map(staff => 
-        staff.id === staffId ? { ...staff, payment_status: status } : staff
-      ));
-      
-      toast({
-        title: "Success",
-        description: `Payment status updated to ${status}`,
-      });
-    } catch (err: any) {
-      console.error('Error updating payment status:', err);
-      toast({
-        title: "Error",
-        description: `Failed to update payment status: ${err.message}`,
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Process batch payments
-  const processPayments = () => {
-    // In a real app, this would trigger payment processing
-    const pendingStaff = staffMembers.filter(staff => staff.payment_status === "Pending");
-    
-    if (pendingStaff.length === 0) {
-      toast({
-        title: "Info",
-        description: "No pending payments to process",
-      });
-      return;
-    }
-    
-    setStaffMembers(staffMembers.map(staff => 
-      staff.payment_status === "Pending" ? { ...staff, payment_status: "Paid" } : staff
-    ));
-    
-    toast({
-      title: "Success",
-      description: `Processed payments for ${pendingStaff.length} staff members`,
-    });
-  };
-
-  useEffect(() => {
-    fetchStaffData();
-  }, []);
-
-  const getFullName = (staff: StaffMember) => {
-    return `${staff.first_name || ""} ${staff.last_name || ""}`.trim() || "No Name";
-  };
-
-  const filteredStaff = staffMembers.filter(staff => {
-    const fullName = getFullName(staff).toLowerCase();
+  // Filter payroll records based on search term and status filter
+  const filteredPayroll = payrollRecords.filter(record => {
+    const staffName = staffNames[record.staff_id] || "";
     const matchesSearch = 
-      fullName.includes(searchTerm.toLowerCase()) ||
-      (staff.role || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (staff.department || "").toLowerCase().includes(searchTerm.toLowerCase());
+      staffName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.pay_period.toLowerCase().includes(searchTerm.toLowerCase());
     
     if (statusFilter === "all") return matchesSearch;
-    return matchesSearch && (staff.payment_status || "").toLowerCase() === statusFilter.toLowerCase();
+    return matchesSearch && (record.payment_status || "").toLowerCase() === statusFilter.toLowerCase();
   });
 
   // Apply sorting
-  const sortedStaff = [...filteredStaff].sort((a, b) => {
+  const sortedPayroll = [...filteredPayroll].sort((a, b) => {
     if (!sortConfig) return 0;
     
     let aValue: any, bValue: any;
     switch(sortConfig.key) {
       case 'name':
-        aValue = getFullName(a);
-        bValue = getFullName(b);
+        aValue = staffNames[a.staff_id] || "";
+        bValue = staffNames[b.staff_id] || "";
         break;
-      case 'hoursWorked':
-        aValue = a.hours_worked || 0;
-        bValue = b.hours_worked || 0;
+      case 'hours':
+        aValue = a.total_hours || 0;
+        bValue = b.total_hours || 0;
         break;
-      case 'totalPay':
+      case 'pay':
         aValue = a.total_pay || 0;
         bValue = b.total_pay || 0;
         break;
@@ -217,11 +116,167 @@ const Payroll = () => {
     setSortConfig({ key, direction });
   };
 
+  // Handler for updating payroll status
+  const handleUpdatePaymentStatus = async (payrollId: string, status: string) => {
+    try {
+      await updatePayrollRecord(payrollId, { 
+        payment_status: status,
+        payment_date: status === 'Paid' ? new Date().toISOString() : null
+      });
+    } catch (error) {
+      console.error('Failed to update payment status:', error);
+    }
+  };
+  
+  // Process batch payments
+  const processPayments = async () => {
+    const pendingPayrolls = payrollRecords.filter(record => record.payment_status === "Pending");
+    
+    if (pendingPayrolls.length === 0) {
+      toast({
+        title: "Info",
+        description: "No pending payments to process",
+      });
+      return;
+    }
+    
+    try {
+      const promises = pendingPayrolls.map(record => 
+        updatePayrollRecord(record.id, { 
+          payment_status: 'Paid',
+          payment_date: new Date().toISOString()
+        })
+      );
+      
+      await Promise.all(promises);
+      
+      toast({
+        title: "Success",
+        description: `Processed payments for ${pendingPayrolls.length} staff members`,
+      });
+    } catch (error) {
+      console.error('Failed to process payments:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process payments",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  // Handler for payroll form submission
+  const handlePayrollSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    if (!selectedStaff) {
+      toast({
+        title: "Error",
+        description: "Please select a staff member",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const staffMember = staffMembers.find(s => s.id === selectedStaff);
+    if (!staffMember) {
+      toast({
+        title: "Error",
+        description: "Selected staff member not found",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const formData = new FormData(e.currentTarget);
+    const payPeriod = formData.get('payPeriod') as string;
+    const regularHours = parseFloat(formData.get('regularHours') as string);
+    const overtimeHours = parseFloat(formData.get('overtimeHours') as string);
+    const hourlyRate = staffMember.hourly_rate || 0;
+    
+    const totalHours = regularHours + overtimeHours;
+    const totalPay = (regularHours * hourlyRate) + (overtimeHours * hourlyRate * 1.5);
+    
+    try {
+      const newPayroll = {
+        staff_id: selectedStaff,
+        pay_period: payPeriod,
+        regular_hours: regularHours,
+        overtime_hours: overtimeHours,
+        total_hours: totalHours,
+        total_pay: totalPay,
+        payment_status: 'Pending',
+        payment_date: null
+      };
+      
+      await addPayrollRecord(newPayroll);
+      setNewPayrollDialog(false);
+      setSelectedStaff("");
+    } catch (error) {
+      console.error('Failed to add payroll record:', error);
+    }
+  };
+  
+  // Export data to CSV
+  const exportPayrollData = () => {
+    if (filteredPayroll.length === 0) {
+      toast({
+        title: "Error",
+        description: "No data to export",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Transform data to include staff names
+    const exportData = filteredPayroll.map(record => ({
+      Staff: staffNames[record.staff_id] || record.staff_id,
+      PayPeriod: record.pay_period,
+      RegularHours: record.regular_hours,
+      OvertimeHours: record.overtime_hours,
+      TotalHours: record.total_hours,
+      TotalPay: `£${record.total_pay.toFixed(2)}`,
+      Status: record.payment_status,
+      PaymentDate: record.payment_date || ''
+    }));
+    
+    const headers = Object.keys(exportData[0]);
+    const csvRows = [
+      headers.join(','),
+      ...exportData.map(row => 
+        headers.map(header => {
+          let value = row[header as keyof typeof row];
+          // Handle special formatting
+          if (value === null || value === undefined) value = '';
+          if (typeof value === 'string') value = `"${value.replace(/"/g, '""')}"`;
+          return value;
+        }).join(',')
+      )
+    ];
+    
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create a link to download
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Payroll_${payrollPeriods.find(p => p.id.toString() === selectedPeriod)?.name || 'Export'}.csv`);
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Success",
+      description: "Payroll data exported successfully",
+    });
+  };
+
   // Calculate payroll statistics
-  const totalHours = staffMembers.reduce((sum, staff) => sum + (staff.hours_worked || 0), 0);
-  const totalPay = staffMembers.reduce((sum, staff) => sum + (staff.total_pay || 0), 0);
-  const paidStaff = staffMembers.filter(staff => staff.payment_status === "Paid").length;
-  const percentagePaid = staffMembers.length > 0 ? (paidStaff / staffMembers.length) * 100 : 0;
+  const totalHours = filteredPayroll.reduce((sum, record) => sum + (record.total_hours || 0), 0);
+  const totalPay = filteredPayroll.reduce((sum, record) => sum + (record.total_pay || 0), 0);
+  const paidStaff = filteredPayroll.filter(record => record.payment_status === "Paid").length;
+  const percentagePaid = filteredPayroll.length > 0 ? (paidStaff / filteredPayroll.length) * 100 : 0;
 
   return (
     <Layout interface="admin">
@@ -230,25 +285,24 @@ const Payroll = () => {
         description={<T text="Track staff hours, manage wages, and process payments" />}
         actions={
           <div className="flex gap-2">
-            <Button variant="outline">
-              <Download className="mr-2 h-4 w-4" />
+            <Button variant="outline" onClick={exportPayrollData}>
+              <DownloadIcon className="mr-2 h-4 w-4" />
               <T text="Export" />
             </Button>
+            <Button variant="outline">
+              <Printer className="mr-2 h-4 w-4" />
+              <T text="Print" />
+            </Button>
             <Button onClick={processPayments}>
-              <DollarSign className="mr-2 h-4 w-4" />
+              <Calendar className="mr-2 h-4 w-4" />
               <T text="Process Payments" />
             </Button>
           </div>
         }
       />
 
-      {error && (
-        <Card className="mb-6 border-red-300 bg-red-50 dark:bg-red-950/20">
-          <div className="p-4 flex items-center gap-3">
-            <AlertCircle className="h-5 w-5 text-red-500" />
-            <p className="text-red-500">{error}</p>
-          </div>
-        </Card>
+      {(staffError || payrollError) && (
+        <ErrorDisplay error={staffError || payrollError || ""} />
       )}
 
       <div className="mb-6 flex flex-wrap gap-4">
@@ -257,10 +311,10 @@ const Payroll = () => {
             <CardTitle className="text-sm font-medium">
               <T text="Total Hours" />
             </CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalHours} <span className="text-sm font-normal text-muted-foreground">hrs</span></div>
+            <div className="text-2xl font-bold">{totalHours.toFixed(1)} <span className="text-sm font-normal text-muted-foreground">hrs</span></div>
             <p className="text-xs text-muted-foreground">
               <T text="Current pay period" />
             </p>
@@ -272,7 +326,7 @@ const Payroll = () => {
             <CardTitle className="text-sm font-medium">
               <T text="Total Payroll" />
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">£{totalPay.toFixed(2)}</div>
@@ -296,21 +350,114 @@ const Payroll = () => {
                 <T text="Paid" />
               </div>
             </div>
-            <Progress 
-              value={percentagePaid} 
-              className="h-2 mt-2" 
-              indicatorClassName={percentagePaid < 50 ? "bg-amber-500" : "bg-green-500"}
-            />
+            <div className="mt-2 h-2 w-full rounded-full bg-secondary">
+              <div 
+                className={`h-2 rounded-full ${percentagePaid < 50 ? "bg-amber-500" : "bg-green-500"}`}
+                style={{ width: `${percentagePaid}%` }}
+              ></div>
+            </div>
           </CardContent>
         </Card>
       </div>
       
       <Card className="mb-6">
-        <CardHeader>
-          <CardTitle><T text="Pay Period" /></CardTitle>
-          <CardDescription>
-            <T text="Select a pay period to view and manage payroll" />
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <div>
+            <CardTitle><T text="Pay Period" /></CardTitle>
+            <CardDescription>
+              <T text="Select a pay period to view and manage payroll" />
+            </CardDescription>
+          </div>
+          <Dialog open={newPayrollDialog} onOpenChange={setNewPayrollDialog}>
+            <DialogTrigger asChild>
+              <Button>
+                <T text="Add Payroll Record" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle><T text="Add Payroll Record" /></DialogTitle>
+                <DialogDescription>
+                  <T text="Add a new payroll record for a staff member" />
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handlePayrollSubmit}>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="staffMember" className="text-right">
+                      <T text="Staff Member" />
+                    </Label>
+                    <Select 
+                      value={selectedStaff} 
+                      onValueChange={setSelectedStaff}
+                      name="staffMember"
+                    >
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder={t("Select staff member")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {staffMembers.map(staff => (
+                          <SelectItem key={staff.id} value={staff.id}>
+                            {`${staff.first_name || ""} ${staff.last_name || ""}`.trim() || "No Name"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="payPeriod" className="text-right">
+                      <T text="Pay Period" />
+                    </Label>
+                    <Select name="payPeriod" defaultValue={payrollPeriods[0].name}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder={t("Select pay period")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {payrollPeriods.map(period => (
+                          <SelectItem key={period.id} value={period.name}>
+                            {period.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="regularHours" className="text-right">
+                      <T text="Regular Hours" />
+                    </Label>
+                    <Input
+                      id="regularHours"
+                      name="regularHours"
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      defaultValue="80"
+                      className="col-span-3"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="overtimeHours" className="text-right">
+                      <T text="Overtime Hours" />
+                    </Label>
+                    <Input
+                      id="overtimeHours"
+                      name="overtimeHours"
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      defaultValue="0"
+                      className="col-span-3"
+                      required
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="submit"><T text="Save Record" /></Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </CardHeader>
         <CardContent>
           <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
@@ -356,100 +503,22 @@ const Payroll = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all"><T text="All Statuses" /></SelectItem>
-            <SelectItem value="paid"><T text="Paid" /></SelectItem>
-            <SelectItem value="pending"><T text="Pending" /></SelectItem>
+            <SelectItem value="Paid"><T text="Paid" /></SelectItem>
+            <SelectItem value="Pending"><T text="Pending" /></SelectItem>
           </SelectContent>
         </Select>
       </div>
       
       <Card>
-        {isLoading ? (
-          <div className="p-4">
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          </div>
-        ) : filteredStaff.length === 0 ? (
-          <div className="p-8 text-center">
-            <p className="text-muted-foreground"><T text="No staff members found" /></p>
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead><T text="Staff Member" /></TableHead>
-                <TableHead onClick={() => requestSort('hoursWorked')} className="cursor-pointer">
-                  <div className="flex items-center">
-                    <T text="Hours" />
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </div>
-                </TableHead>
-                <TableHead><T text="Regular Hours" /></TableHead>
-                <TableHead><T text="Overtime" /></TableHead>
-                <TableHead><T text="Rate" /></TableHead>
-                <TableHead onClick={() => requestSort('totalPay')} className="cursor-pointer">
-                  <div className="flex items-center">
-                    <T text="Total" />
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </div>
-                </TableHead>
-                <TableHead><T text="Status" /></TableHead>
-                <TableHead className="text-right"><T text="Actions" /></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedStaff.map((staff) => (
-                <TableRow key={staff.id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <img
-                          src={staff.image_url || "/placeholder.svg"}
-                          alt={getFullName(staff)}
-                          className="aspect-square h-full w-full object-cover"
-                        />
-                      </Avatar>
-                      <div>
-                        <div>{getFullName(staff)}</div>
-                        <div className="text-sm text-muted-foreground">{staff.role}</div>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{staff.hours_worked}</TableCell>
-                  <TableCell>{staff.regular_hours}</TableCell>
-                  <TableCell>{staff.overtime_hours}</TableCell>
-                  <TableCell>£{staff.hourly_rate?.toFixed(2) || '0.00'}/hr</TableCell>
-                  <TableCell className="font-semibold">£{staff.total_pay?.toFixed(2) || '0.00'}</TableCell>
-                  <TableCell>
-                    <Select 
-                      value={staff.payment_status} 
-                      onValueChange={(value) => updatePaymentStatus(staff.id, value as "Paid" | "Pending")}
-                    >
-                      <SelectTrigger className="w-[100px] h-7">
-                        <Badge variant={staff.payment_status === "Paid" ? "outline" : "default"}>
-                          {staff.payment_status}
-                        </Badge>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Paid">Paid</SelectItem>
-                        <SelectItem value="Pending">Pending</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => navigate(`/admin/staff/profile/${staff.id}`)}
-                    >
-                      <T text="Details" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
+        <CardContent className="p-0">
+          <PayrollList
+            payrollRecords={sortedPayroll}
+            isLoading={isPayrollLoading || isStaffLoading}
+            onUpdateStatus={handleUpdatePaymentStatus}
+            showStaffInfo={true}
+            staffNames={staffNames}
+          />
+        </CardContent>
       </Card>
     </Layout>
   );

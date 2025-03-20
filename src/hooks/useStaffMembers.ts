@@ -15,6 +15,9 @@ export type StaffMember = {
   performance: number | null;
   hourly_rate: number | null;
   image_url: string | null;
+  bio: string | null;
+  skills: string[] | null;
+  start_date: string | null;
 };
 
 export const useStaffMembers = () => {
