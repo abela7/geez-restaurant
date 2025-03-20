@@ -132,9 +132,9 @@ const PromotionForm: React.FC<PromotionFormProps> = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  {field.value === 'percentage' ? 
+                  {form.getValues('discount_type') === 'percentage' ? 
                     <T text="Discount (%)" /> : 
-                    field.value === 'bogo' ? 
+                    form.getValues('discount_type') === 'bogo' ? 
                     <T text="Discount (%)" /> : 
                     <T text="Discount Amount (£)" />
                   }

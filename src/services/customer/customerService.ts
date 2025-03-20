@@ -107,6 +107,7 @@ export const createCustomerFeedback = async (feedback: Omit<CustomerFeedback, 'i
 
 // Promotions functions
 export const getPromotions = async (): Promise<Promotion[]> => {
+  console.log('Fetching promotions');
   const { data, error } = await supabase
     .from('promotions')
     .select('*')
@@ -134,7 +135,7 @@ export const getPromotions = async (): Promise<Promotion[]> => {
     }
     
     return promo;
-  });
+  }) as Promotion[];
 };
 
 export const createPromotion = async (promotion: Omit<Promotion, 'id' | 'created_at' | 'updated_at'>): Promise<Promotion> => {
@@ -149,7 +150,7 @@ export const createPromotion = async (promotion: Omit<Promotion, 'id' | 'created
     throw error;
   }
   
-  return data;
+  return data as Promotion;
 };
 
 export const updatePromotion = async (id: string, promotion: Partial<Promotion>): Promise<Promotion> => {
@@ -165,7 +166,7 @@ export const updatePromotion = async (id: string, promotion: Partial<Promotion>)
     throw error;
   }
   
-  return data;
+  return data as Promotion;
 };
 
 export const deletePromotion = async (id: string): Promise<void> => {
