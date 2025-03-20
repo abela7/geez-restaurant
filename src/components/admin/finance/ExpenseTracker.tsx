@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -9,69 +9,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, X, Calendar, Download, Search, Filter } from "lucide-react";
-import { format } from "date-fns";
+import { Plus, X, Search } from "lucide-react";
+import { format, parseISO } from "date-fns";
 import { useLanguage, T } from "@/contexts/LanguageContext";
-
-// Sample expense data
-const initialExpenses = [
-  { 
-    id: 1, 
-    date: new Date(2023, 7, 15), 
-    category: "Staff Wages", 
-    amount: 3250.00, 
-    payee: "Staff Payroll", 
-    paymentMethod: "Bank Transfer",
-    reference: "AUG-PAYROLL-01", 
-    description: "August salaries for kitchen staff" 
-  },
-  { 
-    id: 2, 
-    date: new Date(2023, 7, 10), 
-    category: "Rent", 
-    amount: 2500.00, 
-    payee: "Property Management Ltd", 
-    paymentMethod: "Bank Transfer",
-    reference: "AUG-RENT-2023", 
-    description: "August rent for restaurant premises" 
-  },
-  { 
-    id: 3, 
-    date: new Date(2023, 7, 8), 
-    category: "Ingredients", 
-    amount: 1245.60, 
-    payee: "Fresh Foods Supplier", 
-    paymentMethod: "Credit Card",
-    reference: "INV-12345", 
-    description: "Weekly produce delivery" 
-  },
-  { 
-    id: 4, 
-    date: new Date(2023, 7, 5), 
-    category: "Utilities", 
-    amount: 475.25, 
-    payee: "Energy Provider", 
-    paymentMethod: "Direct Debit",
-    reference: "BILL-08-2023", 
-    description: "Electricity and gas bill" 
-  },
-  { 
-    id: 5, 
-    date: new Date(2023, 7, 12), 
-    category: "Marketing", 
-    amount: 350.00, 
-    payee: "Social Media Agency", 
-    paymentMethod: "Credit Card",
-    reference: "SM-AUG-2023", 
-    description: "Social media promotion campaign" 
-  },
-];
-
-// Sample categories
-const expenseCategories = [
-  "Staff Wages", "Rent", "Ingredients", "Utilities", "Maintenance", 
-  "Marketing", "Licenses & Insurance", "Kitchen Supplies", "Transport"
-];
+import { useToast } from "@/hooks/use-toast";
+import { fetchExpenses, fetchExpenseCategories, addExpense, deleteExpense, ExpenseCategory, ExpenseWithCategory } from "@/services/expenseService";
 
 const paymentMethods = ["Cash", "Credit Card", "Bank Transfer", "Cheque", "Direct Debit"];
 
@@ -81,80 +23,130 @@ interface ExpenseTrackerProps {
 
 const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
   const { t } = useLanguage();
-  const [expenses, setExpenses] = useState(initialExpenses);
+  const { toast } = useToast();
+  const [expenses, setExpenses] = useState<ExpenseWithCategory[]>([]);
+  const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [dateFilter, setDateFilter] = useState("All");
+  const [isLoading, setIsLoading] = useState(false);
   
   const [newExpense, setNewExpense] = useState({
-    date: new Date(),
-    category: "",
+    date: new Date().toISOString().split('T')[0],
+    category_id: "",
     amount: 0,
     payee: "",
-    paymentMethod: "Bank Transfer",
+    payment_method: "Bank Transfer",
     reference: "",
     description: ""
   });
 
-  const handleAddExpense = () => {
-    const expense = {
-      ...newExpense,
-      id: expenses.length + 1,
-    };
-    
-    setExpenses([expense, ...expenses]);
-    
-    if (onExpenseAdded) {
-      onExpenseAdded(expense);
+  // Load expenses and categories on mount
+  useEffect(() => {
+    loadData();
+  }, [searchTerm, categoryFilter, dateFilter]);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const [fetchedExpenses, fetchedCategories] = await Promise.all([
+        fetchExpenses(searchTerm, categoryFilter, dateFilter),
+        fetchExpenseCategories()
+      ]);
+      setExpenses(fetchedExpenses);
+      setCategories(fetchedCategories);
+    } catch (error) {
+      console.error("Error loading expense data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load expense data. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
-    
-    setNewExpense({
-      date: new Date(),
-      category: "",
-      amount: 0,
-      payee: "",
-      paymentMethod: "Bank Transfer",
-      reference: "",
-      description: ""
-    });
-    
-    setIsAddDialogOpen(false);
   };
 
-  const handleDeleteExpense = (id: number) => {
-    setExpenses(expenses.filter(expense => expense.id !== id));
+  const handleAddExpense = async () => {
+    try {
+      if (!newExpense.category_id || newExpense.amount <= 0 || !newExpense.payee) {
+        toast({
+          title: "Validation Error",
+          description: "Please fill in all required fields.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Convert date string to ISO string for database
+      const dateWithTime = new Date(newExpense.date);
+      
+      const addedExpense = await addExpense({
+        ...newExpense,
+        date: dateWithTime.toISOString()
+      });
+      
+      toast({
+        title: "Success",
+        description: "Expense added successfully."
+      });
+      
+      // Reload data to include the new expense
+      await loadData();
+      
+      if (onExpenseAdded) {
+        onExpenseAdded(addedExpense);
+      }
+      
+      // Reset form
+      setNewExpense({
+        date: new Date().toISOString().split('T')[0],
+        category_id: "",
+        amount: 0,
+        payee: "",
+        payment_method: "Bank Transfer",
+        reference: "",
+        description: ""
+      });
+      
+      setIsAddDialogOpen(false);
+    } catch (error) {
+      console.error("Error adding expense:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add expense. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
-  // Filter expenses based on search, category, and date
-  const filteredExpenses = expenses.filter(expense => {
-    const matchesSearch = 
-      expense.payee.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      expense.reference.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesCategory = categoryFilter === "All" || expense.category === categoryFilter;
-    
-    let matchesDate = true;
-    if (dateFilter === "Today") {
-      const today = new Date();
-      matchesDate = expense.date.toDateString() === today.toDateString();
-    } else if (dateFilter === "This Week") {
-      const today = new Date();
-      const oneWeekAgo = new Date(today);
-      oneWeekAgo.setDate(today.getDate() - 7);
-      matchesDate = expense.date >= oneWeekAgo && expense.date <= today;
-    } else if (dateFilter === "This Month") {
-      const today = new Date();
-      matchesDate = 
-        expense.date.getMonth() === today.getMonth() && 
-        expense.date.getFullYear() === today.getFullYear();
+  const handleDeleteExpense = async (id: string) => {
+    try {
+      await deleteExpense(id);
+      toast({
+        title: "Success",
+        description: "Expense deleted successfully."
+      });
+      // Remove expense from local state
+      setExpenses(expenses.filter(expense => expense.id !== id));
+    } catch (error) {
+      console.error("Error deleting expense:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete expense. Please try again.",
+        variant: "destructive"
+      });
     }
-    
-    return matchesSearch && matchesCategory && matchesDate;
-  });
+  };
 
-  const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setCategoryFilter("All");
+    setDateFilter("All");
+  };
+
+  const totalExpenses = expenses.reduce((sum, expense) => sum + parseFloat(expense.amount.toString()), 0);
 
   return (
     <>
@@ -176,8 +168,8 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="All"><T text="All Categories" /></SelectItem>
-              {expenseCategories.map((category) => (
-                <SelectItem key={category} value={category}>{category}</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -194,11 +186,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
             </SelectContent>
           </Select>
           
-          <Button variant="outline" onClick={() => {
-            setSearchTerm("");
-            setCategoryFilter("All");
-            setDateFilter("All");
-          }}>
+          <Button variant="outline" onClick={handleClearFilters}>
             <X className="h-4 w-4 mr-2" />
             <T text="Clear" />
           </Button>
@@ -221,10 +209,11 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
                     <Input
                       id="date"
                       type="date"
+                      value={newExpense.date}
                       onChange={(e) => {
                         setNewExpense({
                           ...newExpense, 
-                          date: e.target.value ? new Date(e.target.value) : new Date()
+                          date: e.target.value
                         });
                       }}
                     />
@@ -244,14 +233,14 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
                 <div className="grid gap-2">
                   <Label htmlFor="category"><T text="Category" /></Label>
                   <Select 
-                    value={newExpense.category} 
-                    onValueChange={(value) => setNewExpense({...newExpense, category: value})}>
+                    value={newExpense.category_id} 
+                    onValueChange={(value) => setNewExpense({...newExpense, category_id: value})}>
                     <SelectTrigger>
                       <SelectValue placeholder={t("Select a category")} />
                     </SelectTrigger>
                     <SelectContent>
-                      {expenseCategories.map((category) => (
-                        <SelectItem key={category} value={category}>{category}</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -268,8 +257,8 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
                 <div className="grid gap-2">
                   <Label htmlFor="payment-method"><T text="Payment Method" /></Label>
                   <Select 
-                    value={newExpense.paymentMethod} 
-                    onValueChange={(value) => setNewExpense({...newExpense, paymentMethod: value})}>
+                    value={newExpense.payment_method} 
+                    onValueChange={(value) => setNewExpense({...newExpense, payment_method: value})}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -303,7 +292,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                   <T text="Cancel" />
                 </Button>
-                <Button onClick={handleAddExpense} disabled={!newExpense.category || newExpense.amount <= 0 || !newExpense.payee}>
+                <Button onClick={handleAddExpense} disabled={!newExpense.category_id || newExpense.amount <= 0 || !newExpense.payee}>
                   <T text="Add Expense" />
                 </Button>
               </DialogFooter>
@@ -313,57 +302,64 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
       </div>
       
       <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead><T text="Date" /></TableHead>
-              <TableHead><T text="Category" /></TableHead>
-              <TableHead><T text="Amount" /></TableHead>
-              <TableHead className="hidden md:table-cell"><T text="Payee" /></TableHead>
-              <TableHead className="hidden md:table-cell"><T text="Payment Method" /></TableHead>
-              <TableHead className="hidden lg:table-cell"><T text="Reference" /></TableHead>
-              <TableHead className="hidden lg:table-cell"><T text="Description" /></TableHead>
-              <TableHead className="text-right"><T text="Actions" /></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredExpenses.map((expense) => (
-              <TableRow key={expense.id}>
-                <TableCell>{format(expense.date, "dd MMM yyyy")}</TableCell>
-                <TableCell>
-                  <Badge variant="outline">{expense.category}</Badge>
-                </TableCell>
-                <TableCell className="font-medium">£{expense.amount.toFixed(2)}</TableCell>
-                <TableCell className="hidden md:table-cell">{expense.payee}</TableCell>
-                <TableCell className="hidden md:table-cell">{expense.paymentMethod}</TableCell>
-                <TableCell className="hidden lg:table-cell">{expense.reference}</TableCell>
-                <TableCell className="hidden lg:table-cell max-w-[200px] truncate">{expense.description}</TableCell>
-                <TableCell className="text-right">
-                  <Button variant="ghost" size="icon" onClick={() => handleDeleteExpense(expense.id)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-            {filteredExpenses.length === 0 && (
+        {isLoading ? (
+          <div className="h-32 flex items-center justify-center">
+            <p className="text-muted-foreground"><T text="Loading expenses..." /></p>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={8} className="h-32 text-center">
-                  <div className="flex flex-col items-center justify-center text-muted-foreground">
-                    <p><T text="No expenses found" /></p>
-                    <p className="text-sm"><T text="Try adjusting your filters or add a new expense" /></p>
-                  </div>
-                </TableCell>
+                <TableHead><T text="Date" /></TableHead>
+                <TableHead><T text="Category" /></TableHead>
+                <TableHead><T text="Amount" /></TableHead>
+                <TableHead className="hidden md:table-cell"><T text="Payee" /></TableHead>
+                <TableHead className="hidden md:table-cell"><T text="Payment Method" /></TableHead>
+                <TableHead className="hidden lg:table-cell"><T text="Reference" /></TableHead>
+                <TableHead className="hidden lg:table-cell"><T text="Description" /></TableHead>
+                <TableHead className="text-right"><T text="Actions" /></TableHead>
               </TableRow>
-            )}
-          </TableBody>
-          <TableHeader>
-            <TableRow>
-              <TableHead colSpan={2} className="text-right font-bold"><T text="Total:" /></TableHead>
-              <TableHead className="font-bold">£{totalExpenses.toFixed(2)}</TableHead>
-              <TableHead colSpan={5}></TableHead>
-            </TableRow>
-          </TableHeader>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {expenses.length > 0 ? (
+                expenses.map((expense) => (
+                  <TableRow key={expense.id}>
+                    <TableCell>{format(parseISO(expense.date), "dd MMM yyyy")}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{expense.category?.name || "Uncategorized"}</Badge>
+                    </TableCell>
+                    <TableCell className="font-medium">£{parseFloat(expense.amount.toString()).toFixed(2)}</TableCell>
+                    <TableCell className="hidden md:table-cell">{expense.payee}</TableCell>
+                    <TableCell className="hidden md:table-cell">{expense.payment_method}</TableCell>
+                    <TableCell className="hidden lg:table-cell">{expense.reference || "-"}</TableCell>
+                    <TableCell className="hidden lg:table-cell max-w-[200px] truncate">{expense.description || "-"}</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteExpense(expense.id)}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={8} className="h-32 text-center">
+                    <div className="flex flex-col items-center justify-center text-muted-foreground">
+                      <p><T text="No expenses found" /></p>
+                      <p className="text-sm"><T text="Try adjusting your filters or add a new expense" /></p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+            <TableHeader>
+              <TableRow>
+                <TableHead colSpan={2} className="text-right font-bold"><T text="Total:" /></TableHead>
+                <TableHead className="font-bold">£{totalExpenses.toFixed(2)}</TableHead>
+                <TableHead colSpan={5}></TableHead>
+              </TableRow>
+            </TableHeader>
+          </Table>
+        )}
       </Card>
     </>
   );
