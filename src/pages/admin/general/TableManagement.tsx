@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,7 +50,7 @@ import {
   updateLayout,
   deleteLayout,
   activateLayout
-} from "@/services/table/tableService";
+} from "@/services/table";
 
 const TableManagement = () => {
   const { toast } = useToast();
@@ -1100,3 +1099,4 @@ const TableManagement = () => {
 };
 
 export default TableManagement;
+

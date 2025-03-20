@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Layout from '@/components/Layout';
@@ -23,7 +24,7 @@ import {
   getTables,
   updateTableStatus,
   getTableStats
-} from "@/services/table/tableService";
+} from "@/services/table";
 import type { Table, TableWithDetails } from "@/services/table/types";
 
 // Mock data for areas/locations since we no longer have rooms
