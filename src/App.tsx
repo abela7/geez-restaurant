@@ -49,6 +49,9 @@ const App = () => (
   </QueryClientProvider>
 );
 
+// Import the storage setup
+import "@/integrations/supabase/setup-storage";
+
 // Import these here since they're used directly in the App component
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";

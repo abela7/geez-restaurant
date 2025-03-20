@@ -26,7 +26,6 @@ import StaffLoadingState from "@/components/staff/StaffLoadingState";
 
 const StaffProfile = () => {
   const { id } = useParams<{ id: string }>();
-  const { t } = useLanguage();
   const { toast } = useToast();
   
   // Fetch staff profile data

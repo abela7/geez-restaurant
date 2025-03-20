@@ -243,6 +243,12 @@ const EditStaff = () => {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
 
+  // Handle the image select button click without triggering form submission
+  const handleSelectImageClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent form submission
+    document.getElementById("profile-picture")?.click();
+  };
+
   if (isLoading) {
     return (
       <Layout interface="admin">
@@ -439,6 +445,7 @@ const EditStaff = () => {
                     </Avatar>
                     <div className="flex space-x-2">
                       <Button 
+                        type="button" 
                         variant="outline" 
                         size="sm"
                         onClick={() => document.getElementById("profile-picture")?.click()}
@@ -452,6 +459,7 @@ const EditStaff = () => {
                         <T text="Change" />
                       </Button>
                       <Button 
+                        type="button"
                         variant="outline" 
                         size="sm"
                         onClick={removeProfileImage}
@@ -472,10 +480,11 @@ const EditStaff = () => {
                       <T text="Drag and drop or click to browse" />
                     </p>
                     <Button
+                      type="button" // Added type="button" to prevent form submission
                       variant="outline"
                       size="sm"
                       className="mt-4"
-                      onClick={() => document.getElementById("profile-picture")?.click()}
+                      onClick={handleSelectImageClick}
                       disabled={uploadingImage}
                     >
                       {uploadingImage ? (
@@ -504,6 +513,7 @@ const EditStaff = () => {
         
         <div className="mt-6 flex justify-end space-x-2">
           <Button 
+            type="button" // Changed to button type to prevent form submission
             variant="outline" 
             onClick={() => navigate("/admin/staff/directory")}
             disabled={isSaving}

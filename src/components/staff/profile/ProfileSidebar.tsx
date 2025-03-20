@@ -78,17 +78,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ staffMember }) => {
           </div>
         </CardContent>
       </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle><T text="Skills & Expertise" /></CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-2">
-            <p className="text-sm text-muted-foreground"><T text="Coming Soon" /></p>
-          </div>
-        </CardContent>
-      </Card>
     </>
   );
 };

@@ -6,11 +6,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, DownloadIcon, Printer } from "lucide-react";
+import { PlusCircle, DownloadIcon, Printer, Clock } from "lucide-react";
 import AttendanceList from "@/components/staff/AttendanceList";
 import ErrorDisplay from "@/components/staff/ErrorDisplay";
 import { StaffAttendance } from "@/hooks/useStaffAttendance";
+import { useToast } from "@/hooks/use-toast";
 import { useLanguage, T } from "@/contexts/LanguageContext";
+import { format } from "date-fns";
 
 type AttendanceSectionProps = {
   staffId: string;
@@ -32,44 +34,100 @@ const AttendanceSection: React.FC<AttendanceSectionProps> = ({
   onExportData
 }) => {
   const { t } = useLanguage();
+  const { toast } = useToast();
   const [newAttendanceDialog, setNewAttendanceDialog] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    date: format(new Date(), 'yyyy-MM-dd'),
+    status: "Present",
+    checkIn: "",
+    checkOut: "",
+    notes: ""
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const calculateHoursWorked = (checkIn: string, checkOut: string): number => {
+    if (!checkIn || !checkOut) return 0;
+    
+    const checkInDate = new Date(`2000-01-01T${checkIn}`);
+    const checkOutDate = new Date(`2000-01-01T${checkOut}`);
+    
+    // Handle case where checkout is before checkin (next day)
+    if (checkOutDate < checkInDate) {
+      checkOutDate.setDate(checkOutDate.getDate() + 1);
+    }
+    
+    return (checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60);
+  };
 
   const handleAttendanceSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!staffId) return;
     
-    const formData = new FormData(e.currentTarget);
-    const date = formData.get('date') as string;
-    const status = formData.get('status') as string;
-    const checkIn = formData.get('checkIn') as string;
-    const checkOut = formData.get('checkOut') as string;
-    const notes = formData.get('notes') as string;
-    
-    let hoursWorked = 0;
-    
-    if (checkIn && checkOut) {
-      const checkInDate = new Date(`2000-01-01T${checkIn}`);
-      const checkOutDate = new Date(`2000-01-01T${checkOut}`);
-      hoursWorked = (checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60);
-    }
+    setIsSubmitting(true);
     
     try {
+      const hoursWorked = calculateHoursWorked(formData.checkIn, formData.checkOut);
+      
       const newRecord = {
         staff_id: staffId,
-        date,
-        status,
-        check_in: checkIn ? `${date}T${checkIn}:00` : null,
-        check_out: checkOut ? `${date}T${checkOut}:00` : null,
+        date: formData.date,
+        status: formData.status,
+        check_in: formData.checkIn ? `${formData.date}T${formData.checkIn}:00` : null,
+        check_out: formData.checkOut ? `${formData.date}T${formData.checkOut}:00` : null,
         hours_worked: hoursWorked,
-        notes
+        notes: formData.notes || null
       };
       
       await addAttendanceRecord(newRecord);
+      
+      // Reset form
+      setFormData({
+        date: format(new Date(), 'yyyy-MM-dd'),
+        status: "Present",
+        checkIn: "",
+        checkOut: "",
+        notes: ""
+      });
+      
       setNewAttendanceDialog(false);
-    } catch (error) {
+      
+      toast({
+        title: "Success",
+        description: "Attendance record added successfully",
+      });
+    } catch (error: any) {
       console.error('Failed to add attendance record:', error);
+      toast({
+        title: "Error",
+        description: `Failed to add attendance record: ${error.message}`,
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  const handlePrintReport = () => {
+    toast({
+      title: "Information",
+      description: "Print functionality will be implemented in a future update.",
+    });
   };
 
   return (
@@ -103,7 +161,8 @@ const AttendanceSection: React.FC<AttendanceSectionProps> = ({
                     id="date"
                     name="date"
                     type="date"
-                    defaultValue={new Date().toISOString().split('T')[0]}
+                    value={formData.date}
+                    onChange={handleInputChange}
                     className="col-span-3"
                     required
                   />
@@ -112,7 +171,11 @@ const AttendanceSection: React.FC<AttendanceSectionProps> = ({
                   <Label htmlFor="status" className="text-right">
                     <T text="Status" />
                   </Label>
-                  <Select name="status" defaultValue="Present">
+                  <Select 
+                    name="status" 
+                    value={formData.status}
+                    onValueChange={(value) => handleSelectChange("status", value)}
+                  >
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder={t("Select status")} />
                     </SelectTrigger>
@@ -123,28 +186,46 @@ const AttendanceSection: React.FC<AttendanceSectionProps> = ({
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="checkIn" className="text-right">
-                    <T text="Check In" />
-                  </Label>
-                  <Input
-                    id="checkIn"
-                    name="checkIn"
-                    type="time"
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="checkOut" className="text-right">
-                    <T text="Check Out" />
-                  </Label>
-                  <Input
-                    id="checkOut"
-                    name="checkOut"
-                    type="time"
-                    className="col-span-3"
-                  />
-                </div>
+                
+                {formData.status !== "Absent" && (
+                  <>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="checkIn" className="text-right">
+                        <T text="Check In" />
+                      </Label>
+                      <div className="col-span-3 flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="checkIn"
+                          name="checkIn"
+                          type="time"
+                          value={formData.checkIn}
+                          onChange={handleInputChange}
+                          className="flex-1"
+                          required={formData.status !== "Absent"}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="checkOut" className="text-right">
+                        <T text="Check Out" />
+                      </Label>
+                      <div className="col-span-3 flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="checkOut"
+                          name="checkOut"
+                          type="time"
+                          value={formData.checkOut}
+                          onChange={handleInputChange}
+                          className="flex-1"
+                          required={formData.status !== "Absent"}
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+                
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="notes" className="text-right">
                     <T text="Notes" />
@@ -152,12 +233,17 @@ const AttendanceSection: React.FC<AttendanceSectionProps> = ({
                   <Input
                     id="notes"
                     name="notes"
+                    value={formData.notes}
+                    onChange={handleInputChange}
                     className="col-span-3"
+                    placeholder={formData.status === "Absent" ? "Reason for absence..." : "Additional notes..."}
                   />
                 </div>
               </div>
               <DialogFooter>
-                <Button type="submit"><T text="Save Record" /></Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? <T text="Saving..." /> : <T text="Save Record" />}
+                </Button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -182,7 +268,11 @@ const AttendanceSection: React.FC<AttendanceSectionProps> = ({
           <DownloadIcon className="mr-2 h-4 w-4" />
           <T text="Export Data" />
         </Button>
-        <Button variant="outline" disabled={attendanceRecords.length === 0}>
+        <Button 
+          variant="outline" 
+          onClick={handlePrintReport}
+          disabled={attendanceRecords.length === 0}
+        >
           <Printer className="mr-2 h-4 w-4" />
           <T text="Print Report" />
         </Button>
