@@ -5,6 +5,7 @@ export type ExpenseCategory = {
   id: string;
   name: string;
   description: string | null;
+  type: string;  // Added this field
   created_at: string | null;
   updated_at: string | null;
 };
@@ -38,7 +39,11 @@ export const fetchExpenseCategories = async (): Promise<ExpenseCategory[]> => {
     throw new Error(error.message);
   }
 
-  return data;
+  // Add default type if not present
+  return data.map(category => ({
+    ...category,
+    type: category.type || "operational"
+  }));
 };
 
 export const fetchExpenses = async (
@@ -194,7 +199,7 @@ export const getExpensesGroupedByCategory = async (timePeriod = "year"): Promise
     if (!acc[categoryName]) {
       acc[categoryName] = 0;
     }
-    acc[categoryName] += parseFloat(expense.amount);
+    acc[categoryName] += parseFloat(String(expense.amount));
     return acc;
   }, {});
 
@@ -245,7 +250,7 @@ export const getExpensesByMonth = async (): Promise<any[]> => {
     }
     
     const categoryName = expense.category?.name || "";
-    const amount = parseFloat(expense.amount);
+    const amount = parseFloat(String(expense.amount));
     
     // Categorize expenses (simplified for demo)
     if (categoryName === "Rent" || categoryName === "Licenses") {
@@ -295,7 +300,7 @@ export const getProfitMarginData = async (): Promise<any[]> => {
       monthlyExpenses[monthKey] = 0;
     }
     
-    monthlyExpenses[monthKey] += parseFloat(expense.amount);
+    monthlyExpenses[monthKey] += parseFloat(String(expense.amount));
   });
 
   // Generate profit data with simulated revenue
