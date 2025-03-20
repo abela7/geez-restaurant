@@ -22,13 +22,13 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'admin' }) => {
-  // Set default sidebar state to closed on initial load for mobile and open for desktop
+  // Set default sidebar state to closed
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
-  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const location = useLocation();
   
   useEffect(() => {
-    // Close sidebar on mobile when location changes
+    // Close sidebar when location changes on mobile
     if (isMobile) {
       setSidebarOpen(false);
     }
@@ -62,9 +62,6 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
   };
   
   const breadcrumbs = getBreadcrumbs();
-  
-  // Calculate sidebar width based on state
-  const sidebarWidth = sidebarOpen ? "w-64" : "w-16";
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -76,28 +73,23 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
         />
       )}
       
-      {/* Sidebar - fixed position for desktop */}
+      {/* Sidebar - fixed position with transform to hide/show */}
       <div 
         className={cn(
           "fixed left-0 top-0 h-screen z-30",
-          sidebarWidth,
-          "transition-all duration-300 ease-in-out",
-          isMobile && !sidebarOpen ? "-translate-x-full" : "translate-x-0"
+          "transition-transform duration-300 ease-in-out",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <MainSidebar open={sidebarOpen} onToggle={toggleSidebar} interface={userInterface} />
       </div>
       
-      {/* Main content - adjusted with padding to account for fixed sidebar */}
-      <div className={cn(
-        "flex-1 flex flex-col w-full",
-        sidebarOpen ? "md:ml-64" : "md:ml-16", // Adjust margin based on sidebar width
-        "transition-all duration-300" // Smooth transition for the margin
-      )}>
+      {/* Main content - full width since sidebar is now overlay style */}
+      <div className="flex-1 flex flex-col w-full transition-all duration-300">
         <div className="sticky top-0 z-10 bg-background border-b border-border">
           <div className="flex items-center h-16 px-4">
             <div className="flex-1">
-              <Header toggleSidebar={toggleSidebar} interface={userInterface} />
+              <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} interface={userInterface} />
             </div>
           </div>
         </div>

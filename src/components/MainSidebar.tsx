@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -6,7 +7,7 @@ import {
   LayoutDashboard, DollarSign, Users, Package, BarChart, 
   User, Settings, ClipboardList, ChevronDown, ChevronRight, Languages,
   LogOut, ChevronLeft, Menu as MenuIcon, Settings2, MapPin, Utensils,
-  PanelLeft, PanelRight
+  PanelLeft, PanelRight, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -110,6 +111,7 @@ export const MainSidebar: React.FC<{
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const { t } = useLanguage();
   const isMobile = useIsMobile();
+  const [collapsed, setCollapsed] = useState(false);
 
   const toggleSection = (e: React.MouseEvent, section: string) => {
     e.preventDefault();
@@ -118,6 +120,10 @@ export const MainSidebar: React.FC<{
         ? prev.filter(item => item !== section) 
         : [...prev, section]
     );
+  };
+
+  const toggleCollapse = () => {
+    setCollapsed(prev => !prev);
   };
 
   const adminSections: NavSection[] = [
@@ -302,27 +308,45 @@ export const MainSidebar: React.FC<{
       interfaceTitle = "Administrative Portal";
   }
 
+  const sidebarWidth = collapsed ? "w-16" : "w-64";
+
   return (
-    <div className="h-full flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
+    <div className={cn(
+      "h-full flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border",
+      sidebarWidth,
+      "transition-all duration-300 ease-in-out"
+    )}>
       <div className="p-4 flex justify-between items-center h-16 border-b border-sidebar-border">
         <div className="text-xl font-bold text-amber-500 flex-1 text-center">
-          {open ? "Habesha" : "H"}
+          {!collapsed ? "Habesha" : "H"}
         </div>
         
-        <Button
-          onClick={onToggle}
-          variant="ghost"
-          size="icon"
-          className="w-8 h-8 hover:bg-amber-100 hover:text-amber-800"
-          aria-label={t(open ? "Collapse sidebar" : "Expand sidebar")}
-        >
-          {open ? <PanelLeft size={18} /> : <PanelRight size={18} />}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={toggleCollapse}
+            variant="ghost"
+            size="icon"
+            className="w-8 h-8 hover:bg-amber-100 hover:text-amber-800"
+            aria-label={t(collapsed ? "Expand sidebar" : "Collapse sidebar")}
+          >
+            {collapsed ? <PanelRight size={18} /> : <PanelLeft size={18} />}
+          </Button>
+          
+          <Button
+            onClick={onToggle}
+            variant="ghost"
+            size="icon"
+            className="w-8 h-8 hover:bg-amber-100 hover:text-amber-800"
+            aria-label={t("Close sidebar")}
+          >
+            <X size={18} />
+          </Button>
+        </div>
       </div>
       
       <div className="flex-1 py-4 px-2 overflow-y-auto">
         <div className="mb-4 px-3 py-1">
-          {open && (
+          {!collapsed && (
             <h2 className="text-xs uppercase font-semibold text-sidebar-foreground/70">
               <T text={interfaceType === 'admin' ? 'Administrative Portal' : 
                       interfaceType === 'waiter' ? 'Waiter Interface' :
@@ -346,7 +370,7 @@ export const MainSidebar: React.FC<{
                       ? location.pathname.startsWith(section.path) 
                       : location.pathname === section.path
                   }
-                  isOpen={open}
+                  isOpen={!collapsed}
                   hasDropdown={!!section.submenu}
                   isExpanded={expandedSections.includes(section.path)}
                   onClick={(e) => section.submenu ? toggleSection(e, section.path) : undefined}
@@ -354,7 +378,7 @@ export const MainSidebar: React.FC<{
                 {section.submenu && (
                   <DropdownMenu 
                     items={section.submenu} 
-                    isOpen={open} 
+                    isOpen={!collapsed} 
                     isExpanded={expandedSections.includes(section.path)}
                     parentPath={section.path}
                   />
@@ -369,7 +393,7 @@ export const MainSidebar: React.FC<{
                 icon={link.icon}
                 label={link.label}
                 isActive={location.pathname === link.to}
-                isOpen={open}
+                isOpen={!collapsed}
               />
             ))
           )}
@@ -377,7 +401,7 @@ export const MainSidebar: React.FC<{
       </div>
       
       <div className="border-t p-3">
-        {open ? (
+        {!collapsed ? (
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
               <User className="h-4 w-4" />
