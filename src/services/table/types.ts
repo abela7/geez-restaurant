@@ -33,6 +33,22 @@ export interface TableWithDetails extends Table {
   server?: string;
 }
 
+export interface TableGuest {
+  id: string;
+  table_id: string;
+  guest_count: number;
+  server_name?: string;
+  seated_at?: string;
+  status: 'seated' | 'completed' | 'cancelled';
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+  table?: {
+    table_number: number;
+    [key: string]: any;
+  };
+}
+
 export interface Reservation {
   id: string;
   customer_id?: string;

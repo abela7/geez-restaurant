@@ -1283,28 +1283,81 @@ export type Database = {
         Row: {
           capacity: number
           created_at: string | null
+          height: number | null
           id: string
           location: string | null
+          position_x: number | null
+          position_y: number | null
+          room_id: string | null
+          shape: string | null
           status: string | null
           table_number: number
           updated_at: string | null
+          width: number | null
         }
         Insert: {
           capacity: number
           created_at?: string | null
+          height?: number | null
           id?: string
           location?: string | null
+          position_x?: number | null
+          position_y?: number | null
+          room_id?: string | null
+          shape?: string | null
           status?: string | null
           table_number: number
           updated_at?: string | null
+          width?: number | null
         }
         Update: {
           capacity?: number
           created_at?: string | null
+          height?: number | null
           id?: string
           location?: string | null
+          position_x?: number | null
+          position_y?: number | null
+          room_id?: string | null
+          shape?: string | null
           status?: string | null
           table_number?: number
+          updated_at?: string | null
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_tables_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rooms: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
           updated_at?: string | null
         }
         Relationships: []
@@ -1641,6 +1694,50 @@ export type Database = {
           website?: string | null
         }
         Relationships: []
+      }
+      table_guests: {
+        Row: {
+          created_at: string | null
+          guest_count: number
+          id: string
+          notes: string | null
+          seated_at: string | null
+          server_name: string | null
+          status: string | null
+          table_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          guest_count: number
+          id?: string
+          notes?: string | null
+          seated_at?: string | null
+          server_name?: string | null
+          status?: string | null
+          table_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          guest_count?: number
+          id?: string
+          notes?: string | null
+          seated_at?: string | null
+          server_name?: string | null
+          status?: string | null
+          table_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "table_guests_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "restaurant_tables"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
