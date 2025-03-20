@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,32 +15,69 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { MenuNav } from "@/components/menu/MenuNav";
 import Layout from "@/components/Layout";
-import { useDatabase } from "@/contexts/DatabaseContext";
-import { MenuItem } from "@/lib/database";
-import { useToast } from "@/components/ui/use-toast";
+
+// Sample food items
+const foodItems = [
+  { 
+    id: 1, 
+    name: "Doro Wat", 
+    category: "Main Dishes", 
+    cost: 7.45, 
+    profitMargin: 61, 
+    price: 18.99,  
+    image: "/placeholder.svg", 
+    description: "Spicy chicken stew with berbere sauce and hard-boiled eggs",
+    ingredients: [
+      { id: 1, name: "Chicken", quantity: 0.5, unit: "kg" },
+      { id: 2, name: "Berbere Spice", quantity: 0.03, unit: "kg" },
+      { id: 3, name: "Onions", quantity: 0.2, unit: "kg" },
+    ]
+  },
+  { 
+    id: 2, 
+    name: "Kitfo", 
+    category: "Main Dishes", 
+    cost: 8.75, 
+    profitMargin: 56, 
+    price: 19.99,
+    image: "/placeholder.svg", 
+    description: "Minced raw beef seasoned with mitmita and niter kibbeh",
+    ingredients: [
+      { id: 1, name: "Lean Beef", quantity: 0.3, unit: "kg" },
+      { id: 2, name: "Mitmita", quantity: 0.02, unit: "kg" },
+      { id: 3, name: "Niter Kibbeh", quantity: 0.05, unit: "kg" },
+    ]
+  },
+  { 
+    id: 3, 
+    name: "Misir Wat", 
+    category: "Vegetarian", 
+    cost: 3.75, 
+    profitMargin: 73, 
+    price: 13.99,
+    image: "/placeholder.svg", 
+    description: "Spiced red lentil stew",
+    ingredients: [
+      { id: 1, name: "Red Lentils", quantity: 0.2, unit: "kg" },
+      { id: 2, name: "Berbere Spice", quantity: 0.02, unit: "kg" },
+      { id: 3, name: "Onions", quantity: 0.15, unit: "kg" },
+    ]
+  },
+];
+
+const categories = ["Main Dishes", "Vegetarian", "Appetizers", "Beverages", "Desserts"];
 
 const FoodManagement = () => {
   const { t } = useLanguage();
-  const { menuItems, menuCategories, ingredients, recipes } = useDatabase();
-  const { toast } = useToast();
-  
-  const [selectedFood, setSelectedFood] = useState<MenuItem | null>(null);
+  const [selectedFood, setSelectedFood] = useState(null);
   const [showAddIngredientDialog, setShowAddIngredientDialog] = useState(false);
   const [showAddFoodDialog, setShowAddFoodDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
-  const filteredFoodItems = menuItems.filter(item => 
+  const filteredFoodItems = foodItems.filter(item => 
     item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    menuCategories.find(cat => cat.id === item.categoryId)?.name.toLowerCase().includes(searchQuery.toLowerCase())
+    item.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const getCategoryName = (categoryId: string) => {
-    return menuCategories.find(cat => cat.id === categoryId)?.name || '';
-  };
-
-  const getItemIngredients = (ingredientIds: string[]) => {
-    return ingredientIds.map(id => ingredients.find(ing => ing.id === id)).filter(Boolean);
-  };
 
   return (
     <Layout interface="admin">
@@ -87,9 +123,9 @@ const FoodManagement = () => {
                             <SelectValue placeholder={t("Select category")} />
                           </SelectTrigger>
                           <SelectContent>
-                            {menuCategories.map((category) => (
-                              <SelectItem key={category.id} value={category.id}>
-                                {category.name}
+                            {categories.map((category) => (
+                              <SelectItem key={category} value={category}>
+                                {category}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -114,17 +150,7 @@ const FoodManagement = () => {
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button 
-                      onClick={() => {
-                        toast({
-                          title: "Not implemented",
-                          description: "The add food feature is not implemented yet.",
-                        });
-                        setShowAddFoodDialog(false);
-                      }}
-                    >
-                      <T text="Create Food Item" />
-                    </Button>
+                    <Button><T text="Create Food Item" /></Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -153,14 +179,14 @@ const FoodManagement = () => {
             >
               <T text="All Categories" />
             </Button>
-            {menuCategories.map((category) => (
+            {categories.map((category) => (
               <Button 
-                key={category.id} 
+                key={category} 
                 variant="outline" 
                 size="sm"
-                onClick={() => setSearchQuery(category.name)}
+                onClick={() => setSearchQuery(category)}
               >
-                <T text={category.name} />
+                <T text={category} />
               </Button>
             ))}
           </div>
@@ -171,7 +197,7 @@ const FoodManagement = () => {
             <Card key={item.id} className="overflow-hidden">
               <AspectRatio ratio={16 / 9}>
                 <img 
-                  src={item.image || "/placeholder.svg"} 
+                  src={item.image} 
                   alt={item.name} 
                   className="object-cover w-full h-full"
                 />
@@ -180,7 +206,7 @@ const FoodManagement = () => {
                 <div className="flex justify-between items-start mb-2">
                   <div>
                     <h3 className="text-lg font-medium">{item.name}</h3>
-                    <Badge variant="outline">{getCategoryName(item.categoryId)}</Badge>
+                    <Badge variant="outline">{item.category}</Badge>
                   </div>
                   <div className="text-lg font-bold">${item.price.toFixed(2)}</div>
                 </div>
@@ -188,12 +214,10 @@ const FoodManagement = () => {
                 <div className="space-y-2 mb-4">
                   <h4 className="text-sm font-medium"><T text="Ingredients" /></h4>
                   <div className="flex flex-wrap gap-1">
-                    {getItemIngredients(item.ingredients).map((ingredient, index) => (
-                      ingredient && (
-                        <Badge key={ingredient.id} variant="secondary" className="text-xs">
-                          {ingredient.name}
-                        </Badge>
-                      )
+                    {item.ingredients.map((ingredient, index) => (
+                      <Badge key={index} variant="secondary" className="text-xs">
+                        {ingredient.name} ({ingredient.quantity} {ingredient.unit})
+                      </Badge>
                     ))}
                   </div>
                 </div>
@@ -201,11 +225,7 @@ const FoodManagement = () => {
                   <div className="flex items-center text-sm text-muted-foreground">
                     <DollarSign className="h-4 w-4 mr-1" />
                     <T text="Cost" />: ${item.cost.toFixed(2)} | 
-                    {item.price > 0 && (
-                      <>
-                        <T text="Margin" />: {Math.round((1 - (item.cost / item.price)) * 100)}%
-                      </>
-                    )}
+                    <T text="Margin" />: {item.profitMargin}%
                   </div>
                 </div>
                 <div className="flex justify-end">

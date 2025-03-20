@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,64 +14,73 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MenuNav } from "@/components/menu/MenuNav";
 import Layout from "@/components/Layout";
-import { useDatabase } from "@/contexts/DatabaseContext";
-import { Recipe, Ingredient } from "@/lib/database";
-import { useToast } from "@/components/ui/use-toast";
+
+// Sample ingredients for recipes
+const ingredients = [
+  { id: 1, name: "Chicken", category: "Meat", cost: 5.99, unit: "kg", stock: 25 },
+  { id: 2, name: "Berbere Spice", category: "Spices", cost: 12.99, unit: "kg", stock: 5 },
+  { id: 3, name: "Onions", category: "Vegetables", cost: 1.99, unit: "kg", stock: 15 },
+  { id: 4, name: "Garlic", category: "Vegetables", cost: 8.99, unit: "kg", stock: 3 },
+  { id: 5, name: "Niter Kibbeh", category: "Dairy", cost: 9.99, unit: "kg", stock: 8 },
+  { id: 6, name: "Red Lentils", category: "Legumes", cost: 4.99, unit: "kg", stock: 20 },
+];
+
+// Sample recipes
+const recipes = [
+  { 
+    id: 1, 
+    name: "Doro Wat", 
+    category: "Main Dishes", 
+    totalCost: 7.45, 
+    serves: 2,
+    costPerServing: 3.73,
+    ingredients: [
+      { id: 1, ingredientId: 1, name: "Chicken", quantity: 0.5, unit: "kg", cost: 3.00 },
+      { id: 2, ingredientId: 2, name: "Berbere Spice", quantity: 0.03, unit: "kg", cost: 0.39 },
+      { id: 3, ingredientId: 3, name: "Onions", quantity: 0.2, unit: "kg", cost: 0.40 },
+      { id: 4, ingredientId: 5, name: "Niter Kibbeh", quantity: 0.05, unit: "kg", cost: 0.50 },
+    ]
+  },
+  { 
+    id: 2, 
+    name: "Misir Wat", 
+    category: "Vegetarian", 
+    totalCost: 3.75, 
+    serves: 4,
+    costPerServing: 0.94,
+    ingredients: [
+      { id: 5, ingredientId: 6, name: "Red Lentils", quantity: 0.3, unit: "kg", cost: 1.50 },
+      { id: 6, ingredientId: 2, name: "Berbere Spice", quantity: 0.02, unit: "kg", cost: 0.26 },
+      { id: 7, ingredientId: 3, name: "Onions", quantity: 0.25, unit: "kg", cost: 0.50 },
+      { id: 8, ingredientId: 4, name: "Garlic", quantity: 0.02, unit: "kg", cost: 0.18 },
+    ]
+  },
+];
 
 const RecipeManagement = () => {
   const { t } = useLanguage();
-  const { recipes, ingredients, menuItems } = useDatabase();
-  const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("recipes");
-  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   
   const foodId = searchParams.get("foodId");
   
   // If a foodId is provided, find the corresponding recipe and select it
-  useEffect(() => {
+  React.useEffect(() => {
     if (foodId) {
-      const recipe = recipes.find(r => r.menuItemId === foodId);
+      const recipe = recipes.find(r => r.id === parseInt(foodId));
       if (recipe) {
         setSelectedRecipe(recipe);
         setActiveTab("ingredients");
       }
     }
-  }, [foodId, recipes]);
+  }, [foodId]);
   
-  const filteredRecipes = recipes.filter(recipe => {
-    const menuItem = menuItems.find(item => item.id === recipe.menuItemId);
-    return recipe.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-           (menuItem && menuItem.name.toLowerCase().includes(searchQuery.toLowerCase()));
-  });
-
-  const getMenuItemName = (menuItemId: string) => {
-    return menuItems.find(item => item.id === menuItemId)?.name || '';
-  };
-
-  const getMenuItemCategory = (menuItemId: string) => {
-    const menuItem = menuItems.find(item => item.id === menuItemId);
-    if (!menuItem) return '';
-    return menuItem.categoryId;
-  };
-
-  const getIngredientById = (id: string): Ingredient | undefined => {
-    return ingredients.find(ing => ing.id === id);
-  };
-
-  const calculateTotalCost = (recipe: Recipe): number => {
-    return recipe.ingredients.reduce((total, ingredient) => {
-      const ing = getIngredientById(ingredient.ingredientId);
-      if (!ing) return total;
-      return total + (ing.unitCost * ingredient.quantity);
-    }, 0);
-  };
-
-  const calculateCostPerServing = (recipe: Recipe): number => {
-    if (!recipe.servingSize || recipe.servingSize <= 0) return 0;
-    return calculateTotalCost(recipe) / recipe.servingSize;
-  };
+  const filteredRecipes = recipes.filter(recipe => 
+    recipe.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    recipe.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <Layout interface="admin">
@@ -112,17 +120,17 @@ const RecipeManagement = () => {
                         <Input id="name" placeholder={t("Enter recipe name")} />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="menuItem"><T text="Menu Item" /></Label>
+                        <Label htmlFor="category"><T text="Category" /></Label>
                         <Select>
                           <SelectTrigger>
-                            <SelectValue placeholder={t("Select menu item")} />
+                            <SelectValue placeholder={t("Select category")} />
                           </SelectTrigger>
                           <SelectContent>
-                            {menuItems.map((item) => (
-                              <SelectItem key={item.id} value={item.id}>
-                                {item.name}
-                              </SelectItem>
-                            ))}
+                            <SelectItem value="Main Dishes">Main Dishes</SelectItem>
+                            <SelectItem value="Vegetarian">Vegetarian</SelectItem>
+                            <SelectItem value="Appetizers">Appetizers</SelectItem>
+                            <SelectItem value="Beverages">Beverages</SelectItem>
+                            <SelectItem value="Desserts">Desserts</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -133,14 +141,7 @@ const RecipeManagement = () => {
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button onClick={() => {
-                      toast({
-                        title: "Not implemented",
-                        description: "The add recipe feature is not implemented yet.",
-                      });
-                    }}>
-                      <T text="Create Recipe" />
-                    </Button>
+                    <Button><T text="Create Recipe" /></Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -172,7 +173,7 @@ const RecipeManagement = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead><T text="Recipe" /></TableHead>
-                    <TableHead><T text="Menu Item" /></TableHead>
+                    <TableHead><T text="Category" /></TableHead>
                     <TableHead><T text="Total Cost" /></TableHead>
                     <TableHead><T text="Cost per Serving" /></TableHead>
                     <TableHead className="text-right"><T text="Actions" /></TableHead>
@@ -182,9 +183,9 @@ const RecipeManagement = () => {
                   {filteredRecipes.map((recipe) => (
                     <TableRow key={recipe.id}>
                       <TableCell className="font-medium">{recipe.name}</TableCell>
-                      <TableCell>{getMenuItemName(recipe.menuItemId)}</TableCell>
-                      <TableCell>${calculateTotalCost(recipe).toFixed(2)}</TableCell>
-                      <TableCell>${calculateCostPerServing(recipe).toFixed(2)}</TableCell>
+                      <TableCell>{recipe.category}</TableCell>
+                      <TableCell>${recipe.totalCost.toFixed(2)}</TableCell>
+                      <TableCell>${recipe.costPerServing.toFixed(2)}</TableCell>
                       <TableCell className="text-right">
                         <Button 
                           variant="ghost" 
@@ -230,12 +231,12 @@ const RecipeManagement = () => {
                         <div className="space-y-2">
                           <Label htmlFor="ingredient"><T text="Ingredient" /></Label>
                           <Select>
-                            <SelectTrigger className="w-full">
+                            <SelectTrigger className="w-[180px]">
                               <SelectValue placeholder={t("Select ingredient")} />
                             </SelectTrigger>
                             <SelectContent>
                               {ingredients.map((ingredient) => (
-                                <SelectItem key={ingredient.id} value={ingredient.id}>
+                                <SelectItem key={ingredient.id} value={ingredient.name}>
                                   {ingredient.name}
                                 </SelectItem>
                               ))}
@@ -246,16 +247,23 @@ const RecipeManagement = () => {
                           <Label htmlFor="quantity"><T text="Quantity" /></Label>
                           <Input id="quantity" type="number" step="0.01" placeholder="0.00" />
                         </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="unit"><T text="Unit" /></Label>
+                          <Select>
+                            <SelectTrigger className="w-[120px]">
+                              <SelectValue placeholder={t("Select unit")} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="kg">kg</SelectItem>
+                              <SelectItem value="g">g</SelectItem>
+                              <SelectItem value="l">l</SelectItem>
+                              <SelectItem value="ml">ml</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                       <DialogFooter>
-                        <Button onClick={() => {
-                          toast({
-                            title: "Not implemented",
-                            description: "The add ingredient feature is not implemented yet.",
-                          });
-                        }}>
-                          <T text="Add Ingredient" />
-                        </Button>
+                        <Button><T text="Add Ingredient" /></Button>
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
@@ -273,41 +281,24 @@ const RecipeManagement = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {selectedRecipe.ingredients.map((recipeIngredient) => {
-                        const ingredient = getIngredientById(recipeIngredient.ingredientId);
-                        if (!ingredient) return null;
-                        
-                        const cost = ingredient.unitCost * recipeIngredient.quantity;
-                        
-                        return (
-                          <TableRow key={recipeIngredient.ingredientId}>
-                            <TableCell className="font-medium">{ingredient.name}</TableCell>
-                            <TableCell>{recipeIngredient.quantity}</TableCell>
-                            <TableCell>{ingredient.unit}</TableCell>
-                            <TableCell>${cost.toFixed(2)}</TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                <Button variant="ghost" size="sm" onClick={() => {
-                                  toast({
-                                    title: "Not implemented",
-                                    description: "The edit ingredient feature is not implemented yet.",
-                                  });
-                                }}>
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" onClick={() => {
-                                  toast({
-                                    title: "Not implemented",
-                                    description: "The delete ingredient feature is not implemented yet.",
-                                  });
-                                }}>
-                                  <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
+                      {selectedRecipe.ingredients.map((ingredient) => (
+                        <TableRow key={ingredient.id}>
+                          <TableCell className="font-medium">{ingredient.name}</TableCell>
+                          <TableCell>{ingredient.quantity}</TableCell>
+                          <TableCell>{ingredient.unit}</TableCell>
+                          <TableCell>${ingredient.cost.toFixed(2)}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button variant="ghost" size="sm">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
                     </TableBody>
                   </Table>
                 </Card>
