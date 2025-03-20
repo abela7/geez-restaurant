@@ -22,35 +22,20 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'admin' }) => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    // Get initial collapsed state from localStorage, default to false (expanded)
-    const storedState = localStorage.getItem('sidebarCollapsed');
-    return storedState ? JSON.parse(storedState) : false;
-  });
+  // Sidebar is closed by default
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
   const location = useLocation();
   
-  // Mobile sidebar visibility (separate from collapse state)
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  
   useEffect(() => {
-    // Close mobile sidebar when location changes
+    // Close sidebar when location changes on mobile
     if (isMobile) {
-      setMobileSidebarOpen(false);
+      setSidebarOpen(false);
     }
   }, [location, isMobile]);
   
-  // When sidebar collapse state changes, save to localStorage
-  useEffect(() => {
-    localStorage.setItem('sidebarCollapsed', JSON.stringify(sidebarCollapsed));
-  }, [sidebarCollapsed]);
-  
   const toggleSidebar = () => {
-    if (isMobile) {
-      setMobileSidebarOpen(prev => !prev);
-    } else {
-      setSidebarCollapsed(prev => !prev);
-    }
+    setSidebarOpen(prev => !prev);
   };
 
   const getBreadcrumbs = () => {
@@ -77,45 +62,29 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
   };
   
   const breadcrumbs = getBreadcrumbs();
-  
-  // Calculate sidebar width based on collapsed state
-  const sidebarWidth = sidebarCollapsed ? '64px' : '256px'; // 4rem or 16rem
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Overlay for mobile sidebar */}
-      {isMobile && mobileSidebarOpen && (
+      {/* Overlay for sidebar */}
+      {sidebarOpen && (
         <div
           className="fixed inset-0 z-20 bg-black/60"
-          onClick={() => setMobileSidebarOpen(false)}
+          onClick={() => setSidebarOpen(false)}
         />
       )}
       
-      {/* Sidebar - fixed position for mobile, static for desktop */}
+      {/* Sidebar - fixed position with transform to hide/show */}
       <div 
         className={cn(
-          "h-screen z-30 transition-all duration-300 ease-in-out", 
-          isMobile 
-            ? "fixed left-0 top-0" 
-            : "relative",
-          isMobile && !mobileSidebarOpen && "-translate-x-full"
+          "fixed left-0 top-0 h-screen z-30 transition-transform duration-300 ease-in-out",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
-        style={{ width: sidebarWidth }}
       >
-        <MainSidebar 
-          collapsed={sidebarCollapsed} 
-          setCollapsed={setSidebarCollapsed} 
-          interface={userInterface} 
-        />
+        <MainSidebar open={sidebarOpen} onToggle={toggleSidebar} interface={userInterface} />
       </div>
       
-      {/* Main content - adjust margin based on sidebar state */}
-      <div 
-        className="flex-1 flex flex-col w-full transition-all duration-300 ease-in-out"
-        style={{ 
-          marginLeft: isMobile ? 0 : sidebarWidth 
-        }}
-      >
+      {/* Main content */}
+      <div className="flex-1 flex flex-col w-full transition-all duration-300">
         <Header toggleSidebar={toggleSidebar} interface={userInterface} />
         
         <main className="flex-1 overflow-auto p-4 md:p-6">

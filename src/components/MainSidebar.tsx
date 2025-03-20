@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useLanguage, T } from '@/contexts/LanguageContext';
@@ -10,13 +10,27 @@ import SidebarHeader from './sidebar/SidebarHeader';
 import { getNavSections, getInterfaceTitle, NavSection } from './sidebar/SidebarNavData';
 
 export const MainSidebar: React.FC<{
-  collapsed: boolean;
-  setCollapsed: (collapsed: boolean) => void;
+  open: boolean;
+  onToggle: () => void;
   interface: "admin" | "waiter" | "kitchen" | "customer" | "system";
-}> = ({ collapsed, setCollapsed, interface: interfaceType }) => {
+}> = ({ open, onToggle, interface: interfaceType }) => {
   const location = useLocation();
-  const [expandedSections, setExpandedSections] = React.useState<string[]>([]);
+  const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const { t } = useLanguage();
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    // Check if there's a stored value for sidebar collapsed state
+    const storedCollapsed = localStorage.getItem('sidebarCollapsed');
+    if (storedCollapsed !== null) {
+      setCollapsed(storedCollapsed === 'true');
+    }
+  }, []);
+
+  useEffect(() => {
+    // Save collapsed state to localStorage when it changes
+    localStorage.setItem('sidebarCollapsed', collapsed.toString());
+  }, [collapsed]);
 
   const toggleSection = (e: React.MouseEvent, section: string) => {
     e.preventDefault();
@@ -28,15 +42,17 @@ export const MainSidebar: React.FC<{
   };
 
   const toggleCollapse = () => {
-    setCollapsed(!collapsed);
+    setCollapsed(prev => !prev);
   };
 
   const navSections = getNavSections(interfaceType);
   const interfaceTitle = getInterfaceTitle(interfaceType);
+  const sidebarWidth = collapsed ? "w-16" : "w-64";
 
   return (
     <div className={cn(
       "h-full flex flex-col bg-white text-gray-800 border-r border-gray-200",
+      sidebarWidth,
       "transition-all duration-300 ease-in-out"
     )}>
       <div className="flex flex-col h-full">
@@ -46,7 +62,7 @@ export const MainSidebar: React.FC<{
           {!collapsed && <span><T text={interfaceTitle} /></span>}
         </div>
         
-        <div className="flex-1 py-2 overflow-y-auto custom-scrollbar">
+        <div className="flex-1 py-2 overflow-y-auto">
           <nav className="px-2">
             {interfaceType === 'admin' ? (
               navSections.map((section: NavSection) => (

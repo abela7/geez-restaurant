@@ -1,8 +1,6 @@
 
 import React from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils';
-import { useLanguage, T } from '@/contexts/LanguageContext';
+import { User, LogOut } from 'lucide-react';
 
 interface SidebarUserProfileProps {
   collapsed: boolean;
@@ -10,21 +8,23 @@ interface SidebarUserProfileProps {
 
 const SidebarUserProfile: React.FC<SidebarUserProfileProps> = ({ collapsed }) => {
   return (
-    <div className={cn(
-      "p-4 border-t border-border flex items-center",
-      collapsed ? "justify-center" : "justify-start"
-    )}>
-      <Avatar className="h-8 w-8">
-        <AvatarImage src="/placeholder.svg" alt="User" />
-        <AvatarFallback>AB</AvatarFallback>
-      </Avatar>
-      
-      {!collapsed && (
-        <div className="ml-3 overflow-hidden">
-          <p className="text-sm font-medium truncate">Abebe Bekele</p>
-          <p className="text-xs text-muted-foreground truncate">
-            <T text="Manager" />
-          </p>
+    <div className="border-t border-gray-200 p-4">
+      {!collapsed ? (
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+            <User className="h-4 w-4 text-gray-600" />
+          </div>
+          <div className="flex-1 overflow-hidden">
+            <p className="text-sm font-medium leading-none truncate">Admin User</p>
+            <p className="text-xs text-gray-500 truncate">admin@restaurant.com</p>
+          </div>
+          <LogOut className="h-4 w-4 text-gray-500 hover:text-gray-700 cursor-pointer" />
+        </div>
+      ) : (
+        <div className="flex justify-center">
+          <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+            <User className="h-4 w-4 text-gray-600" />
+          </div>
         </div>
       )}
     </div>
