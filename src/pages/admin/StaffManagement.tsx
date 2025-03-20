@@ -1,380 +1,436 @@
-
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
-import { useLanguage, T } from "@/contexts/LanguageContext";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Avatar } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { UserPlus, Users, Search, Clock, CalendarClock, BadgeDollarSign, Check, Ban, ArrowUpDown } from "lucide-react";
-import { useStaff } from "@/hooks/useStaff";
-import { StaffMember } from "@/types/staff";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { 
+  Plus, Search, UserPlus, Star, Clock, ChevronRight, 
+  CalendarDays, DollarSign, BarChart, Users,
+  BookUser, ListChecks, BadgeDollarSign
+} from "lucide-react";
+import { useLanguage, T } from "@/contexts/LanguageContext";
+import { useNavigate } from "react-router-dom";
+
+// Sample staff data
+const staffMembers = [
+  { 
+    id: 1, 
+    name: "Abebe Kebede", 
+    role: "Chef", 
+    department: "Kitchen",
+    attendance: "Present", 
+    performance: 95, 
+    wage: 6,
+    hourlyRate: "£6.00/hr",
+    image: "/placeholder.svg" 
+  },
+  { 
+    id: 2, 
+    name: "Makeda Haile", 
+    role: "Chef", 
+    department: "Kitchen",
+    attendance: "Late", 
+    performance: 88, 
+    wage: 6,
+    hourlyRate: "£6.00/hr",
+    image: "/placeholder.svg" 
+  },
+  { 
+    id: 3, 
+    name: "Dawit Tadesse", 
+    role: "Waiter", 
+    department: "Front of House",
+    attendance: "Present", 
+    performance: 92, 
+    wage: 6,
+    hourlyRate: "£6.00/hr",
+    image: "/placeholder.svg" 
+  },
+  { 
+    id: 4, 
+    name: "Sara Mengistu", 
+    role: "Manager", 
+    department: "Management",
+    attendance: "Present", 
+    performance: 98, 
+    wage: 8,
+    hourlyRate: "£8.00/hr",
+    image: "/placeholder.svg" 
+  },
+];
 
 const StaffManagement = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const { staff, isLoading } = useStaff();
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState<keyof StaffMember>("first_name");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-
-  // Filter staff by search term
-  const filteredStaff = staff.filter(
-    (member) =>
-      member.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.department.toLowerCase().includes(searchTerm.toLowerCase())
+  
+  const filteredStaff = staffMembers.filter(staff => 
+    staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    staff.role.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Sort staff
-  const sortedStaff = [...filteredStaff].sort((a, b) => {
-    const valueA = a[sortBy];
-    const valueB = b[sortBy];
-
-    if (valueA < valueB) {
-      return sortDirection === "asc" ? -1 : 1;
-    }
-    if (valueA > valueB) {
-      return sortDirection === "asc" ? 1 : -1;
-    }
-    return 0;
-  });
-
-  const handleSort = (field: keyof StaffMember) => {
-    if (sortBy === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortBy(field);
-      setSortDirection("asc");
-    }
+  const handleViewStaff = (id: number) => {
+    navigate(`/admin/staff/profile/${id}`);
   };
-
-  // Group staff by department
-  const staffByDepartment = staff.reduce(
-    (acc, member) => {
-      if (!acc[member.department]) {
-        acc[member.department] = [];
-      }
-      acc[member.department].push(member);
-      return acc;
-    },
-    {} as Record<string, StaffMember[]>
-  );
 
   return (
     <Layout interface="admin">
-      <PageHeader
+      <PageHeader 
         heading={<T text="Staff Management" />}
-        description={<T text="Manage your restaurant staff, track performance, and assign tasks" />}
+        description={<T text="Manage your restaurant staff, track attendance and performance" />}
         actions={
           <Button onClick={() => navigate("/admin/staff/new")}>
             <UserPlus className="mr-2 h-4 w-4" />
-            <T text="Add Staff Member" />
+            <T text="Add Staff" />
           </Button>
         }
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              <T text="Total Staff" />
-            </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{staff.length}</div>
-            <p className="text-xs text-muted-foreground">
-              <T text="Active staff members" />
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              <T text="Attendance Rate" />
-            </CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {staff.length ? Math.round((staff.filter((s) => s.attendance === "Present").length / staff.length) * 100) : 0}%
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/staff/directory")}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground"><T text="Staff Directory" /></p>
+              <h3 className="text-2xl font-bold">{staffMembers.length}</h3>
             </div>
-            <p className="text-xs text-muted-foreground">
-              <T text="Current day" />
-            </p>
-          </CardContent>
+            <div className="bg-primary/10 p-2 rounded-full">
+              <BookUser className="h-5 w-5 text-primary" />
+            </div>
+          </div>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              <T text="Upcoming Schedule" />
-            </CardTitle>
-            <CalendarClock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">
-              <T text="Staff on duty tomorrow" />
-            </p>
-          </CardContent>
+
+        <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/staff/attendance")}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground"><T text="Present Today" /></p>
+              <h3 className="text-2xl font-bold">{staffMembers.filter(s => s.attendance === "Present").length}</h3>
+            </div>
+            <div className="bg-green-100 dark:bg-green-900/20 p-2 rounded-full">
+              <CalendarDays className="h-5 w-5 text-green-600 dark:text-green-400" />
+            </div>
+          </div>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              <T text="Payroll Due" />
-            </CardTitle>
-            <BadgeDollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">£{staff.reduce((sum, s) => sum + (s.hourly_rate || 0), 0).toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">
-              <T text="Weekly total" />
-            </p>
-          </CardContent>
+
+        <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/staff/tasks")}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground"><T text="Task Management" /></p>
+              <h3 className="text-2xl font-bold">5</h3>
+            </div>
+            <div className="bg-blue-100 dark:bg-blue-900/20 p-2 rounded-full">
+              <ListChecks className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/staff/payroll")}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground"><T text="Total Wage Per Hour" /></p>
+              <h3 className="text-2xl font-bold">£{staffMembers.reduce((acc, staff) => acc + staff.wage, 0)}</h3>
+            </div>
+            <div className="bg-amber-100 dark:bg-amber-900/20 p-2 rounded-full">
+              <BadgeDollarSign className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            </div>
+          </div>
         </Card>
       </div>
 
-      <div className="flex items-center mb-6">
+      <div className="mb-6 flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder={t("Search staff...")}
-            className="pl-8"
+            type="search"
+            placeholder="Search staff..."
+            className="w-full pl-9"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex ml-4 space-x-2">
-          <Button
-            variant="outline"
-            className="gap-1"
-            onClick={() => handleSort("role")}
-          >
-            <T text="Role" />
-            <ArrowUpDown className="h-3 w-3" />
+        <div className="flex space-x-2">
+          <Button variant="outline" onClick={() => navigate("/admin/staff/directory")}>
+            <BookUser className="mr-2 h-4 w-4" />
+            <T text="Directory" />
           </Button>
-          <Button
-            variant="outline"
-            className="gap-1"
-            onClick={() => handleSort("department")}
-          >
-            <T text="Department" />
-            <ArrowUpDown className="h-3 w-3" />
+          <Button variant="outline" onClick={() => navigate("/admin/staff/tasks")}>
+            <ListChecks className="mr-2 h-4 w-4" />
+            <T text="Tasks" />
+          </Button>
+          <Button variant="outline" onClick={() => navigate("/admin/staff/payroll")}>
+            <BadgeDollarSign className="mr-2 h-4 w-4" />
+            <T text="Payroll" />
           </Button>
         </div>
       </div>
-
+      
       <Tabs defaultValue="all">
-        <TabsList className="mb-6">
-          <TabsTrigger value="all">
-            <T text="All Staff" />
-          </TabsTrigger>
-          <TabsTrigger value="kitchen">
-            <T text="Kitchen" />
-          </TabsTrigger>
-          <TabsTrigger value="frontofhouse">
-            <T text="Front of House" />
-          </TabsTrigger>
-          <TabsTrigger value="management">
-            <T text="Management" />
-          </TabsTrigger>
+        <TabsList className="mb-4">
+          <TabsTrigger value="all"><T text="All Staff" /></TabsTrigger>
+          <TabsTrigger value="kitchen"><T text="Kitchen" /></TabsTrigger>
+          <TabsTrigger value="waiters"><T text="Waiters" /></TabsTrigger>
+          <TabsTrigger value="management"><T text="Management" /></TabsTrigger>
         </TabsList>
 
         <TabsContent value="all">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {isLoading ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center text-muted-foreground">
-                    <T text="Loading staff data..." />
-                  </div>
-                </CardContent>
-              </Card>
-            ) : sortedStaff.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center text-muted-foreground">
-                    <T text="No staff members found" />
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              sortedStaff.map((member, index) => (
-                <Card key={member.id || index}>
-                  <CardHeader className="pb-3">
-                    <div className="flex justify-between items-center">
-                      <Badge
-                        variant={member.attendance === "Present" ? "outline" : "default"}
-                        className={
-                          member.attendance === "Present"
-                            ? "bg-green-100 text-green-800 hover:bg-green-100 hover:text-green-800 dark:bg-green-900/20 dark:text-green-400"
-                            : member.attendance === "Late"
-                            ? "bg-amber-500 hover:bg-amber-500"
-                            : "bg-red-500 hover:bg-red-500"
-                        }
-                      >
-                        {member.attendance === "Present" ? (
-                          <Check className="h-3 w-3 mr-1" />
-                        ) : (
-                          <Ban className="h-3 w-3 mr-1" />
-                        )}
-                        <T text={member.attendance} />
-                      </Badge>
-                      <Badge variant="secondary">
-                        <T text={member.role} />
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="text-center pb-3">
-                    <Avatar className="h-20 w-20 mx-auto mb-3">
-                      <img
-                        src={member.image_url || "/placeholder.svg"}
-                        alt={`${member.first_name} ${member.last_name}`}
-                        className="object-cover"
-                      />
-                    </Avatar>
-                    <h3 className="font-semibold text-lg">{`${member.first_name} ${member.last_name}`}</h3>
-                    <p className="text-muted-foreground text-sm">{member.department}</p>
-                    <div className="flex items-center justify-center mt-2 gap-1">
-                      <span className="text-xs text-muted-foreground">
-                        <T text="Performance:" />
-                      </span>
-                      <span
-                        className={`text-xs font-semibold ${
-                          member.performance > 90
-                            ? "text-green-600"
-                            : member.performance > 70
-                            ? "text-amber-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        {member.performance}%
-                      </span>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex justify-between pt-0">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => navigate(`/admin/staff/profile/${member.id}`)}
-                    >
-                      <T text="View Profile" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/admin/staff/tasks?assign=${member.id}`)}
-                    >
-                      <T text="Assign Task" />
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))
-            )}
-          </div>
-        </TabsContent>
-
-        {/* Department tabs - these would ideally be dynamic based on your departments */}
-        {["kitchen", "frontofhouse", "management"].map((dept, index) => {
-          const deptName = dept === "frontofhouse" ? "Front of House" : dept === "kitchen" ? "Kitchen" : "Management";
-          const deptStaff = staff.filter(
-            member => member.department.toLowerCase() === deptName.toLowerCase()
-          );
-          
-          return (
-            <TabsContent key={index} value={dept}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {deptStaff.length === 0 ? (
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center text-muted-foreground">
-                        <T text={`No staff members in ${deptName}`} />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  deptStaff.map((member, idx) => (
-                    <Card key={member.id || idx}>
-                      <CardHeader className="pb-3">
-                        <div className="flex justify-between items-center">
-                          <Badge
-                            variant={member.attendance === "Present" ? "outline" : "default"}
-                            className={
-                              member.attendance === "Present"
-                                ? "bg-green-100 text-green-800 hover:bg-green-100 hover:text-green-800 dark:bg-green-900/20 dark:text-green-400"
-                                : member.attendance === "Late"
-                                ? "bg-amber-500 hover:bg-amber-500"
-                                : "bg-red-500 hover:bg-red-500"
-                            }
-                          >
-                            {member.attendance === "Present" ? (
-                              <Check className="h-3 w-3 mr-1" />
-                            ) : (
-                              <Ban className="h-3 w-3 mr-1" />
-                            )}
-                            <T text={member.attendance} />
-                          </Badge>
-                          <Badge variant="secondary">
-                            <T text={member.role} />
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="text-center pb-3">
-                        <Avatar className="h-20 w-20 mx-auto mb-3">
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead><T text="Staff Member" /></TableHead>
+                  <TableHead><T text="Role" /></TableHead>
+                  <TableHead><T text="Department" /></TableHead>
+                  <TableHead><T text="Status" /></TableHead>
+                  <TableHead><T text="Performance" /></TableHead>
+                  <TableHead><T text="Rate" /></TableHead>
+                  <TableHead className="text-right"><T text="Actions" /></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredStaff.map((staff) => (
+                  <TableRow key={staff.id}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-3">
+                        <Avatar>
                           <img
-                            src={member.image_url || "/placeholder.svg"}
-                            alt={`${member.first_name} ${member.last_name}`}
-                            className="object-cover"
+                            src={staff.image}
+                            alt={staff.name}
+                            className="aspect-square h-10 w-10 object-cover"
                           />
                         </Avatar>
-                        <h3 className="font-semibold text-lg">{`${member.first_name} ${member.last_name}`}</h3>
-                        <p className="text-muted-foreground text-sm">{member.department}</p>
-                        <div className="flex items-center justify-center mt-2 gap-1">
-                          <span className="text-xs text-muted-foreground">
-                            <T text="Performance:" />
-                          </span>
-                          <span
-                            className={`text-xs font-semibold ${
-                              member.performance > 90
-                                ? "text-green-600"
-                                : member.performance > 70
-                                ? "text-amber-600"
-                                : "text-red-600"
-                            }`}
-                          >
-                            {member.performance}%
-                          </span>
+                        <div>
+                          {staff.name}
                         </div>
-                      </CardContent>
-                      <CardFooter className="flex justify-between pt-0">
-                        <Button
-                          variant="ghost"
+                      </div>
+                    </TableCell>
+                    <TableCell>{staff.role}</TableCell>
+                    <TableCell>{staff.department}</TableCell>
+                    <TableCell>
+                      <Badge variant={staff.attendance === "Present" ? "default" : 
+                                      staff.attendance === "Late" ? "outline" : 
+                                      "destructive"}>
+                        {staff.attendance}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Star className="h-4 w-4 text-yellow-500" />
+                        <span>{staff.performance}%</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{staff.hourlyRate}</TableCell>
+                    <TableCell className="text-right">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleViewStaff(staff.id)}
+                      >
+                        <T text="View" />
+                        <ChevronRight className="ml-1 h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="kitchen">
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead><T text="Staff Member" /></TableHead>
+                  <TableHead><T text="Role" /></TableHead>
+                  <TableHead><T text="Status" /></TableHead>
+                  <TableHead><T text="Performance" /></TableHead>
+                  <TableHead><T text="Rate" /></TableHead>
+                  <TableHead className="text-right"><T text="Actions" /></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredStaff
+                  .filter(staff => staff.department === "Kitchen")
+                  .map((staff) => (
+                    <TableRow key={staff.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-3">
+                          <Avatar>
+                            <img
+                              src={staff.image}
+                              alt={staff.name}
+                              className="aspect-square h-10 w-10 object-cover"
+                            />
+                          </Avatar>
+                          <div>
+                            {staff.name}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{staff.role}</TableCell>
+                      <TableCell>
+                        <Badge variant={staff.attendance === "Present" ? "default" : 
+                                        staff.attendance === "Late" ? "outline" : 
+                                        "destructive"}>
+                          {staff.attendance}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Star className="h-4 w-4 text-yellow-500" />
+                          <span>{staff.performance}%</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{staff.hourlyRate}</TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="ghost" 
                           size="sm"
-                          onClick={() => navigate(`/admin/staff/profile/${member.id}`)}
+                          onClick={() => handleViewStaff(staff.id)}
                         >
-                          <T text="View Profile" />
+                          <T text="View" />
+                          <ChevronRight className="ml-1 h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="outline"
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="waiters">
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead><T text="Staff Member" /></TableHead>
+                  <TableHead><T text="Role" /></TableHead>
+                  <TableHead><T text="Status" /></TableHead>
+                  <TableHead><T text="Performance" /></TableHead>
+                  <TableHead><T text="Rate" /></TableHead>
+                  <TableHead className="text-right"><T text="Actions" /></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredStaff
+                  .filter(staff => staff.department === "Front of House")
+                  .map((staff) => (
+                    <TableRow key={staff.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-3">
+                          <Avatar>
+                            <img
+                              src={staff.image}
+                              alt={staff.name}
+                              className="aspect-square h-10 w-10 object-cover"
+                            />
+                          </Avatar>
+                          <div>
+                            {staff.name}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{staff.role}</TableCell>
+                      <TableCell>
+                        <Badge variant={staff.attendance === "Present" ? "default" : 
+                                        staff.attendance === "Late" ? "outline" : 
+                                        "destructive"}>
+                          {staff.attendance}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Star className="h-4 w-4 text-yellow-500" />
+                          <span>{staff.performance}%</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{staff.hourlyRate}</TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="ghost" 
                           size="sm"
-                          onClick={() => navigate(`/admin/staff/tasks?assign=${member.id}`)}
+                          onClick={() => handleViewStaff(staff.id)}
                         >
-                          <T text="Assign Task" />
+                          <T text="View" />
+                          <ChevronRight className="ml-1 h-4 w-4" />
                         </Button>
-                      </CardFooter>
-                    </Card>
-                  ))
-                )}
-              </div>
-            </TabsContent>
-          );
-        })}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="management">
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead><T text="Staff Member" /></TableHead>
+                  <TableHead><T text="Role" /></TableHead>
+                  <TableHead><T text="Status" /></TableHead>
+                  <TableHead><T text="Performance" /></TableHead>
+                  <TableHead><T text="Rate" /></TableHead>
+                  <TableHead className="text-right"><T text="Actions" /></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredStaff
+                  .filter(staff => staff.department === "Management")
+                  .map((staff) => (
+                    <TableRow key={staff.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-3">
+                          <Avatar>
+                            <img
+                              src={staff.image}
+                              alt={staff.name}
+                              className="aspect-square h-10 w-10 object-cover"
+                            />
+                          </Avatar>
+                          <div>
+                            {staff.name}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{staff.role}</TableCell>
+                      <TableCell>
+                        <Badge variant={staff.attendance === "Present" ? "default" : 
+                                        staff.attendance === "Late" ? "outline" : 
+                                        "destructive"}>
+                          {staff.attendance}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Star className="h-4 w-4 text-yellow-500" />
+                          <span>{staff.performance}%</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{staff.hourlyRate}</TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleViewStaff(staff.id)}
+                        >
+                          <T text="View" />
+                          <ChevronRight className="ml-1 h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
       </Tabs>
     </Layout>
   );

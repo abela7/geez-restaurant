@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { PageHeader } from "@/components/ui/page-header";
@@ -9,90 +9,49 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Save, UserPlus, Upload } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useForm } from "react-hook-form";
-import { useStaff } from "@/hooks/useStaff";
-import { StaffMember, StaffRole, Department, StaffRoleEnum } from "@/types/staff";
-import { useToast } from "@/hooks/use-toast";
 
-type StaffFormValues = Omit<StaffMember, 'id'> & {
-  hiring_date: string;
-};
-
-const roleMapping: Record<StaffRole, StaffRoleEnum> = {
-  'admin': 'Admin',
-  'waiter': 'Waiter',
-  'chef': 'Kitchen',
-  'dishwasher': 'Kitchen',
-  'manager': 'Admin'
+type StaffFormValues = {
+  firstName: string;
+  lastName: string;
+  role: string;
+  department: string;
+  email: string;
+  phone: string;
+  address: string;
+  hourlyRate: string;
+  bio: string;
 };
 
 const NewStaff = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { addStaffMember } = useStaff();
-  const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<StaffFormValues>({
     defaultValues: {
-      first_name: "",
-      last_name: "",
-      role: "waiter",
-      staff_role: "Waiter",
-      department: "Front of House",
+      firstName: "",
+      lastName: "",
+      role: "",
+      department: "",
       email: "",
       phone: "",
       address: "",
-      hourly_rate: 6.00,
-      bio: "",
-      gender: "",
-      performance: 90,
-      attendance: "Present",
-      image_url: "/placeholder.svg",
-      hiring_date: new Date().toISOString().split('T')[0]
+      hourlyRate: "",
+      bio: ""
     }
   });
 
-  const onSubmit = async (data: StaffFormValues) => {
-    setIsSubmitting(true);
+  const onSubmit = (data: StaffFormValues) => {
     console.log("Form data:", data);
+    // In a real application, this would submit to an API
     
-    try {
-      // Update staff_role based on selected role if not set
-      if (!data.staff_role) {
-        data.staff_role = roleMapping[data.role as StaffRole];
-      }
-      
-      // In a real app with auth, we would need to create the user first
-      // Since we have a foreign key constraint, we cannot directly insert
-      // profiles without associated auth.users records
-      toast({
-        title: "Demo Mode",
-        description: "In a production app, this would create a new staff record",
-      });
-      
-      // Navigate back to staff list
-      setTimeout(() => {
-        navigate("/admin/staff");
-      }, 1000);
-    } catch (error) {
-      console.error("Error:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to create staff record",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Handle role change to update staff_role accordingly
-  const handleRoleChange = (role: string) => {
-    form.setValue("role", role as StaffRole);
-    form.setValue("staff_role", roleMapping[role as StaffRole]);
+    // Show success message and navigate back to staff list
+    setTimeout(() => {
+      navigate("/admin/staff");
+    }, 1000);
   };
 
   return (
@@ -122,17 +81,17 @@ const NewStaff = () => {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="first_name"><T text="First Name" /></Label>
+                    <Label htmlFor="firstName"><T text="First Name" /></Label>
                     <Input 
-                      id="first_name" 
-                      {...form.register("first_name", { required: true })}
+                      id="firstName" 
+                      {...form.register("firstName", { required: true })}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="last_name"><T text="Last Name" /></Label>
+                    <Label htmlFor="lastName"><T text="Last Name" /></Label>
                     <Input 
-                      id="last_name" 
-                      {...form.register("last_name", { required: true })}
+                      id="lastName" 
+                      {...form.register("lastName", { required: true })}
                     />
                   </div>
                 </div>
@@ -164,27 +123,10 @@ const NewStaff = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="gender"><T text="Gender" /></Label>
-                  <Select 
-                    defaultValue={form.getValues().gender}
-                    onValueChange={(value) => form.setValue("gender", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={t("Select gender")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Male"><T text="Male" /></SelectItem>
-                      <SelectItem value="Female"><T text="Female" /></SelectItem>
-                      <SelectItem value="Other"><T text="Other" /></SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
                   <Label htmlFor="bio"><T text="Bio" /></Label>
                   <Textarea 
                     id="bio" 
-                    placeholder={t("Brief description of the staff member...")}
+                    placeholder="Brief description of the staff member..."
                     className="min-h-[100px]"
                     {...form.register("bio")}
                   />
@@ -201,10 +143,7 @@ const NewStaff = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="role"><T text="Role" /></Label>
-                    <Select 
-                      defaultValue={form.getValues().role}
-                      onValueChange={(value) => handleRoleChange(value)}
-                    >
+                    <Select defaultValue="" onValueChange={(value) => form.setValue("role", value)}>
                       <SelectTrigger>
                         <SelectValue placeholder={t("Select a role")} />
                       </SelectTrigger>
@@ -212,69 +151,45 @@ const NewStaff = () => {
                         <SelectItem value="chef"><T text="Chef" /></SelectItem>
                         <SelectItem value="waiter"><T text="Waiter" /></SelectItem>
                         <SelectItem value="manager"><T text="Manager" /></SelectItem>
+                        <SelectItem value="host"><T text="Host/Hostess" /></SelectItem>
+                        <SelectItem value="bartender"><T text="Bartender" /></SelectItem>
                         <SelectItem value="dishwasher"><T text="Dishwasher" /></SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="staff_role"><T text="Staff Category" /></Label>
-                    <Select 
-                      defaultValue={form.getValues().staff_role}
-                      onValueChange={(value) => form.setValue("staff_role", value as StaffRoleEnum)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("Select a staff category")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Super Admin"><T text="Super Admin" /></SelectItem>
-                        <SelectItem value="Admin"><T text="Admin" /></SelectItem>
-                        <SelectItem value="Waiter"><T text="Waiter" /></SelectItem>
-                        <SelectItem value="Kitchen"><T text="Kitchen" /></SelectItem>
-                        <SelectItem value="Customer"><T text="Customer" /></SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
                     <Label htmlFor="department"><T text="Department" /></Label>
-                    <Select 
-                      defaultValue={form.getValues().department}
-                      onValueChange={(value) => form.setValue("department", value as Department)}
-                    >
+                    <Select defaultValue="" onValueChange={(value) => form.setValue("department", value)}>
                       <SelectTrigger>
                         <SelectValue placeholder={t("Select a department")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Kitchen"><T text="Kitchen" /></SelectItem>
-                        <SelectItem value="Front of House"><T text="Front of House" /></SelectItem>
-                        <SelectItem value="Management"><T text="Management" /></SelectItem>
+                        <SelectItem value="kitchen"><T text="Kitchen" /></SelectItem>
+                        <SelectItem value="front"><T text="Front of House" /></SelectItem>
+                        <SelectItem value="management"><T text="Management" /></SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="hourly_rate"><T text="Hourly Rate (£)" /></Label>
-                    <Input 
-                      id="hourly_rate" 
-                      type="number" 
-                      min="0" 
-                      step="0.01"
-                      placeholder="6.00"
-                      {...form.register("hourly_rate", { 
-                        required: true,
-                        valueAsNumber: true 
-                      })}
-                    />
                   </div>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="hiring_date"><T text="Start Date" /></Label>
+                  <Label htmlFor="hourlyRate"><T text="Hourly Rate (£)" /></Label>
                   <Input 
-                    id="hiring_date" 
+                    id="hourlyRate" 
+                    type="number" 
+                    min="0" 
+                    step="0.01"
+                    placeholder="6.00"
+                    {...form.register("hourlyRate", { required: true })}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="startDate"><T text="Start Date" /></Label>
+                  <Input 
+                    id="startDate" 
                     type="date" 
-                    {...form.register("hiring_date")}
+                    defaultValue={new Date().toISOString().split('T')[0]}
                   />
                 </div>
               </CardContent>
@@ -346,7 +261,7 @@ const NewStaff = () => {
           >
             <T text="Cancel" />
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit">
             <UserPlus className="mr-2 h-4 w-4" />
             <T text="Create Staff Record" />
           </Button>

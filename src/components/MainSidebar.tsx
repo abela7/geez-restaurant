@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -7,7 +6,7 @@ import {
   LayoutDashboard, DollarSign, Users, Package, BarChart, 
   User, Settings, ClipboardList, ChevronDown, ChevronRight, Languages,
   BookUser, ListChecks, BadgeDollarSign, Menu as MenuIcon, LogOut, 
-  ChevronLeft, Utensils, Database, TableProperties, ClipboardCheck
+  ChevronLeft, Utensils
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -156,16 +155,8 @@ export const MainSidebar: React.FC<MainSidebarProps> = ({
         { to: "directory", label: "Staff Directory" },
         { to: "performance", label: "Performance Tracking" },
         { to: "attendance", label: "Time & Attendance" },
-        { to: "tasks", label: "Task Management" },
+        { to: "tasks", label: "Task Assignment" },
         { to: "payroll", label: "Payroll" }
-      ]
-    },
-    { 
-      label: "General", 
-      icon: <Settings size={20} />, 
-      path: "/admin/general",
-      submenu: [
-        { to: "tables", label: "Table Management" }
       ]
     },
     { 
@@ -225,7 +216,6 @@ export const MainSidebar: React.FC<MainSidebarProps> = ({
         { to: "users", label: "User Access" },
         { to: "devices", label: "Printers & Devices" },
         { to: "logs", label: "System Logs" },
-        { to: "database", label: "Database Management" },
         { to: "integrations", label: "Integrations" }
       ]
     },
