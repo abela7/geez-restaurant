@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -11,71 +11,36 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DollarSign, Calendar, User, Clock, Download, Search, ArrowUpDown, Filter, PieChart } from "lucide-react";
+import { DollarSign, Calendar, User, Clock, Download, Search, ArrowUpDown, Filter, PieChart, AlertCircle, Loader2 } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-// Sample staff data
-const staffMembers = [
-  { 
-    id: 1, 
-    name: "Abebe Kebede", 
-    role: "Chef", 
-    department: "Kitchen",
-    wage: 6,
-    hourlyRate: "£6.00/hr",
-    hoursWorked: 42,
-    regularHours: 40,
-    overtimeHours: 2,
-    totalPay: 258,
-    paymentStatus: "Paid",
-    image: "/placeholder.svg" 
-  },
-  { 
-    id: 2, 
-    name: "Makeda Haile", 
-    role: "Chef", 
-    department: "Kitchen",
-    wage: 6,
-    hourlyRate: "£6.00/hr",
-    hoursWorked: 38,
-    regularHours: 38,
-    overtimeHours: 0,
-    totalPay: 228,
-    paymentStatus: "Pending",
-    image: "/placeholder.svg" 
-  },
-  { 
-    id: 3, 
-    name: "Dawit Tadesse", 
-    role: "Waiter", 
-    department: "Front of House",
-    wage: 6,
-    hourlyRate: "£6.00/hr",
-    hoursWorked: 45,
-    regularHours: 40,
-    overtimeHours: 5,
-    totalPay: 285,
-    paymentStatus: "Pending",
-    image: "/placeholder.svg" 
-  },
-  { 
-    id: 4, 
-    name: "Sara Mengistu", 
-    role: "Manager", 
-    department: "Management",
-    wage: 8,
-    hourlyRate: "£8.00/hr",
-    hoursWorked: 40,
-    regularHours: 40,
-    overtimeHours: 0,
-    totalPay: 320,
-    paymentStatus: "Paid",
-    image: "/placeholder.svg" 
-  },
-];
+// Define the staff member type
+type StaffMember = {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  role: string;
+  department: string | null;
+  hourly_rate: number | null;
+  image_url: string | null;
+  hours_worked?: number;
+  regular_hours?: number;
+  overtime_hours?: number;
+  total_pay?: number;
+  payment_status?: "Paid" | "Pending";
+};
 
-// Sample payroll periods
+// Payroll period type
+type PayrollPeriod = {
+  id: number;
+  name: string;
+  status: string;
+};
+
+// Sample payroll periods (would come from DB in a real app)
 const payrollPeriods = [
   { id: 1, name: "July 1-15, 2023", status: "Completed" },
   { id: 2, name: "July 16-31, 2023", status: "In Progress" },
@@ -86,41 +51,150 @@ const payrollPeriods = [
 const Payroll = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'ascending' | 'descending' } | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedPeriod, setSelectedPeriod] = useState("2");
+  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  const totalHours = staffMembers.reduce((sum, staff) => sum + staff.hoursWorked, 0);
-  const totalPay = staffMembers.reduce((sum, staff) => sum + staff.totalPay, 0);
-  const percentagePaid = (staffMembers.filter(s => s.paymentStatus === "Paid").length / staffMembers.length) * 100;
-  
+  // Function to fetch staff data from the database
+  const fetchStaffData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*');
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Enhance the data with additional payroll metrics
+      // In a real app, these would come from proper payroll/timesheet tables
+      const enhancedData = (data || []).map(staff => {
+        const hourlyRate = staff.hourly_rate || 0;
+        
+        // Generate random but realistic work hours
+        const regularHours = Math.floor(35 + Math.random() * 5);
+        const overtimeHours = Math.floor(Math.random() * 6);
+        const hoursWorked = regularHours + overtimeHours;
+        
+        // Calculate pay
+        const totalPay = regularHours * hourlyRate + overtimeHours * hourlyRate * 1.5;
+        
+        // Random payment status
+        const paymentStatus = Math.random() > 0.5 ? "Paid" : "Pending";
+        
+        return {
+          ...staff,
+          hours_worked: hoursWorked,
+          regular_hours: regularHours,
+          overtime_hours: overtimeHours,
+          total_pay: totalPay,
+          payment_status: paymentStatus as "Paid" | "Pending"
+        };
+      });
+      
+      setStaffMembers(enhancedData);
+    } catch (err: any) {
+      console.error('Error fetching staff:', err);
+      setError(err.message || 'Failed to load staff data');
+      toast({
+        title: "Error",
+        description: `Failed to load staff data: ${err.message}`,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Function to update staff payment status
+  const updatePaymentStatus = async (staffId: string, status: "Paid" | "Pending") => {
+    try {
+      // In a real app, this would update a payroll records table
+      // For now, we'll just update the local state
+      setStaffMembers(staffMembers.map(staff => 
+        staff.id === staffId ? { ...staff, payment_status: status } : staff
+      ));
+      
+      toast({
+        title: "Success",
+        description: `Payment status updated to ${status}`,
+      });
+    } catch (err: any) {
+      console.error('Error updating payment status:', err);
+      toast({
+        title: "Error",
+        description: `Failed to update payment status: ${err.message}`,
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Process batch payments
+  const processPayments = () => {
+    // In a real app, this would trigger payment processing
+    const pendingStaff = staffMembers.filter(staff => staff.payment_status === "Pending");
+    
+    if (pendingStaff.length === 0) {
+      toast({
+        title: "Info",
+        description: "No pending payments to process",
+      });
+      return;
+    }
+    
+    setStaffMembers(staffMembers.map(staff => 
+      staff.payment_status === "Pending" ? { ...staff, payment_status: "Paid" } : staff
+    ));
+    
+    toast({
+      title: "Success",
+      description: `Processed payments for ${pendingStaff.length} staff members`,
+    });
+  };
+
+  useEffect(() => {
+    fetchStaffData();
+  }, []);
+
+  const getFullName = (staff: StaffMember) => {
+    return `${staff.first_name || ""} ${staff.last_name || ""}`.trim() || "No Name";
+  };
+
   const filteredStaff = staffMembers.filter(staff => {
+    const fullName = getFullName(staff).toLowerCase();
     const matchesSearch = 
-      staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      staff.role.toLowerCase().includes(searchTerm.toLowerCase());
+      fullName.includes(searchTerm.toLowerCase()) ||
+      (staff.role || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (staff.department || "").toLowerCase().includes(searchTerm.toLowerCase());
     
     if (statusFilter === "all") return matchesSearch;
-    return matchesSearch && staff.paymentStatus.toLowerCase() === statusFilter.toLowerCase();
+    return matchesSearch && (staff.payment_status || "").toLowerCase() === statusFilter.toLowerCase();
   });
 
   // Apply sorting
   const sortedStaff = [...filteredStaff].sort((a, b) => {
     if (!sortConfig) return 0;
     
-    let aValue, bValue;
+    let aValue: any, bValue: any;
     switch(sortConfig.key) {
       case 'name':
-        aValue = a.name;
-        bValue = b.name;
+        aValue = getFullName(a);
+        bValue = getFullName(b);
         break;
       case 'hoursWorked':
-        aValue = a.hoursWorked;
-        bValue = b.hoursWorked;
+        aValue = a.hours_worked || 0;
+        bValue = b.hours_worked || 0;
         break;
       case 'totalPay':
-        aValue = a.totalPay;
-        bValue = b.totalPay;
+        aValue = a.total_pay || 0;
+        bValue = b.total_pay || 0;
         break;
       default:
         return 0;
@@ -143,12 +217,11 @@ const Payroll = () => {
     setSortConfig({ key, direction });
   };
 
-  const getSortDirection = (key: string) => {
-    if (!sortConfig || sortConfig.key !== key) {
-      return null;
-    }
-    return sortConfig.direction === 'ascending' ? 'up' : 'down';
-  };
+  // Calculate payroll statistics
+  const totalHours = staffMembers.reduce((sum, staff) => sum + (staff.hours_worked || 0), 0);
+  const totalPay = staffMembers.reduce((sum, staff) => sum + (staff.total_pay || 0), 0);
+  const paidStaff = staffMembers.filter(staff => staff.payment_status === "Paid").length;
+  const percentagePaid = staffMembers.length > 0 ? (paidStaff / staffMembers.length) * 100 : 0;
 
   return (
     <Layout interface="admin">
@@ -161,13 +234,22 @@ const Payroll = () => {
               <Download className="mr-2 h-4 w-4" />
               <T text="Export" />
             </Button>
-            <Button>
+            <Button onClick={processPayments}>
               <DollarSign className="mr-2 h-4 w-4" />
               <T text="Process Payments" />
             </Button>
           </div>
         }
       />
+
+      {error && (
+        <Card className="mb-6 border-red-300 bg-red-50 dark:bg-red-950/20">
+          <div className="p-4 flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-red-500" />
+            <p className="text-red-500">{error}</p>
+          </div>
+        </Card>
+      )}
 
       <div className="mb-6 flex flex-wrap gap-4">
         <Card className="flex-1 min-w-[240px]">
@@ -267,7 +349,7 @@ const Payroll = () => {
           />
         </div>
         
-        <Select defaultValue="all" onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-full md:w-[200px]">
             <Filter className="mr-2 h-4 w-4" />
             <SelectValue placeholder={t("Filter by status")} />
@@ -281,66 +363,93 @@ const Payroll = () => {
       </div>
       
       <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead><T text="Staff Member" /></TableHead>
-              <TableHead onClick={() => requestSort('hoursWorked')} className="cursor-pointer">
-                <div className="flex items-center">
-                  <T text="Hours" />
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </div>
-              </TableHead>
-              <TableHead><T text="Regular Hours" /></TableHead>
-              <TableHead><T text="Overtime" /></TableHead>
-              <TableHead><T text="Rate" /></TableHead>
-              <TableHead onClick={() => requestSort('totalPay')} className="cursor-pointer">
-                <div className="flex items-center">
-                  <T text="Total" />
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </div>
-              </TableHead>
-              <TableHead><T text="Status" /></TableHead>
-              <TableHead className="text-right"><T text="Actions" /></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedStaff.map((staff) => (
-              <TableRow key={staff.id}>
-                <TableCell className="font-medium">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <img
-                        src={staff.image}
-                        alt={staff.name}
-                        className="aspect-square h-full w-full object-cover"
-                      />
-                    </Avatar>
-                    <div>
-                      <div>{staff.name}</div>
-                      <div className="text-sm text-muted-foreground">{staff.role}</div>
-                    </div>
+        {isLoading ? (
+          <div className="p-4">
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          </div>
+        ) : filteredStaff.length === 0 ? (
+          <div className="p-8 text-center">
+            <p className="text-muted-foreground"><T text="No staff members found" /></p>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead><T text="Staff Member" /></TableHead>
+                <TableHead onClick={() => requestSort('hoursWorked')} className="cursor-pointer">
+                  <div className="flex items-center">
+                    <T text="Hours" />
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
                   </div>
-                </TableCell>
-                <TableCell>{staff.hoursWorked}</TableCell>
-                <TableCell>{staff.regularHours}</TableCell>
-                <TableCell>{staff.overtimeHours}</TableCell>
-                <TableCell>{staff.hourlyRate}</TableCell>
-                <TableCell className="font-semibold">£{staff.totalPay.toFixed(2)}</TableCell>
-                <TableCell>
-                  <Badge variant={staff.paymentStatus === "Paid" ? "outline" : "default"}>
-                    {staff.paymentStatus}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button variant="ghost" size="sm">
-                    <T text="Details" />
-                  </Button>
-                </TableCell>
+                </TableHead>
+                <TableHead><T text="Regular Hours" /></TableHead>
+                <TableHead><T text="Overtime" /></TableHead>
+                <TableHead><T text="Rate" /></TableHead>
+                <TableHead onClick={() => requestSort('totalPay')} className="cursor-pointer">
+                  <div className="flex items-center">
+                    <T text="Total" />
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </div>
+                </TableHead>
+                <TableHead><T text="Status" /></TableHead>
+                <TableHead className="text-right"><T text="Actions" /></TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {sortedStaff.map((staff) => (
+                <TableRow key={staff.id}>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8">
+                        <img
+                          src={staff.image_url || "/placeholder.svg"}
+                          alt={getFullName(staff)}
+                          className="aspect-square h-full w-full object-cover"
+                        />
+                      </Avatar>
+                      <div>
+                        <div>{getFullName(staff)}</div>
+                        <div className="text-sm text-muted-foreground">{staff.role}</div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>{staff.hours_worked}</TableCell>
+                  <TableCell>{staff.regular_hours}</TableCell>
+                  <TableCell>{staff.overtime_hours}</TableCell>
+                  <TableCell>£{staff.hourly_rate?.toFixed(2) || '0.00'}/hr</TableCell>
+                  <TableCell className="font-semibold">£{staff.total_pay?.toFixed(2) || '0.00'}</TableCell>
+                  <TableCell>
+                    <Select 
+                      value={staff.payment_status} 
+                      onValueChange={(value) => updatePaymentStatus(staff.id, value as "Paid" | "Pending")}
+                    >
+                      <SelectTrigger className="w-[100px] h-7">
+                        <Badge variant={staff.payment_status === "Paid" ? "outline" : "default"}>
+                          {staff.payment_status}
+                        </Badge>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Paid">Paid</SelectItem>
+                        <SelectItem value="Pending">Pending</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => navigate(`/admin/staff/profile/${staff.id}`)}
+                    >
+                      <T text="Details" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </Card>
     </Layout>
   );

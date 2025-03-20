@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -11,71 +12,99 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { 
   Plus, Search, UserPlus, Star, Clock, ChevronRight, 
   CalendarDays, DollarSign, BarChart, Users,
-  BookUser, ListChecks, BadgeDollarSign
+  BookUser, ListChecks, BadgeDollarSign, AlertCircle
 } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-// Sample staff data
-const staffMembers = [
-  { 
-    id: 1, 
-    name: "Abebe Kebede", 
-    role: "Chef", 
-    department: "Kitchen",
-    attendance: "Present", 
-    performance: 95, 
-    wage: 6,
-    hourlyRate: "£6.00/hr",
-    image: "/placeholder.svg" 
-  },
-  { 
-    id: 2, 
-    name: "Makeda Haile", 
-    role: "Chef", 
-    department: "Kitchen",
-    attendance: "Late", 
-    performance: 88, 
-    wage: 6,
-    hourlyRate: "£6.00/hr",
-    image: "/placeholder.svg" 
-  },
-  { 
-    id: 3, 
-    name: "Dawit Tadesse", 
-    role: "Waiter", 
-    department: "Front of House",
-    attendance: "Present", 
-    performance: 92, 
-    wage: 6,
-    hourlyRate: "£6.00/hr",
-    image: "/placeholder.svg" 
-  },
-  { 
-    id: 4, 
-    name: "Sara Mengistu", 
-    role: "Manager", 
-    department: "Management",
-    attendance: "Present", 
-    performance: 98, 
-    wage: 8,
-    hourlyRate: "£8.00/hr",
-    image: "/placeholder.svg" 
-  },
-];
+// Define the staff member type based on the profiles table schema
+type StaffMember = {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+  phone: string | null;
+  role: string;
+  department: string | null;
+  attendance: string | null;
+  performance: number | null;
+  hourly_rate: number | null;
+  image_url: string | null;
+};
 
 const StaffManagement = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
+  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  const filteredStaff = staffMembers.filter(staff => 
-    staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    staff.role.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Function to fetch staff data from the database
+  const fetchStaffData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*');
+      
+      if (error) {
+        throw error;
+      }
+      
+      setStaffMembers(data || []);
+    } catch (err: any) {
+      console.error('Error fetching staff:', err);
+      setError(err.message || 'Failed to load staff data');
+      toast({
+        title: "Error",
+        description: `Failed to load staff data: ${err.message}`,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const handleViewStaff = (id: number) => {
-    navigate(`/admin/staff/profile/${id}`);
+  useEffect(() => {
+    fetchStaffData();
+  }, []);
+
+  const filteredStaff = staffMembers.filter(staff => {
+    const fullName = `${staff.first_name || ""} ${staff.last_name || ""}`.toLowerCase();
+    return fullName.includes(searchTerm.toLowerCase()) ||
+      (staff.role || "").toLowerCase().includes(searchTerm.toLowerCase());
+  });
+
+  const getFullName = (staff: StaffMember) => {
+    return `${staff.first_name || ""} ${staff.last_name || ""}`.trim() || "No Name";
+  };
+
+  const getAttendanceVariant = (attendance: string | null) => {
+    switch (attendance) {
+      case "Present":
+        return "default";
+      case "Late":
+        return "secondary";
+      case "Absent":
+        return "destructive";
+      default:
+        return "outline";
+    }
+  };
+
+  // Calculate statistics for dashboard cards
+  const presentCount = staffMembers.filter(s => s.attendance === "Present").length;
+  const lateCount = staffMembers.filter(s => s.attendance === "Late").length;
+  const absentCount = staffMembers.filter(s => s.attendance === "Absent").length;
+  const totalHourlyRate = staffMembers.reduce((acc, staff) => acc + (staff.hourly_rate || 0), 0);
+
+  const filterStaffByDepartment = (department: string) => {
+    return filteredStaff.filter(staff => staff.department === department);
   };
 
   return (
@@ -90,6 +119,15 @@ const StaffManagement = () => {
           </Button>
         }
       />
+
+      {error && (
+        <Card className="mb-6 border-red-300 bg-red-50 dark:bg-red-950/20">
+          <div className="p-4 flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-red-500" />
+            <p className="text-red-500">{error}</p>
+          </div>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/admin/staff/directory")}>
@@ -108,7 +146,7 @@ const StaffManagement = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground"><T text="Present Today" /></p>
-              <h3 className="text-2xl font-bold">{staffMembers.filter(s => s.attendance === "Present").length}</h3>
+              <h3 className="text-2xl font-bold">{presentCount}</h3>
             </div>
             <div className="bg-green-100 dark:bg-green-900/20 p-2 rounded-full">
               <CalendarDays className="h-5 w-5 text-green-600 dark:text-green-400" />
@@ -132,7 +170,7 @@ const StaffManagement = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground"><T text="Total Wage Per Hour" /></p>
-              <h3 className="text-2xl font-bold">£{staffMembers.reduce((acc, staff) => acc + staff.wage, 0)}</h3>
+              <h3 className="text-2xl font-bold">£{totalHourlyRate.toFixed(2)}</h3>
             </div>
             <div className="bg-amber-100 dark:bg-amber-900/20 p-2 rounded-full">
               <BadgeDollarSign className="h-5 w-5 text-amber-600 dark:text-amber-400" />
@@ -178,65 +216,83 @@ const StaffManagement = () => {
 
         <TabsContent value="all">
           <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead><T text="Staff Member" /></TableHead>
-                  <TableHead><T text="Role" /></TableHead>
-                  <TableHead><T text="Department" /></TableHead>
-                  <TableHead><T text="Status" /></TableHead>
-                  <TableHead><T text="Performance" /></TableHead>
-                  <TableHead><T text="Rate" /></TableHead>
-                  <TableHead className="text-right"><T text="Actions" /></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredStaff.map((staff) => (
-                  <TableRow key={staff.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-3">
-                        <Avatar>
-                          <img
-                            src={staff.image}
-                            alt={staff.name}
-                            className="aspect-square h-10 w-10 object-cover"
-                          />
-                        </Avatar>
-                        <div>
-                          {staff.name}
-                        </div>
+            {isLoading ? (
+              <div className="p-4">
+                <div className="animate-pulse space-y-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="flex items-center space-x-4">
+                      <div className="rounded-full bg-gray-200 dark:bg-gray-700 h-10 w-10"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
                       </div>
-                    </TableCell>
-                    <TableCell>{staff.role}</TableCell>
-                    <TableCell>{staff.department}</TableCell>
-                    <TableCell>
-                      <Badge variant={staff.attendance === "Present" ? "default" : 
-                                      staff.attendance === "Late" ? "outline" : 
-                                      "destructive"}>
-                        {staff.attendance}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Star className="h-4 w-4 text-yellow-500" />
-                        <span>{staff.performance}%</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{staff.hourlyRate}</TableCell>
-                    <TableCell className="text-right">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleViewStaff(staff.id)}
-                      >
-                        <T text="View" />
-                        <ChevronRight className="ml-1 h-4 w-4" />
-                      </Button>
-                    </TableCell>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : filteredStaff.length === 0 ? (
+              <div className="p-4 text-center">
+                <p className="text-muted-foreground"><T text="No staff members found" /></p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead><T text="Staff Member" /></TableHead>
+                    <TableHead><T text="Role" /></TableHead>
+                    <TableHead><T text="Department" /></TableHead>
+                    <TableHead><T text="Status" /></TableHead>
+                    <TableHead><T text="Performance" /></TableHead>
+                    <TableHead><T text="Rate" /></TableHead>
+                    <TableHead className="text-right"><T text="Actions" /></TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredStaff.map((staff) => (
+                    <TableRow key={staff.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-3">
+                          <Avatar>
+                            <img
+                              src={staff.image_url || "/placeholder.svg"}
+                              alt={getFullName(staff)}
+                              className="aspect-square h-10 w-10 object-cover"
+                            />
+                          </Avatar>
+                          <div>
+                            {getFullName(staff)}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{staff.role}</TableCell>
+                      <TableCell>{staff.department}</TableCell>
+                      <TableCell>
+                        <Badge variant={getAttendanceVariant(staff.attendance)}>
+                          {staff.attendance || "Unknown"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Star className="h-4 w-4 text-yellow-500" />
+                          <span>{staff.performance || 0}%</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>£{staff.hourly_rate?.toFixed(2) || '0.00'}/hr</TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => navigate(`/admin/staff/profile/${staff.id}`)}
+                        >
+                          <T text="View" />
+                          <ChevronRight className="ml-1 h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </Card>
         </TabsContent>
 
@@ -254,51 +310,47 @@ const StaffManagement = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredStaff
-                  .filter(staff => staff.department === "Kitchen")
-                  .map((staff) => (
-                    <TableRow key={staff.id}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-3">
-                          <Avatar>
-                            <img
-                              src={staff.image}
-                              alt={staff.name}
-                              className="aspect-square h-10 w-10 object-cover"
-                            />
-                          </Avatar>
-                          <div>
-                            {staff.name}
-                          </div>
+                {filterStaffByDepartment("Kitchen").map((staff) => (
+                  <TableRow key={staff.id}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <img
+                            src={staff.image_url || "/placeholder.svg"}
+                            alt={getFullName(staff)}
+                            className="aspect-square h-10 w-10 object-cover"
+                          />
+                        </Avatar>
+                        <div>
+                          {getFullName(staff)}
                         </div>
-                      </TableCell>
-                      <TableCell>{staff.role}</TableCell>
-                      <TableCell>
-                        <Badge variant={staff.attendance === "Present" ? "default" : 
-                                        staff.attendance === "Late" ? "outline" : 
-                                        "destructive"}>
-                          {staff.attendance}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Star className="h-4 w-4 text-yellow-500" />
-                          <span>{staff.performance}%</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{staff.hourlyRate}</TableCell>
-                      <TableCell className="text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleViewStaff(staff.id)}
-                        >
-                          <T text="View" />
-                          <ChevronRight className="ml-1 h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                      </div>
+                    </TableCell>
+                    <TableCell>{staff.role}</TableCell>
+                    <TableCell>
+                      <Badge variant={getAttendanceVariant(staff.attendance)}>
+                        {staff.attendance || "Unknown"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Star className="h-4 w-4 text-yellow-500" />
+                        <span>{staff.performance || 0}%</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>£{staff.hourly_rate?.toFixed(2) || '0.00'}/hr</TableCell>
+                    <TableCell className="text-right">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => navigate(`/admin/staff/profile/${staff.id}`)}
+                      >
+                        <T text="View" />
+                        <ChevronRight className="ml-1 h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </Card>
@@ -318,51 +370,47 @@ const StaffManagement = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredStaff
-                  .filter(staff => staff.department === "Front of House")
-                  .map((staff) => (
-                    <TableRow key={staff.id}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-3">
-                          <Avatar>
-                            <img
-                              src={staff.image}
-                              alt={staff.name}
-                              className="aspect-square h-10 w-10 object-cover"
-                            />
-                          </Avatar>
-                          <div>
-                            {staff.name}
-                          </div>
+                {filterStaffByDepartment("Front of House").map((staff) => (
+                  <TableRow key={staff.id}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <img
+                            src={staff.image_url || "/placeholder.svg"}
+                            alt={getFullName(staff)}
+                            className="aspect-square h-10 w-10 object-cover"
+                          />
+                        </Avatar>
+                        <div>
+                          {getFullName(staff)}
                         </div>
-                      </TableCell>
-                      <TableCell>{staff.role}</TableCell>
-                      <TableCell>
-                        <Badge variant={staff.attendance === "Present" ? "default" : 
-                                        staff.attendance === "Late" ? "outline" : 
-                                        "destructive"}>
-                          {staff.attendance}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Star className="h-4 w-4 text-yellow-500" />
-                          <span>{staff.performance}%</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{staff.hourlyRate}</TableCell>
-                      <TableCell className="text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleViewStaff(staff.id)}
-                        >
-                          <T text="View" />
-                          <ChevronRight className="ml-1 h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                      </div>
+                    </TableCell>
+                    <TableCell>{staff.role}</TableCell>
+                    <TableCell>
+                      <Badge variant={getAttendanceVariant(staff.attendance)}>
+                        {staff.attendance || "Unknown"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Star className="h-4 w-4 text-yellow-500" />
+                        <span>{staff.performance || 0}%</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>£{staff.hourly_rate?.toFixed(2) || '0.00'}/hr</TableCell>
+                    <TableCell className="text-right">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => navigate(`/admin/staff/profile/${staff.id}`)}
+                      >
+                        <T text="View" />
+                        <ChevronRight className="ml-1 h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </Card>
@@ -382,51 +430,47 @@ const StaffManagement = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredStaff
-                  .filter(staff => staff.department === "Management")
-                  .map((staff) => (
-                    <TableRow key={staff.id}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-3">
-                          <Avatar>
-                            <img
-                              src={staff.image}
-                              alt={staff.name}
-                              className="aspect-square h-10 w-10 object-cover"
-                            />
-                          </Avatar>
-                          <div>
-                            {staff.name}
-                          </div>
+                {filterStaffByDepartment("Management").map((staff) => (
+                  <TableRow key={staff.id}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <img
+                            src={staff.image_url || "/placeholder.svg"}
+                            alt={getFullName(staff)}
+                            className="aspect-square h-10 w-10 object-cover"
+                          />
+                        </Avatar>
+                        <div>
+                          {getFullName(staff)}
                         </div>
-                      </TableCell>
-                      <TableCell>{staff.role}</TableCell>
-                      <TableCell>
-                        <Badge variant={staff.attendance === "Present" ? "default" : 
-                                        staff.attendance === "Late" ? "outline" : 
-                                        "destructive"}>
-                          {staff.attendance}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Star className="h-4 w-4 text-yellow-500" />
-                          <span>{staff.performance}%</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{staff.hourlyRate}</TableCell>
-                      <TableCell className="text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleViewStaff(staff.id)}
-                        >
-                          <T text="View" />
-                          <ChevronRight className="ml-1 h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                      </div>
+                    </TableCell>
+                    <TableCell>{staff.role}</TableCell>
+                    <TableCell>
+                      <Badge variant={getAttendanceVariant(staff.attendance)}>
+                        {staff.attendance || "Unknown"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Star className="h-4 w-4 text-yellow-500" />
+                        <span>{staff.performance || 0}%</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>£{staff.hourly_rate?.toFixed(2) || '0.00'}/hr</TableCell>
+                    <TableCell className="text-right">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => navigate(`/admin/staff/profile/${staff.id}`)}
+                      >
+                        <T text="View" />
+                        <ChevronRight className="ml-1 h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </Card>

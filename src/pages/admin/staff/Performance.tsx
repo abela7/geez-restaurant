@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { PageHeader } from "@/components/ui/page-header";
@@ -14,65 +14,27 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   ArrowLeft, Search, ChevronRight, Star, TrendingUp, TrendingDown, BarChart,
-  Award, ThumbsUp, User, Users
+  Award, ThumbsUp, User, Users, AlertCircle, Loader2
 } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-// Sample staff data
-const staffMembers = [
-  { 
-    id: 1, 
-    name: "Abebe Kebede", 
-    role: "Chef", 
-    department: "Kitchen",
-    overallRating: 95,
-    customerService: 90,
-    teamwork: 97,
-    efficiency: 94,
-    quality: 96,
-    trend: "up",
-    image: "/placeholder.svg" 
-  },
-  { 
-    id: 2, 
-    name: "Makeda Haile", 
-    role: "Chef", 
-    department: "Kitchen",
-    overallRating: 88,
-    customerService: 85,
-    teamwork: 90,
-    efficiency: 87,
-    quality: 90,
-    trend: "stable",
-    image: "/placeholder.svg" 
-  },
-  { 
-    id: 3, 
-    name: "Dawit Tadesse", 
-    role: "Waiter", 
-    department: "Front of House",
-    overallRating: 92,
-    customerService: 95,
-    teamwork: 88,
-    efficiency: 93,
-    quality: 90,
-    trend: "up",
-    image: "/placeholder.svg" 
-  },
-  { 
-    id: 4, 
-    name: "Sara Mengistu", 
-    role: "Manager", 
-    department: "Management",
-    overallRating: 98,
-    customerService: 96,
-    teamwork: 99,
-    efficiency: 97,
-    quality: 98,
-    trend: "up",
-    image: "/placeholder.svg" 
-  },
-];
+// Define the staff member type
+type StaffMember = {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  role: string;
+  department: string | null;
+  performance: number | null;
+  image_url: string | null;
+  customer_service_rating?: number;
+  teamwork_rating?: number;
+  efficiency_rating?: number;
+  quality_rating?: number;
+  trend?: "up" | "down" | "stable";
+};
 
 // Performance categories for detailed view
 const performanceCategories = [
@@ -86,14 +48,114 @@ const performanceCategories = [
 const StaffPerformance = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
+  const [departmentFilter, setDepartmentFilter] = useState("all");
+  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  const filteredStaff = staffMembers.filter(staff => 
-    staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    staff.role.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Function to fetch staff data from the database
+  const fetchStaffData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*');
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Enhance the data with additional performance metrics and trend
+      const enhancedData = (data || []).map(staff => {
+        // Generate random ratings for demo purposes
+        // In a real app, these would come from a proper performance tracking table
+        const performance = staff.performance || Math.floor(70 + Math.random() * 30);
+        const customerServiceRating = Math.floor(performance - 5 + Math.random() * 10);
+        const teamworkRating = Math.floor(performance - 5 + Math.random() * 10);
+        const efficiencyRating = Math.floor(performance - 5 + Math.random() * 10);
+        const qualityRating = Math.floor(performance - 5 + Math.random() * 10);
+        
+        // Generate a random trend
+        const trends = ["up", "down", "stable"];
+        const trend = trends[Math.floor(Math.random() * trends.length)] as "up" | "down" | "stable";
+        
+        return {
+          ...staff,
+          performance,
+          customer_service_rating: customerServiceRating,
+          teamwork_rating: teamworkRating,
+          efficiency_rating: efficiencyRating,
+          quality_rating: qualityRating,
+          trend
+        };
+      });
+      
+      setStaffMembers(enhancedData);
+    } catch (err: any) {
+      console.error('Error fetching staff:', err);
+      setError(err.message || 'Failed to load staff data');
+      toast({
+        title: "Error",
+        description: `Failed to load staff data: ${err.message}`,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const getTrendIcon = (trend: string) => {
+  // Function to update staff performance rating
+  const updatePerformanceRating = async (staffId: string, rating: number) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ performance: rating })
+        .eq('id', staffId);
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Update local state
+      setStaffMembers(staffMembers.map(staff => 
+        staff.id === staffId ? { ...staff, performance: rating } : staff
+      ));
+      
+      toast({
+        title: "Success",
+        description: `Staff performance rating updated to ${rating}%`,
+      });
+    } catch (err: any) {
+      console.error('Error updating performance:', err);
+      toast({
+        title: "Error",
+        description: `Failed to update performance: ${err.message}`,
+        variant: "destructive"
+      });
+    }
+  };
+
+  useEffect(() => {
+    fetchStaffData();
+  }, []);
+
+  const filteredStaff = staffMembers.filter(staff => {
+    const fullName = `${staff.first_name || ""} ${staff.last_name || ""}`.toLowerCase();
+    const matchesSearch = fullName.includes(searchTerm.toLowerCase()) ||
+      (staff.role || "").toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (departmentFilter === "all") return matchesSearch;
+    return matchesSearch && (staff.department || "").toLowerCase() === departmentFilter.toLowerCase();
+  });
+
+  const getFullName = (staff: StaffMember) => {
+    return `${staff.first_name || ""} ${staff.last_name || ""}`.trim() || "No Name";
+  };
+
+  const getTrendIcon = (trend: string | undefined) => {
     switch (trend) {
       case "up":
         return <TrendingUp className="h-4 w-4 text-green-500" />;
@@ -104,17 +166,33 @@ const StaffPerformance = () => {
     }
   };
 
-  const getPerformanceColor = (score: number) => {
+  const getPerformanceColor = (score: number | null) => {
+    if (!score) return "text-gray-500";
     if (score >= 90) return "text-green-600";
     if (score >= 80) return "text-amber-600";
     return "text-red-600";
   };
 
-  const getProgressColor = (score: number) => {
+  const getProgressColor = (score: number | null) => {
+    if (!score) return "bg-gray-300";
     if (score >= 90) return "bg-green-600";
     if (score >= 80) return "bg-amber-600";
     return "bg-red-600";
   };
+
+  // Calculate statistics for dashboard cards
+  const teamAverage = Math.round(
+    staffMembers.reduce((acc, staff) => acc + (staff.performance || 0), 0) / 
+    (staffMembers.length || 1)
+  );
+  
+  const topPerformer = staffMembers.length > 0 
+    ? staffMembers.sort((a, b) => (b.performance || 0) - (a.performance || 0))[0]
+    : null;
+    
+  const mostImproved = staffMembers.filter(staff => staff.trend === "up").length > 0
+    ? staffMembers.filter(staff => staff.trend === "up").sort((a, b) => (b.performance || 0) - (a.performance || 0))[0]
+    : null;
 
   return (
     <Layout interface="admin">
@@ -138,14 +216,21 @@ const StaffPerformance = () => {
         }
       />
 
+      {error && (
+        <Card className="mb-6 border-red-300 bg-red-50 dark:bg-red-950/20">
+          <div className="p-4 flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-red-500" />
+            <p className="text-red-500">{error}</p>
+          </div>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground"><T text="Team Average" /></p>
-              <h3 className="text-2xl font-bold">
-                {Math.round(staffMembers.reduce((acc, staff) => acc + staff.overallRating, 0) / staffMembers.length)}%
-              </h3>
+              <h3 className="text-2xl font-bold">{teamAverage}%</h3>
             </div>
             <div className="bg-primary/10 p-2 rounded-full">
               <Users className="h-5 w-5 text-primary" />
@@ -158,7 +243,7 @@ const StaffPerformance = () => {
             <div>
               <p className="text-sm text-muted-foreground"><T text="Top Performer" /></p>
               <h3 className="text-lg font-bold">
-                {staffMembers.sort((a, b) => b.overallRating - a.overallRating)[0].name}
+                {topPerformer ? getFullName(topPerformer) : "N/A"}
               </h3>
             </div>
             <div className="bg-green-100 dark:bg-green-900/20 p-2 rounded-full">
@@ -172,7 +257,7 @@ const StaffPerformance = () => {
             <div>
               <p className="text-sm text-muted-foreground"><T text="Most Improved" /></p>
               <h3 className="text-lg font-bold">
-                {staffMembers.filter(staff => staff.trend === "up")[0]?.name || "N/A"}
+                {mostImproved ? getFullName(mostImproved) : "N/A"}
               </h3>
             </div>
             <div className="bg-amber-100 dark:bg-amber-900/20 p-2 rounded-full">
@@ -193,14 +278,14 @@ const StaffPerformance = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Select defaultValue="all">
+        <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
           <SelectTrigger className="w-full md:w-[180px]">
             <SelectValue placeholder="Filter by department" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all"><T text="All Departments" /></SelectItem>
             <SelectItem value="kitchen"><T text="Kitchen" /></SelectItem>
-            <SelectItem value="front"><T text="Front of House" /></SelectItem>
+            <SelectItem value="front of house"><T text="Front of House" /></SelectItem>
             <SelectItem value="management"><T text="Management" /></SelectItem>
           </SelectContent>
         </Select>
@@ -215,61 +300,85 @@ const StaffPerformance = () => {
         
         <TabsContent value="overview">
           <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead><T text="Staff Member" /></TableHead>
-                  <TableHead><T text="Department" /></TableHead>
-                  <TableHead><T text="Overall Rating" /></TableHead>
-                  <TableHead><T text="Trend" /></TableHead>
-                  <TableHead className="text-right"><T text="Actions" /></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredStaff.map((staff) => (
-                  <TableRow key={staff.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-3">
-                        <Avatar>
-                          <img
-                            src={staff.image}
-                            alt={staff.name}
-                            className="aspect-square h-10 w-10 object-cover"
-                          />
-                        </Avatar>
-                        <div>
-                          {staff.name}
-                          <div className="text-sm text-muted-foreground">{staff.role}</div>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{staff.department}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Star className="h-4 w-4 text-yellow-500" />
-                        <span className={getPerformanceColor(staff.overallRating)}>{staff.overallRating}%</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getTrendIcon(staff.trend)}
-                        <span className="capitalize">{staff.trend}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate(`/admin/staff/profile/${staff.id}`)}
-                      >
-                        <T text="View Profile" />
-                        <ChevronRight className="ml-1 h-4 w-4" />
-                      </Button>
-                    </TableCell>
+            {isLoading ? (
+              <div className="p-4">
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              </div>
+            ) : filteredStaff.length === 0 ? (
+              <div className="p-8 text-center">
+                <p className="text-muted-foreground"><T text="No staff members found" /></p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead><T text="Staff Member" /></TableHead>
+                    <TableHead><T text="Department" /></TableHead>
+                    <TableHead><T text="Overall Rating" /></TableHead>
+                    <TableHead><T text="Trend" /></TableHead>
+                    <TableHead className="text-right"><T text="Actions" /></TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredStaff.map((staff) => (
+                    <TableRow key={staff.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-3">
+                          <Avatar>
+                            <img
+                              src={staff.image_url || "/placeholder.svg"}
+                              alt={getFullName(staff)}
+                              className="aspect-square h-10 w-10 object-cover"
+                            />
+                          </Avatar>
+                          <div>
+                            {getFullName(staff)}
+                            <div className="text-sm text-muted-foreground">{staff.role}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{staff.department}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Star className="h-4 w-4 text-yellow-500" />
+                          <Select 
+                            value={String(staff.performance || 0)} 
+                            onValueChange={(value) => updatePerformanceRating(staff.id, parseInt(value))}
+                          >
+                            <SelectTrigger className="w-[80px] h-7">
+                              <span className={getPerformanceColor(staff.performance)}>{staff.performance}%</span>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {[100, 95, 90, 85, 80, 75, 70, 65, 60].map(rating => (
+                                <SelectItem key={rating} value={String(rating)}>{rating}%</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {getTrendIcon(staff.trend)}
+                          <span className="capitalize">{staff.trend || "stable"}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/admin/staff/profile/${staff.id}`)}
+                        >
+                          <T text="View Profile" />
+                          <ChevronRight className="ml-1 h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </Card>
         </TabsContent>
         
@@ -282,77 +391,83 @@ const StaffPerformance = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead><T text="Staff Member" /></TableHead>
-                    <TableHead><T text="Customer Service" /></TableHead>
-                    <TableHead><T text="Team Collaboration" /></TableHead>
-                    <TableHead><T text="Efficiency" /></TableHead>
-                    <TableHead><T text="Quality" /></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredStaff.map((staff) => (
-                    <TableRow key={staff.id}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-3">
-                          <Avatar>
-                            <img
-                              src={staff.image}
-                              alt={staff.name}
-                              className="aspect-square h-10 w-10 object-cover"
-                            />
-                          </Avatar>
-                          <div>
-                            {staff.name}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="w-[100px] flex items-center gap-2">
-                          <Progress 
-                            value={staff.customerService} 
-                            className="h-2" 
-                            indicatorClassName={getProgressColor(staff.customerService)}
-                          />
-                          <span className="text-sm">{staff.customerService}%</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="w-[100px] flex items-center gap-2">
-                          <Progress 
-                            value={staff.teamwork} 
-                            className="h-2"
-                            indicatorClassName={getProgressColor(staff.teamwork)}
-                          />
-                          <span className="text-sm">{staff.teamwork}%</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="w-[100px] flex items-center gap-2">
-                          <Progress 
-                            value={staff.efficiency} 
-                            className="h-2"
-                            indicatorClassName={getProgressColor(staff.efficiency)}
-                          />
-                          <span className="text-sm">{staff.efficiency}%</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="w-[100px] flex items-center gap-2">
-                          <Progress 
-                            value={staff.quality} 
-                            className="h-2"
-                            indicatorClassName={getProgressColor(staff.quality)}
-                          />
-                          <span className="text-sm">{staff.quality}%</span>
-                        </div>
-                      </TableCell>
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead><T text="Staff Member" /></TableHead>
+                      <TableHead><T text="Customer Service" /></TableHead>
+                      <TableHead><T text="Team Collaboration" /></TableHead>
+                      <TableHead><T text="Efficiency" /></TableHead>
+                      <TableHead><T text="Quality" /></TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredStaff.map((staff) => (
+                      <TableRow key={staff.id}>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-3">
+                            <Avatar>
+                              <img
+                                src={staff.image_url || "/placeholder.svg"}
+                                alt={getFullName(staff)}
+                                className="aspect-square h-10 w-10 object-cover"
+                              />
+                            </Avatar>
+                            <div>
+                              {getFullName(staff)}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="w-[100px] flex items-center gap-2">
+                            <Progress 
+                              value={staff.customer_service_rating} 
+                              className="h-2" 
+                              indicatorClassName={getProgressColor(staff.customer_service_rating)}
+                            />
+                            <span className="text-sm">{staff.customer_service_rating}%</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="w-[100px] flex items-center gap-2">
+                            <Progress 
+                              value={staff.teamwork_rating} 
+                              className="h-2"
+                              indicatorClassName={getProgressColor(staff.teamwork_rating)}
+                            />
+                            <span className="text-sm">{staff.teamwork_rating}%</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="w-[100px] flex items-center gap-2">
+                            <Progress 
+                              value={staff.efficiency_rating} 
+                              className="h-2"
+                              indicatorClassName={getProgressColor(staff.efficiency_rating)}
+                            />
+                            <span className="text-sm">{staff.efficiency_rating}%</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="w-[100px] flex items-center gap-2">
+                            <Progress 
+                              value={staff.quality_rating} 
+                              className="h-2"
+                              indicatorClassName={getProgressColor(staff.quality_rating)}
+                            />
+                            <span className="text-sm">{staff.quality_rating}%</span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
