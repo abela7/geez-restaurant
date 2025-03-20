@@ -16,6 +16,7 @@ import PayrollList from "@/components/staff/PayrollList";
 import useStaffMembers from "@/hooks/useStaffMembers";
 import useStaffPayroll, { PayrollRecord } from "@/hooks/useStaffPayroll";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 // Payroll period type
 type PayrollPeriod = {

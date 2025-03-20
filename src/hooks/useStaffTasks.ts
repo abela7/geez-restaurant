@@ -34,9 +34,9 @@ export const useStaffTasks = (staffId: string) => {
         throw error;
       }
       
-      setTasks(data || []);
+      setTasks(data as StaffTask[] || []);
     } catch (err: any) {
-      console.error('Error fetching staff tasks:', err);
+      console.error('Error fetching tasks:', err);
       setError(err.message || 'Failed to load tasks');
       toast({
         title: "Error",
@@ -48,7 +48,7 @@ export const useStaffTasks = (staffId: string) => {
     }
   };
 
-  const addTask = async (newTask: Omit<StaffTask, 'id'>) => {
+  const addTask = async (newTask: Omit<StaffTask, 'id' | 'completed_at'>) => {
     try {
       const { data, error } = await supabase
         .from('staff_tasks')
@@ -60,11 +60,15 @@ export const useStaffTasks = (staffId: string) => {
         throw error;
       }
       
-      setTasks(prev => [data, ...prev].sort((a, b) => {
-        if (!a.due_date) return 1;
-        if (!b.due_date) return -1;
-        return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
-      }));
+      // Sort tasks by due date after adding a new one
+      setTasks(prev => {
+        const updatedTasks = [...prev, data as StaffTask];
+        return updatedTasks.sort((a, b) => {
+          if (!a.due_date) return 1;
+          if (!b.due_date) return -1;
+          return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+        });
+      });
       
       toast({
         title: "Success",
@@ -96,18 +100,19 @@ export const useStaffTasks = (staffId: string) => {
         throw error;
       }
       
-      setTasks(prev => 
-        prev.map(task => task.id === id ? data : task)
-          .sort((a, b) => {
-            if (!a.due_date) return 1;
-            if (!b.due_date) return -1;
-            return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
-          })
-      );
+      // Sort tasks by due date after updating
+      setTasks(prev => {
+        const updatedTasks = prev.map(task => task.id === id ? (data as StaffTask) : task);
+        return updatedTasks.sort((a, b) => {
+          if (!a.due_date) return 1;
+          if (!b.due_date) return -1;
+          return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+        });
+      });
       
       toast({
         title: "Success",
-        description: "Task updated successfully"
+        description: `Task ${updates.status === 'Completed' ? 'marked as completed' : 'updated'} successfully`
       });
       
       return data;
@@ -116,34 +121,6 @@ export const useStaffTasks = (staffId: string) => {
       toast({
         title: "Error",
         description: `Failed to update task: ${err.message}`,
-        variant: "destructive"
-      });
-      throw err;
-    }
-  };
-
-  const deleteTask = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('staff_tasks')
-        .delete()
-        .eq('id', id);
-        
-      if (error) {
-        throw error;
-      }
-      
-      setTasks(prev => prev.filter(task => task.id !== id));
-      
-      toast({
-        title: "Success",
-        description: "Task deleted successfully"
-      });
-    } catch (err: any) {
-      console.error('Error deleting task:', err);
-      toast({
-        title: "Error",
-        description: `Failed to delete task: ${err.message}`,
         variant: "destructive"
       });
       throw err;
@@ -162,8 +139,7 @@ export const useStaffTasks = (staffId: string) => {
     error,
     fetchTasks,
     addTask,
-    updateTask,
-    deleteTask
+    updateTask
   };
 };
 

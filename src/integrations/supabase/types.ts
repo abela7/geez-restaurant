@@ -472,6 +472,8 @@ export type Database = {
           performance: number | null
           phone: string | null
           role: string
+          skills: string[] | null
+          start_date: string | null
           updated_at: string | null
         }
         Insert: {
@@ -491,6 +493,8 @@ export type Database = {
           performance?: number | null
           phone?: string | null
           role: string
+          skills?: string[] | null
+          start_date?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -510,6 +514,8 @@ export type Database = {
           performance?: number | null
           phone?: string | null
           role?: string
+          skills?: string[] | null
+          start_date?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -821,6 +827,103 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_attendance: {
+        Row: {
+          check_in: string | null
+          check_out: string | null
+          created_at: string | null
+          date: string
+          hours_worked: number | null
+          id: string
+          notes: string | null
+          staff_id: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          check_in?: string | null
+          check_out?: string | null
+          created_at?: string | null
+          date: string
+          hours_worked?: number | null
+          id?: string
+          notes?: string | null
+          staff_id: string
+          status: string
+          updated_at?: string | null
+        }
+        Update: {
+          check_in?: string | null
+          check_out?: string | null
+          created_at?: string | null
+          date?: string
+          hours_worked?: number | null
+          id?: string
+          notes?: string | null
+          staff_id?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_attendance_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_payroll: {
+        Row: {
+          created_at: string | null
+          id: string
+          overtime_hours: number | null
+          pay_period: string
+          payment_date: string | null
+          payment_status: string | null
+          regular_hours: number | null
+          staff_id: string
+          total_hours: number | null
+          total_pay: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          overtime_hours?: number | null
+          pay_period: string
+          payment_date?: string | null
+          payment_status?: string | null
+          regular_hours?: number | null
+          staff_id: string
+          total_hours?: number | null
+          total_pay?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          overtime_hours?: number | null
+          pay_period?: string
+          payment_date?: string | null
+          payment_status?: string | null
+          regular_hours?: number | null
+          staff_id?: string
+          total_hours?: number | null
+          total_pay?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_payroll_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff_schedules: {
         Row: {
           created_at: string | null
@@ -862,6 +965,53 @@ export type Database = {
           },
           {
             foreignKeyName: "staff_schedules_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_tasks: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          priority: string | null
+          staff_id: string
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string | null
+          staff_id: string
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string | null
+          staff_id?: string
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_tasks_staff_id_fkey"
             columns: ["staff_id"]
             isOneToOne: false
             referencedRelation: "profiles"

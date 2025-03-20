@@ -40,7 +40,7 @@ export const useStaffPayroll = (staffId?: string) => {
         throw error;
       }
       
-      setPayrollRecords(data || []);
+      setPayrollRecords(data as PayrollRecord[] || []);
     } catch (err: any) {
       console.error('Error fetching payroll records:', err);
       setError(err.message || 'Failed to load payroll data');
@@ -66,7 +66,7 @@ export const useStaffPayroll = (staffId?: string) => {
         throw error;
       }
       
-      setPayrollRecords(prev => [data, ...prev]);
+      setPayrollRecords(prev => [data as PayrollRecord, ...prev]);
       toast({
         title: "Success",
         description: "Payroll record added successfully"
@@ -98,7 +98,7 @@ export const useStaffPayroll = (staffId?: string) => {
       }
       
       setPayrollRecords(prev => 
-        prev.map(record => record.id === id ? data : record)
+        prev.map(record => record.id === id ? (data as PayrollRecord) : record)
       );
       
       toast({

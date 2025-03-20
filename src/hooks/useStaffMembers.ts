@@ -38,7 +38,7 @@ export const useStaffMembers = () => {
         throw error;
       }
       
-      setStaffMembers(data || []);
+      setStaffMembers(data as StaffMember[] || []);
     } catch (err: any) {
       console.error('Error fetching staff:', err);
       setError(err.message || 'Failed to load staff data');

@@ -24,7 +24,7 @@ export const useStaffProfile = (id: string) => {
         throw error;
       }
       
-      setStaffMember(data);
+      setStaffMember(data as StaffMember);
     } catch (err: any) {
       console.error('Error fetching staff profile:', err);
       setError(err.message || 'Failed to load staff profile');

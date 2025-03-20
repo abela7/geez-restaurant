@@ -34,7 +34,7 @@ export const useStaffAttendance = (staffId: string) => {
         throw error;
       }
       
-      setAttendanceRecords(data || []);
+      setAttendanceRecords(data as StaffAttendance[] || []);
     } catch (err: any) {
       console.error('Error fetching attendance records:', err);
       setError(err.message || 'Failed to load attendance data');
@@ -60,7 +60,7 @@ export const useStaffAttendance = (staffId: string) => {
         throw error;
       }
       
-      setAttendanceRecords(prev => [data, ...prev]);
+      setAttendanceRecords(prev => [data as StaffAttendance, ...prev]);
       toast({
         title: "Success",
         description: "Attendance record added successfully"
@@ -92,7 +92,7 @@ export const useStaffAttendance = (staffId: string) => {
       }
       
       setAttendanceRecords(prev => 
-        prev.map(record => record.id === id ? data : record)
+        prev.map(record => record.id === id ? (data as StaffAttendance) : record)
       );
       
       toast({
