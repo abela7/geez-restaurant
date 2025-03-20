@@ -6,13 +6,12 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, Trash, Edit, RefreshCw, Save } from 'lucide-react';
+import { Plus, Trash, Edit, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
@@ -22,35 +21,35 @@ interface TableInfo {
   schema: string;
 }
 
+interface ColumnInfo {
+  name: string;
+  data_type: string;
+  is_nullable: boolean;
+  column_default: string | null;
+}
+
 const DatabaseManagement: React.FC = () => {
   const { toast } = useToast();
   const [tables, setTables] = useState<TableInfo[]>([]);
   const [selectedTable, setSelectedTable] = useState<string>('');
   const [selectedSchema, setSelectedSchema] = useState<string>('public');
   const [tableData, setTableData] = useState<any[]>([]);
-  const [columns, setColumns] = useState<any[]>([]);
+  const [columns, setColumns] = useState<ColumnInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isNewRowDialogOpen, setIsNewRowDialogOpen] = useState(false);
   const [currentRow, setCurrentRow] = useState<any>(null);
   
-  // Get all tables
+  // Get all tables using the RPC function
   const fetchTables = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('pg_tables')
-        .select('schemaname, tablename')
-        .eq('schemaname', 'public');
+      const { data, error } = await supabase.rpc('get_tables');
       
       if (error) throw error;
       
       if (data) {
-        const formattedTables = data.map(item => ({
-          name: item.tablename,
-          schema: item.schemaname
-        }));
-        setTables(formattedTables);
+        setTables(data);
       }
     } catch (error) {
       console.error('Error fetching tables:', error);
@@ -64,15 +63,14 @@ const DatabaseManagement: React.FC = () => {
     }
   };
 
-  // Get columns for a table
-  const fetchColumns = async (tableName: string) => {
+  // Get columns for a table using the RPC function
+  const fetchColumns = async (tableName: string, schema: string = 'public') => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('information_schema.columns')
-        .select('column_name, data_type, is_nullable')
-        .eq('table_name', tableName)
-        .eq('table_schema', 'public');
+      const { data, error } = await supabase.rpc('get_table_columns', {
+        tablename: tableName,
+        schema: schema
+      });
       
       if (error) throw error;
       
@@ -98,7 +96,7 @@ const DatabaseManagement: React.FC = () => {
     setIsLoading(true);
     try {
       // Cast to any for dynamic table access
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from(tableName)
         .select('*')
         .limit(100);
@@ -126,8 +124,7 @@ const DatabaseManagement: React.FC = () => {
     
     setIsLoading(true);
     try {
-      // Cast to any for dynamic table access
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from(selectedTable)
         .insert(rowData)
         .select();
@@ -159,8 +156,7 @@ const DatabaseManagement: React.FC = () => {
     
     setIsLoading(true);
     try {
-      // Cast to any for dynamic table access
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from(selectedTable)
         .update(rowData)
         .eq('id', id);
@@ -192,8 +188,7 @@ const DatabaseManagement: React.FC = () => {
     
     setIsLoading(true);
     try {
-      // Cast to any for dynamic table access
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from(selectedTable)
         .delete()
         .eq('id', id);
@@ -226,7 +221,7 @@ const DatabaseManagement: React.FC = () => {
   // Handle table selection
   const handleTableSelect = (tableName: string) => {
     setSelectedTable(tableName);
-    fetchColumns(tableName);
+    fetchColumns(tableName, selectedSchema);
     fetchTableData(tableName);
   };
 
@@ -245,16 +240,16 @@ const DatabaseManagement: React.FC = () => {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           {columns.map((column) => (
             <FormField
-              key={column.column_name}
+              key={column.name}
               control={form.control}
-              name={column.column_name}
+              name={column.name}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{column.column_name}</FormLabel>
+                  <FormLabel>{column.name}</FormLabel>
                   <FormControl>
                     <Input 
                       {...field} 
-                      disabled={column.column_name === 'id'}
+                      disabled={column.name === 'id'}
                       value={field.value === null ? '' : field.value}
                       onChange={(e) => field.onChange(e.target.value)}
                     />
@@ -275,7 +270,7 @@ const DatabaseManagement: React.FC = () => {
   const NewRowForm = () => {
     const initialValues: any = {};
     columns.forEach(column => {
-      initialValues[column.column_name] = '';
+      initialValues[column.name] = '';
     });
     
     const form = useForm({
@@ -303,17 +298,17 @@ const DatabaseManagement: React.FC = () => {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           {columns.map((column) => (
             <FormField
-              key={column.column_name}
+              key={column.name}
               control={form.control}
-              name={column.column_name}
+              name={column.name}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{column.column_name}</FormLabel>
+                  <FormLabel>{column.name}</FormLabel>
                   <FormControl>
                     <Input 
                       {...field}
-                      placeholder={column.column_name === 'id' ? 'Auto-generated' : ''}
-                      disabled={column.column_name === 'id' && column.column_default?.includes('uuid_generate')}
+                      placeholder={column.name === 'id' ? 'Auto-generated' : ''}
+                      disabled={column.name === 'id' && column.column_default?.includes('uuid_generate')}
                     />
                   </FormControl>
                 </FormItem>
@@ -417,7 +412,7 @@ const DatabaseManagement: React.FC = () => {
                         <TableRow>
                           <TableHead className="w-[100px]">Actions</TableHead>
                           {columns.map((column) => (
-                            <TableHead key={column.column_name}>{column.column_name}</TableHead>
+                            <TableHead key={column.name}>{column.name}</TableHead>
                           ))}
                         </TableRow>
                       </TableHeader>
