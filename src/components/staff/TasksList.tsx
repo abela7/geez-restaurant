@@ -4,10 +4,19 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Check, X, Clock } from "lucide-react";
+import { Loader2, Check, X, Clock, Tag } from "lucide-react";
 import { StaffTask } from "@/hooks/useStaffTasks";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { format } from "date-fns";
+
+// Task categories and colors mapping
+const taskCategories = [
+  { id: "1", name: "Kitchen", color: "bg-amber-500" },
+  { id: "2", name: "Service", color: "bg-blue-500" },
+  { id: "3", name: "Cleaning", color: "bg-green-500" },
+  { id: "4", name: "Inventory", color: "bg-purple-500" },
+  { id: "5", name: "Administration", color: "bg-slate-500" },
+];
 
 type TasksListProps = {
   tasks: StaffTask[];
@@ -16,6 +25,8 @@ type TasksListProps = {
   onDelete?: (id: string) => void;
   showStaffInfo?: boolean;
   staffNames?: Record<string, string>;
+  className?: string;
+  maxHeight?: string;
 };
 
 const TasksList: React.FC<TasksListProps> = ({ 
@@ -24,7 +35,9 @@ const TasksList: React.FC<TasksListProps> = ({
   onUpdateStatus,
   onDelete,
   showStaffInfo = false,
-  staffNames = {}
+  staffNames = {},
+  className = "",
+  maxHeight = "420px"
 }) => {
   const { t } = useLanguage();
 
@@ -52,6 +65,18 @@ const TasksList: React.FC<TasksListProps> = ({
       default:
         return 'outline';
     }
+  };
+
+  const getCategoryName = (categoryId?: string | null) => {
+    if (!categoryId) return "";
+    const category = taskCategories.find(cat => cat.id === categoryId);
+    return category ? category.name : "";
+  };
+
+  const getCategoryColor = (categoryId?: string | null) => {
+    if (!categoryId) return "bg-gray-500";
+    const category = taskCategories.find(cat => cat.id === categoryId);
+    return category ? category.color : "bg-gray-500";
   };
 
   const formatDateTime = (dateString: string | null, timeString: string | null) => {
@@ -94,13 +119,14 @@ const TasksList: React.FC<TasksListProps> = ({
   }
 
   return (
-    <div className="overflow-auto max-h-[420px]">
+    <div className={`overflow-auto ${maxHeight ? `max-h-[${maxHeight}]` : "max-h-[420px]"} ${className}`}>
       <Table>
         <TableHeader className="sticky top-0 bg-background z-10">
           <TableRow>
             {showStaffInfo && <TableHead><T text="Staff Member" /></TableHead>}
             <TableHead><T text="Title" /></TableHead>
             <TableHead><T text="Description" /></TableHead>
+            <TableHead><T text="Category" /></TableHead>
             <TableHead><T text="Priority" /></TableHead>
             <TableHead><T text="Status" /></TableHead>
             <TableHead><T text="Due Date" /></TableHead>
@@ -114,6 +140,16 @@ const TasksList: React.FC<TasksListProps> = ({
               <TableCell className="font-medium">{task.title}</TableCell>
               <TableCell className="max-w-[300px] truncate">{task.description || '-'}</TableCell>
               <TableCell>
+                {task.category ? (
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${getCategoryColor(task.category)}`}></div>
+                    <span>{getCategoryName(task.category)}</span>
+                  </div>
+                ) : (
+                  <span>-</span>
+                )}
+              </TableCell>
+              <TableCell>
                 <Badge variant={getPriorityVariant(task.priority)}>
                   {task.priority}
                 </Badge>
@@ -125,9 +161,11 @@ const TasksList: React.FC<TasksListProps> = ({
                     onValueChange={(value) => onUpdateStatus(task.id, value)}
                   >
                     <SelectTrigger className="w-[120px] h-7">
-                      <Badge variant={getStatusVariant(task.status)}>
-                        {task.status}
-                      </Badge>
+                      <SelectValue>
+                        <Badge variant={getStatusVariant(task.status)}>
+                          {task.status}
+                        </Badge>
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Pending">Pending</SelectItem>

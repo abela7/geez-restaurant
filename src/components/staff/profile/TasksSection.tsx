@@ -6,12 +6,21 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, DownloadIcon, Printer, Clock } from "lucide-react";
+import { PlusCircle, DownloadIcon, Printer, Clock, Tag } from "lucide-react";
 import TasksList from "@/components/staff/TasksList";
 import ErrorDisplay from "@/components/staff/ErrorDisplay";
 import { StaffTask } from "@/hooks/useStaffTasks";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { format } from "date-fns";
+
+// Task categories for selection
+const taskCategories = [
+  { id: "1", name: "Kitchen", color: "bg-amber-500" },
+  { id: "2", name: "Service", color: "bg-blue-500" },
+  { id: "3", name: "Cleaning", color: "bg-green-500" },
+  { id: "4", name: "Inventory", color: "bg-purple-500" },
+  { id: "5", name: "Administration", color: "bg-slate-500" },
+];
 
 type TasksSectionProps = {
   staffId: string;
@@ -50,6 +59,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({
     const priority = formData.get('priority') as string;
     const dueDate = formData.get('dueDate') as string;
     const dueTime = formData.get('dueTime') as string;
+    const category = formData.get('category') as string;
     
     try {
       // Combine date and time if both are provided
@@ -75,8 +85,9 @@ const TasksSection: React.FC<TasksSectionProps> = ({
         description,
         priority,
         status: 'Pending',
-        due_date: dueDateTime,
+        due_date: dueDate || null,
         due_time: dueTime || null,
+        category: category || null,
       };
       
       await addTask(newTask);
@@ -135,7 +146,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({
                   <Input
                     id="title"
                     name="title"
-                    placeholder="Task title"
+                    placeholder={t("Task title")}
                     className="col-span-3"
                     required
                   />
@@ -147,9 +158,29 @@ const TasksSection: React.FC<TasksSectionProps> = ({
                   <Input
                     id="description"
                     name="description"
-                    placeholder="Task description"
+                    placeholder={t("Task description")}
                     className="col-span-3"
                   />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="category" className="text-right">
+                    <T text="Category" />
+                  </Label>
+                  <Select name="category" defaultValue="1">
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder={t("Select category")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {taskCategories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${category.color}`}></div>
+                            <span>{category.name}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="priority" className="text-right">
@@ -208,6 +239,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({
             isLoading={isLoading}
             onUpdateStatus={handleUpdateTaskStatus}
             onDelete={handleDeleteTask}
+            maxHeight="350px"
           />
         )}
       </CardContent>

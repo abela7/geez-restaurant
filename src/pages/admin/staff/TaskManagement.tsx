@@ -9,18 +9,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Search, Plus, CheckCircle2, Clock, AlertCircle, ListChecks, Calendar, 
-  Calendar as CalendarIcon, Filter, MoreHorizontal, PlusCircle, X, 
+  Calendar as CalendarIcon, Filter, PlusCircle, X, 
   CheckCircle, Users, Download, Printer, Loader2 
 } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
-import { useNavigate } from "react-router-dom";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import TasksList from "@/components/staff/TasksList";
@@ -45,7 +42,6 @@ const taskCategories: TaskCategory[] = [
 
 const TaskManagement = () => {
   const { t } = useLanguage();
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -54,7 +50,6 @@ const TaskManagement = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showCompleted, setShowCompleted] = useState(true);
   const [newTaskDialogOpen, setNewTaskDialogOpen] = useState(false);
-  const [showEditTask, setShowEditTask] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState("list");
   const { staffMembers, isLoading: staffLoading } = useStaffMembers();
   
@@ -149,12 +144,14 @@ const TaskManagement = () => {
     return staff?.image_url;
   };
 
-  const getCategoryName = (id: string) => {
+  const getCategoryName = (id?: string | null) => {
+    if (!id) return "";
     const category = taskCategories.find(category => category.id === id);
     return category ? category.name : "";
   };
 
-  const getCategoryColor = (id: string) => {
+  const getCategoryColor = (id?: string | null) => {
+    if (!id) return "bg-gray-500";
     const category = taskCategories.find(category => category.id === id);
     return category ? category.color : "bg-gray-500";
   };
@@ -170,30 +167,13 @@ const TaskManagement = () => {
         return;
       }
       
-      // Combine date and time if both are provided
-      let dueDateTime = null;
-      if (newTask.due_date) {
-        const dateObj = new Date(newTask.due_date);
-        
-        // If time is also provided, set it
-        if (newTask.due_time) {
-          const [hours, minutes] = newTask.due_time.split(':');
-          dateObj.setHours(parseInt(hours, 10), parseInt(minutes, 10));
-        } else {
-          // Default to end of day if no time specified
-          dateObj.setHours(23, 59, 59);
-        }
-        
-        dueDateTime = dateObj.toISOString();
-      }
-      
       const taskData = {
         staff_id: newTask.staff_id,
         title: newTask.title,
         description: newTask.description,
         priority: newTask.priority,
         status: "Pending",
-        due_date: dueDateTime,
+        due_date: newTask.due_date || null,
         due_time: newTask.due_time || null,
         category: newTask.category
       };
@@ -323,7 +303,7 @@ const TaskManagement = () => {
       return;
     }
 
-    const headers = ['Title', 'Description', 'Assigned To', 'Priority', 'Status', 'Due Date', 'Category'];
+    const headers = ['Title', 'Description', 'Assigned To', 'Priority', 'Status', 'Due Date', 'Due Time', 'Category'];
     const csvRows = [
       headers.join(','),
       ...filteredTasks.map(task => [
@@ -333,7 +313,8 @@ const TaskManagement = () => {
         `"${task.priority}"`,
         `"${task.status}"`,
         task.due_date ? `"${format(new Date(task.due_date), 'MMM dd, yyyy')}"` : '""',
-        `"${getCategoryName(task.category || '1')}"`
+        task.due_time ? `"${task.due_time}"` : '""',
+        `"${getCategoryName(task.category)}"` 
       ].join(','))
     ];
     
@@ -440,7 +421,10 @@ const TaskManagement = () => {
                       <SelectContent>
                         {taskCategories.map((category) => (
                           <SelectItem key={category.id} value={category.id}>
-                            {category.name}
+                            <div className="flex items-center gap-2">
+                              <div className={`w-2 h-2 rounded-full ${category.color}`}></div>
+                              <span>{category.name}</span>
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -535,7 +519,10 @@ const TaskManagement = () => {
               <SelectItem value="all"><T text="All Categories" /></SelectItem>
               {taskCategories.map((category) => (
                 <SelectItem key={category.id} value={category.id}>
-                  {category.name}
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${category.color}`}></div>
+                    <span>{category.name}</span>
+                  </div>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -587,6 +574,7 @@ const TaskManagement = () => {
                 onDelete={handleDeleteTask}
                 showStaffInfo={true}
                 staffNames={getStaffNamesMap()}
+                maxHeight="600px"
               />
             )}
           </Card>
@@ -733,8 +721,8 @@ const TaskManagement = () => {
                           <div className="text-sm text-muted-foreground mt-1">{task.description}</div>
                           <div className="flex items-center justify-between mt-2 text-sm">
                             <div className="flex items-center gap-2">
-                              <div className={`w-2 h-2 rounded-full ${getCategoryColor(task.category || '1')}`}></div>
-                              <span>{getCategoryName(task.category || '1')}</span>
+                              <div className={`w-2 h-2 rounded-full ${getCategoryColor(task.category)}`}></div>
+                              <span>{getCategoryName(task.category)}</span>
                             </div>
                             <div className="flex items-center gap-1">
                               <Clock className="h-3 w-3 text-muted-foreground" />

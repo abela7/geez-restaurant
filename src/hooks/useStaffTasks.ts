@@ -13,6 +13,7 @@ export type StaffTask = {
   due_date: string | null;
   due_time: string | null;
   completed_at: string | null;
+  category?: string | null;
 };
 
 export const useStaffTasks = (staffId: string) => {
