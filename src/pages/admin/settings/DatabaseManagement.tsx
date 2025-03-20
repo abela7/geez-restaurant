@@ -49,7 +49,11 @@ const DatabaseManagement: React.FC = () => {
   const fetchTables = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_tables');
+      // Type assertion for RPC call
+      const { data, error } = await supabase.rpc('get_tables') as {
+        data: TableInfo[] | null;
+        error: Error | null;
+      };
       
       if (error) throw error;
       
@@ -72,10 +76,14 @@ const DatabaseManagement: React.FC = () => {
   const fetchColumns = async (tableName: string, schema: string = 'public') => {
     setIsLoading(true);
     try {
+      // Type assertion for RPC call with parameters
       const { data, error } = await supabase.rpc('get_table_columns', {
         tablename: tableName,
         schema: schema
-      });
+      }) as {
+        data: ColumnInfo[] | null;
+        error: Error | null;
+      };
       
       if (error) throw error;
       
