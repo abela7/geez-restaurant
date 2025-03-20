@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,7 +13,7 @@ import Reports from "./pages/admin/Reports";
 import StaffManagement from "./pages/admin/StaffManagement";
 import InventoryControl from "./pages/admin/InventoryControl";
 import MenuManagement from "./pages/admin/MenuManagement";
-import TaskManagement from "./pages/admin/TaskManagement";
+import AdminTaskManagement from "./pages/admin/TaskManagement";
 import Communication from "./pages/admin/Communication";
 import FinancialManagement from "./pages/admin/FinancialManagement";
 import LanguageManagement from "./pages/admin/LanguageManagement";
@@ -71,10 +72,11 @@ import NewStaff from "./pages/admin/staff/NewStaff";
 import Directory from "./pages/admin/staff/Directory";
 import Tasks from "./pages/admin/staff/Tasks";
 import Payroll from "./pages/admin/staff/Payroll";
+import StaffTaskManagement from "./pages/admin/staff/TaskManagement";
 
 // Waiter Interface
 import WaiterDashboard from "./pages/waiter/WaiterDashboard";
-import TableManagement from "./pages/waiter/TableManagement";
+import WaiterTableManagement from "./pages/waiter/TableManagement";
 import OrderManagement from "./pages/waiter/OrderManagement";
 import PaymentProcessing from "./pages/waiter/PaymentProcessing";
 import WaiterTasks from "./pages/waiter/WaiterTasks";
@@ -101,8 +103,7 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
 // General Section
-import TableManagement from "./pages/admin/general/TableManagement";
-import TaskManagement from "./pages/admin/staff/TaskManagement";
+import GeneralTableManagement from "./pages/admin/general/TableManagement";
 
 const queryClient = new QueryClient();
 
@@ -143,7 +144,7 @@ const App = () => (
               <Route path="/admin/staff/performance" element={<StaffPerformance />} />
               <Route path="/admin/staff/new" element={<NewStaff />} />
               <Route path="/admin/staff/directory" element={<Directory />} />
-              <Route path="/admin/staff/tasks" element={<TaskManagement />} />
+              <Route path="/admin/staff/tasks" element={<StaffTaskManagement />} />
               <Route path="/admin/staff/payroll" element={<Payroll />} />
               
               {/* Inventory Management */}
@@ -164,7 +165,7 @@ const App = () => (
               <Route path="/admin/menu/design" element={<MenuDesign />} />
               
               {/* Tasks */}
-              <Route path="/admin/tasks" element={<TaskManagement />} />
+              <Route path="/admin/tasks" element={<AdminTaskManagement />} />
               
               {/* Communication */}
               <Route path="/admin/communication" element={<Communication />} />
@@ -192,7 +193,7 @@ const App = () => (
               
               {/* Waiter Interface Routes */}
               <Route path="/waiter" element={<WaiterDashboard />} />
-              <Route path="/waiter/tables" element={<TableManagement />} />
+              <Route path="/waiter/tables" element={<WaiterTableManagement />} />
               <Route path="/waiter/orders" element={<OrderManagement />} />
               <Route path="/waiter/payments" element={<PaymentProcessing />} />
               <Route path="/waiter/tasks" element={<WaiterTasks />} />
@@ -215,7 +216,7 @@ const App = () => (
               <Route path="/system/docs" element={<Documentation />} />
               
               {/* General Section */}
-              <Route path="/admin/general/table-management" element={<TableManagement />} />
+              <Route path="/admin/general/table-management" element={<GeneralTableManagement />} />
               
               {/* Catch All */}
               <Route path="*" element={<NotFound />} />

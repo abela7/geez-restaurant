@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import Layout from "@/components/Layout";
 import { PageHeader } from "@/components/ui/page-header";
@@ -15,7 +14,6 @@ import { Separator } from "@/components/ui/separator";
 import { Search, Plus, Filter, Grid3X3, LayoutGrid, Users, Coffee, Clock, Edit, Trash2 } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 
-// Sample tables data
 const tables = [
   { id: 1, name: "Table 1", capacity: 4, location: "Main Area", status: "Available" },
   { id: 2, name: "Table 2", capacity: 2, location: "Main Area", status: "Occupied" },
@@ -29,7 +27,6 @@ const tables = [
   { id: 10, name: "Table 10", capacity: 2, location: "Bar", status: "Occupied" },
 ];
 
-// Sample reservations data
 const reservations = [
   { id: 1, customerName: "Abebe Kebede", tableId: 3, date: "2023-07-15", time: "18:00", guests: 5, contact: "+251911234567", status: "Confirmed" },
   { id: 2, customerName: "Sara Mengistu", tableId: 8, date: "2023-07-15", time: "19:30", guests: 4, contact: "+251922345678", status: "Confirmed" },
@@ -45,7 +42,6 @@ const TableManagement = () => {
   const [newTableDialogOpen, setNewTableDialogOpen] = useState(false);
   const [newReservationDialogOpen, setNewReservationDialogOpen] = useState(false);
   
-  // Filter tables based on search term, status, and location
   const filteredTables = tables.filter(table => {
     const matchesSearch = table.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || table.status.toLowerCase() === statusFilter.toLowerCase();
@@ -54,30 +50,27 @@ const TableManagement = () => {
     return matchesSearch && matchesStatus && matchesLocation;
   });
   
-  // Get status badge color
   const getStatusBadgeVariant = (status: string) => {
     switch (status.toLowerCase()) {
       case "available":
-        return "success";
+        return "default";
       case "occupied":
         return "destructive";
       case "reserved":
-        return "warning";
-      case "cleaning":
         return "secondary";
+      case "cleaning":
+        return "outline";
       default:
         return "outline";
     }
   };
   
-  // New table form state
   const [newTable, setNewTable] = useState({
     name: "",
     capacity: "4",
     location: "Main Area"
   });
   
-  // New reservation form state
   const [newReservation, setNewReservation] = useState({
     customerName: "",
     tableId: "",
@@ -89,9 +82,7 @@ const TableManagement = () => {
   });
   
   const handleCreateTable = () => {
-    // Add logic to create a table here
     setNewTableDialogOpen(false);
-    // Reset form
     setNewTable({
       name: "",
       capacity: "4",
@@ -100,9 +91,7 @@ const TableManagement = () => {
   };
   
   const handleCreateReservation = () => {
-    // Add logic to create a reservation here
     setNewReservationDialogOpen(false);
-    // Reset form
     setNewReservation({
       customerName: "",
       tableId: "",
@@ -507,7 +496,7 @@ const TableManagement = () => {
                     <TableCell>{reservation.contact}</TableCell>
                     <TableCell>
                       <Badge 
-                        variant={reservation.status === "Confirmed" ? "success" : "warning"}
+                        variant={reservation.status === "Confirmed" ? "default" : "secondary"}
                       >
                         {reservation.status}
                       </Badge>

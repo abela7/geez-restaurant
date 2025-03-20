@@ -13,7 +13,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Plus, CheckCircle2, Clock, AlertCircle, ListChecks, Calendar, Calendar as CalendarIcon, Filter, MoreHorizontal, PlusCircle, X, CheckCircle } from "lucide-react";
+import { Search, Plus, CheckCircle2, Clock, AlertCircle, ListChecks, Calendar, Calendar as CalendarIcon, Filter, MoreHorizontal, PlusCircle, X, CheckCircle, Users } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
