@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -16,6 +15,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Search, Plus, Minus, Trash2, Check, ChevronsUp, ChevronsDown, UserRound, Loader2 } from "lucide-react";
+
+interface OrderManagementProps {
+  newOrder?: boolean;
+  search?: boolean;
+}
 
 interface FoodItem {
   id: string;
@@ -51,7 +55,7 @@ interface Table {
   location?: string;
 }
 
-const OrderManagement = () => {
+const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
@@ -139,7 +143,6 @@ const OrderManagement = () => {
     const existingItem = orderItems.find(item => item.foodItem.id === foodItem.id);
     
     if (existingItem) {
-      // Increase quantity if item already in order
       setOrderItems(prevItems => 
         prevItems.map(item => 
           item.id === existingItem.id 
@@ -148,7 +151,6 @@ const OrderManagement = () => {
         )
       );
     } else {
-      // Add new item
       setOrderItems(prevItems => [
         ...prevItems, 
         { 
@@ -164,7 +166,6 @@ const OrderManagement = () => {
 
   const handleQuantityChange = (itemId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
-      // Remove item if quantity is zero or negative
       setOrderItems(prevItems => prevItems.filter(item => item.id !== itemId));
       return;
     }
@@ -182,11 +183,9 @@ const OrderManagement = () => {
 
   const getFilteredMenuItems = () => {
     return menuItems.filter(item => {
-      // Apply search filter
       const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
       
-      // Apply category filter
       const matchesCategory = selectedCategory === "all" || item.categoryName === selectedCategory;
       
       return matchesSearch && matchesCategory;
@@ -213,7 +212,6 @@ const OrderManagement = () => {
     setIsSubmitting(true);
     
     try {
-      // Create order
       const orderTotal = calculateTotal();
       
       const { data: order, error: orderError } = await supabase
@@ -231,7 +229,6 @@ const OrderManagement = () => {
       
       if (orderError) throw orderError;
       
-      // Add order items
       const orderItemsToInsert = orderItems.map(item => ({
         order_id: order.id,
         food_item_id: item.foodItem.id,
@@ -247,7 +244,6 @@ const OrderManagement = () => {
       
       if (itemsError) throw itemsError;
       
-      // Update table status if dining in
       if (orderType === "dine-in" && selectedTable) {
         const { error: tableError } = await supabase
           .from('restaurant_tables')
@@ -256,7 +252,6 @@ const OrderManagement = () => {
         
         if (tableError) throw tableError;
         
-        // Add table guests
         const { error: guestsError } = await supabase
           .from('table_guests')
           .insert({
@@ -268,7 +263,6 @@ const OrderManagement = () => {
         if (guestsError) throw guestsError;
       }
       
-      // Success!
       toast.success("Order created successfully!");
       navigate("/waiter/orders");
       
@@ -280,7 +274,6 @@ const OrderManagement = () => {
     }
   };
 
-  // Group menu items by category for easier display
   const itemsByCategory = React.useMemo(() => {
     const filteredItems = getFilteredMenuItems();
     return filteredItems.reduce((acc, item) => {
@@ -297,12 +290,11 @@ const OrderManagement = () => {
     <Layout interface="waiter">
       <div className="container mx-auto p-4 pb-24">
         <PageHeader
-          title={<T text="New Order" />}
-          description={<T text="Create a new customer order" />}
+          title={<T text={newOrder ? "New Order" : search ? "Search Orders" : "Order Management"} />}
+          description={<T text={newOrder ? "Create a new customer order" : search ? "Search for existing orders" : "Manage customer orders"} />}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Menu */}
           <div className="lg:col-span-2">
             <Card className="mb-6">
               <CardContent className="p-4">
@@ -406,7 +398,6 @@ const OrderManagement = () => {
             </Card>
           </div>
           
-          {/* Right Column - Order Summary */}
           <div className="lg:col-span-1">
             <Card className="sticky top-20">
               <CardContent className="p-4">
