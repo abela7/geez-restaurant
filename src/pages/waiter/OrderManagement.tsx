@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
@@ -22,7 +21,6 @@ import {
 } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 
-// Sample orders data
 const orders = [
   { id: 1, table: "Table 5", items: 4, total: "$86.50", status: "Pending", time: "5 mins ago", special: false },
   { id: 2, table: "Table 8", items: 3, total: "$52.75", status: "Preparing", time: "12 mins ago", special: true },
@@ -44,7 +42,6 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder = false, sea
   const [searchQuery, setSearchQuery] = useState<string>("");
   
   useEffect(() => {
-    // Check URL params for order type
     const queryParams = new URLSearchParams(location.search);
     const typeParam = queryParams.get('type');
     if (typeParam) {
@@ -52,7 +49,6 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder = false, sea
     }
   }, [location]);
   
-  // Render the new order interface
   if (newOrder) {
     return (
       <div className="container mx-auto p-4 md:p-6">
@@ -60,7 +56,6 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder = false, sea
           title={t("New Order")} 
           description={
             orderType === "takeout" ? t("Create a new takeout order") : 
-            orderType === "delivery" ? t("Create a new delivery order") : 
             t("Create a new table order")
           }
         />
@@ -76,10 +71,6 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder = false, sea
                 <TabsTrigger value="takeout">
                   <Package className="h-4 w-4 mr-2" />
                   <T text="Takeout" />
-                </TabsTrigger>
-                <TabsTrigger value="delivery">
-                  <ShoppingBag className="h-4 w-4 mr-2" />
-                  <T text="Delivery" />
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -108,10 +99,6 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder = false, sea
               <h3 className="font-medium mb-4"><T text="Takeout Information" /></h3>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium mb-2 block"><T text="Customer Name" /></label>
-                  <Input placeholder={t("Enter customer name")} />
-                </div>
-                <div>
                   <label className="text-sm font-medium mb-2 block"><T text="Phone Number" /></label>
                   <Input placeholder={t("Enter phone number")} />
                 </div>
@@ -122,29 +109,8 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder = false, sea
               </div>
             </div>
           )}
-          
-          {orderType === "delivery" && (
-            <div className="p-4">
-              <h3 className="font-medium mb-4"><T text="Delivery Information" /></h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block"><T text="Customer Name" /></label>
-                  <Input placeholder={t("Enter customer name")} />
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-2 block"><T text="Phone Number" /></label>
-                  <Input placeholder={t("Enter phone number")} />
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-2 block"><T text="Delivery Address" /></label>
-                  <Input placeholder={t("Enter delivery address")} />
-                </div>
-              </div>
-            </div>
-          )}
         </Card>
         
-        {/* Menu selection section would go here */}
         <Card>
           <div className="p-4 border-b flex justify-between items-center">
             <h3 className="font-medium text-lg"><T text="Menu Items" /></h3>
@@ -164,7 +130,6 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder = false, sea
     );
   }
   
-  // Render the search interface
   if (search) {
     return (
       <div className="container mx-auto p-4 md:p-6">
@@ -261,7 +226,6 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder = false, sea
     );
   }
   
-  // Render the main order management interface
   return (
     <div className="container mx-auto p-4 md:p-6">
       <PageHeader 
@@ -371,7 +335,6 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder = false, sea
           </Card>
         </TabsContent>
 
-        {/* The other tabs would show filtered views */}
         <TabsContent value="pending">
           <Card className="p-4">
             <div className="text-center p-8 text-muted-foreground">
