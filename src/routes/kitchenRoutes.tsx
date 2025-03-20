@@ -1,20 +1,20 @@
 
 import { Route, Routes } from "react-router-dom";
 
-// Kitchen Staff Interface
 import KitchenDashboard from "../pages/kitchen/KitchenDashboard";
 import RecipeViewer from "../pages/kitchen/RecipeViewer";
 import InventoryCheck from "../pages/kitchen/InventoryCheck";
 import KitchenTasks from "../pages/kitchen/KitchenTasks";
+import KitchenFoodSafety from "../pages/kitchen/KitchenFoodSafety";
 
 const KitchenRoutes = () => {
   return (
     <Routes>
-      {/* Kitchen Staff Interface Routes */}
-      <Route path="/kitchen" element={<KitchenDashboard />} />
-      <Route path="/kitchen/recipes" element={<RecipeViewer />} />
-      <Route path="/kitchen/inventory" element={<InventoryCheck />} />
-      <Route path="/kitchen/tasks" element={<KitchenTasks />} />
+      <Route path="/" element={<KitchenDashboard />} />
+      <Route path="/recipes" element={<RecipeViewer />} />
+      <Route path="/inventory" element={<InventoryCheck />} />
+      <Route path="/tasks" element={<KitchenTasks />} />
+      <Route path="/food-safety" element={<KitchenFoodSafety />} />
     </Routes>
   );
 };
