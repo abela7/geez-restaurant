@@ -6,7 +6,7 @@ import {
   LayoutDashboard, DollarSign, Users, Package, BarChart, 
   User, Settings, ClipboardList, ChevronDown, ChevronRight, Languages,
   BookUser, ListChecks, BadgeDollarSign, Menu as MenuIcon, LogOut, 
-  ChevronLeft, Utensils
+  ChevronLeft, Utensils, Database
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -216,6 +216,7 @@ export const MainSidebar: React.FC<MainSidebarProps> = ({
         { to: "users", label: "User Access" },
         { to: "devices", label: "Printers & Devices" },
         { to: "logs", label: "System Logs" },
+        { to: "database", label: "Database Management" },
         { to: "integrations", label: "Integrations" }
       ]
     },

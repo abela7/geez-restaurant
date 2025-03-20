@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -107,126 +106,76 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
+function App() {
+  return (
     <LanguageProvider>
       <ThemeProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              {/* Auth Routes */}
-              <Route path="/login" element={<Login />} />
-              
-              {/* Admin Portal Routes */}
-              <Route path="/" element={<Index />} />
-              
-              {/* Reports Section */}
-              <Route path="/admin/reports" element={<Reports />} />
-              <Route path="/admin/reports/sales" element={<SalesAnalytics />} />
-              <Route path="/admin/reports/staff" element={<StaffReports />} />
-              <Route path="/admin/reports/inventory" element={<InventoryReports />} />
-              <Route path="/admin/reports/customers" element={<CustomerInsights />} />
-              <Route path="/admin/reports/custom" element={<CustomReports />} />
-              
-              {/* Finance Section */}
-              <Route path="/admin/finance" element={<FinancialManagement />} />
-              <Route path="/admin/finance/daily-sales" element={<DailySales />} />
-              <Route path="/admin/finance/financial-reports" element={<FinancialReports />} />
-              <Route path="/admin/finance/payment-management" element={<PaymentManagement />} />
-              <Route path="/admin/finance/budgeting" element={<Budgeting />} />
-              
-              {/* Staff Management */}
-              <Route path="/admin/staff" element={<StaffManagement />} />
-              <Route path="/admin/staff/profile/:id" element={<StaffProfile />} />
-              <Route path="/admin/staff/attendance" element={<StaffAttendance />} />
-              <Route path="/admin/staff/performance" element={<StaffPerformance />} />
-              <Route path="/admin/staff/new" element={<NewStaff />} />
-              <Route path="/admin/staff/directory" element={<Directory />} />
-              <Route path="/admin/staff/tasks" element={<Tasks />} />
-              <Route path="/admin/staff/payroll" element={<Payroll />} />
-              
-              {/* Inventory Management */}
-              <Route path="/admin/inventory" element={<InventoryControl />} />
-              <Route path="/admin/inventory/stock" element={<StockLevels />} />
-              <Route path="/admin/inventory/ingredients" element={<Ingredients />} />
-              <Route path="/admin/inventory/recipes" element={<Recipes />} />
-              <Route path="/admin/inventory/suppliers" element={<Suppliers />} />
-              <Route path="/admin/inventory/purchase-orders" element={<PurchaseOrders />} />
-              
-              {/* Menu Management */}
-              <Route path="/admin/menu" element={<MenuManagement />} />
-              <Route path="/admin/menu/recipes" element={<RecipeManagement />} />
-              <Route path="/admin/menu/food" element={<FoodManagement />} />
-              <Route path="/admin/menu/categories" element={<Categories />} />
-              <Route path="/admin/menu/modifiers" element={<Modifiers />} />
-              <Route path="/admin/menu/pricing" element={<Pricing />} />
-              <Route path="/admin/menu/design" element={<MenuDesign />} />
-              
-              {/* General Settings */}
-              <Route path="/admin/general" element={<General />} />
-              <Route path="/admin/general/tables" element={<TableManagement />} />
-              
-              {/* Tasks */}
-              <Route path="/admin/tasks" element={<TaskManagement />} />
-              
-              {/* Communication */}
-              <Route path="/admin/communication" element={<Communication />} />
-              
-              {/* Customers Section */}
-              <Route path="/admin/customers" element={<AdminCustomers />} />
-              <Route path="/admin/customers/feedback" element={<CustomerFeedback />} />
-              <Route path="/admin/customers/database" element={<CustomerDatabase />} />
-              <Route path="/admin/customers/promotions" element={<Promotions />} />
-              <Route path="/admin/customers/loyalty" element={<LoyaltyProgram />} />
-              
-              {/* Settings Section */}
-              <Route path="/admin/settings" element={<AdminSettings />} />
-              <Route path="/admin/settings/profile" element={<RestaurantProfile />} />
-              <Route path="/admin/settings/users" element={<UserAccess />} />
-              <Route path="/admin/settings/devices" element={<PrintersDevices />} />
-              <Route path="/admin/settings/logs" element={<SystemLogs />} />
-              <Route path="/admin/settings/integrations" element={<Integrations />} />
-              
-              {/* Activity Log */}
-              <Route path="/admin/activity" element={<AdminActivity />} />
-              
-              {/* Language Management */}
-              <Route path="/admin/language" element={<LanguageManagement />} />
-              
-              {/* Waiter Interface Routes */}
-              <Route path="/waiter" element={<WaiterDashboard />} />
-              <Route path="/waiter/tables" element={<TableManagementWaiter />} />
-              <Route path="/waiter/orders" element={<OrderManagement />} />
-              <Route path="/waiter/payments" element={<PaymentProcessing />} />
-              <Route path="/waiter/tasks" element={<WaiterTasks />} />
-              
-              {/* Kitchen Staff Interface Routes */}
-              <Route path="/kitchen" element={<KitchenDashboard />} />
-              <Route path="/kitchen/recipes" element={<RecipeViewer />} />
-              <Route path="/kitchen/inventory" element={<InventoryCheck />} />
-              <Route path="/kitchen/tasks" element={<KitchenTasks />} />
-              
-              {/* Customer Interface Routes */}
-              <Route path="/menu" element={<CustomerMenu />} />
-              <Route path="/feedback" element={<CustomerFeedbackPage />} />
-              <Route path="/promotions" element={<PromotionsPage />} />
-              
-              {/* System Administration Interface Routes */}
-              <Route path="/system" element={<SystemDashboard />} />
-              <Route path="/system/errors" element={<ErrorLogs />} />
-              <Route path="/system/users" element={<UserManagement />} />
-              <Route path="/system/docs" element={<Documentation />} />
-              
-              {/* Catch All */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </ThemeProvider>
-    </LanguageProvider>
-  </QueryClientProvider>
-);
+        <BrowserRouter>
+          <Routes>
+            {/* Auth Routes */}
+            <Route path="/login" element={<Login />} />
+            
+            {/* Admin Portal Routes */}
+            <Route path="/" element={<Index />} />
+            
+            {/* Reports Section */}
+            <Route path="/admin/reports" element={<Reports />} />
+            <Route path="/admin/reports/sales" element={<SalesAnalytics />} />
+            <Route path="/admin/reports/staff" element={<StaffReports />} />
+            <Route path="/admin/reports/inventory" element={<InventoryReports />} />
+            <Route path="/admin/reports/customers" element={<CustomerInsights />} />
+            <Route path="/admin/reports/custom" element={<CustomReports />} />
+            
+            {/* Finance Section */}
+            <Route path="/admin/finance" element={<FinancialManagement />} />
+            <Route path="/admin/finance/daily-sales" element={<DailySales />} />
+            <Route path="/admin/finance/financial-reports" element={<FinancialReports />} />
+            <Route path="/admin/finance/payment-management" element={<PaymentManagement />} />
+            <Route path="/admin/finance/budgeting" element={<Budgeting />} />
+            
+            {/* Staff Management */}
+            <Route path="/admin/staff" element={<StaffManagement />} />
+            <Route path="/admin/staff/profile/:id" element={<StaffProfile />} />
+            <Route path="/admin/staff/attendance" element={<StaffAttendance />} />
+            <Route path="/admin/staff/performance" element={<StaffPerformance />} />
+            <Route path="/admin/staff/new" element={<NewStaff />} />
+            <Route path="/admin/staff/directory" element={<Directory />} />
+            <Route path="/admin/staff/tasks" element={<Tasks />} />
+            <Route path="/admin/staff/payroll" element={<Payroll />} />
+            
+            {/* Inventory Management */}
+            <Route path="/admin/inventory" element={<InventoryControl />} />
+            <Route path="/admin/inventory/stock" element={<StockLevels />} />
+            <Route path="/admin/inventory/ingredients" element={<Ingredients />} />
+            <Route path="/admin/inventory/recipes" element={<Recipes />} />
+            <Route path="/admin/inventory/suppliers" element={<Suppliers />} />
+            <Route path="/admin/inventory/purchase-orders" element={<PurchaseOrders />} />
+            
+            {/* Menu Management */}
+            <Route path="/admin/menu" element={<MenuManagement />} />
+            <Route path="/admin/menu/recipes" element={<RecipeManagement />} />
+            <Route path="/admin/menu/food" element={<FoodManagement />} />
+            <Route path="/admin/menu/categories" element={<Categories />} />
+            <Route path="/admin/menu/modifiers" element={<Modifiers />} />
+            <Route path="/admin/menu/pricing" element={<Pricing />} />
+            <Route path="/admin/menu/design" element={<MenuDesign />} />
+            
+            {/* General Settings */}
+            <Route path="/admin/general" element={<General />} />
+            <Route path="/admin/general/tables" element={<TableManagement />} />
+            
+            {/* Tasks */}
+            <Route path="/admin/tasks" element={<TaskManagement />} />
+            
+            {/* Communication */}
+            <Route path="/admin/communication" element={<Communication />} />
+            
+            {/* Customers Section */}
+            <Route path="/admin/customers" element={<AdminCustomers />} />
+            <Route path="/admin/customers/feedback" element={<CustomerFeedback />} />
+            <Route path="/admin/customers/database" element={<CustomerDatabase />} />
+            <Route path="/admin/customers/promotions" element={<Promotions />} />
+            <Route path="/admin/customers/loyalty" element={<LoyaltyProgram />} />
+            
+            {/* Settings
 
-export default App;

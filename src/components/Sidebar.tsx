@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -7,7 +6,7 @@ import {
   LayoutDashboard, DollarSign, Users, Package, BarChart, 
   User, Settings, ClipboardList, ChevronDown, ChevronRight, Languages,
   BookUser, ListChecks, BadgeDollarSign, Menu as MenuIcon, LogOut, 
-  ChevronLeft, TableProperties
+  ChevronLeft, TableProperties, Database
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -107,7 +106,6 @@ interface SidebarProps {
   interface?: 'admin' | 'waiter' | 'kitchen' | 'customer' | 'system';
 }
 
-// Define staffManagementQuickLinks before using it
 const staffManagementQuickLinks = [
   { to: "/admin/staff", label: "Overview", icon: <Users size={20} /> },
   { to: "/admin/staff/directory", label: "Directory", icon: <BookUser size={20} /> },
@@ -225,6 +223,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { to: "users", label: "User Access" },
         { to: "devices", label: "Printers & Devices" },
         { to: "logs", label: "System Logs" },
+        { to: "database", label: "Database Management" },
         { to: "integrations", label: "Integrations" }
       ]
     },
