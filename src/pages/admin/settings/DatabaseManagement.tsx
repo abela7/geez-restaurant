@@ -6,7 +6,6 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -26,6 +25,12 @@ interface ColumnInfo {
   data_type: string;
   is_nullable: boolean;
   column_default: string | null;
+}
+
+// Define a type for RPC response
+interface RpcResponse<T> {
+  data: T | null;
+  error: Error | null;
 }
 
 const DatabaseManagement: React.FC = () => {
@@ -89,15 +94,15 @@ const DatabaseManagement: React.FC = () => {
     }
   };
 
-  // Fetch table data
+  // Fetch table data - using type assertion to handle dynamic table names
   const fetchTableData = async (tableName: string) => {
     if (!tableName) return;
     
     setIsLoading(true);
     try {
-      // Cast to any for dynamic table access
+      // Use type assertion to treat tableName as a known table
       const { data, error } = await supabase
-        .from(tableName)
+        .from(tableName as any)
         .select('*')
         .limit(100);
       
@@ -118,14 +123,14 @@ const DatabaseManagement: React.FC = () => {
     }
   };
 
-  // Insert new row
+  // Insert new row - using type assertion for dynamic table
   const insertRow = async (rowData: any) => {
     if (!selectedTable) return;
     
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from(selectedTable)
+        .from(selectedTable as any)
         .insert(rowData)
         .select();
       
@@ -150,14 +155,14 @@ const DatabaseManagement: React.FC = () => {
     }
   };
 
-  // Update row
+  // Update row - using type assertion for dynamic table
   const updateRow = async (id: string, rowData: any) => {
     if (!selectedTable) return;
     
     setIsLoading(true);
     try {
       const { error } = await supabase
-        .from(selectedTable)
+        .from(selectedTable as any)
         .update(rowData)
         .eq('id', id);
       
@@ -182,14 +187,14 @@ const DatabaseManagement: React.FC = () => {
     }
   };
 
-  // Delete row
+  // Delete row - using type assertion for dynamic table
   const deleteRow = async (id: string) => {
     if (!selectedTable) return;
     
     setIsLoading(true);
     try {
       const { error } = await supabase
-        .from(selectedTable)
+        .from(selectedTable as any)
         .delete()
         .eq('id', id);
       
