@@ -12,7 +12,15 @@ export const getUserRoles = async (): Promise<UserRole[]> => {
       .order('name');
     
     if (error) throw error;
-    return data || [];
+    
+    // Convert the JSON permissions to Record<string, boolean>
+    const formattedData = data?.map(role => ({
+      ...role,
+      permissions: role.permissions ? (typeof role.permissions === 'string' ? 
+        JSON.parse(role.permissions) : role.permissions) as Record<string, boolean>
+    })) || [];
+    
+    return formattedData;
   } catch (error) {
     console.error('Error fetching user roles:', error);
     toast.error('Failed to load user roles');
@@ -29,7 +37,12 @@ export const getUserRoleById = async (id: string): Promise<UserRole | null> => {
       .single();
     
     if (error) throw error;
-    return data;
+    
+    return data ? {
+      ...data,
+      permissions: data.permissions ? (typeof data.permissions === 'string' ? 
+        JSON.parse(data.permissions) : data.permissions) as Record<string, boolean>
+    } : null;
   } catch (error) {
     console.error('Error fetching user role:', error);
     toast.error('Failed to load user role');
@@ -37,17 +50,26 @@ export const getUserRoleById = async (id: string): Promise<UserRole | null> => {
   }
 };
 
-export const createUserRole = async (role: Omit<UserRole, 'id' | 'created_at' | 'updated_at'>): Promise<UserRole | null> => {
+export const createUserRole = async (role: Pick<UserRole, 'name' | 'description' | 'permissions'>): Promise<UserRole | null> => {
   try {
     const { data, error } = await supabase
       .from('user_roles')
-      .insert([role])
+      .insert([{
+        name: role.name,
+        description: role.description || null,
+        permissions: role.permissions || {}
+      }])
       .select('*')
       .single();
     
     if (error) throw error;
     toast.success('Role created successfully');
-    return data;
+    
+    return data ? {
+      ...data,
+      permissions: data.permissions ? (typeof data.permissions === 'string' ? 
+        JSON.parse(data.permissions) : data.permissions) as Record<string, boolean>
+    } : null;
   } catch (error) {
     console.error('Error creating user role:', error);
     toast.error('Failed to create user role');
@@ -59,14 +81,23 @@ export const updateUserRole = async (id: string, role: Partial<UserRole>): Promi
   try {
     const { data, error } = await supabase
       .from('user_roles')
-      .update(role)
+      .update({
+        name: role.name,
+        description: role.description,
+        permissions: role.permissions
+      })
       .eq('id', id)
       .select('*')
       .single();
     
     if (error) throw error;
     toast.success('Role updated successfully');
-    return data;
+    
+    return data ? {
+      ...data,
+      permissions: data.permissions ? (typeof data.permissions === 'string' ? 
+        JSON.parse(data.permissions) : data.permissions) as Record<string, boolean>
+    } : null;
   } catch (error) {
     console.error('Error updating user role:', error);
     toast.error('Failed to update user role');
@@ -102,13 +133,26 @@ export const getUserAccounts = async (): Promise<UserAccount[]> => {
           id,
           name,
           description,
-          permissions
+          permissions,
+          created_at,
+          updated_at
         )
       `)
       .order('name');
     
     if (error) throw error;
-    return data || [];
+    
+    // Convert permissions in roles
+    const processedData = data?.map(user => ({
+      ...user,
+      role: user.role ? {
+        ...user.role,
+        permissions: user.role.permissions ? (typeof user.role.permissions === 'string' ? 
+          JSON.parse(user.role.permissions) : user.role.permissions) as Record<string, boolean>
+      } : undefined
+    })) || [];
+    
+    return processedData;
   } catch (error) {
     console.error('Error fetching user accounts:', error);
     toast.error('Failed to load user accounts');
@@ -126,14 +170,25 @@ export const getUserAccountById = async (id: string): Promise<UserAccount | null
           id,
           name,
           description,
-          permissions
+          permissions,
+          created_at,
+          updated_at
         )
       `)
       .eq('id', id)
       .single();
     
     if (error) throw error;
-    return data;
+    
+    // Process permissions
+    return data ? {
+      ...data,
+      role: data.role ? {
+        ...data.role,
+        permissions: data.role.permissions ? (typeof data.role.permissions === 'string' ? 
+          JSON.parse(data.role.permissions) : data.role.permissions) as Record<string, boolean>
+      } : undefined
+    } : null;
   } catch (error) {
     console.error('Error fetching user account:', error);
     toast.error('Failed to load user account');
@@ -141,11 +196,17 @@ export const getUserAccountById = async (id: string): Promise<UserAccount | null
   }
 };
 
-export const createUserAccount = async (user: Omit<UserAccount, 'id' | 'created_at' | 'updated_at'>): Promise<UserAccount | null> => {
+export const createUserAccount = async (user: Pick<UserAccount, 'name' | 'email' | 'role_id' | 'status'>): Promise<UserAccount | null> => {
   try {
     const { data, error } = await supabase
       .from('user_accounts')
-      .insert([user])
+      .insert([{
+        name: user.name,
+        email: user.email,
+        role_id: user.role_id || null,
+        status: user.status || 'active',
+        last_login: null
+      }])
       .select('*')
       .single();
     
@@ -205,7 +266,12 @@ export const getUserActivityLogs = async (): Promise<UserActivityLog[]> => {
         user:user_id (
           id,
           name,
-          email
+          email,
+          role_id,
+          status,
+          last_login,
+          created_at,
+          updated_at
         )
       `)
       .order('timestamp', { ascending: false })

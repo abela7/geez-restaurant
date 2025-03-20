@@ -35,9 +35,23 @@ export const updateRestaurantProfile = async (profile: Partial<RestaurantProfile
     
     if (!profileId) {
       // If no profile exists, create one
+      // We need to ensure name is provided for new profiles
+      if (!profile.name) {
+        throw new Error('Restaurant name is required');
+      }
+      
       const { data, error } = await supabase
         .from('restaurant_profile')
-        .insert([profile])
+        .insert({
+          name: profile.name,
+          cuisine_type: profile.cuisine_type,
+          phone: profile.phone,
+          email: profile.email,
+          address: profile.address,
+          description: profile.description,
+          tax_id: profile.tax_id,
+          founded_year: profile.founded_year
+        })
         .select('*')
         .single();
       
@@ -97,9 +111,19 @@ export const updateBusinessHours = async (dayOfWeek: string, hours: Partial<Busi
     
     if (!existingHours) {
       // If no hours exist for this day, create them
+      // Ensure required fields are provided
+      if (!hours.open_time || !hours.close_time) {
+        throw new Error('Open time and close time are required');
+      }
+      
       const { data, error } = await supabase
         .from('business_hours')
-        .insert([{ day_of_week: dayOfWeek, ...hours }])
+        .insert({
+          day_of_week: dayOfWeek,
+          open_time: hours.open_time,
+          close_time: hours.close_time,
+          is_closed: hours.is_closed ?? false
+        })
         .select('*')
         .single();
       

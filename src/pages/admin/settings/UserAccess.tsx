@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { useLanguage, T } from '@/contexts/LanguageContext';
@@ -47,8 +46,8 @@ const userFormSchema = z.object({
 
 const roleFormSchema = z.object({
   name: z.string().min(2, { message: "Name is required" }),
-  description: z.string().optional(),
-  permissions: z.record(z.boolean()).optional()
+  description: z.string().nullable(),
+  permissions: z.record(z.boolean()).optional().default({})
 });
 
 const UserAccess: React.FC = () => {
@@ -192,7 +191,12 @@ const UserAccess: React.FC = () => {
           ));
         }
       } else {
-        const newUser = await createUserAccount(values);
+        const newUser = await createUserAccount({
+          name: values.name,
+          email: values.email,
+          role_id: values.role_id,
+          status: values.status
+        });
         if (newUser) {
           setUsers([...users, { ...newUser, role: roles.find(r => r.id === newUser.role_id) }]);
         }
@@ -206,14 +210,22 @@ const UserAccess: React.FC = () => {
   const onSubmitRole = async (values: z.infer<typeof roleFormSchema>) => {
     try {
       if (selectedRole) {
-        const updatedRole = await updateUserRole(selectedRole.id, values);
+        const updatedRole = await updateUserRole(selectedRole.id, {
+          name: values.name,
+          description: values.description,
+          permissions: values.permissions
+        });
         if (updatedRole) {
           setRoles(roles.map(role => 
             role.id === selectedRole.id ? updatedRole : role
           ));
         }
       } else {
-        const newRole = await createUserRole(values);
+        const newRole = await createUserRole({
+          name: values.name,
+          description: values.description || null,
+          permissions: values.permissions || {}
+        });
         if (newRole) {
           setRoles([...roles, newRole]);
         }
