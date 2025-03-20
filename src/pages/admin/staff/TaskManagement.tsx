@@ -1,11 +1,11 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -13,166 +13,96 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Plus, CheckCircle2, Clock, AlertCircle, ListChecks, Calendar, Calendar as CalendarIcon, Filter, MoreHorizontal, PlusCircle, X, CheckCircle, Users } from "lucide-react";
+import { 
+  Search, Plus, CheckCircle2, Clock, AlertCircle, ListChecks, Calendar, 
+  Calendar as CalendarIcon, Filter, MoreHorizontal, PlusCircle, X, 
+  CheckCircle, Users, Download, Printer, Loader2 
+} from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import TasksList from "@/components/staff/TasksList";
+import { StaffTask } from "@/hooks/useStaffTasks";
+import useStaffMembers from "@/hooks/useStaffMembers";
+import { format } from "date-fns";
 
-// Sample staff data
-const staffMembers = [
-  { 
-    id: 1, 
-    name: "Abebe Kebede", 
-    role: "Chef", 
-    image: "/placeholder.svg"
-  },
-  { 
-    id: 2, 
-    name: "Makeda Haile", 
-    role: "Chef", 
-    image: "/placeholder.svg"
-  },
-  { 
-    id: 3, 
-    name: "Dawit Tadesse", 
-    role: "Waiter", 
-    image: "/placeholder.svg"
-  },
-  { 
-    id: 4, 
-    name: "Sara Mengistu", 
-    role: "Manager", 
-    image: "/placeholder.svg"
-  },
-  { 
-    id: 5, 
-    name: "Yonas Gebre", 
-    role: "Waiter", 
-    image: "/placeholder.svg"
-  },
-  { 
-    id: 6, 
-    name: "Hanna Tesfaye", 
-    role: "Inventory Manager", 
-    image: "/placeholder.svg"
-  },
-];
+// Task category types and colors
+type TaskCategory = {
+  id: string;
+  name: string;
+  color: string;
+};
 
-// Sample task categories
-const taskCategories = [
-  { id: 1, name: "Kitchen", color: "bg-amber-500" },
-  { id: 2, name: "Service", color: "bg-blue-500" },
-  { id: 3, name: "Cleaning", color: "bg-green-500" },
-  { id: 4, name: "Inventory", color: "bg-purple-500" },
-  { id: 5, name: "Administration", color: "bg-slate-500" },
-];
-
-// Sample tasks data
-const initialTasks = [
-  {
-    id: 1,
-    title: "Update weekly menu items",
-    description: "Review and update the weekly special menu items based on inventory",
-    assignedTo: 1,
-    dueDate: "2023-07-15",
-    priority: "High",
-    status: "Completed",
-    category: 1,
-    createdAt: "2023-07-10"
-  },
-  {
-    id: 2,
-    title: "Train new kitchen assistant",
-    description: "Orient the new kitchen assistant on food preparation procedures",
-    assignedTo: 1,
-    dueDate: "2023-07-18",
-    priority: "Medium",
-    status: "In Progress",
-    category: 1,
-    createdAt: "2023-07-12"
-  },
-  {
-    id: 3,
-    title: "Deep clean refrigeration units",
-    description: "Perform deep cleaning of all kitchen refrigeration units",
-    assignedTo: 2,
-    dueDate: "2023-07-20",
-    priority: "Medium",
-    status: "Pending",
-    category: 3,
-    createdAt: "2023-07-13"
-  },
-  {
-    id: 4,
-    title: "Customer service training",
-    description: "Conduct refresher training on customer service best practices",
-    assignedTo: 3,
-    dueDate: "2023-07-16",
-    priority: "High",
-    status: "In Progress",
-    category: 2,
-    createdAt: "2023-07-11"
-  },
-  {
-    id: 5,
-    title: "Update staff schedule for next month",
-    description: "Create and publish the staff schedule for the upcoming month",
-    assignedTo: 4,
-    dueDate: "2023-07-25",
-    priority: "High",
-    status: "Pending",
-    category: 5,
-    createdAt: "2023-07-14"
-  },
-  {
-    id: 6,
-    title: "Inventory count of spices",
-    description: "Perform a complete inventory of all spices and update the inventory system",
-    assignedTo: 6,
-    dueDate: "2023-07-17",
-    priority: "Medium",
-    status: "Pending",
-    category: 4,
-    createdAt: "2023-07-13"
-  },
-  {
-    id: 7,
-    title: "Clean and organize wine storage",
-    description: "Clean the wine storage area and ensure proper organization",
-    assignedTo: 5,
-    dueDate: "2023-07-19",
-    priority: "Low",
-    status: "Pending",
-    category: 3,
-    createdAt: "2023-07-15"
-  }
+const taskCategories: TaskCategory[] = [
+  { id: "1", name: "Kitchen", color: "bg-amber-500" },
+  { id: "2", name: "Service", color: "bg-blue-500" },
+  { id: "3", name: "Cleaning", color: "bg-green-500" },
+  { id: "4", name: "Inventory", color: "bg-purple-500" },
+  { id: "5", name: "Administration", color: "bg-slate-500" },
 ];
 
 const TaskManagement = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [tasks, setTasks] = useState(initialTasks);
+  const [tasks, setTasks] = useState<StaffTask[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [showCompleted, setShowCompleted] = useState(true);
   const [newTaskDialogOpen, setNewTaskDialogOpen] = useState(false);
-  const [showEditTask, setShowEditTask] = useState<number | null>(null);
+  const [showEditTask, setShowEditTask] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState("list");
+  const { staffMembers, isLoading: staffLoading } = useStaffMembers();
   
   const [newTask, setNewTask] = useState({
     title: "",
     description: "",
-    assignedTo: "",
-    dueDate: "",
+    staff_id: "",
+    due_date: "",
+    due_time: "",
     priority: "Medium",
-    category: ""
+    category: "1"
   });
+  
+  // Fetch all tasks
+  const fetchTasks = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('staff_tasks')
+        .select('*')
+        .order('due_date', { ascending: true });
+      
+      if (error) {
+        throw error;
+      }
+      
+      setTasks(data as StaffTask[] || []);
+    } catch (err: any) {
+      console.error('Error fetching tasks:', err);
+      toast({
+        title: "Error",
+        description: `Failed to load tasks: ${err.message}`,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Initial data fetch
+  useEffect(() => {
+    fetchTasks();
+  }, []);
   
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = 
       task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      task.description.toLowerCase().includes(searchTerm.toLowerCase());
+      (task.description?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
     
     const matchesStatus = 
       statusFilter === "all" || 
@@ -180,7 +110,7 @@ const TaskManagement = () => {
     
     const matchesCategory = 
       categoryFilter === "all" || 
-      task.category.toString() === categoryFilter;
+      task.category === categoryFilter;
     
     const isVisible = showCompleted || task.status !== "Completed";
     
@@ -200,60 +130,168 @@ const TaskManagement = () => {
     }
   };
 
-  const getStaffName = (id: number) => {
+  const getStaffName = (id: string) => {
     const staff = staffMembers.find(staff => staff.id === id);
-    return staff ? staff.name : "Unassigned";
+    return staff ? `${staff.first_name || ''} ${staff.last_name || ''}`.trim() : "Unassigned";
   };
 
-  const getCategoryName = (id: number) => {
+  const getStaffInitials = (id: string) => {
+    const staff = staffMembers.find(staff => staff.id === id);
+    if (!staff) return "NA";
+    
+    const firstName = staff.first_name || '';
+    const lastName = staff.last_name || '';
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  };
+
+  const getStaffImageUrl = (id: string) => {
+    const staff = staffMembers.find(staff => staff.id === id);
+    return staff?.image_url;
+  };
+
+  const getCategoryName = (id: string) => {
     const category = taskCategories.find(category => category.id === id);
     return category ? category.name : "";
   };
 
-  const getCategoryColor = (id: number) => {
+  const getCategoryColor = (id: string) => {
     const category = taskCategories.find(category => category.id === id);
     return category ? category.color : "bg-gray-500";
   };
 
-  const handleCreateTask = () => {
-    const newId = Math.max(...tasks.map(task => task.id)) + 1;
-    
-    const createdTask = {
-      id: newId,
-      title: newTask.title,
-      description: newTask.description,
-      assignedTo: parseInt(newTask.assignedTo),
-      dueDate: newTask.dueDate,
-      priority: newTask.priority,
-      status: "Pending",
-      category: parseInt(newTask.category),
-      createdAt: new Date().toISOString().split('T')[0]
-    };
-    
-    setTasks([...tasks, createdTask]);
-    setNewTaskDialogOpen(false);
-    
-    // Reset form
-    setNewTask({
-      title: "",
-      description: "",
-      assignedTo: "",
-      dueDate: "",
-      priority: "Medium",
-      category: ""
-    });
+  const handleCreateTask = async () => {
+    try {
+      if (!newTask.staff_id || !newTask.title) {
+        toast({
+          title: "Validation Error",
+          description: "Please fill in all required fields",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Combine date and time if both are provided
+      let dueDateTime = null;
+      if (newTask.due_date) {
+        const dateObj = new Date(newTask.due_date);
+        
+        // If time is also provided, set it
+        if (newTask.due_time) {
+          const [hours, minutes] = newTask.due_time.split(':');
+          dateObj.setHours(parseInt(hours, 10), parseInt(minutes, 10));
+        } else {
+          // Default to end of day if no time specified
+          dateObj.setHours(23, 59, 59);
+        }
+        
+        dueDateTime = dateObj.toISOString();
+      }
+      
+      const taskData = {
+        staff_id: newTask.staff_id,
+        title: newTask.title,
+        description: newTask.description,
+        priority: newTask.priority,
+        status: "Pending",
+        due_date: dueDateTime,
+        due_time: newTask.due_time || null,
+        category: newTask.category
+      };
+      
+      const { data, error } = await supabase
+        .from('staff_tasks')
+        .insert([taskData])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      // Add the new task to the list
+      setTasks(prev => [...prev, data as StaffTask]);
+      
+      toast({
+        title: "Success",
+        description: "Task created successfully"
+      });
+      
+      // Reset form and close dialog
+      setNewTask({
+        title: "",
+        description: "",
+        staff_id: "",
+        due_date: "",
+        due_time: "",
+        priority: "Medium",
+        category: "1"
+      });
+      setNewTaskDialogOpen(false);
+    } catch (error: any) {
+      console.error('Error creating task:', error);
+      toast({
+        title: "Error",
+        description: `Failed to create task: ${error.message}`,
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleCompleteTask = (taskId: number) => {
-    setTasks(tasks.map(task => 
-      task.id === taskId 
-        ? { ...task, status: "Completed" } 
-        : task
-    ));
+  const handleUpdateTaskStatus = async (taskId: string, status: string) => {
+    try {
+      const updates = { 
+        status,
+        completed_at: status === 'Completed' ? new Date().toISOString() : null
+      };
+      
+      const { data, error } = await supabase
+        .from('staff_tasks')
+        .update(updates)
+        .eq('id', taskId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      // Update the task in the list
+      setTasks(prev => prev.map(task => task.id === taskId ? (data as StaffTask) : task));
+      
+      toast({
+        title: "Success",
+        description: `Task ${status === 'Completed' ? 'marked as completed' : 'updated'} successfully`
+      });
+    } catch (error: any) {
+      console.error('Error updating task status:', error);
+      toast({
+        title: "Error",
+        description: `Failed to update task: ${error.message}`,
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleDeleteTask = (taskId: number) => {
-    setTasks(tasks.filter(task => task.id !== taskId));
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      const { error } = await supabase
+        .from('staff_tasks')
+        .delete()
+        .eq('id', taskId);
+      
+      if (error) throw error;
+      
+      // Remove the task from the list
+      setTasks(prev => prev.filter(task => task.id !== taskId));
+      
+      toast({
+        title: "Success",
+        description: "Task deleted successfully"
+      });
+    } catch (error: any) {
+      console.error('Error deleting task:', error);
+      toast({
+        title: "Error",
+        description: `Failed to delete task: ${error.message}`,
+        variant: "destructive"
+      });
+    }
   };
 
   const groupTasksByCategory = () => {
@@ -266,12 +304,64 @@ const TaskManagement = () => {
   };
 
   const groupTasksByAssignee = () => {
-    const grouped = staffMembers.map(staff => ({
-      ...staff,
-      tasks: filteredTasks.filter(task => task.assignedTo === staff.id)
-    }));
+    if (staffLoading) return [];
     
-    return grouped;
+    return staffMembers.map(staff => ({
+      ...staff,
+      tasks: filteredTasks.filter(task => task.staff_id === staff.id)
+    })).filter(staff => staff.tasks.length > 0);
+  };
+
+  // Function to export tasks to CSV
+  const exportToCSV = () => {
+    if (!filteredTasks.length) {
+      toast({
+        title: "Error",
+        description: "No data to export",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const headers = ['Title', 'Description', 'Assigned To', 'Priority', 'Status', 'Due Date', 'Category'];
+    const csvRows = [
+      headers.join(','),
+      ...filteredTasks.map(task => [
+        `"${task.title}"`,
+        `"${task.description || ''}"`,
+        `"${getStaffName(task.staff_id)}"`,
+        `"${task.priority}"`,
+        `"${task.status}"`,
+        task.due_date ? `"${format(new Date(task.due_date), 'MMM dd, yyyy')}"` : '""',
+        `"${getCategoryName(task.category || '1')}"`
+      ].join(','))
+    ];
+    
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create a link to download
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Tasks_Export_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Success",
+      description: "Tasks exported successfully",
+    });
+  };
+
+  const getStaffNamesMap = () => {
+    const namesMap: Record<string, string> = {};
+    staffMembers.forEach(staff => {
+      namesMap[staff.id] = `${staff.first_name || ''} ${staff.last_name || ''}`.trim();
+    });
+    return namesMap;
   };
 
   return (
@@ -304,6 +394,7 @@ const TaskManagement = () => {
                     value={newTask.title}
                     onChange={(e) => setNewTask({...newTask, title: e.target.value})}
                     placeholder={t("Enter task title")}
+                    required
                   />
                 </div>
                 
@@ -321,16 +412,16 @@ const TaskManagement = () => {
                   <div className="grid gap-2">
                     <Label htmlFor="assignee"><T text="Assign To" /></Label>
                     <Select 
-                      value={newTask.assignedTo}
-                      onValueChange={(value) => setNewTask({...newTask, assignedTo: value})}
+                      value={newTask.staff_id}
+                      onValueChange={(value) => setNewTask({...newTask, staff_id: value})}
                     >
                       <SelectTrigger id="assignee">
                         <SelectValue placeholder={t("Select staff member")} />
                       </SelectTrigger>
                       <SelectContent>
                         {staffMembers.map((staff) => (
-                          <SelectItem key={staff.id} value={String(staff.id)}>
-                            {staff.name} ({staff.role})
+                          <SelectItem key={staff.id} value={staff.id}>
+                            {`${staff.first_name || ''} ${staff.last_name || ''}`.trim()} ({staff.role})
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -348,7 +439,7 @@ const TaskManagement = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {taskCategories.map((category) => (
-                          <SelectItem key={category.id} value={String(category.id)}>
+                          <SelectItem key={category.id} value={category.id}>
                             {category.name}
                           </SelectItem>
                         ))}
@@ -363,27 +454,37 @@ const TaskManagement = () => {
                     <Input 
                       id="dueDate" 
                       type="date" 
-                      value={newTask.dueDate}
-                      onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})}
+                      value={newTask.due_date}
+                      onChange={(e) => setNewTask({...newTask, due_date: e.target.value})}
                     />
                   </div>
                   
                   <div className="grid gap-2">
-                    <Label htmlFor="priority"><T text="Priority" /></Label>
-                    <Select 
-                      value={newTask.priority}
-                      onValueChange={(value) => setNewTask({...newTask, priority: value})}
-                    >
-                      <SelectTrigger id="priority">
-                        <SelectValue placeholder={t("Select priority")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="High"><T text="High" /></SelectItem>
-                        <SelectItem value="Medium"><T text="Medium" /></SelectItem>
-                        <SelectItem value="Low"><T text="Low" /></SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="dueTime"><T text="Due Time" /> (optional)</Label>
+                    <Input 
+                      id="dueTime" 
+                      type="time" 
+                      value={newTask.due_time}
+                      onChange={(e) => setNewTask({...newTask, due_time: e.target.value})}
+                    />
                   </div>
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="priority"><T text="Priority" /></Label>
+                  <Select 
+                    value={newTask.priority}
+                    onValueChange={(value) => setNewTask({...newTask, priority: value})}
+                  >
+                    <SelectTrigger id="priority">
+                      <SelectValue placeholder={t("Select priority")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="High"><T text="High" /></SelectItem>
+                      <SelectItem value="Medium"><T text="Medium" /></SelectItem>
+                      <SelectItem value="Low"><T text="Low" /></SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               
@@ -433,7 +534,7 @@ const TaskManagement = () => {
             <SelectContent>
               <SelectItem value="all"><T text="All Categories" /></SelectItem>
               {taskCategories.map((category) => (
-                <SelectItem key={category.id} value={String(category.id)}>
+                <SelectItem key={category.id} value={category.id}>
                   {category.name}
                 </SelectItem>
               ))}
@@ -443,6 +544,11 @@ const TaskManagement = () => {
           <Button variant="outline" className="w-full sm:w-auto" onClick={() => setShowCompleted(!showCompleted)}>
             {showCompleted ? <X className="mr-2 h-4 w-4" /> : <CheckCircle className="mr-2 h-4 w-4" />}
             {showCompleted ? <T text="Hide Completed" /> : <T text="Show Completed" />}
+          </Button>
+          
+          <Button variant="outline" className="w-full sm:w-auto" onClick={exportToCSV} disabled={filteredTasks.length === 0}>
+            <Download className="mr-2 h-4 w-4" />
+            <T text="Export" />
           </Button>
         </div>
       </div>
@@ -469,101 +575,20 @@ const TaskManagement = () => {
 
         <TabsContent value="list">
           <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead><T text="Task" /></TableHead>
-                  <TableHead><T text="Assigned To" /></TableHead>
-                  <TableHead><T text="Category" /></TableHead>
-                  <TableHead><T text="Due Date" /></TableHead>
-                  <TableHead><T text="Priority" /></TableHead>
-                  <TableHead><T text="Status" /></TableHead>
-                  <TableHead className="text-right"><T text="Actions" /></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTasks.map((task) => (
-                  <TableRow key={task.id}>
-                    <TableCell className="min-w-[200px]">
-                      <div>
-                        <div className="font-medium">{task.title}</div>
-                        <div className="text-sm text-muted-foreground">{task.description}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-8 w-8">
-                          <img
-                            src={staffMembers.find(s => s.id === task.assignedTo)?.image}
-                            alt={getStaffName(task.assignedTo)}
-                            className="aspect-square h-full w-full object-cover"
-                          />
-                        </Avatar>
-                        <span>{getStaffName(task.assignedTo)}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-3 h-3 rounded-full ${getCategoryColor(task.category)}`}></div>
-                        <span>{getCategoryName(task.category)}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1 whitespace-nowrap">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>{task.dueDate}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant={
-                          task.priority === "High" ? "destructive" : 
-                          task.priority === "Medium" ? "default" : 
-                          "outline"
-                        }
-                      >
-                        {task.priority}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(task.status)}
-                        <span>{task.status}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end">
-                        {task.status !== "Completed" && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => handleCompleteTask(task.id)}
-                          >
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            <T text="Complete" />
-                          </Button>
-                        )}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setShowEditTask(task.id)}>
-                              <T text="Edit" />
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDeleteTask(task.id)} className="text-destructive">
-                              <T text="Delete" />
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <TasksList 
+                tasks={filteredTasks}
+                isLoading={isLoading}
+                onUpdateStatus={handleUpdateTaskStatus}
+                onDelete={handleDeleteTask}
+                showStaffInfo={true}
+                staffNames={getStaffNamesMap()}
+              />
+            )}
           </Card>
         </TabsContent>
         
@@ -582,7 +607,7 @@ const TaskManagement = () => {
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="pt-4">
+                <CardContent className="pt-4 max-h-[400px] overflow-auto">
                   {category.tasks.length > 0 ? (
                     <div className="space-y-3">
                       {category.tasks.map((task) => (
@@ -597,18 +622,42 @@ const TaskManagement = () => {
                           <div className="flex items-center justify-between mt-2 text-sm">
                             <div className="flex items-center gap-1">
                               <Avatar className="h-5 w-5">
-                                <img
-                                  src={staffMembers.find(s => s.id === task.assignedTo)?.image}
-                                  alt={getStaffName(task.assignedTo)}
-                                  className="aspect-square h-full w-full object-cover"
-                                />
+                                {getStaffImageUrl(task.staff_id) ? (
+                                  <AvatarImage src={getStaffImageUrl(task.staff_id)} alt={getStaffName(task.staff_id)} />
+                                ) : (
+                                  <AvatarFallback>{getStaffInitials(task.staff_id)}</AvatarFallback>
+                                )}
                               </Avatar>
-                              <span>{getStaffName(task.assignedTo)}</span>
+                              <span>{getStaffName(task.staff_id)}</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3 text-muted-foreground" />
-                              <span>{task.dueDate}</span>
+                              <Clock className="h-3 w-3 text-muted-foreground" />
+                              <span>
+                                {task.due_date 
+                                  ? format(new Date(task.due_date), 'MMM dd, yyyy') 
+                                  : '-'}
+                                {task.due_time && ` ${task.due_time}`}
+                              </span>
                             </div>
+                          </div>
+                          <div className="flex justify-end mt-2 gap-2">
+                            {task.status !== 'Completed' && (
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => handleUpdateTaskStatus(task.id, 'Completed')}
+                              >
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                <T text="Complete" />
+                              </Button>
+                            )}
+                            <Button 
+                              variant="destructive" 
+                              size="sm" 
+                              onClick={() => handleDeleteTask(task.id)}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
                           </div>
                         </div>
                       ))}
@@ -623,7 +672,7 @@ const TaskManagement = () => {
                     size="sm" 
                     className="w-full mt-3" 
                     onClick={() => {
-                      setNewTask({...newTask, category: String(category.id)});
+                      setNewTask({...newTask, category: category.id});
                       setNewTaskDialogOpen(true);
                     }}
                   >
@@ -638,77 +687,107 @@ const TaskManagement = () => {
         
         <TabsContent value="assignee">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {groupTasksByAssignee().filter(staff => staff.tasks.length > 0).map((staff) => (
-              <Card key={staff.id} className="overflow-hidden">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <img
-                          src={staff.image}
-                          alt={staff.name}
-                          className="aspect-square h-full w-full object-cover"
-                        />
-                      </Avatar>
-                      <div>
-                        <CardTitle className="text-lg">{staff.name}</CardTitle>
-                        <div className="text-sm text-muted-foreground">{staff.role}</div>
+            {isLoading || staffLoading ? (
+              <div className="flex items-center justify-center py-8 col-span-full">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              groupTasksByAssignee().map((staff) => (
+                <Card key={staff.id} className="overflow-hidden">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          {staff.image_url ? (
+                            <AvatarImage src={staff.image_url} alt={`${staff.first_name || ''} ${staff.last_name || ''}`.trim()} />
+                          ) : (
+                            <AvatarFallback>{`${(staff.first_name || '').charAt(0)}${(staff.last_name || '').charAt(0)}`.toUpperCase()}</AvatarFallback>
+                          )}
+                        </Avatar>
+                        <div>
+                          <CardTitle className="text-lg">{`${staff.first_name || ''} ${staff.last_name || ''}`.trim()}</CardTitle>
+                          <div className="text-sm text-muted-foreground">{staff.role}</div>
+                        </div>
                       </div>
+                      <Badge variant="outline">
+                        {staff.tasks.length} <T text="tasks" />
+                      </Badge>
                     </div>
-                    <Badge variant="outline">
-                      {staff.tasks.length} <T text="tasks" />
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-4">
-                  <div className="space-y-3">
-                    {staff.tasks.map((task) => (
-                      <div key={task.id} className="p-3 border rounded-md hover:bg-accent/50 transition-colors">
-                        <div className="flex justify-between items-start">
-                          <div className="font-medium">{task.title}</div>
-                          <Badge 
-                            variant={
-                              task.priority === "High" ? "destructive" : 
-                              task.priority === "Medium" ? "default" : 
-                              "outline"
-                            }
-                          >
-                            {task.priority}
-                          </Badge>
+                  </CardHeader>
+                  <CardContent className="pt-4 max-h-[400px] overflow-auto">
+                    <div className="space-y-3">
+                      {staff.tasks.map((task) => (
+                        <div key={task.id} className="p-3 border rounded-md hover:bg-accent/50 transition-colors">
+                          <div className="flex justify-between items-start">
+                            <div className="font-medium">{task.title}</div>
+                            <Badge 
+                              variant={
+                                task.priority === "High" ? "destructive" : 
+                                task.priority === "Medium" ? "default" : 
+                                "outline"
+                              }
+                            >
+                              {task.priority}
+                            </Badge>
+                          </div>
+                          <div className="text-sm text-muted-foreground mt-1">{task.description}</div>
+                          <div className="flex items-center justify-between mt-2 text-sm">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-2 h-2 rounded-full ${getCategoryColor(task.category || '1')}`}></div>
+                              <span>{getCategoryName(task.category || '1')}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3 w-3 text-muted-foreground" />
+                              <span>
+                                {task.due_date 
+                                  ? format(new Date(task.due_date), 'MMM dd, yyyy') 
+                                  : '-'}
+                                {task.due_time && ` ${task.due_time}`}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {getStatusIcon(task.status)}
+                              <span>{task.status}</span>
+                            </div>
+                          </div>
+                          <div className="flex justify-end mt-2 gap-2">
+                            {task.status !== 'Completed' && (
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => handleUpdateTaskStatus(task.id, 'Completed')}
+                              >
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                <T text="Complete" />
+                              </Button>
+                            )}
+                            <Button 
+                              variant="destructive" 
+                              size="sm" 
+                              onClick={() => handleDeleteTask(task.id)}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </div>
-                        <div className="text-sm text-muted-foreground mt-1">{task.description}</div>
-                        <div className="flex items-center justify-between mt-2 text-sm">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${getCategoryColor(task.category)}`}></div>
-                            <span>{getCategoryName(task.category)}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3 text-muted-foreground" />
-                            <span>{task.dueDate}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {getStatusIcon(task.status)}
-                            <span>{task.status}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="w-full mt-3" 
-                    onClick={() => {
-                      setNewTask({...newTask, assignedTo: String(staff.id)});
-                      setNewTaskDialogOpen(true);
-                    }}
-                  >
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    <T text="Add Task" />
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                      ))}
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="w-full mt-3" 
+                      onClick={() => {
+                        setNewTask({...newTask, staff_id: staff.id});
+                        setNewTaskDialogOpen(true);
+                      }}
+                    >
+                      <PlusCircle className="h-4 w-4 mr-2" />
+                      <T text="Add Task" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         </TabsContent>
         

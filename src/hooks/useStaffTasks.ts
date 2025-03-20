@@ -11,6 +11,7 @@ export type StaffTask = {
   priority: string;
   status: string;
   due_date: string | null;
+  due_time: string | null;
   completed_at: string | null;
 };
 

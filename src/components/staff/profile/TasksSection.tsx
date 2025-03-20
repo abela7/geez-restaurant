@@ -6,11 +6,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, DownloadIcon, Printer } from "lucide-react";
+import { PlusCircle, DownloadIcon, Printer, Clock } from "lucide-react";
 import TasksList from "@/components/staff/TasksList";
 import ErrorDisplay from "@/components/staff/ErrorDisplay";
 import { StaffTask } from "@/hooks/useStaffTasks";
 import { useLanguage, T } from "@/contexts/LanguageContext";
+import { format } from "date-fns";
 
 type TasksSectionProps = {
   staffId: string;
@@ -48,15 +49,34 @@ const TasksSection: React.FC<TasksSectionProps> = ({
     const description = formData.get('description') as string;
     const priority = formData.get('priority') as string;
     const dueDate = formData.get('dueDate') as string;
+    const dueTime = formData.get('dueTime') as string;
     
     try {
+      // Combine date and time if both are provided
+      let dueDateTime = null;
+      if (dueDate) {
+        const dateObj = new Date(dueDate);
+        
+        // If time is also provided, set it
+        if (dueTime) {
+          const [hours, minutes] = dueTime.split(':');
+          dateObj.setHours(parseInt(hours, 10), parseInt(minutes, 10));
+        } else {
+          // Default to end of day if no time specified
+          dateObj.setHours(23, 59, 59);
+        }
+        
+        dueDateTime = dateObj.toISOString();
+      }
+      
       const newTask = {
         staff_id: staffId,
         title,
         description,
         priority,
         status: 'Pending',
-        due_date: dueDate ? new Date(dueDate).toISOString() : null,
+        due_date: dueDateTime,
+        due_time: dueTime || null,
       };
       
       await addTask(newTask);
@@ -99,7 +119,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({
               <T text="Add Task" />
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle><T text="Assign New Task" /></DialogTitle>
               <DialogDescription>
@@ -157,8 +177,22 @@ const TasksSection: React.FC<TasksSectionProps> = ({
                     className="col-span-3"
                   />
                 </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="dueTime" className="text-right">
+                    <T text="Due Time" /> (optional)
+                  </Label>
+                  <Input
+                    id="dueTime"
+                    name="dueTime"
+                    type="time"
+                    className="col-span-3"
+                  />
+                </div>
               </div>
               <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setNewTaskDialog(false)}>
+                  <T text="Cancel" />
+                </Button>
                 <Button type="submit"><T text="Assign Task" /></Button>
               </DialogFooter>
             </form>

@@ -12,7 +12,9 @@ export const setupStorage = async () => {
     if (!staffImagesBucketExists) {
       // Create the staff_images bucket
       const { error } = await supabase.storage.createBucket('staff_images', {
-        public: true
+        public: true,
+        fileSizeLimit: 5242880, // 5MB
+        allowedMimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/gif']
       });
       
       if (error) {
@@ -20,6 +22,8 @@ export const setupStorage = async () => {
       }
       
       console.log('Created staff_images storage bucket');
+    } else {
+      console.log('staff_images bucket already exists');
     }
   } catch (error) {
     console.error('Error setting up storage buckets:', error);
