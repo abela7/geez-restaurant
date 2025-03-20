@@ -73,9 +73,13 @@ import Directory from "./pages/admin/staff/Directory";
 import Tasks from "./pages/admin/staff/Tasks";
 import Payroll from "./pages/admin/staff/Payroll";
 
+// General Settings Pages
+import General from "./pages/admin/general/General";
+import TableManagement from "./pages/admin/general/TableManagement";
+
 // Waiter Interface
 import WaiterDashboard from "./pages/waiter/WaiterDashboard";
-import TableManagement from "./pages/waiter/TableManagement";
+import TableManagementWaiter from "./pages/waiter/TableManagement";
 import OrderManagement from "./pages/waiter/OrderManagement";
 import PaymentProcessing from "./pages/waiter/PaymentProcessing";
 import WaiterTasks from "./pages/waiter/WaiterTasks";
@@ -160,6 +164,10 @@ const App = () => (
               <Route path="/admin/menu/pricing" element={<Pricing />} />
               <Route path="/admin/menu/design" element={<MenuDesign />} />
               
+              {/* General Settings */}
+              <Route path="/admin/general" element={<General />} />
+              <Route path="/admin/general/tables" element={<TableManagement />} />
+              
               {/* Tasks */}
               <Route path="/admin/tasks" element={<TaskManagement />} />
               
@@ -189,7 +197,7 @@ const App = () => (
               
               {/* Waiter Interface Routes */}
               <Route path="/waiter" element={<WaiterDashboard />} />
-              <Route path="/waiter/tables" element={<TableManagement />} />
+              <Route path="/waiter/tables" element={<TableManagementWaiter />} />
               <Route path="/waiter/orders" element={<OrderManagement />} />
               <Route path="/waiter/payments" element={<PaymentProcessing />} />
               <Route path="/waiter/tasks" element={<WaiterTasks />} />
