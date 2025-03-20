@@ -101,7 +101,7 @@ export const getTablesByRoom = async (roomId: string): Promise<Table[]> => {
     throw error;
   }
   
-  return (data || []) as any as Table[];
+  return (data || []) as any;
 };
 
 export const getTableById = async (id: string): Promise<Table | null> => {
