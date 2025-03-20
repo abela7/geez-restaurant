@@ -27,6 +27,8 @@ export interface InventoryTransaction {
   notes?: string;
   created_at: string;
   created_by?: string;
+  reference_id?: string;
+  reference_type?: string;
   ingredient?: {
     id: string;
     name: string;

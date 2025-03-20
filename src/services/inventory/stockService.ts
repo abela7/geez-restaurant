@@ -30,7 +30,7 @@ export const addStockItem = async (ingredient: Omit<Ingredient, 'id' | 'created_
   try {
     const { data, error } = await supabase
       .from("ingredients")
-      .insert(ingredient) // Remove the array brackets
+      .insert(ingredient)
       .select()
       .single();
 
@@ -166,7 +166,13 @@ export const getStockHistory = async (ingredientId: string): Promise<InventoryTr
       return [];
     }
 
-    return data || [];
+    // Cast the transaction_type to the expected enum type
+    const typedData = data?.map(item => ({
+      ...item,
+      transaction_type: item.transaction_type as 'purchase' | 'adjustment' | 'waste' | 'consumption'
+    }));
+
+    return typedData || [];
   } catch (error) {
     console.error("Unexpected error fetching stock history:", error);
     toast.error("An unexpected error occurred");
@@ -218,7 +224,13 @@ export const getStockAnalytics = async (): Promise<any> => {
       outOfStock: ingredients.filter(i => (i.stock_quantity || 0) === 0).length
     };
 
-    const transactionTypes = transactions.reduce((acc: {[key: string]: number}, tx) => {
+    // Ensure transaction_type is cast to the expected enum values
+    const typedTransactions = transactions.map(tx => ({
+      ...tx,
+      transaction_type: tx.transaction_type as 'purchase' | 'adjustment' | 'waste' | 'consumption'
+    }));
+
+    const transactionTypes = typedTransactions.reduce((acc: {[key: string]: number}, tx) => {
       acc[tx.transaction_type] = (acc[tx.transaction_type] || 0) + 1;
       return acc;
     }, {});
@@ -228,7 +240,7 @@ export const getStockAnalytics = async (): Promise<any> => {
       categoryCounts,
       stockStatus,
       transactionTypes,
-      recentTransactions: transactions.slice(0, 10)
+      recentTransactions: typedTransactions.slice(0, 10)
     };
   } catch (error) {
     console.error("Unexpected error generating analytics:", error);
