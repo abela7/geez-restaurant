@@ -21,8 +21,8 @@ const monthlyBudgetData = [
 ];
 
 const chartConfig = {
-  budget: { label: "Budget ($)", color: "#CDAF56" },
-  actual: { label: "Actual ($)", color: "#DAA520" },
+  budget: { label: "Budget (£)", color: "#CDAF56" },
+  actual: { label: "Actual (£)", color: "#DAA520" },
 };
 
 const BudgetOverview: React.FC = () => {
@@ -68,8 +68,8 @@ const BudgetOverview: React.FC = () => {
                 return (
                   <TableRow key={index}>
                     <TableCell className="font-medium">{month.month}</TableCell>
-                    <TableCell className="text-right">${month.budget.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">${month.actual.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">£{month.budget.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">£{month.actual.toLocaleString()}</TableCell>
                     <TableCell className={`text-right ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
                       {isPositive ? '+' : ''}{month.variance.toLocaleString()}
                     </TableCell>

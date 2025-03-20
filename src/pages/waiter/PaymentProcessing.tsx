@@ -63,21 +63,21 @@ const PaymentProcessing = () => {
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">{item.name}</TableCell>
                     <TableCell className="text-right">{item.quantity}</TableCell>
-                    <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">${item.subtotal.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">£{item.price.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">£{item.subtotal.toFixed(2)}</TableCell>
                   </TableRow>
                 ))}
                 <TableRow>
                   <TableCell colSpan={3} className="text-right font-medium"><T text="Subtotal" /></TableCell>
-                  <TableCell className="text-right font-medium">${subtotal.toFixed(2)}</TableCell>
+                  <TableCell className="text-right font-medium">£{subtotal.toFixed(2)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell colSpan={3} className="text-right font-medium"><T text="Tax (8%)" /></TableCell>
-                  <TableCell className="text-right">${tax.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">£{tax.toFixed(2)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell colSpan={3} className="text-right font-bold text-lg"><T text="Total" /></TableCell>
-                  <TableCell className="text-right font-bold text-lg">${total.toFixed(2)}</TableCell>
+                  <TableCell className="text-right font-bold text-lg">£{total.toFixed(2)}</TableCell>
                 </TableRow>
               </TableBody>
             </Table>
@@ -122,13 +122,13 @@ const PaymentProcessing = () => {
                   <div className="space-y-4">
                     <div>
                       <p className="text-sm font-medium mb-2"><T text="Amount Due" /></p>
-                      <p className="text-2xl font-bold">${total.toFixed(2)}</p>
+                      <p className="text-2xl font-bold">£{total.toFixed(2)}</p>
                     </div>
                     
                     <div>
                       <label className="text-sm font-medium mb-2 block"><T text="Amount Received" /></label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2">£</span>
                         <Input placeholder="0.00" className="pl-7" />
                       </div>
                     </div>
@@ -136,7 +136,7 @@ const PaymentProcessing = () => {
                     <div className="bg-muted rounded-md p-4">
                       <div className="flex justify-between items-center mb-2">
                         <p className="font-medium"><T text="Change Due" /></p>
-                        <p className="font-bold">$0.00</p>
+                        <p className="font-bold">£0.00</p>
                       </div>
                     </div>
                     
@@ -151,7 +151,7 @@ const PaymentProcessing = () => {
                   <div className="space-y-4">
                     <div>
                       <p className="text-sm font-medium mb-2"><T text="Amount to Charge" /></p>
-                      <p className="text-2xl font-bold">${total.toFixed(2)}</p>
+                      <p className="text-2xl font-bold">£{total.toFixed(2)}</p>
                     </div>
                     
                     <div className="bg-muted rounded-md p-4">
@@ -167,7 +167,7 @@ const PaymentProcessing = () => {
                     <div>
                       <label className="text-sm font-medium mb-2 block"><T text="Tip Amount (Optional)" /></label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2">£</span>
                         <Input placeholder="0.00" className="pl-7" />
                       </div>
                       <div className="grid grid-cols-3 gap-2 mt-2">
@@ -188,7 +188,7 @@ const PaymentProcessing = () => {
                   <div className="space-y-4">
                     <div>
                       <p className="text-sm font-medium mb-2"><T text="Amount to Process" /></p>
-                      <p className="text-2xl font-bold">${total.toFixed(2)}</p>
+                      <p className="text-2xl font-bold">£{total.toFixed(2)}</p>
                     </div>
                     
                     <div className="bg-muted rounded-md p-4 flex flex-col items-center justify-center text-center py-8">

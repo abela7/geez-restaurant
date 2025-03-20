@@ -39,9 +39,9 @@ const ForecastDetails: React.FC = () => {
           {monthlyForecasts.map((month, index) => (
             <TableRow key={index}>
               <TableCell className="font-medium">{month.month}</TableCell>
-              <TableCell className="text-right">${month.revenue.toLocaleString()}</TableCell>
-              <TableCell className="text-right">${month.expenses.toLocaleString()}</TableCell>
-              <TableCell className="text-right">${month.profit.toLocaleString()}</TableCell>
+              <TableCell className="text-right">£{month.revenue.toLocaleString()}</TableCell>
+              <TableCell className="text-right">£{month.expenses.toLocaleString()}</TableCell>
+              <TableCell className="text-right">£{month.profit.toLocaleString()}</TableCell>
               <TableCell className="text-right">{((month.profit / month.revenue) * 100).toFixed(1)}%</TableCell>
             </TableRow>
           ))}

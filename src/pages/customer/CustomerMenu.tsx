@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Layout from '@/components/Layout';
 import { useLanguage, T } from '@/contexts/LanguageContext';
@@ -407,7 +406,7 @@ const CustomerMenu: React.FC = () => {
                 </div>
                 
                 <div className="flex justify-between items-center mt-2">
-                  <div className="text-2xl font-bold">${selectedMenuItem.price.toFixed(2)}</div>
+                  <div className="text-2xl font-bold">£{selectedMenuItem.price.toFixed(2)}</div>
                   <Button>
                     <ShoppingCart className="mr-2 h-4 w-4" />
                     <T text="Add to Order" />
@@ -451,7 +450,7 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
           <CardTitle className="text-lg">
             {currentLanguage === 'en' ? item.name : item.amharic}
           </CardTitle>
-          <div className="text-lg font-bold">${item.price.toFixed(2)}</div>
+          <div className="text-lg font-bold">£{item.price.toFixed(2)}</div>
         </div>
       </CardHeader>
       <CardContent className="py-2">

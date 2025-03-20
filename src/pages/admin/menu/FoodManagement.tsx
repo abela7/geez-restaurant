@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -51,7 +50,6 @@ const FoodManagement = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddFoodDialog, setShowAddFoodDialog] = useState(false);
   
-  // New food item state
   const [newItem, setNewItem] = useState<Partial<FoodItem>>({
     name: "",
     description: "",
@@ -64,8 +62,7 @@ const FoodManagement = () => {
     is_gluten_free: false,
     is_spicy: false
   });
-  
-  // Load data when component mounts
+
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
@@ -84,8 +81,7 @@ const FoodManagement = () => {
     
     loadData();
   }, []);
-  
-  // Load food items from Supabase
+
   const loadFoodItems = async () => {
     try {
       const { data, error } = await supabase
@@ -108,8 +104,7 @@ const FoodManagement = () => {
       throw error;
     }
   };
-  
-  // Load categories from Supabase
+
   const loadCategories = async () => {
     try {
       const { data, error } = await supabase
@@ -125,36 +120,30 @@ const FoodManagement = () => {
       throw error;
     }
   };
-  
-  // Handle form input changes
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setNewItem(prev => ({ ...prev, [name]: value }));
   };
-  
-  // Handle numeric input changes with conversion to number
+
   const handleNumericChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setNewItem(prev => ({ ...prev, [name]: parseFloat(value) || 0 }));
   };
-  
-  // Handle switch/checkbox changes
+
   const handleSwitchChange = (name: string, checked: boolean) => {
     setNewItem(prev => ({ ...prev, [name]: checked }));
   };
-  
-  // Handle dropdown select changes
+
   const handleSelectChange = (name: string, value: string) => {
     setNewItem(prev => ({ ...prev, [name]: value }));
   };
-  
-  // Calculate profit margin
+
   const calculateProfitMargin = (price: number, cost: number): number => {
     if (!cost || cost === 0) return 0;
     return Math.round(((price - cost) / price) * 100);
   };
-  
-  // Add new food item
+
   const handleAddFoodItem = async () => {
     if (!newItem.name || !newItem.price) {
       toast.error("Name and price are required");
@@ -164,13 +153,11 @@ const FoodManagement = () => {
     try {
       setIsLoading(true);
       
-      // If cost is provided, calculate profit margin
       let profitMargin = null;
       if (newItem.cost && newItem.cost > 0) {
         profitMargin = calculateProfitMargin(newItem.price, newItem.cost);
       }
       
-      // Create a new object with the correct structure for Supabase
       const foodItemData = {
         name: newItem.name,
         description: newItem.description || null,
@@ -196,10 +183,8 @@ const FoodManagement = () => {
       
       toast.success("Food item added successfully");
       
-      // Reload food items
       await loadFoodItems();
       
-      // Reset form and close dialog
       setNewItem({
         name: "",
         description: "",
@@ -221,8 +206,7 @@ const FoodManagement = () => {
       setIsLoading(false);
     }
   };
-  
-  // Toggle food item availability
+
   const toggleFoodAvailability = async (id: string, currentStatus: boolean) => {
     try {
       setIsLoading(true);
@@ -234,7 +218,6 @@ const FoodManagement = () => {
       
       if (error) throw error;
       
-      // Update the local state
       setFoodItems(prev => 
         prev.map(item => 
           item.id === id ? { ...item, available: !currentStatus } : item
@@ -250,15 +233,13 @@ const FoodManagement = () => {
       setIsLoading(false);
     }
   };
-  
-  // Filter food items based on search query
+
   const filteredFoodItems = foodItems.filter(item => 
     item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (item.categoryName && item.categoryName.toLowerCase().includes(searchQuery.toLowerCase())) ||
     (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
-  
-  // Get unique category names for filter buttons
+
   const uniqueCategories = Array.from(new Set(foodItems.map(item => item.categoryName).filter(Boolean))) as string[];
 
   return (
@@ -501,14 +482,14 @@ const FoodManagement = () => {
                           {item.is_spicy && <Badge variant="secondary" className="bg-red-100 text-red-800"><T text="Spicy" /></Badge>}
                         </div>
                       </div>
-                      <div className="text-lg font-bold">${(item.price || 0).toFixed(2)}</div>
+                      <div className="text-lg font-bold">£{(item.price || 0).toFixed(2)}</div>
                     </div>
                     <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{item.description}</p>
                     
                     <div className="flex justify-between items-center mb-3">
                       <div className="flex items-center text-sm text-muted-foreground">
                         <DollarSign className="h-4 w-4 mr-1" />
-                        <T text="Cost" />: ${(item.cost || 0).toFixed(2)} | 
+                        <T text="Cost" />: £{(item.cost || 0).toFixed(2)} | 
                         <T text="Margin" />: {item.profit_margin || 0}%
                       </div>
                     </div>

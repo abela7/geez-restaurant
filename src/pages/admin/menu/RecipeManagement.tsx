@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -28,7 +27,6 @@ const RecipeManagement = () => {
   const [ingredients, setIngredients] = useState([]);
   const [recipeIngredients, setRecipeIngredients] = useState([]);
   
-  // Form states
   const [newRecipeName, setNewRecipeName] = useState("");
   const [newRecipeServes, setNewRecipeServes] = useState(2);
   const [newRecipeCategory, setNewRecipeCategory] = useState("");
@@ -39,7 +37,6 @@ const RecipeManagement = () => {
   
   const foodId = searchParams.get("foodId");
   
-  // Load data from Supabase
   useEffect(() => {
     const loadInitialData = async () => {
       try {
@@ -60,7 +57,6 @@ const RecipeManagement = () => {
     loadInitialData();
   }, [foodId]);
   
-  // Load recipes data from Supabase
   const loadRecipes = async () => {
     try {
       const { data, error } = await supabase
@@ -99,13 +95,11 @@ const RecipeManagement = () => {
       
       setRecipes(formattedRecipes);
       
-      // If a foodId is provided, find the corresponding recipe and select it
       if (foodId) {
         const recipe = formattedRecipes.find(r => r.foodItemId === foodId);
         if (recipe) {
           setSelectedRecipe(recipe);
           setActiveTab("ingredients");
-          // Load recipe ingredients
           loadRecipeIngredients(recipe.id);
         }
       }
@@ -116,7 +110,6 @@ const RecipeManagement = () => {
     }
   };
   
-  // Load ingredients data from Supabase
   const loadIngredients = async () => {
     try {
       const { data, error } = await supabase
@@ -125,7 +118,6 @@ const RecipeManagement = () => {
       
       if (error) throw error;
       
-      // Notice we're not trying to access 'cost' here since it doesn't exist in the database
       setIngredients(data.map(ingredient => ({
         id: ingredient.id,
         name: ingredient.name,
@@ -140,7 +132,6 @@ const RecipeManagement = () => {
     }
   };
   
-  // Load menu categories from Supabase
   const loadMenuCategories = async () => {
     try {
       const { data, error } = await supabase
@@ -158,7 +149,6 @@ const RecipeManagement = () => {
     }
   };
   
-  // Fetch recipe ingredients when a recipe is selected
   const loadRecipeIngredients = async (recipeId) => {
     try {
       setIsLoading(true);
@@ -196,7 +186,6 @@ const RecipeManagement = () => {
     }
   };
   
-  // Handle creating a new recipe
   const handleCreateRecipe = async () => {
     if (!newRecipeName || !newRecipeServes) {
       toast.error('Please enter recipe name and servings');
@@ -206,17 +195,15 @@ const RecipeManagement = () => {
     try {
       setIsLoading(true);
       
-      // First, check if this is connected to a food item
       let foodItemId = null;
       
       if (newRecipeCategory) {
-        // Find or create a food item for this recipe
         const { data: foodItem, error: foodItemError } = await supabase
           .from('food_items')
           .insert({
             name: newRecipeName,
             category_id: newRecipeCategory,
-            price: 0, // Default values since this is just for recipe tracking
+            price: 0,
             cost: 0,
             available: true
           })
@@ -227,7 +214,6 @@ const RecipeManagement = () => {
         foodItemId = foodItem.id;
       }
       
-      // Then create the recipe
       const { data, error } = await supabase
         .from('recipes')
         .insert({
@@ -244,13 +230,12 @@ const RecipeManagement = () => {
       
       toast.success('Recipe created successfully');
       
-      // Update local state
       const newRecipe = {
         id: data.id,
         name: data.name,
         foodItemId: data.food_item_id,
         foodName: data.name,
-        category: "Uncategorized", // We'll need to fetch this in the reload
+        category: "Uncategorized",
         serves: data.serves,
         totalCost: data.total_cost,
         costPerServing: data.cost_per_serving
@@ -258,18 +243,14 @@ const RecipeManagement = () => {
       
       setRecipes([...recipes, newRecipe]);
       
-      // Reset form
       setNewRecipeName("");
       setNewRecipeServes(2);
       setNewRecipeCategory("");
       
-      // Select the new recipe
       setSelectedRecipe(newRecipe);
       setActiveTab("ingredients");
       
-      // Reload all recipes to get the complete data
       await loadRecipes();
-      
     } catch (error) {
       console.error('Error creating recipe:', error);
       toast.error('Failed to create recipe');
@@ -278,7 +259,6 @@ const RecipeManagement = () => {
     }
   };
   
-  // Handle adding an ingredient to the recipe
   const handleAddIngredient = async () => {
     if (!selectedRecipe || !newIngredientId || !newIngredientQuantity) {
       toast.error('Please select an ingredient and enter quantity');
@@ -288,13 +268,10 @@ const RecipeManagement = () => {
     try {
       setIsLoading(true);
       
-      // We'll calculate the cost based on the quantity and a fixed unit price
-      // since the ingredients table doesn't have a cost field
       const quantity = parseFloat(newIngredientQuantity);
-      const unitPrice = 10; // Default unit price in dollars per kg/liter/unit
+      const unitPrice = 10;
       const ingredientCost = quantity * unitPrice;
       
-      // Add the ingredient to the recipe
       const { data, error } = await supabase
         .from('recipe_ingredients')
         .insert({
@@ -311,17 +288,13 @@ const RecipeManagement = () => {
       
       toast.success('Ingredient added to recipe');
       
-      // Update the recipe's total cost
       await updateRecipeCost(selectedRecipe.id);
       
-      // Reload ingredients for this recipe
       await loadRecipeIngredients(selectedRecipe.id);
       
-      // Reset form
       setNewIngredientId("");
       setNewIngredientQuantity("");
       setNewIngredientUnit("kg");
-      
     } catch (error) {
       console.error('Error adding ingredient:', error);
       toast.error('Failed to add ingredient');
@@ -330,10 +303,8 @@ const RecipeManagement = () => {
     }
   };
   
-  // Update the recipe's total cost and cost per serving
   const updateRecipeCost = async (recipeId) => {
     try {
-      // Get all ingredients for this recipe
       const { data, error } = await supabase
         .from('recipe_ingredients')
         .select('cost')
@@ -341,17 +312,13 @@ const RecipeManagement = () => {
       
       if (error) throw error;
       
-      // Calculate total cost
       const totalCost = data.reduce((sum, item) => sum + (item.cost || 0), 0);
       
-      // Get recipe servings
       const recipe = recipes.find(r => r.id === recipeId);
       const serves = recipe?.serves || 1;
       
-      // Calculate cost per serving
       const costPerServing = totalCost / serves;
       
-      // Update the recipe
       const { error: updateError } = await supabase
         .from('recipes')
         .update({
@@ -362,7 +329,6 @@ const RecipeManagement = () => {
       
       if (updateError) throw updateError;
       
-      // Update local state
       setRecipes(recipes.map(r => 
         r.id === recipeId 
           ? { ...r, totalCost, costPerServing } 
@@ -376,13 +342,11 @@ const RecipeManagement = () => {
           costPerServing
         });
       }
-      
     } catch (error) {
       console.error('Error updating recipe cost:', error);
     }
   };
   
-  // Handle removing an ingredient from the recipe
   const handleRemoveIngredient = async (ingredientId) => {
     if (!selectedRecipe || !ingredientId) return;
     
@@ -398,12 +362,9 @@ const RecipeManagement = () => {
       
       toast.success('Ingredient removed from recipe');
       
-      // Update the recipe's total cost
       await updateRecipeCost(selectedRecipe.id);
       
-      // Reload ingredients for this recipe
       await loadRecipeIngredients(selectedRecipe.id);
-      
     } catch (error) {
       console.error('Error removing ingredient:', error);
       toast.error('Failed to remove ingredient');
@@ -550,8 +511,8 @@ const RecipeManagement = () => {
                         <TableRow key={recipe.id}>
                           <TableCell className="font-medium">{recipe.name}</TableCell>
                           <TableCell>{recipe.category}</TableCell>
-                          <TableCell>${recipe.totalCost ? recipe.totalCost.toFixed(2) : '0.00'}</TableCell>
-                          <TableCell>${recipe.costPerServing ? recipe.costPerServing.toFixed(2) : '0.00'}</TableCell>
+                          <TableCell>£{recipe.totalCost ? recipe.totalCost.toFixed(2) : '0.00'}</TableCell>
+                          <TableCell>£{recipe.costPerServing ? recipe.costPerServing.toFixed(2) : '0.00'}</TableCell>
                           <TableCell className="text-right">
                             <Button 
                               variant="ghost" 
@@ -678,7 +639,7 @@ const RecipeManagement = () => {
                               <TableCell className="font-medium">{ingredient.name}</TableCell>
                               <TableCell>{ingredient.quantity}</TableCell>
                               <TableCell>{ingredient.unit}</TableCell>
-                              <TableCell>${ingredient.cost ? ingredient.cost.toFixed(2) : '0.00'}</TableCell>
+                              <TableCell>£{ingredient.cost ? ingredient.cost.toFixed(2) : '0.00'}</TableCell>
                               <TableCell className="text-right">
                                 <div className="flex justify-end gap-2">
                                   <Button 

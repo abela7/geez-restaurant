@@ -58,12 +58,12 @@ const RevenueBudget: React.FC<RevenueBudgetProps> = ({ editingMode }) => {
                       className="w-28 text-right ml-auto"
                     />
                   ) : (
-                    `$${category.budget.toLocaleString()}`
+                    `£${category.budget.toLocaleString()}`
                   )}
                 </TableCell>
-                <TableCell className="text-right">${category.actual.toLocaleString()}</TableCell>
+                <TableCell className="text-right">£{category.actual.toLocaleString()}</TableCell>
                 <TableCell className={`text-right ${isOverBudget ? 'text-green-600' : ''}`}>
-                  ${remaining.toLocaleString()}
+                  £{remaining.toLocaleString()}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
@@ -92,14 +92,14 @@ const RevenueBudget: React.FC<RevenueBudgetProps> = ({ editingMode }) => {
                   disabled
                 />
               ) : (
-                `$${revenueBudgetData.reduce((acc, curr) => acc + curr.budget, 0).toLocaleString()}`
+                `£${revenueBudgetData.reduce((acc, curr) => acc + curr.budget, 0).toLocaleString()}`
               )}
             </TableCell>
             <TableCell className="text-right font-bold">
-              ${revenueBudgetData.reduce((acc, curr) => acc + curr.actual, 0).toLocaleString()}
+              £{revenueBudgetData.reduce((acc, curr) => acc + curr.actual, 0).toLocaleString()}
             </TableCell>
             <TableCell className="text-right font-bold">
-              ${(revenueBudgetData.reduce((acc, curr) => acc + curr.budget, 0) - 
+              £{(revenueBudgetData.reduce((acc, curr) => acc + curr.budget, 0) - 
                 revenueBudgetData.reduce((acc, curr) => acc + curr.actual, 0)).toLocaleString()}
             </TableCell>
             <TableCell>
