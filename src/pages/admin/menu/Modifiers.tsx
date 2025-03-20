@@ -22,12 +22,16 @@ interface ModifierOption {
   name: string;
   price: number;
   modifier_group_id: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface ModifierGroup {
   id: string;
   name: string;
   required: boolean;
+  created_at?: string;
+  updated_at?: string;
   options?: ModifierOption[];
 }
 
@@ -64,7 +68,17 @@ const Modifiers = () => {
       
       if (error) throw error;
       
-      for (const group of data) {
+      const groups: ModifierGroup[] = data.map(group => ({
+        id: group.id,
+        name: group.name,
+        required: group.required,
+        created_at: group.created_at,
+        updated_at: group.updated_at,
+        options: []
+      }));
+      
+      // Load options for each group
+      for (const group of groups) {
         const { data: options, error: optionsError } = await supabase
           .from('modifier_options')
           .select('*')
@@ -72,10 +86,10 @@ const Modifiers = () => {
         
         if (optionsError) throw optionsError;
         
-        group.options = options;
+        group.options = options as ModifierOption[];
       }
       
-      setModifierGroups(data);
+      setModifierGroups(groups);
     } catch (error) {
       console.error('Error loading modifier groups:', error);
       toast.error('Failed to load modifier groups');
@@ -97,7 +111,7 @@ const Modifiers = () => {
       
       const updatedGroups = modifierGroups.map(group => {
         if (group.id === groupId) {
-          return { ...group, options: data };
+          return { ...group, options: data as ModifierOption[] };
         }
         return group;
       });
@@ -145,7 +159,14 @@ const Modifiers = () => {
       
       if (error) throw error;
       
-      const newGroupWithOptions = { ...data, options: [] };
+      const newGroupWithOptions: ModifierGroup = {
+        id: data.id,
+        name: data.name,
+        required: data.required,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        options: []
+      };
       
       setModifierGroups([...modifierGroups, newGroupWithOptions]);
       

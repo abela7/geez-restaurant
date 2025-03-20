@@ -448,6 +448,65 @@ export type Database = {
         }
         Relationships: []
       }
+      modifier_groups: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          required: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          required?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          required?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      modifier_options: {
+        Row: {
+          created_at: string | null
+          id: string
+          modifier_group_id: string | null
+          name: string
+          price: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          modifier_group_id?: string | null
+          name: string
+          price?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          modifier_group_id?: string | null
+          name?: string
+          price?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modifier_options_modifier_group_id_fkey"
+            columns: ["modifier_group_id"]
+            isOneToOne: false
+            referencedRelation: "modifier_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       monthly_budgets: {
         Row: {
           actual_amount: number | null
@@ -617,6 +676,47 @@ export type Database = {
             columns: ["table_id"]
             isOneToOne: false
             referencedRelation: "restaurant_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      price_history: {
+        Row: {
+          change_date: string | null
+          created_at: string | null
+          food_item_id: string | null
+          id: string
+          new_price: number
+          old_price: number
+          reason: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          change_date?: string | null
+          created_at?: string | null
+          food_item_id?: string | null
+          id?: string
+          new_price: number
+          old_price: number
+          reason?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          change_date?: string | null
+          created_at?: string | null
+          food_item_id?: string | null
+          id?: string
+          new_price?: number
+          old_price?: number
+          reason?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_history_food_item_id_fkey"
+            columns: ["food_item_id"]
+            isOneToOne: false
+            referencedRelation: "food_items"
             referencedColumns: ["id"]
           },
         ]
