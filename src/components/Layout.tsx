@@ -22,17 +22,15 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'admin' }) => {
-  // Set default sidebar state to closed
+  // Sidebar is closed by default
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
   const location = useLocation();
   
   useEffect(() => {
-    // Close sidebar when location changes on mobile
-    if (isMobile) {
-      setSidebarOpen(false);
-    }
-  }, [location, isMobile]);
+    // Close sidebar when location changes
+    setSidebarOpen(false);
+  }, [location]);
   
   const toggleSidebar = () => {
     setSidebarOpen(prev => !prev);
@@ -65,10 +63,10 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Overlay for mobile sidebar */}
-      {sidebarOpen && isMobile && (
+      {/* Overlay for sidebar */}
+      {sidebarOpen && (
         <div
-          className="fixed inset-0 z-20 bg-black/60 md:hidden"
+          className="fixed inset-0 z-20 bg-black/60"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -76,48 +74,18 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
       {/* Sidebar - fixed position with transform to hide/show */}
       <div 
         className={cn(
-          "fixed left-0 top-0 h-screen z-30",
-          "transition-transform duration-300 ease-in-out",
+          "fixed left-0 top-0 h-screen z-30 transition-transform duration-300 ease-in-out",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <MainSidebar open={sidebarOpen} onToggle={toggleSidebar} interface={userInterface} />
       </div>
       
-      {/* Main content - full width since sidebar is now overlay style */}
+      {/* Main content */}
       <div className="flex-1 flex flex-col w-full transition-all duration-300">
-        <div className="sticky top-0 z-10 bg-background border-b border-border">
-          <div className="flex items-center h-16 px-4">
-            <div className="flex-1">
-              <Header toggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} interface={userInterface} />
-            </div>
-          </div>
-        </div>
+        <Header toggleSidebar={toggleSidebar} interface={userInterface} />
         
-        {location.pathname !== '/' && (
-          <div className="px-4 md:px-6 py-2 bg-background/50 border-b border-border/50">
-            <Breadcrumb>
-              <BreadcrumbList className="flex-wrap">
-                {breadcrumbs.map((crumb, index) => (
-                  <React.Fragment key={crumb.path}>
-                    {index > 0 && <BreadcrumbSeparator />}
-                    <BreadcrumbItem>
-                      {index === breadcrumbs.length - 1 ? (
-                        <BreadcrumbPage><T text={crumb.label} /></BreadcrumbPage>
-                      ) : (
-                        <BreadcrumbLink asChild>
-                          <Link to={crumb.path}><T text={crumb.label} /></Link>
-                        </BreadcrumbLink>
-                      )}
-                    </BreadcrumbItem>
-                  </React.Fragment>
-                ))}
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-        )}
-        
-        <main className="flex-1 p-4 md:p-6 overflow-auto">
+        <main className="flex-1 overflow-auto p-4 md:p-6">
           {children}
         </main>
         

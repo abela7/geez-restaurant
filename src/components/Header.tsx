@@ -7,99 +7,71 @@ import { Bell, Menu, Search, User } from 'lucide-react';
 import { Input } from './ui/input';
 import { useLanguage, T } from '@/contexts/LanguageContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 interface HeaderProps {
   toggleSidebar: () => void;
-  sidebarOpen?: boolean;
   interface?: 'admin' | 'waiter' | 'kitchen' | 'customer' | 'system';
 }
 
 const Header: React.FC<HeaderProps> = ({ 
   toggleSidebar, 
-  sidebarOpen = false,
   interface: userInterface = 'admin' 
 }) => {
   const { t } = useLanguage();
   
   return (
-    <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
-      <div className="flex h-16 items-center px-4 md:px-6">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost" 
-                size="icon"
-                className="mr-4 size-9 shrink-0 border border-border hover:bg-primary hover:text-primary-foreground"
-                onClick={toggleSidebar}
-                aria-label={t("Toggle sidebar")}
-              >
-                <Menu className="size-5" />
-                <span className="sr-only">{t("Toggle sidebar")}</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <T text="Toggle Menu" />
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        
+    <header className="border-b border-border bg-background z-10 px-4 md:px-6 h-16 flex items-center">
+      <div className="flex items-center w-full">
         <div className="flex items-center space-x-4">
-          <h2 className="text-lg font-medium">
-            <T text={
-              userInterface === 'admin' ? 'Admin Portal' :
-              userInterface === 'waiter' ? 'Waiter Interface' :
-              userInterface === 'kitchen' ? 'Kitchen Staff Interface' :
-              userInterface === 'customer' ? 'Customer Interface' :
-              'System Administration'
-            } />
-          </h2>
+          <Button
+            variant="ghost" 
+            size="icon"
+            className="mr-2 size-9 shrink-0 hover:bg-muted"
+            onClick={toggleSidebar}
+            aria-label={t("Toggle sidebar")}
+          >
+            <Menu className="size-5" />
+            <span className="sr-only">{t("Toggle sidebar")}</span>
+          </Button>
+          
+          <div className="hidden sm:flex items-center border-l border-border pl-4 ml-2">
+            <h2 className="text-lg font-medium">
+              <T text={
+                userInterface === 'admin' ? 'Admin Portal' :
+                userInterface === 'waiter' ? 'Waiter Interface' :
+                userInterface === 'kitchen' ? 'Kitchen Staff Interface' :
+                userInterface === 'customer' ? 'Customer Interface' :
+                'System Administration'
+              } />
+            </h2>
+          </div>
         </div>
         
         <div className="ml-auto flex items-center space-x-2 md:space-x-4">
-          <div className="hidden md:flex relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <div className="relative hidden md:flex">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
               placeholder={t("Search...")}
-              className="w-64 pl-9 rounded-full bg-muted"
+              className="w-64 pl-10 rounded-full bg-muted/50"
             />
           </div>
           
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="icon" className="size-9 relative">
-                  <Bell className="size-5" />
-                  <span className="sr-only">{t("Notifications")}</span>
-                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
-                    2
-                  </span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <T text="Notifications" />
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Button variant="ghost" size="icon" className="size-9 relative">
+            <Bell className="size-5" />
+            <span className="sr-only">{t("Notifications")}</span>
+            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-medium text-white">
+              2
+            </span>
+          </Button>
 
           <ThemeSwitcher />
           <LanguageSwitcher />
           
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="icon" className="size-9 relative">
-                  <User className="size-5" />
-                  <span className="sr-only">{t("User menu")}</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <T text="User Menu" />
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Button variant="ghost" size="icon" className="size-9 relative ml-1">
+            <User className="size-5" />
+            <span className="sr-only">{t("User menu")}</span>
+          </Button>
         </div>
       </div>
     </header>

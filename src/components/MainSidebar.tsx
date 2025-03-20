@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -40,8 +39,8 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
         className={cn(
           "flex items-center px-3 py-2.5 my-1 rounded-md transition-colors",
           isActive 
-            ? "bg-primary text-primary-foreground font-medium" 
-            : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            ? "bg-amber-500 text-white font-medium" 
+            : "hover:bg-muted"
         )}
         onClick={hasDropdown ? onClick : undefined}
       >
@@ -76,7 +75,7 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({ items, isOpen, isExpanded, 
   if (!isOpen || !isExpanded) return null;
   
   return (
-    <div className="ml-8 pl-2 border-l border-sidebar-border">
+    <div className="ml-8 pl-2 border-l border-border/50">
       {items.map((item) => (
         <Link
           key={item.to}
@@ -84,8 +83,8 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({ items, isOpen, isExpanded, 
           className={cn(
             "block px-3 py-1.5 my-1 rounded-md text-sm transition-colors",
             location.pathname === `${parentPath}/${item.to}` 
-              ? "bg-primary/80 text-primary-foreground"
-              : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              ? "bg-amber-500/80 text-white"
+              : "hover:bg-muted"
           )}
         >
           <T text={item.label} />
@@ -110,7 +109,6 @@ export const MainSidebar: React.FC<{
   const location = useLocation();
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const { t } = useLanguage();
-  const isMobile = useIsMobile();
   const [collapsed, setCollapsed] = useState(false);
 
   const toggleSection = (e: React.MouseEvent, section: string) => {
@@ -312,115 +310,97 @@ export const MainSidebar: React.FC<{
 
   return (
     <div className={cn(
-      "h-full flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border",
+      "h-full flex flex-col bg-white text-gray-800 border-r border-gray-200",
       sidebarWidth,
       "transition-all duration-300 ease-in-out"
     )}>
-      <div className="p-4 flex justify-between items-center h-16 border-b border-sidebar-border">
-        <div className="text-xl font-bold text-amber-500 flex-1 text-center">
-          {!collapsed ? "Habesha" : "H"}
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={toggleCollapse}
-            variant="ghost"
-            size="icon"
-            className="w-8 h-8 hover:bg-amber-100 hover:text-amber-800"
-            aria-label={t(collapsed ? "Expand sidebar" : "Collapse sidebar")}
-          >
-            {collapsed ? <PanelRight size={18} /> : <PanelLeft size={18} />}
-          </Button>
+      <div className="flex flex-col h-full">
+        <div className="p-4 h-16 flex items-center justify-between border-b border-gray-200">
+          <Link to="/" className="text-xl font-bold text-amber-500">
+            {!collapsed ? "Habesha" : "H"}
+          </Link>
           
-          <Button
-            onClick={onToggle}
-            variant="ghost"
-            size="icon"
-            className="w-8 h-8 hover:bg-amber-100 hover:text-amber-800"
-            aria-label={t("Close sidebar")}
-          >
-            <X size={18} />
-          </Button>
-        </div>
-      </div>
-      
-      <div className="flex-1 py-4 px-2 overflow-y-auto">
-        <div className="mb-4 px-3 py-1">
-          {!collapsed && (
-            <h2 className="text-xs uppercase font-semibold text-sidebar-foreground/70">
-              <T text={interfaceType === 'admin' ? 'Administrative Portal' : 
-                      interfaceType === 'waiter' ? 'Waiter Interface' :
-                      interfaceType === 'kitchen' ? 'Kitchen Staff Interface' :
-                      interfaceType === 'customer' ? 'Customer Interface' :
-                      'System Administration'} />
-            </h2>
-          )}
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={toggleCollapse}
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8 hover:bg-gray-100"
+              aria-label={t(collapsed ? "Expand sidebar" : "Collapse sidebar")}
+            >
+              {collapsed ? <PanelRight size={18} /> : <PanelLeft size={18} />}
+            </Button>
+          </div>
         </div>
         
-        <nav className="space-y-0.5">
-          {interfaceType === 'admin' ? (
-            adminSections.map((section: NavSection) => (
-              <React.Fragment key={section.path}>
-                <SidebarLink
-                  to={section.submenu ? '#' : section.path}
-                  icon={section.icon}
-                  label={section.label}
-                  isActive={
-                    section.submenu 
-                      ? location.pathname.startsWith(section.path) 
-                      : location.pathname === section.path
-                  }
-                  isOpen={!collapsed}
-                  hasDropdown={!!section.submenu}
-                  isExpanded={expandedSections.includes(section.path)}
-                  onClick={(e) => section.submenu ? toggleSection(e, section.path) : undefined}
-                />
-                {section.submenu && (
-                  <DropdownMenu 
-                    items={section.submenu} 
-                    isOpen={!collapsed} 
+        <div className="px-4 py-3 uppercase text-xs font-semibold text-gray-500">
+          {!collapsed && <span><T text="ADMINISTRATIVE PORTAL" /></span>}
+        </div>
+        
+        <div className="flex-1 py-2 overflow-y-auto">
+          <nav className="px-2">
+            {interfaceType === 'admin' ? (
+              adminSections.map((section: NavSection) => (
+                <React.Fragment key={section.path}>
+                  <SidebarLink
+                    to={section.submenu ? '#' : section.path}
+                    icon={section.icon}
+                    label={section.label}
+                    isActive={
+                      section.submenu 
+                        ? location.pathname.startsWith(section.path) 
+                        : location.pathname === section.path
+                    }
+                    isOpen={!collapsed}
+                    hasDropdown={!!section.submenu}
                     isExpanded={expandedSections.includes(section.path)}
-                    parentPath={section.path}
+                    onClick={(e) => section.submenu ? toggleSection(e, section.path) : undefined}
                   />
-                )}
-              </React.Fragment>
-            ))
+                  {section.submenu && (
+                    <DropdownMenu 
+                      items={section.submenu} 
+                      isOpen={!collapsed} 
+                      isExpanded={expandedSections.includes(section.path)}
+                      parentPath={section.path}
+                    />
+                  )}
+                </React.Fragment>
+              ))
+            ) : (
+              navSections.map((link: any) => (
+                <SidebarLink
+                  key={link.to}
+                  to={link.to}
+                  icon={link.icon}
+                  label={link.label}
+                  isActive={location.pathname === link.to}
+                  isOpen={!collapsed}
+                />
+              ))
+            )}
+          </nav>
+        </div>
+        
+        <div className="border-t border-gray-200 p-4">
+          {!collapsed ? (
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                <User className="h-4 w-4 text-gray-600" />
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <p className="text-sm font-medium leading-none truncate">Admin User</p>
+                <p className="text-xs text-gray-500 truncate">admin@restaurant.com</p>
+              </div>
+              <LogOut className="h-4 w-4 text-gray-500 hover:text-gray-700 cursor-pointer" />
+            </div>
           ) : (
-            navSections.map((link: any) => (
-              <SidebarLink
-                key={link.to}
-                to={link.to}
-                icon={link.icon}
-                label={link.label}
-                isActive={location.pathname === link.to}
-                isOpen={!collapsed}
-              />
-            ))
+            <div className="flex justify-center">
+              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                <User className="h-4 w-4 text-gray-600" />
+              </div>
+            </div>
           )}
-        </nav>
-      </div>
-      
-      <div className="border-t p-3">
-        {!collapsed ? (
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-              <User className="h-4 w-4" />
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <p className="text-sm font-medium leading-none truncate">Admin User</p>
-              <p className="text-xs text-muted-foreground truncate">admin@restaurant.com</p>
-            </div>
-            <button className="text-muted-foreground hover:text-foreground">
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
-        ) : (
-          <div className="flex justify-center">
-            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-              <User className="h-4 w-4" />
-            </div>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );
