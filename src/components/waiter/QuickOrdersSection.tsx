@@ -7,13 +7,16 @@ import { useQuickOrders, QuickOrder } from "@/hooks/useQuickOrders";
 import { QuickOrderCard } from './QuickOrderCard';
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
+import { SearchX } from "lucide-react";
 
 interface QuickOrdersSectionProps {
   onAddToOrder?: (order: QuickOrder) => void;
+  compact?: boolean;
 }
 
 export const QuickOrdersSection: React.FC<QuickOrdersSectionProps> = ({ 
-  onAddToOrder 
+  onAddToOrder,
+  compact = false
 }) => {
   const { t } = useLanguage();
   const { orders, isLoading, error } = useQuickOrders();
@@ -47,16 +50,26 @@ export const QuickOrdersSection: React.FC<QuickOrdersSectionProps> = ({
   
   if (error) {
     return (
-      <Card className="p-4 h-64 flex justify-center items-center">
-        <div className="text-destructive">
-          <T text="Failed to load quick orders" />
-        </div>
+      <Card className="p-4 h-64 flex justify-center items-center text-destructive">
+        <T text="Failed to load quick orders" />
+      </Card>
+    );
+  }
+
+  if (!orders || orders.length === 0) {
+    return (
+      <Card className="p-6 flex flex-col items-center justify-center">
+        <SearchX className="h-12 w-12 text-muted-foreground mb-2" />
+        <h3 className="font-medium text-lg mb-1"><T text="No Orders Available" /></h3>
+        <p className="text-muted-foreground text-center">
+          <T text="There are currently no quick orders available." />
+        </p>
       </Card>
     );
   }
   
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden border-border">
       <div className="p-4 border-b">
         <h3 className="font-medium text-lg"><T text="Quick Orders" /></h3>
       </div>
@@ -65,7 +78,7 @@ export const QuickOrdersSection: React.FC<QuickOrdersSectionProps> = ({
         <Tabs defaultValue="All">
           <TabsList className="mb-4 flex overflow-auto hide-scrollbar">
             {categories.map(category => (
-              <TabsTrigger key={category} value={category}>
+              <TabsTrigger key={category} value={category} className="whitespace-nowrap">
                 {t(category)}
               </TabsTrigger>
             ))}
@@ -73,8 +86,8 @@ export const QuickOrdersSection: React.FC<QuickOrdersSectionProps> = ({
           
           {categories.map(category => (
             <TabsContent key={category} value={category}>
-              <ScrollArea className="h-[calc(100vh-400px)]">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-1">
+              <ScrollArea className={compact ? "h-[300px]" : "h-[calc(100vh-400px)]"}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-1">
                   {orders
                     .filter(order => category === 'All' || order.category === category)
                     .map(order => (
