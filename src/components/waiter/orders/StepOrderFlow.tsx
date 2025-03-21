@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { OrderStep } from '@/hooks/useOrderManagement';
+import { OrderStep } from '@/types/order';
 import { ArrowLeft, ArrowRight, Store, Users, Utensils, ClipboardList, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage, T } from '@/contexts/LanguageContext';

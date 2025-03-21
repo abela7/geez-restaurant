@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -7,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Minus, Plus, Trash2, CheckCircle, Printer } from "lucide-react";
-import { OrderItem } from "@/hooks/useOrderManagement";
+import { OrderItem } from "@/types/order";
 
 interface OrderReviewStepProps {
   orderItems: OrderItem[];

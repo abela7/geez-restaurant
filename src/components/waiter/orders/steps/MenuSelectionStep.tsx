@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Search, Tag, Plus, Minus, X } from "lucide-react";
 import { FoodItem } from "@/hooks/useMenuItems";
-import { OrderItem } from "@/hooks/useOrderManagement";
+import { OrderItem } from "@/types/order";
 import { QuickOrdersSection } from "@/components/waiter/QuickOrdersSection";
 import { QuickOrder } from "@/hooks/useQuickOrders";
 

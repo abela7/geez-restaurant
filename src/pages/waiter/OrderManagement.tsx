@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -83,7 +82,6 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
 
   const isLoading = isLoadingMenu || isLoadingTables;
 
-  // Render content based on current step
   const renderStepContent = () => {
     switch(currentStep) {
       case "order-type":
