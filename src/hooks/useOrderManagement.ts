@@ -11,9 +11,17 @@ export interface OrderItem {
   special_instructions?: string;
 }
 
+export type OrderStep = 
+  | "order-type" 
+  | "table-selection" 
+  | "customer-info" 
+  | "menu-selection" 
+  | "order-review" 
+  | "confirmation";
+
 export const useOrderManagement = () => {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
-  const [orderType, setOrderType] = useState("dine-in");
+  const [orderType, setOrderType] = useState<"dine-in" | "takeout" | "delivery">("dine-in");
   const [selectedTable, setSelectedTable] = useState<string>("");
   const [customerName, setCustomerName] = useState("");
   const [customerCount, setCustomerCount] = useState<string>("1");
@@ -21,6 +29,78 @@ export const useOrderManagement = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  
+  // Step-by-step flow
+  const [currentStep, setCurrentStep] = useState<OrderStep>("order-type");
+
+  const goToNextStep = () => {
+    switch (currentStep) {
+      case "order-type":
+        if (orderType === "dine-in") {
+          setCurrentStep("table-selection");
+        } else {
+          setCurrentStep("customer-info");
+        }
+        break;
+      case "table-selection":
+        if (!selectedTable) {
+          toast.error("Please select a table");
+          return;
+        }
+        setCurrentStep("customer-info");
+        break;
+      case "customer-info":
+        setCurrentStep("menu-selection");
+        break;
+      case "menu-selection":
+        if (orderItems.length === 0) {
+          toast.error("Please add items to the order");
+          return;
+        }
+        setCurrentStep("order-review");
+        break;
+      case "order-review":
+        setCurrentStep("confirmation");
+        break;
+      default:
+        break;
+    }
+  };
+
+  const goToPreviousStep = () => {
+    switch (currentStep) {
+      case "table-selection":
+        setCurrentStep("order-type");
+        break;
+      case "customer-info":
+        if (orderType === "dine-in") {
+          setCurrentStep("table-selection");
+        } else {
+          setCurrentStep("order-type");
+        }
+        break;
+      case "menu-selection":
+        setCurrentStep("customer-info");
+        break;
+      case "order-review":
+        setCurrentStep("menu-selection");
+        break;
+      case "confirmation":
+        setCurrentStep("order-review");
+        break;
+      default:
+        break;
+    }
+  };
+
+  const resetOrder = () => {
+    setOrderItems([]);
+    setSelectedTable("");
+    setCustomerName("");
+    setCustomerCount("1");
+    setSpecialInstructions("");
+    setCurrentStep("order-type");
+  };
 
   const handleAddToOrder = (foodItem: FoodItem) => {
     const existingItem = orderItems.find(item => item.foodItem.id === foodItem.id);
@@ -136,6 +216,7 @@ export const useOrderManagement = () => {
       }
       
       toast.success("Order created successfully!");
+      resetOrder();
       return order.id;
       
     } catch (error) {
@@ -167,6 +248,13 @@ export const useOrderManagement = () => {
     setSearchQuery,
     selectedCategory,
     setSelectedCategory,
+    
+    // Step management
+    currentStep,
+    setCurrentStep,
+    goToNextStep,
+    goToPreviousStep,
+    resetOrder,
     
     // Order actions
     handleAddToOrder,

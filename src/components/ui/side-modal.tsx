@@ -14,6 +14,8 @@ interface SideModalProps {
   children: React.ReactNode
   className?: string
   width?: "sm" | "md" | "lg" | "xl" | "full"
+  showCloseButton?: boolean
+  fullScreenOnMobile?: boolean
 }
 
 export function SideModal({
@@ -24,6 +26,8 @@ export function SideModal({
   children,
   className,
   width = "md",
+  showCloseButton = true,
+  fullScreenOnMobile = false,
 }: SideModalProps) {
   const isMobile = useIsMobile()
   
@@ -42,21 +46,24 @@ export function SideModal({
         className={cn(
           "pt-6 flex flex-col h-full p-0 gap-0 border-l", 
           widthClasses[width],
+          fullScreenOnMobile && isMobile ? "w-full max-w-full" : "",
           className
         )}
       >
         <SheetHeader className="px-6 py-4 border-b">
           <div className="flex items-center justify-between w-full">
             <SheetTitle className="text-xl font-semibold">{title}</SheetTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-full"
-              onClick={() => onOpenChange(false)}
-            >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </Button>
+            {showCloseButton && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+                onClick={() => onOpenChange(false)}
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close</span>
+              </Button>
+            )}
           </div>
           {description && (
             <p className="text-sm text-muted-foreground">{description}</p>
