@@ -15,7 +15,6 @@ import { TableSelectionStep } from "@/components/waiter/orders/steps/TableSelect
 import { CustomerInfoStep } from "@/components/waiter/orders/steps/CustomerInfoStep";
 import { MenuSelectionStep } from "@/components/waiter/orders/steps/MenuSelectionStep";
 import { OrderReviewStep } from "@/components/waiter/orders/steps/OrderReviewStep";
-import { ConfirmationStep } from "@/components/waiter/orders/steps/ConfirmationStep";
 
 interface OrderManagementProps {
   newOrder?: boolean;
@@ -98,6 +97,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
           <OrderTypeStep
             orderType={orderType}
             setOrderType={setOrderType}
+            goToNextStep={goToNextStep}
           />
         );
       case 'table-selection':
@@ -106,6 +106,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
             tables={tables}
             selectedTable={selectedTable}
             setSelectedTable={setSelectedTable}
+            goToNextStep={goToNextStep}
           />
         );
       case 'customer-info':
@@ -116,6 +117,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
             setCustomerName={setCustomerName}
             customerCount={customerCount}
             setCustomerCount={setCustomerCount}
+            goToNextStep={goToNextStep}
           />
         );
       case 'menu-selection':
@@ -147,19 +149,6 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
             specialInstructions={specialInstructions}
             setSpecialInstructions={setSpecialInstructions}
             calculateTotal={calculateTotal}
-          />
-        );
-      case 'confirmation':
-        return (
-          <ConfirmationStep
-            orderItems={orderItems}
-            orderType={orderType}
-            selectedTable={selectedTable}
-            tables={tables}
-            customerName={customerName}
-            customerCount={customerCount}
-            specialInstructions={specialInstructions}
-            calculateTotal={calculateTotal}
             handleSubmitOrder={submitOrder}
             isSubmitting={isSubmitting}
           />
@@ -187,20 +176,22 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
             <>
               {renderStepContent()}
               
-              <div className="mt-6">
-                <StepOrderFlow
-                  currentStep={currentStep}
-                  goToNextStep={goToNextStep}
-                  goToPreviousStep={goToPreviousStep}
-                  isSubmitting={isSubmitting}
-                  canProceed={
-                    (currentStep !== 'table-selection' || selectedTable) &&
-                    (currentStep !== 'menu-selection' || orderItems.length > 0)
-                  }
-                  isLastStep={currentStep === 'confirmation'}
-                  onSubmit={submitOrder}
-                />
-              </div>
+              {currentStep !== 'order-review' && (
+                <div className="mt-6">
+                  <StepOrderFlow
+                    currentStep={currentStep}
+                    goToNextStep={goToNextStep}
+                    goToPreviousStep={goToPreviousStep}
+                    isSubmitting={isSubmitting}
+                    canProceed={
+                      (currentStep !== 'table-selection' || selectedTable) &&
+                      (currentStep !== 'menu-selection' || orderItems.length > 0)
+                    }
+                    isLastStep={currentStep === 'order-review'}
+                    onSubmit={submitOrder}
+                  />
+                </div>
+              )}
             </>
           )}
         </div>

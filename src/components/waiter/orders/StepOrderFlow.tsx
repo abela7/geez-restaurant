@@ -35,7 +35,6 @@ export const StepOrderFlow: React.FC<StepOrderFlowProps> = ({
     { id: 'customer-info', label: t('Customer'), icon: <Users className="h-4 w-4" /> },
     { id: 'menu-selection', label: t('Menu Items'), icon: <Utensils className="h-4 w-4" /> },
     { id: 'order-review', label: t('Review'), icon: <ClipboardList className="h-4 w-4" /> },
-    { id: 'confirmation', label: t('Confirm'), icon: <CheckCircle className="h-4 w-4" /> },
   ];
 
   const currentStepIndex = steps.findIndex(step => step.id === currentStep);
@@ -48,6 +47,9 @@ export const StepOrderFlow: React.FC<StepOrderFlowProps> = ({
     }
     return true;
   });
+  
+  // Hide navigation buttons on the review step since it has its own buttons
+  const showNavButtons = currentStep !== 'order-review';
 
   return (
     <div className="w-full">
@@ -92,41 +94,43 @@ export const StepOrderFlow: React.FC<StepOrderFlowProps> = ({
         </div>
       )}
 
-      {/* Navigation Buttons */}
-      <div className="flex justify-between mt-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={goToPreviousStep}
-          disabled={currentStep === 'order-type' || isSubmitting}
-          className="flex items-center"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          <T text="Back" />
-        </Button>
+      {/* Navigation Buttons - only show when not in review step */}
+      {showNavButtons && (
+        <div className="flex justify-between mt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={goToPreviousStep}
+            disabled={currentStep === 'order-type' || isSubmitting}
+            className="flex items-center"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            <T text="Back" />
+          </Button>
 
-        {isLastStep ? (
-          <Button
-            type="button"
-            onClick={onSubmit}
-            disabled={!canProceed || isSubmitting}
-            className="flex items-center"
-          >
-            <CheckCircle className="h-4 w-4 mr-2" />
-            <T text="Place Order" />
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            onClick={goToNextStep}
-            disabled={!canProceed || isSubmitting}
-            className="flex items-center"
-          >
-            <T text="Next" />
-            <ArrowRight className="h-4 w-4 ml-2" />
-          </Button>
-        )}
-      </div>
+          {isLastStep ? (
+            <Button
+              type="button"
+              onClick={onSubmit}
+              disabled={!canProceed || isSubmitting}
+              className="flex items-center"
+            >
+              <CheckCircle className="h-4 w-4 mr-2" />
+              <T text="Place Order" />
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              onClick={goToNextStep}
+              disabled={!canProceed || isSubmitting}
+              className="flex items-center"
+            >
+              <T text="Next" />
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

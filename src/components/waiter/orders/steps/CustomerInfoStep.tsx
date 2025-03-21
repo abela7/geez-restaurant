@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,6 +12,7 @@ interface CustomerInfoStepProps {
   setCustomerName: (name: string) => void;
   customerCount: string;
   setCustomerCount: (count: string) => void;
+  goToNextStep: () => void;
 }
 
 export const CustomerInfoStep: React.FC<CustomerInfoStepProps> = ({
@@ -19,9 +20,28 @@ export const CustomerInfoStep: React.FC<CustomerInfoStepProps> = ({
   customerName,
   setCustomerName,
   customerCount,
-  setCustomerCount
+  setCustomerCount,
+  goToNextStep
 }) => {
   const { t } = useLanguage();
+  const [isReady, setIsReady] = useState(false);
+  
+  const handleCustomerCountChange = (value: string) => {
+    setCustomerCount(value);
+    // If we have a value, mark as ready for auto-navigation
+    setIsReady(true);
+  };
+  
+  // For takeout/delivery, auto-continue after a short delay
+  useEffect(() => {
+    if (orderType !== "dine-in" || isReady) {
+      const timer = setTimeout(() => {
+        goToNextStep();
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [orderType, isReady, goToNextStep]);
   
   return (
     <Card>
@@ -51,7 +71,7 @@ export const CustomerInfoStep: React.FC<CustomerInfoStepProps> = ({
               <label className="text-sm font-medium mb-1 block">
                 <T text="Number of Guests" />
               </label>
-              <Select value={customerCount} onValueChange={setCustomerCount}>
+              <Select value={customerCount} onValueChange={handleCustomerCountChange}>
                 <SelectTrigger>
                   <SelectValue placeholder={t("Select guest count")} />
                 </SelectTrigger>

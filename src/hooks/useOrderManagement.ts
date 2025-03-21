@@ -9,6 +9,7 @@ export interface OrderItem {
   foodItem: FoodItem;
   quantity: number;
   special_instructions?: string;
+  modifiers?: any[];
 }
 
 export type OrderStep = 
@@ -16,8 +17,7 @@ export type OrderStep =
   | "table-selection" 
   | "customer-info" 
   | "menu-selection" 
-  | "order-review" 
-  | "confirmation";
+  | "order-review";
 
 export const useOrderManagement = () => {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
@@ -59,9 +59,6 @@ export const useOrderManagement = () => {
         }
         setCurrentStep("order-review");
         break;
-      case "order-review":
-        setCurrentStep("confirmation");
-        break;
       default:
         break;
     }
@@ -85,9 +82,6 @@ export const useOrderManagement = () => {
       case "order-review":
         setCurrentStep("menu-selection");
         break;
-      case "confirmation":
-        setCurrentStep("order-review");
-        break;
       default:
         break;
     }
@@ -102,8 +96,12 @@ export const useOrderManagement = () => {
     setCurrentStep("order-type");
   };
 
-  const handleAddToOrder = (foodItem: FoodItem) => {
-    const existingItem = orderItems.find(item => item.foodItem.id === foodItem.id);
+  const handleAddToOrder = (foodItem: FoodItem, specialInstructions = "", modifiers = []) => {
+    const existingItem = orderItems.find(item => 
+      item.foodItem.id === foodItem.id && 
+      item.special_instructions === specialInstructions &&
+      JSON.stringify(item.modifiers || []) === JSON.stringify(modifiers)
+    );
     
     if (existingItem) {
       setOrderItems(prevItems => 
@@ -119,7 +117,9 @@ export const useOrderManagement = () => {
         { 
           id: crypto.randomUUID(), 
           foodItem, 
-          quantity: 1 
+          quantity: 1,
+          special_instructions: specialInstructions || undefined,
+          modifiers: modifiers.length > 0 ? modifiers : undefined
         }
       ]);
     }
@@ -146,7 +146,15 @@ export const useOrderManagement = () => {
 
   const calculateTotal = () => {
     return orderItems.reduce((total, item) => {
-      return total + (item.foodItem.price * item.quantity);
+      let itemTotal = item.foodItem.price * item.quantity;
+      
+      // Add modifier prices if any
+      if (item.modifiers && item.modifiers.length > 0) {
+        const modifierTotal = item.modifiers.reduce((sum, mod) => sum + (mod.price || 0), 0);
+        itemTotal += modifierTotal * item.quantity;
+      }
+      
+      return total + itemTotal;
     }, 0);
   };
 
@@ -187,7 +195,8 @@ export const useOrderManagement = () => {
         quantity: item.quantity,
         unit_price: item.foodItem.price,
         total_price: item.foodItem.price * item.quantity,
-        special_instructions: item.special_instructions || null
+        special_instructions: item.special_instructions || null,
+        modifiers: item.modifiers || null
       }));
       
       const { error: itemsError } = await supabase

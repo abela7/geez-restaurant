@@ -9,11 +9,13 @@ import { cn } from '@/lib/utils';
 interface OrderTypeStepProps {
   orderType: string;
   setOrderType: (type: "dine-in" | "takeout" | "delivery") => void;
+  goToNextStep: () => void;
 }
 
 export const OrderTypeStep: React.FC<OrderTypeStepProps> = ({
   orderType,
-  setOrderType
+  setOrderType,
+  goToNextStep
 }) => {
   const { t } = useLanguage();
   
@@ -22,6 +24,12 @@ export const OrderTypeStep: React.FC<OrderTypeStepProps> = ({
     { id: 'takeout', label: t('Takeout'), icon: <Store className="h-5 w-5 mb-2" /> },
     { id: 'delivery', label: t('Delivery'), icon: <Truck className="h-5 w-5 mb-2" /> },
   ];
+  
+  const handleOrderTypeSelect = (type: "dine-in" | "takeout" | "delivery") => {
+    setOrderType(type);
+    // Auto-navigate to the next step after selection
+    setTimeout(() => goToNextStep(), 300);
+  };
   
   return (
     <Card>
@@ -39,7 +47,7 @@ export const OrderTypeStep: React.FC<OrderTypeStepProps> = ({
                 "flex flex-col items-center justify-center h-24 p-2",
                 orderType === type.id && "border-primary bg-primary/10 text-primary"
               )}
-              onClick={() => setOrderType(type.id as "dine-in" | "takeout" | "delivery")}
+              onClick={() => handleOrderTypeSelect(type.id as "dine-in" | "takeout" | "delivery")}
             >
               {type.icon}
               <span>{type.label}</span>

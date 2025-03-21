@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useLanguage, T } from "@/contexts/LanguageContext";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Minus, Plus, Trash2, CheckCircle, Printer } from "lucide-react";
 import { OrderItem } from "@/hooks/useOrderManagement";
 
 interface OrderReviewStepProps {
@@ -27,6 +27,8 @@ interface OrderReviewStepProps {
   specialInstructions: string;
   setSpecialInstructions: (instructions: string) => void;
   calculateTotal: () => number;
+  handleSubmitOrder: () => void;
+  isSubmitting: boolean;
 }
 
 export const OrderReviewStep: React.FC<OrderReviewStepProps> = ({
@@ -40,7 +42,9 @@ export const OrderReviewStep: React.FC<OrderReviewStepProps> = ({
   customerCount,
   specialInstructions,
   setSpecialInstructions,
-  calculateTotal
+  calculateTotal,
+  handleSubmitOrder,
+  isSubmitting
 }) => {
   const { t } = useLanguage();
   
@@ -111,6 +115,9 @@ export const OrderReviewStep: React.FC<OrderReviewStepProps> = ({
                       <span className="font-medium">{item.foodItem.name}</span>
                       <span className="font-bold">${(item.foodItem.price * item.quantity).toFixed(2)}</span>
                     </div>
+                    {item.special_instructions && (
+                      <p className="text-sm text-muted-foreground mt-1">Note: {item.special_instructions}</p>
+                    )}
                     <div className="flex items-center gap-2 mt-1">
                       <Button
                         variant="outline"
@@ -167,6 +174,27 @@ export const OrderReviewStep: React.FC<OrderReviewStepProps> = ({
           />
         </CardContent>
       </Card>
+      
+      <div className="flex flex-col gap-3">
+        <Button 
+          onClick={handleSubmitOrder}
+          disabled={isSubmitting}
+          size="lg"
+          className="w-full"
+        >
+          {isSubmitting ? (
+            <div className="animate-spin h-5 w-5 border-2 border-current border-t-transparent rounded-full mr-2" />
+          ) : (
+            <CheckCircle className="h-5 w-5 mr-2" />
+          )}
+          <T text="Place Order" />
+        </Button>
+        
+        <Button variant="outline" className="w-full">
+          <Printer className="h-5 w-5 mr-2" />
+          <T text="Print Receipt" />
+        </Button>
+      </div>
     </div>
   );
 };
