@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -14,7 +15,7 @@ import { TableSelectionStep } from "@/components/waiter/orders/steps/TableSelect
 import { CustomerInfoStep } from "@/components/waiter/orders/steps/CustomerInfoStep";
 import { MenuSelectionStep } from "@/components/waiter/orders/steps/MenuSelectionStep";
 import { OrderReviewStep } from "@/components/waiter/orders/steps/OrderReviewStep";
-import { OrderStep } from "@/types/order";
+import { OrderStep, OrderType } from "@/types/order";
 
 interface OrderManagementProps {
   newOrder?: boolean;
