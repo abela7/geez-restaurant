@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -26,13 +25,9 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   
-  // Load menu items and categories
   const { menuItems, categories, isLoading: isLoadingMenu } = useMenuItems();
-  
-  // Load tables
   const { tables, isLoading: isLoadingTables } = useTables();
   
-  // Order management state and functions
   const {
     orderItems,
     orderType,
@@ -60,7 +55,6 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
     handleSubmitOrder
   } = useOrderManagement();
 
-  // Handle form submission
   const submitOrder = async () => {
     const orderId = await handleSubmitOrder();
     if (orderId) {
@@ -68,9 +62,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
     }
   };
 
-  // Handle adding from quick orders component
   const handleQuickOrderAdd = (quickOrder: QuickOrder) => {
-    // Create a food item from quick order
     const foodItem = {
       id: quickOrder.id,
       name: quickOrder.name,
@@ -89,7 +81,6 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
 
   const isLoading = isLoadingMenu || isLoadingTables;
 
-  // Render appropriate content based on current step
   const renderStepContent = () => {
     switch(currentStep) {
       case 'order-type':
@@ -176,7 +167,6 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
             <>
               {renderStepContent()}
               
-              {/* Now the TypeScript error should be fixed since "order-review" is part of the OrderStep type */}
               {currentStep !== 'order-review' && (
                 <div className="mt-6">
                   <StepOrderFlow
