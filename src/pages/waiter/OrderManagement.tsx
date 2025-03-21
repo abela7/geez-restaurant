@@ -15,6 +15,7 @@ import { TableSelectionStep } from "@/components/waiter/orders/steps/TableSelect
 import { CustomerInfoStep } from "@/components/waiter/orders/steps/CustomerInfoStep";
 import { MenuSelectionStep } from "@/components/waiter/orders/steps/MenuSelectionStep";
 import { OrderReviewStep } from "@/components/waiter/orders/steps/OrderReviewStep";
+import { OrderStep } from "@/types/order";
 
 interface OrderManagementProps {
   newOrder?: boolean;
@@ -82,9 +83,10 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
 
   const isLoading = isLoadingMenu || isLoadingTables;
 
+  // Render content based on current step
   const renderStepContent = () => {
     switch(currentStep) {
-      case 'order-type':
+      case "order-type":
         return (
           <OrderTypeStep
             orderType={orderType}
@@ -92,7 +94,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
             goToNextStep={goToNextStep}
           />
         );
-      case 'table-selection':
+      case "table-selection":
         return (
           <TableSelectionStep
             tables={tables}
@@ -101,7 +103,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
             goToNextStep={goToNextStep}
           />
         );
-      case 'customer-info':
+      case "customer-info":
         return (
           <CustomerInfoStep
             orderType={orderType}
@@ -112,7 +114,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
             goToNextStep={goToNextStep}
           />
         );
-      case 'menu-selection':
+      case "menu-selection":
         return (
           <MenuSelectionStep
             menuItems={menuItems}
@@ -127,7 +129,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
             handleQuickOrderAdd={handleQuickOrderAdd}
           />
         );
-      case 'order-review':
+      case "order-review":
         return (
           <OrderReviewStep
             orderItems={orderItems}
@@ -168,7 +170,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
             <>
               {renderStepContent()}
               
-              {currentStep !== 'order-review' && (
+              {currentStep !== "order-review" && (
                 <div className="mt-6">
                   <StepOrderFlow
                     currentStep={currentStep}
@@ -176,10 +178,10 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
                     goToPreviousStep={goToPreviousStep}
                     isSubmitting={isSubmitting}
                     canProceed={
-                      (currentStep !== 'table-selection' || selectedTable) &&
-                      (currentStep !== 'menu-selection' || orderItems.length > 0)
+                      (currentStep !== "table-selection" || selectedTable) &&
+                      (currentStep !== "menu-selection" || orderItems.length > 0)
                     }
-                    isLastStep={currentStep === 'order-review'}
+                    isLastStep={currentStep === "order-review"}
                     onSubmit={submitOrder}
                   />
                 </div>

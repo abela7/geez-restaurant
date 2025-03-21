@@ -1,26 +1,13 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { FoodItem } from "./useMenuItems";
 import { toast } from "sonner";
-
-export interface OrderItem {
-  id: string;
-  foodItem: FoodItem;
-  quantity: number;
-  special_instructions?: string;
-  modifiers?: any[];
-}
-
-export type OrderStep = 
-  | "order-type" 
-  | "table-selection" 
-  | "customer-info" 
-  | "menu-selection" 
-  | "order-review";
+import { OrderItem, OrderStep, OrderType } from "@/types/order";
 
 export const useOrderManagement = () => {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
-  const [orderType, setOrderType] = useState<"dine-in" | "takeout" | "delivery">("dine-in");
+  const [orderType, setOrderType] = useState<OrderType>("dine-in");
   const [selectedTable, setSelectedTable] = useState<string>("");
   const [customerName, setCustomerName] = useState("");
   const [customerCount, setCustomerCount] = useState<string>("1");
