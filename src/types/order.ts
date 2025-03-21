@@ -21,8 +21,24 @@ export interface OrderItem {
     is_gluten_free: boolean;
     is_spicy: boolean;
     categoryName?: string;
+    preparation_time?: number;
   };
   quantity: number;
   special_instructions?: string;
   modifiers?: any[];
+  status?: string;
+}
+
+export interface Order {
+  id: string;
+  table_id?: string;
+  customer_name?: string;
+  order_type: OrderType;
+  status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
+  total_amount: number;
+  created_at: string;
+  updated_at: string;
+  notes?: string;
+  server_id?: string;
+  items?: OrderItem[];
 }

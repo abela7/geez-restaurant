@@ -2,6 +2,7 @@
 import { Route, Routes } from "react-router-dom";
 
 import KitchenDashboard from "../pages/kitchen/KitchenDashboard";
+import OrderProcessing from "../pages/kitchen/OrderProcessing";
 import RecipeViewer from "../pages/kitchen/RecipeViewer";
 import InventoryCheck from "../pages/kitchen/InventoryCheck";
 import KitchenTasks from "../pages/kitchen/KitchenTasks";
@@ -11,6 +12,7 @@ const KitchenRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<KitchenDashboard />} />
+      <Route path="/orders" element={<OrderProcessing />} />
       <Route path="/recipes" element={<RecipeViewer />} />
       <Route path="/inventory" element={<InventoryCheck />} />
       <Route path="/tasks" element={<KitchenTasks />} />
