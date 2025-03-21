@@ -2,266 +2,222 @@
 import React, { useState } from "react";
 import Layout from "@/components/Layout";
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { useLanguage, T } from "@/contexts/LanguageContext";
-import { useTheme } from "@/components/ThemeProvider";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { supabase } from "@/integrations/supabase/client";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { 
-  ClipboardCheck, 
-  ThermometerSun, 
-  AlertTriangle, 
-  RotateCw, 
-  Clock, 
-  CheckCircle2,
-  CalendarDays,
-  Utensils
-} from "lucide-react";
+import { useLanguage, T } from "@/contexts/LanguageContext";
+import { Plus, CheckCircle2, CheckCircle, AlertTriangle, Thermometer, Clock, ListChecks } from "lucide-react";
 
-// Import the components from the food-safety folder
-import ChecklistCard from "@/components/food-safety/ChecklistCard";
-import ChecklistForm from "@/components/food-safety/ChecklistForm";
-import ChecklistComplianceCard from "@/components/food-safety/ChecklistComplianceCard";
-import ChecklistPendingCard from "@/components/food-safety/ChecklistPendingCard";
+// Simple representation of a checklist template
+interface ChecklistTemplate {
+  id: string;
+  name: string;
+  frequency: string;
+  role: string;
+  required_time?: string;
+}
 
-// Import related hooks
-import { ChecklistTemplate, useChecklistTemplates } from "@/hooks/useChecklistTemplates";
-import { useChecklistLogs } from "@/hooks/useChecklistLogs";
-import useStaffMembers from "@/hooks/useStaffMembers";
+// Simple representation of a temperature log
+interface TemperatureLog {
+  id: string;
+  location: string;
+  temperature: number;
+  recorded_at: string;
+  recorded_by: string;
+  status: 'safe' | 'warning' | 'critical';
+}
 
 const KitchenFoodSafety = () => {
   const { t } = useLanguage();
-  const { theme } = useTheme();
-  const isMobile = useIsMobile();
-  const [activeTab, setActiveTab] = useState("checklists");
-  const [activeTemplate, setActiveTemplate] = useState<ChecklistTemplate | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("checklists");
   
-  // Fetch food safety data
-  const { data: templates = [], isLoading: isLoadingTemplates } = useChecklistTemplates("kitchen");
-  const { data: staffMembers = [] } = useStaffMembers();
-  const { data: logs = [], isLoading: isLoadingLogs } = useChecklistLogs();
+  // Query for checklists
+  const { data: checklists = [], isLoading: checklistsLoading } = useQuery({
+    queryKey: ["food-safety-checklists"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("checklist_templates")
+        .select("*")
+        .eq("role", "kitchen")
+        .order("name");
+        
+      if (error) throw error;
+      return data as ChecklistTemplate[];
+    },
+  });
   
-  // Get the current user's staff ID (this would come from auth in a real implementation)
-  const currentStaffId = staffMembers.length > 0 ? staffMembers[0].id : "";
+  // Temperature logs would be fetched from a real table in a complete implementation
+  // Here we're using mock data for demonstration
+  const temperatureLogs: TemperatureLog[] = [
+    {
+      id: "1",
+      location: "Walk-in Refrigerator",
+      temperature: 3.2,
+      recorded_at: new Date().toISOString(),
+      recorded_by: "Kitchen Staff",
+      status: "safe"
+    },
+    {
+      id: "2",
+      location: "Freezer",
+      temperature: -18.4,
+      recorded_at: new Date().toISOString(),
+      recorded_by: "Kitchen Staff",
+      status: "safe"
+    },
+    {
+      id: "3",
+      location: "Food Warming Station",
+      temperature: 58.1,
+      recorded_at: new Date().toISOString(),
+      recorded_by: "Kitchen Staff",
+      status: "warning"
+    }
+  ];
   
-  // Get last completed date for each template
-  const getLastCompletedAt = (templateId: string) => {
-    const templateLogs = logs.filter(log => log.template_id === templateId);
-    if (templateLogs.length === 0) return null;
-    
-    return templateLogs.sort((a, b) => 
-      new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()
-    )[0].completed_at;
+  const startChecklist = (checklist: ChecklistTemplate) => {
+    // In a real app, this would navigate to a dedicated checklist completion page
+    toast.info(`Starting ${checklist.name} checklist`);
   };
   
-  // Determine pending checklists (ones that should be done today but aren't)
-  const getPendingChecklists = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    return templates.filter(template => {
-      const lastCompletedAt = getLastCompletedAt(template.id);
-      if (!lastCompletedAt) return true;
-      
-      const lastCompleted = new Date(lastCompletedAt);
-      lastCompleted.setHours(0, 0, 0, 0);
-      
-      return lastCompleted.getTime() !== today.getTime();
-    });
+  const recordTemperature = () => {
+    // In a real app, this would open a form to record a new temperature
+    toast.info("Temperature recording form will be implemented soon");
   };
   
-  const pendingChecklists = getPendingChecklists();
-  
-  const handleStartChecklist = (template: ChecklistTemplate) => {
-    setActiveTemplate(template);
+  const renderStatusBadge = (status: 'safe' | 'warning' | 'critical') => {
+    switch (status) {
+      case 'safe':
+        return <Badge variant="outline" className="bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400">
+          <CheckCircle className="h-3.5 w-3.5 mr-1" />{t("Safe")}
+        </Badge>;
+      case 'warning':
+        return <Badge variant="outline" className="bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400">
+          <AlertTriangle className="h-3.5 w-3.5 mr-1" />{t("Warning")}
+        </Badge>;
+      case 'critical':
+        return <Badge variant="destructive">
+          <AlertTriangle className="h-3.5 w-3.5 mr-1" />{t("Critical")}
+        </Badge>;
+    }
   };
-  
-  const handleCompleteChecklist = () => {
-    setActiveTemplate(null);
-    toast.success(t("Checklist completed successfully"));
-  };
-  
-  if (isLoadingTemplates || isLoadingLogs) {
+
+  if (checklistsLoading) {
     return (
       <Layout interface="kitchen">
         <div className="p-4 flex justify-center items-center h-[70vh]">
-          <RotateCw className="h-8 w-8 animate-spin text-primary" />
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
         </div>
       </Layout>
     );
   }
-  
-  if (activeTemplate) {
-    return (
-      <Layout interface="kitchen">
-        <div className="p-4">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setActiveTemplate(null)}
-            className="mb-4"
-          >
-            ← <T text="Back to checklists" />
-          </Button>
-          
-          <h1 className="text-xl font-semibold mb-4">{activeTemplate.name}</h1>
-          
-          <ChecklistForm
-            template={activeTemplate}
-            staffId={currentStaffId}
-            onComplete={handleCompleteChecklist}
-          />
-        </div>
-      </Layout>
-    );
-  }
-  
+
   return (
     <Layout interface="kitchen">
       <div className="p-4">
         <Tabs defaultValue="checklists" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-2 mb-4">
-            <TabsTrigger value="checklists">
-              <ClipboardCheck className="h-4 w-4 mr-1.5" />
+          <TabsList className="w-full mb-4">
+            <TabsTrigger value="checklists" className="flex-1">
+              <ListChecks className="h-4 w-4 mr-2" />
               <T text="Checklists" />
             </TabsTrigger>
-            <TabsTrigger value="temperature">
-              <ThermometerSun className="h-4 w-4 mr-1.5" />
+            <TabsTrigger value="temperature" className="flex-1">
+              <Thermometer className="h-4 w-4 mr-2" />
               <T text="Temperature Logs" />
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="checklists" className="space-y-4">
-            {pendingChecklists.length > 0 && (
-              <ChecklistPendingCard pendingChecklists={pendingChecklists} />
-            )}
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {templates.length > 0 ? (
-                templates.map((template) => (
-                  <ChecklistCard
-                    key={template.id}
-                    template={template}
-                    lastCompletedAt={getLastCompletedAt(template.id)}
-                    onStartChecklist={() => handleStartChecklist(template)}
-                  />
-                ))
-              ) : (
-                <Card className="col-span-full">
-                  <CardContent className="p-6 text-center">
-                    <AlertTriangle className="mx-auto h-8 w-8 text-muted-foreground mb-2 opacity-50" />
-                    <p className="text-muted-foreground">
-                      <T text="No checklists found for kitchen staff" />
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+          <TabsContent value="checklists" className="mt-0">
+            <div className="flex justify-end mb-4">
+              <Button variant="outline" size="sm" className="flex items-center gap-1.5">
+                <Clock className="h-4 w-4" />
+                <T text="View Completed" />
+              </Button>
             </div>
+            
+            <ScrollArea className="h-[calc(100vh-200px)]">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {checklists.map((checklist) => (
+                  <Card key={checklist.id}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-medium text-base">{checklist.name}</h3>
+                          <div className="text-sm text-muted-foreground mt-1">
+                            <span className="capitalize">{checklist.frequency}</span>
+                            {checklist.required_time && (
+                              <span className="ml-2">• {checklist.required_time}</span>
+                            )}
+                          </div>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => startChecklist(checklist)}
+                          className="flex items-center gap-1.5"
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                          <T text="Start" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </ScrollArea>
           </TabsContent>
           
-          <TabsContent value="temperature" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg font-medium">
-                  <T text="Temperature Monitoring" />
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="border rounded-md p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center">
-                        <Utensils className="h-5 w-5 mr-2 text-primary" />
-                        <h3 className="font-medium"><T text="Refrigerator #1" /></h3>
-                      </div>
-                      <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400">
-                        <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                        <T text="Normal" />
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span><T text="Current" /></span>
-                      <span className="font-medium">2.1°C</span>
-                    </div>
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                      <span><T text="Target Range" /></span>
-                      <span>1-4°C</span>
-                    </div>
-                    <div className="mt-3 flex items-center text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3 mr-1" />
-                      <span><T text="Last checked: 30 minutes ago" /></span>
-                    </div>
-                  </div>
-                  
-                  <div className="border rounded-md p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center">
-                        <Utensils className="h-5 w-5 mr-2 text-primary" />
-                        <h3 className="font-medium"><T text="Freezer #1" /></h3>
-                      </div>
-                      <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400">
-                        <AlertTriangle className="h-3.5 w-3.5 mr-1" />
-                        <T text="Warning" />
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span><T text="Current" /></span>
-                      <span className="font-medium text-amber-600 dark:text-amber-400">-15.8°C</span>
-                    </div>
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                      <span><T text="Target Range" /></span>
-                      <span>-18 to -22°C</span>
-                    </div>
-                    <div className="mt-3 flex items-center text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3 mr-1" />
-                      <span><T text="Last checked: 1 hour ago" /></span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="mt-4">
-                  <Button size="sm" className="w-full">
-                    <CalendarDays className="h-4 w-4 mr-1.5" />
-                    <T text="Log New Temperature Reading" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="temperature" className="mt-0">
+            <div className="flex justify-between mb-4">
+              <div className="flex gap-2 items-center">
+                <Badge variant="outline" className="bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400">
+                  <T text="Safe: < 5°C or > 63°C" />
+                </Badge>
+                <Badge variant="outline" className="bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400">
+                  <T text="Warning: 5-8°C or 54-63°C" />
+                </Badge>
+                <Badge variant="destructive">
+                  <T text="Critical: 8-54°C" />
+                </Badge>
+              </div>
+              <Button size="sm" onClick={recordTemperature} className="flex items-center gap-1.5">
+                <Plus className="h-4 w-4" />
+                <T text="Record" />
+              </Button>
+            </div>
             
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg font-medium">
-                  <T text="Recent Temperature Logs" />
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="grid grid-cols-1 divide-y border-t">
-                  {[1, 2, 3, 4, 5].map((item) => (
-                    <div key={item} className="p-3 flex justify-between items-center text-sm">
-                      <div>
-                        <div className="font-medium">{`Refrigerator #${item % 2 + 1}`}</div>
-                        <div className="text-muted-foreground text-xs">Today, {item + 7}:30 AM</div>
+            <ScrollArea className="h-[calc(100vh-200px)]">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg"><T text="Today's Temperature Logs" /></CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="divide-y">
+                    {temperatureLogs.map((log) => (
+                      <div key={log.id} className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-medium">{log.location}</h3>
+                            <div className="text-sm text-muted-foreground mt-1">
+                              {new Date(log.recorded_at).toLocaleTimeString()} • {log.recorded_by}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="text-xl font-semibold">{log.temperature}°C</div>
+                            {renderStatusBadge(log.status)}
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <div className="font-medium">{(Math.random() * 4 + 1).toFixed(1)}°C</div>
-                        <div className="text-xs text-green-600 dark:text-green-400"><T text="Normal" /></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="p-3 border-t">
-                  <Button variant="outline" size="sm" className="w-full">
-                    <T text="View All Temperature Logs" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </ScrollArea>
           </TabsContent>
         </Tabs>
       </div>

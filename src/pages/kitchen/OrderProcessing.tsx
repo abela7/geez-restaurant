@@ -13,7 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Order, OrderItem } from "@/types/order";
+import { Order, OrderItem, DbOrderItem, mapDbOrderItemToOrderItem } from "@/types/order";
 import { Clock, CheckCircle2, AlertCircle, TimerReset, Printer, Check } from "lucide-react";
 
 const OrderProcessing: React.FC = () => {
@@ -35,7 +35,19 @@ const OrderProcessing: React.FC = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Order[];
+      
+      // Map the database structure to our application's structure
+      return data.map(order => {
+        // Convert each order_items to our OrderItem type
+        const mappedItems = order.items 
+          ? order.items.map((item: DbOrderItem) => mapDbOrderItemToOrderItem(item))
+          : [];
+        
+        return {
+          ...order,
+          items: mappedItems
+        } as Order;
+      });
     },
   });
 
@@ -86,7 +98,7 @@ const OrderProcessing: React.FC = () => {
     if (!order.items) return 0;
     
     const maxPrepTime = Math.max(
-      ...order.items.map(item => item.food_item?.preparation_time || 10)
+      ...order.items.map(item => item.foodItem?.preparation_time || 10)
     );
     
     return maxPrepTime;
@@ -181,7 +193,7 @@ const OrderProcessing: React.FC = () => {
                   {order.items?.map(item => (
                     <div key={item.id} className="flex justify-between items-center p-2 bg-muted/30 rounded-md">
                       <div>
-                        <div className="font-medium">{item.food_item?.name}</div>
+                        <div className="font-medium">{item.foodItem?.name}</div>
                         {item.special_instructions && (
                           <div className="text-sm text-muted-foreground">
                             Note: {item.special_instructions}

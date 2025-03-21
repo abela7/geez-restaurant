@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Layout from "@/components/Layout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -61,11 +61,16 @@ const InventoryCheck = () => {
   // Report low stock to admin
   const reportToAdmin = async (item: Ingredient) => {
     try {
-      await supabase.from("inventory_alerts").insert({
+      // Instead of using inventory_alerts table, we'll use the built-in transactions table
+      // to record alerts about low inventory
+      await supabase.from("inventory_transactions").insert({
         ingredient_id: item.id,
-        status: getStockStatus(item),
-        reported_by: "kitchen-staff", // Would use actual user ID in production
-        notes: `${item.name} stock is ${getStockStatus(item)}. Current level: ${item.stock_quantity} ${item.unit}`
+        transaction_type: "alert",
+        quantity: 0, // Not changing quantity, just reporting
+        new_quantity: item.stock_quantity || 0,
+        unit: item.unit,
+        notes: `${item.name} stock is ${getStockStatus(item)}. Current level: ${item.stock_quantity} ${item.unit}`,
+        created_by: "kitchen-staff" // Would use actual user ID in production
       });
       
       toast.success(t("Alert sent to administration"));
@@ -135,7 +140,8 @@ const InventoryCheck = () => {
           <Alert variant="destructive" className="mb-4 bg-destructive/10 border-destructive/50 text-destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              <T text="There are {count} ingredients that need attention" values={{ count: lowStockItems.length }} />
+              {/* Fixed the T component to only use text prop */}
+              <T text={`There are ${lowStockItems.length} ingredients that need attention`} />
             </AlertDescription>
           </Alert>
         )}
