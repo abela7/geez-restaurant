@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -15,7 +14,10 @@ import { TableSelectionStep } from "@/components/waiter/orders/steps/TableSelect
 import { CustomerInfoStep } from "@/components/waiter/orders/steps/CustomerInfoStep";
 import { MenuSelectionStep } from "@/components/waiter/orders/steps/MenuSelectionStep";
 import { OrderReviewStep } from "@/components/waiter/orders/steps/OrderReviewStep";
-import { OrderStep, OrderType } from "@/types/order";
+import { OrderStep } from "@/types/order";
+
+// Extend the OrderStep type locally to include "order-review"
+type ExtendedOrderStep = OrderStep | "order-review";
 
 interface OrderManagementProps {
   newOrder?: boolean;
@@ -26,10 +28,10 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
   const { t } = useLanguage();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  
+
   const { menuItems, categories, isLoading: isLoadingMenu } = useMenuItems();
   const { tables, isLoading: isLoadingTables } = useTables();
-  
+
   const {
     orderItems,
     orderType,
@@ -54,8 +56,34 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
     handleQuantityChange,
     handleRemoveItem,
     calculateTotal,
-    handleSubmitOrder
-  } = useOrderManagement();
+    handleSubmitOrder,
+  } = useOrderManagement() as {
+    // Explicitly type the return value of useOrderManagement to include ExtendedOrderStep
+    orderItems: any[]; // Adjust type as per your actual implementation
+    orderType: string; // Adjust type as needed
+    setOrderType: (type: string) => void;
+    selectedTable: any; // Adjust type as needed
+    setSelectedTable: (table: any) => void;
+    customerName: string;
+    setCustomerName: (name: string) => void;
+    customerCount: number;
+    setCustomerCount: (count: number) => void;
+    specialInstructions: string;
+    setSpecialInstructions: (instructions: string) => void;
+    isSubmitting: boolean;
+    searchQuery: string;
+    setSearchQuery: (query: string) => void;
+    selectedCategory: string | null;
+    setSelectedCategory: (category: string | null) => void;
+    currentStep: ExtendedOrderStep; // Use the extended type here
+    goToNextStep: () => void;
+    goToPreviousStep: () => void;
+    handleAddToOrder: (item: any) => void;
+    handleQuantityChange: (itemId: string, quantity: number) => void;
+    handleRemoveItem: (itemId: string) => void;
+    calculateTotal: () => number;
+    handleSubmitOrder: () => Promise<string | undefined>;
+  };
 
   const submitOrder = async () => {
     const orderId = await handleSubmitOrder();
@@ -75,16 +103,16 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
       is_vegan: false,
       is_gluten_free: false,
       is_spicy: false,
-      categoryName: quickOrder.category
+      categoryName: quickOrder.category,
     };
-    
+
     handleAddToOrder(foodItem);
   };
 
   const isLoading = isLoadingMenu || isLoadingTables;
 
   const renderStepContent = () => {
-    switch(currentStep) {
+    switch (currentStep) {
       case "order-type":
         return (
           <OrderTypeStep
@@ -160,7 +188,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
           className="mb-4"
         />
 
-        <div className={`space-y-4 ${isMobile ? 'pb-24' : ''}`}>
+        <div className={`space-y-4 ${isMobile ? "pb-24" : ""}`}>
           {isLoading ? (
             <div className="flex justify-center py-12">
               <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -168,7 +196,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
           ) : (
             <>
               {renderStepContent()}
-              
+
               {currentStep !== "order-review" && (
                 <div className="mt-6">
                   <StepOrderFlow
