@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { FoodItem } from "./useMenuItems";
@@ -30,7 +29,6 @@ export const useOrderManagement = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   
-  // Step-by-step flow
   const [currentStep, setCurrentStep] = useState<OrderStep>("order-type");
 
   const goToNextStep = () => {
@@ -148,7 +146,6 @@ export const useOrderManagement = () => {
     return orderItems.reduce((total, item) => {
       let itemTotal = item.foodItem.price * item.quantity;
       
-      // Add modifier prices if any
       if (item.modifiers && item.modifiers.length > 0) {
         const modifierTotal = item.modifiers.reduce((sum, mod) => sum + (mod.price || 0), 0);
         itemTotal += modifierTotal * item.quantity;
@@ -238,7 +235,6 @@ export const useOrderManagement = () => {
   };
 
   return {
-    // Order state
     orderItems,
     orderType,
     setOrderType,
@@ -252,20 +248,17 @@ export const useOrderManagement = () => {
     setSpecialInstructions,
     isSubmitting,
     
-    // Search state
     searchQuery,
     setSearchQuery,
     selectedCategory,
     setSelectedCategory,
     
-    // Step management
     currentStep,
     setCurrentStep,
     goToNextStep,
     goToPreviousStep,
     resetOrder,
     
-    // Order actions
     handleAddToOrder,
     handleQuantityChange,
     handleRemoveItem,
