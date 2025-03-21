@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -69,13 +68,13 @@ const TasksList: React.FC<TasksListProps> = ({
 
   const getCategoryName = (categoryId?: string | null) => {
     if (!categoryId) return "";
-    const category = taskCategories.find(cat => cat.id === categoryId);
+    const category = taskCategories.find(cat => cat.id === categoryId.toString());
     return category ? category.name : "";
   };
 
   const getCategoryColor = (categoryId?: string | null) => {
     if (!categoryId) return "bg-gray-500";
-    const category = taskCategories.find(cat => cat.id === categoryId);
+    const category = taskCategories.find(cat => cat.id === categoryId.toString());
     return category ? category.color : "bg-gray-500";
   };
 
@@ -85,10 +84,8 @@ const TasksList: React.FC<TasksListProps> = ({
     try {
       const date = new Date(dateString);
       
-      // Format the date
       const formattedDate = format(date, 'MMM dd, yyyy');
       
-      // Add time if available (either from separate time field or from the date object)
       if (timeString) {
         return `${formattedDate} ${timeString}`;
       } else if (date.getHours() !== 0 || date.getMinutes() !== 0) {

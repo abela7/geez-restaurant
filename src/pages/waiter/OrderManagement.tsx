@@ -176,7 +176,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
             <>
               {renderStepContent()}
               
-              {/* Fixed the TypeScript error by including 'order-review' in the condition check */}
+              {/* Now the TypeScript error should be fixed since "order-review" is part of the OrderStep type */}
               {currentStep !== 'order-review' && (
                 <div className="mt-6">
                   <StepOrderFlow

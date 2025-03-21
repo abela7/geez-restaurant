@@ -11,9 +11,9 @@ export type StaffTask = {
   priority: string;
   status: string;
   due_date: string | null;
-  due_time: string | null; // Added due_time field
+  due_time: string | null;
   completed_at: string | null;
-  category: string | null; // Added category field
+  category: string | null;
 };
 
 export const useStaffTasks = (staffId: string) => {
@@ -53,9 +53,15 @@ export const useStaffTasks = (staffId: string) => {
 
   const addTask = async (newTask: Omit<StaffTask, 'id' | 'completed_at'>) => {
     try {
+      // Ensure category is a string, not a number
+      const taskToAdd = {
+        ...newTask,
+        category: newTask.category ? newTask.category.toString() : null
+      };
+      
       const { data, error } = await supabase
         .from('staff_tasks')
-        .insert([newTask])
+        .insert([taskToAdd])
         .select()
         .single();
         
