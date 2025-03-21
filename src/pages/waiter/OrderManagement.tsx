@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -14,10 +15,7 @@ import { TableSelectionStep } from "@/components/waiter/orders/steps/TableSelect
 import { CustomerInfoStep } from "@/components/waiter/orders/steps/CustomerInfoStep";
 import { MenuSelectionStep } from "@/components/waiter/orders/steps/MenuSelectionStep";
 import { OrderReviewStep } from "@/components/waiter/orders/steps/OrderReviewStep";
-import { OrderStep } from "@/types/order";
-
-// Extend the OrderStep type locally to include "order-review"
-type ExtendedOrderStep = OrderStep | "order-review";
+import { OrderStep, OrderType, OrderItem } from "@/types/order";
 
 interface OrderManagementProps {
   newOrder?: boolean;
@@ -57,33 +55,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) =
     handleRemoveItem,
     calculateTotal,
     handleSubmitOrder,
-  } = useOrderManagement() as {
-    // Explicitly type the return value of useOrderManagement to include ExtendedOrderStep
-    orderItems: any[]; // Adjust type as per your actual implementation
-    orderType: string; // Adjust type as needed
-    setOrderType: (type: string) => void;
-    selectedTable: any; // Adjust type as needed
-    setSelectedTable: (table: any) => void;
-    customerName: string;
-    setCustomerName: (name: string) => void;
-    customerCount: number;
-    setCustomerCount: (count: number) => void;
-    specialInstructions: string;
-    setSpecialInstructions: (instructions: string) => void;
-    isSubmitting: boolean;
-    searchQuery: string;
-    setSearchQuery: (query: string) => void;
-    selectedCategory: string | null;
-    setSelectedCategory: (category: string | null) => void;
-    currentStep: ExtendedOrderStep; // Use the extended type here
-    goToNextStep: () => void;
-    goToPreviousStep: () => void;
-    handleAddToOrder: (item: any) => void;
-    handleQuantityChange: (itemId: string, quantity: number) => void;
-    handleRemoveItem: (itemId: string) => void;
-    calculateTotal: () => number;
-    handleSubmitOrder: () => Promise<string | undefined>;
-  };
+  } = useOrderManagement();
 
   const submitOrder = async () => {
     const orderId = await handleSubmitOrder();
