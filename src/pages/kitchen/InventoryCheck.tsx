@@ -1,166 +1,232 @@
 
-import React from "react";
-import { PageHeader } from "@/components/ui/page-header";
-import { Card } from "@/components/ui/card";
+import React, { useState, useEffect } from "react";
+import Layout from "@/components/Layout";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Search, RefreshCw, AlertCircle, AlertTriangle, Ban } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Search, RefreshCw, AlertCircle, AlertTriangle, Ban, ArrowUpFromLine } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
-
-// Sample inventory data
-const inventoryItems = [
-  { id: 1, name: "Teff Flour", category: "Dry Goods", quantity: 45, unit: "kg", status: "Normal", lastUpdated: "Today, 8:30 AM" },
-  { id: 2, name: "Berbere Spice", category: "Spices", quantity: 12, unit: "kg", status: "Normal", lastUpdated: "Yesterday" },
-  { id: 3, name: "Chicken", category: "Meat", quantity: 15, unit: "kg", status: "Normal", lastUpdated: "Today, 9:15 AM" },
-  { id: 4, name: "Beef", category: "Meat", quantity: 8, unit: "kg", status: "Low", lastUpdated: "Today, 9:15 AM" },
-  { id: 5, name: "Onions", category: "Vegetables", quantity: 7, unit: "kg", status: "Low", lastUpdated: "Today, 7:45 AM" },
-  { id: 6, name: "Tomatoes", category: "Vegetables", quantity: 3, unit: "kg", status: "Critical", lastUpdated: "Yesterday" },
-  { id: 7, name: "Butter", category: "Dairy", quantity: 6, unit: "kg", status: "Normal", lastUpdated: "Today, 8:30 AM" },
-  { id: 8, name: "Eggs", category: "Dairy", quantity: 85, unit: "pcs", status: "Normal", lastUpdated: "Yesterday" },
-  { id: 9, name: "Lentils", category: "Dry Goods", quantity: 28, unit: "kg", status: "Normal", lastUpdated: "Last Week" },
-  { id: 10, name: "Injera Bread", category: "Bread", quantity: 0, unit: "pcs", status: "Out of Stock", lastUpdated: "Today, 10:30 AM" },
-];
-
-// Sample categories for tabs
-const categories = ["All", "Meat", "Vegetables", "Dry Goods", "Spices", "Dairy", "Bread"];
+import { useTheme } from "@/components/ThemeProvider";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { toast } from "sonner";
+import { Ingredient } from "@/services/inventory/types";
 
 const InventoryCheck = () => {
-  return (
-    <div className="container mx-auto p-4 md:p-6">
-      <PageHeader 
-        title="Kitchen Inventory" 
-        description="Check and manage current inventory levels"
-        actions={
-          <Button size="sm">
-            <RefreshCw className="mr-2 h-4 w-4" />
-            <T text="Refresh Data" />
-          </Button>
-        }
-      />
+  const { t } = useLanguage();
+  const { theme } = useTheme();
+  const isMobile = useIsMobile();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("all");
+  
+  // Query inventory data
+  const { data: inventoryItems = [], isLoading, refetch } = useQuery({
+    queryKey: ["kitchen-inventory"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ingredients")
+        .select("*")
+        .order("name");
+        
+      if (error) throw error;
+      return data as Ingredient[];
+    },
+  });
 
-      <div className="mb-6 flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search inventory..."
-            className="pl-9 w-full"
-          />
+  // Filter inventory based on search and category
+  const filteredInventory = inventoryItems.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = activeCategory === "all" || item.category?.toLowerCase() === activeCategory;
+    return matchesSearch && matchesCategory;
+  });
+  
+  // Get unique categories for tabs
+  const categories = ["all", ...new Set(inventoryItems.map(item => item.category?.toLowerCase() || "uncategorized"))];
+  
+  // Calculate stock status
+  const getStockStatus = (item: Ingredient) => {
+    const quantity = item.stock_quantity || 0;
+    const reorderLevel = item.reorder_level || 0;
+    
+    if (quantity <= 0) return "out-of-stock";
+    if (quantity <= reorderLevel) return "low";
+    return "normal";
+  };
+  
+  // Report low stock to admin
+  const reportToAdmin = async (item: Ingredient) => {
+    try {
+      await supabase.from("inventory_alerts").insert({
+        ingredient_id: item.id,
+        status: getStockStatus(item),
+        reported_by: "kitchen-staff", // Would use actual user ID in production
+        notes: `${item.name} stock is ${getStockStatus(item)}. Current level: ${item.stock_quantity} ${item.unit}`
+      });
+      
+      toast.success(t("Alert sent to administration"));
+    } catch (error) {
+      console.error("Error reporting to admin:", error);
+      toast.error(t("Failed to send alert"));
+    }
+  };
+  
+  // Get low stock items
+  const lowStockItems = inventoryItems.filter(
+    item => getStockStatus(item) === "low" || getStockStatus(item) === "out-of-stock"
+  );
+
+  if (isLoading) {
+    return (
+      <Layout interface="kitchen">
+        <div className="p-4 flex justify-center items-center h-[70vh]">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
         </div>
-      </div>
+      </Layout>
+    );
+  }
 
-      <Tabs defaultValue="all">
-        <TabsList className="mb-4">
-          {categories.map((category) => (
-            <TabsTrigger key={category} value={category.toLowerCase().replace(' ', '-')}>
-              <T text={category} />
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        <TabsContent value="all">
-          <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead><T text="Item" /></TableHead>
-                  <TableHead><T text="Category" /></TableHead>
-                  <TableHead><T text="Quantity" /></TableHead>
-                  <TableHead><T text="Status" /></TableHead>
-                  <TableHead><T text="Last Updated" /></TableHead>
-                  <TableHead><T text="Actions" /></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {inventoryItems.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.name}</TableCell>
-                    <TableCell>{item.category}</TableCell>
-                    <TableCell>{item.quantity} {item.unit}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        {item.status === "Critical" && <AlertCircle className="h-4 w-4 text-destructive" />}
-                        {item.status === "Low" && <AlertTriangle className="h-4 w-4 text-amber-500" />}
-                        {item.status === "Out of Stock" && <Ban className="h-4 w-4 text-destructive" />}
-                        <Badge 
-                          variant={
-                            item.status === "Normal" ? "default" : 
-                            item.status === "Low" ? "outline" : 
-                            "destructive"
-                          }
-                        >
-                          {item.status}
-                        </Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell>{item.lastUpdated}</TableCell>
-                    <TableCell>
-                      {(item.status === "Low" || item.status === "Critical" || item.status === "Out of Stock") && (
-                        <Button variant="outline" size="sm">
-                          <T text="Report to Admin" />
-                        </Button>
-                      )}
-                      <Button variant="ghost" size="sm">
-                        <T text="Update" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
-        </TabsContent>
-
-        {/* Filter tabs for other categories */}
-        {categories.slice(1).map((category) => (
-          <TabsContent key={category} value={category.toLowerCase().replace(' ', '-')}>
-            <Card className="p-4">
-              <div className="text-center p-8 text-muted-foreground">
-                <T text={`Filtered view of ${category} inventory would appear here`} />
-              </div>
-            </Card>
-          </TabsContent>
-        ))}
-      </Tabs>
-
-      <div className="mt-6">
-        <Card className="p-4">
-          <h3 className="text-lg font-medium mb-4"><T text="Inventory Alerts" /></h3>
-          <div className="space-y-4">
-            {inventoryItems.filter(item => item.status !== "Normal").map((item) => (
-              <div key={item.id} className={`p-4 rounded-md border ${
-                item.status === "Critical" || item.status === "Out of Stock" ? 'border-destructive bg-destructive/10' : 'border-amber-500 bg-amber-500/10'
-              }`}>
-                <div className="flex items-start gap-3">
-                  {item.status === "Critical" || item.status === "Out of Stock" ? (
-                    <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-                  ) : (
-                    <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                  )}
-                  <div>
-                    <h4 className="font-medium">{item.name} - {item.status}</h4>
-                    <p className="text-sm mt-1">
-                      {item.status === "Out of Stock" 
-                        ? <T text={`${item.name} is currently out of stock. This may affect menu availability.`} />
-                        : <T text={`${item.name} is running low (${item.quantity} ${item.unit} remaining). Consider reordering soon.`} />
-                      }
-                    </p>
-                    <div className="mt-3">
-                      <Button size="sm" variant={item.status === "Critical" || item.status === "Out of Stock" ? "destructive" : "outline"}>
-                        <T text="Report to Admin" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+  return (
+    <Layout interface="kitchen">
+      <div className="p-4">
+        <div className="mb-4 flex flex-col sm:flex-row gap-3 items-center justify-between">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder={t("Search inventory...")}
+              className="pl-9 w-full"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-        </Card>
+          
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => refetch()}
+              className="flex items-center gap-1"
+            >
+              <RefreshCw className="h-4 w-4" />
+              <span className={isMobile ? "hidden" : "inline"}><T text="Refresh" /></span>
+            </Button>
+            
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => {
+                // In a real app, this would open a form to request new items
+                toast.info(t("Item request functionality will be implemented soon"));
+              }}
+              className="flex items-center gap-1"
+            >
+              <ArrowUpFromLine className="h-4 w-4" />
+              <span className={isMobile ? "hidden" : "inline"}><T text="Request Item" /></span>
+            </Button>
+          </div>
+        </div>
+
+        {lowStockItems.length > 0 && (
+          <Alert variant="destructive" className="mb-4 bg-destructive/10 border-destructive/50 text-destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <T text="There are {count} ingredients that need attention" values={{ count: lowStockItems.length }} />
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <Tabs defaultValue="all" value={activeCategory} onValueChange={setActiveCategory}>
+          <TabsList className="mb-4 overflow-auto flex w-full justify-start px-0 py-1">
+            {categories.map((category) => (
+              <TabsTrigger 
+                key={category} 
+                value={category}
+                className="capitalize px-3 py-1.5 text-xs sm:text-sm"
+              >
+                <T text={category === "all" ? "All Items" : category} />
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          
+          <ScrollArea className="h-[calc(100vh-260px)]">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {filteredInventory.length === 0 ? (
+                <Card className="col-span-full">
+                  <CardContent className="flex flex-col items-center justify-center p-6">
+                    <Ban className="h-8 w-8 text-muted-foreground mb-2 opacity-50" />
+                    <p className="text-muted-foreground">
+                      <T text="No inventory items found" />
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                filteredInventory.map((item) => {
+                  const status = getStockStatus(item);
+                  return (
+                    <Card key={item.id} className={`
+                      ${status === 'out-of-stock' ? 'border-destructive/50 bg-destructive/5' : 
+                        status === 'low' ? 'border-amber-500/50 bg-amber-50/50 dark:bg-amber-950/20' : ''}
+                    `}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h3 className="font-medium text-base">{item.name}</h3>
+                            <div className="text-sm text-muted-foreground mt-1">{item.category}</div>
+                          </div>
+                          <Badge 
+                            variant={
+                              status === "normal" ? "outline" : 
+                              status === "low" ? "default" : 
+                              "destructive"
+                            }
+                            className="capitalize"
+                          >
+                            {status === "out-of-stock" ? t("Out of Stock") : 
+                              status === "low" ? t("Low Stock") : t("In Stock")}
+                          </Badge>
+                        </div>
+                        
+                        <div className="mt-3 text-sm">
+                          <div className="flex justify-between">
+                            <span><T text="Current" /></span>
+                            <span className="font-medium">{item.stock_quantity || 0} {item.unit}</span>
+                          </div>
+                          {item.reorder_level !== undefined && (
+                            <div className="flex justify-between mt-1">
+                              <span><T text="Reorder At" /></span>
+                              <span>{item.reorder_level} {item.unit}</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {(status === "low" || status === "out-of-stock") && (
+                          <div className="mt-3">
+                            <Button 
+                              variant={status === "out-of-stock" ? "destructive" : "default"}
+                              size="sm"
+                              className="w-full"
+                              onClick={() => reportToAdmin(item)}
+                            >
+                              <AlertTriangle className="h-4 w-4 mr-1" />
+                              <T text="Report to Admin" />
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              )}
+            </div>
+          </ScrollArea>
+        </Tabs>
       </div>
-    </div>
+    </Layout>
   );
 };
 
