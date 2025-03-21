@@ -35,22 +35,22 @@ export const QuickOrderCard: React.FC<QuickOrderCardProps> = ({
             backgroundColor: !imageUrl ? 'hsl(var(--muted))' : undefined
           }}
         />
-        <Badge className="absolute top-1.5 right-1.5 bg-background/80 backdrop-blur-sm text-xs">{t(category)}</Badge>
+        <Badge className="absolute top-1 right-1 bg-background/80 backdrop-blur-sm text-xs">{t(category)}</Badge>
       </div>
-      <div className="p-2.5">
+      <div className="p-2">
         <h3 className="font-medium text-sm line-clamp-1">{t(name)}</h3>
         {description && (
           <p className="text-muted-foreground text-xs mt-0.5 line-clamp-1">{t(description)}</p>
         )}
-        <div className="flex justify-between items-center mt-2">
+        <div className="flex justify-between items-center mt-1.5">
           <span className="font-bold text-primary text-sm">${price.toFixed(2)}</span>
           <Button 
             size="sm" 
             variant="ghost"
             onClick={onOrder} 
-            className="h-7 px-2 group-hover:bg-primary/10"
+            className="h-6 px-1.5 group-hover:bg-primary/10"
           >
-            <PlusCircle className="h-3.5 w-3.5 mr-1" />
+            <PlusCircle className="h-3 w-3 mr-0.5" />
             <T text="Add" />
           </Button>
         </div>

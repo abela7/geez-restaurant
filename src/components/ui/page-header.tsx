@@ -25,20 +25,20 @@ export function PageHeader({
   actions,
   className,
   backHref,
-  compact = false, // Default to false for backward compatibility
+  compact = true, // Default to true for more compact design
 }: PageHeaderProps) {
   // Use heading if provided, otherwise fall back to title
   const displayHeading = heading || title;
 
   return (
     <div className={cn(
-      "flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2", 
-      compact ? "mb-3" : "mb-6",
+      "flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1", 
+      compact ? "mb-2" : "mb-4",
       className
     )}>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         {backHref && (
-          <Button variant="ghost" size="icon" asChild className="mr-1">
+          <Button variant="ghost" size="icon" asChild className="mr-1 h-8 w-8">
             <Link to={backHref}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
@@ -46,17 +46,17 @@ export function PageHeader({
         )}
         {icon && <div className="flex-shrink-0 text-primary">{icon}</div>}
         <div>
-          <h1 className={cn("font-bold tracking-tight", compact ? "text-xl" : "text-2xl")}>
+          <h1 className={cn("font-bold tracking-tight", compact ? "text-lg" : "text-xl")}>
             {displayHeading}
           </h1>
           {description && (
-            <p className="text-muted-foreground text-sm">
+            <p className="text-muted-foreground text-xs">
               {description}
             </p>
           )}
         </div>
       </div>
-      {actions && <div className="flex-shrink-0 flex gap-2 items-center">{actions}</div>}
+      {actions && <div className="flex-shrink-0 flex gap-1.5 items-center">{actions}</div>}
     </div>
   );
 }
