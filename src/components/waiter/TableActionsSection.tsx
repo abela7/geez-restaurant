@@ -6,8 +6,6 @@ import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { 
   UtensilsCrossed, 
-  Package, 
-  ShoppingBag, 
   ClipboardList, 
   CreditCard,
   Table,
@@ -38,18 +36,6 @@ export const TableActionsSection: React.FC = () => {
       icon: <CreditCard className="h-4 w-4" />,
       onClick: () => navigate('/waiter/payments'),
       color: "secondary"
-    },
-    {
-      name: "Takeout",
-      icon: <Package className="h-4 w-4" />,
-      onClick: () => navigate('/waiter/orders/new?type=takeout'),
-      color: "outline"
-    },
-    {
-      name: "Delivery",
-      icon: <ShoppingBag className="h-4 w-4" />,
-      onClick: () => navigate('/waiter/orders/new?type=delivery'),
-      color: "outline"
     },
     {
       name: "Tables",
@@ -86,7 +72,7 @@ export const TableActionsSection: React.FC = () => {
       </div>
       
       <div className="p-2">
-        <div className="grid grid-cols-3 md:grid-cols-6 gap-1">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
           {mainActions.map((action, idx) => (
             <Card 
               key={idx} 
