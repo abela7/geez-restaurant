@@ -120,42 +120,42 @@
   }
 
   .warm-blend {
-    /* Warm Blend Theme */
-    --background: 45 30% 94%;  /* Gradient blend base of Cream and Sand at 15% opacity */
-    --foreground: 292 13% 28%; /* Plum #4D4052 */
+    /* Modern Glassy Theme */
+    --background: 210 50% 98%;  /* Very light blue-gray #f8fafd */
+    --foreground: 220 20% 30%;  /* Dark blue-gray #3c4356 */
  
-    --card: 0 0% 100%;         /* White #FFFFFF */
-    --card-foreground: 292 13% 28%; /* Plum #4D4052 */
+    --card: 0 0% 100%;          /* White #FFFFFF */
+    --card-foreground: 220 20% 30%; /* Dark blue-gray #3c4356 */
  
-    --popover: 0 0% 100%;      /* White #FFFFFF */
-    --popover-foreground: 292 13% 28%; /* Plum #4D4052 */
+    --popover: 0 0% 100%;       /* White #FFFFFF */
+    --popover-foreground: 220 20% 30%; /* Dark blue-gray #3c4356 */
  
-    --primary: 43 69% 50%;     /* Turmeric #DAA520 */
-    --primary-foreground: 27 37% 25%; /* Coffee #5D4225 */
+    --primary: 250 60% 60%;     /* Vibrant purple #7c5cef */
+    --primary-foreground: 0 0% 100%; /* White #FFFFFF */
  
-    --secondary: 0 0% 100%;    /* White #FFFFFF */
-    --secondary-foreground: 292 13% 28%; /* Plum #4D4052 */
+    --secondary: 210 40% 96%;   /* Light blue-gray #edf2f7 */
+    --secondary-foreground: 220 20% 30%; /* Dark blue-gray #3c4356 */
  
-    --muted: 45 30% 94%;       /* Similar to background */
-    --muted-foreground: 27 37% 35%; /* Lighter Coffee */
+    --muted: 210 40% 96%;       /* Light blue-gray #edf2f7 */
+    --muted-foreground: 220 20% 40%; /* Lighter blue-gray #5a6378 */
  
-    --accent: 43 69% 50%;      /* Turmeric #DAA520 */
-    --accent-foreground: 292 13% 28%; /* Plum #4D4052 */
+    --accent: 190 80% 50%;      /* Teal blue #17bbd0 */
+    --accent-foreground: 220 20% 30%; /* Dark blue-gray #3c4356 */
  
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%; /* White #FFFFFF */
 
-    --border: 50 65% 58%;      /* Sand with increased saturation #CDAF56 */
-    --input: 50 65% 58%;       /* Sand with increased saturation #CDAF56 */
-    --ring: 43 69% 50%;        /* Turmeric #DAA520 */
+    --border: 210 30% 90%;      /* Border color #dee7f2 */
+    --input: 210 30% 90%;       /* Input border #dee7f2 */
+    --ring: 250 60% 60%;        /* Vibrant purple #7c5cef */
  
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar: 0 0% 100%;      /* White #FFFFFF */
-    --sidebar-foreground: 292 13% 28%; /* Plum #4D4052 */
-    --sidebar-border: 50 65% 58%; /* Sand with increased saturation #CDAF56 */
-    --sidebar-accent: 45 30% 94%; /* Similar to background */
-    --sidebar-accent-foreground: 292 13% 28%; /* Plum #4D4052 */
+    --sidebar: 0 0% 100%;       /* White #FFFFFF */
+    --sidebar-foreground: 220 20% 30%; /* Dark blue-gray #3c4356 */
+    --sidebar-border: 210 30% 90%; /* Border color #dee7f2 */
+    --sidebar-accent: 210 50% 98%; /* Very light blue-gray #f8fafd */
+    --sidebar-accent-foreground: 220 20% 30%; /* Dark blue-gray #3c4356 */
   }
 }
  

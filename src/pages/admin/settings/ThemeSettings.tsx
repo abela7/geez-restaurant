@@ -32,7 +32,7 @@ import {
   Sun, 
   Moon, 
   Eye, 
-  Palette, 
+  Sparkles, 
   Check, 
   RotateCcw 
 } from 'lucide-react';
@@ -81,10 +81,10 @@ const ThemePreview = ({
         };
       case 'warm blend':
         return {
-          bg: 'bg-white',
-          text: 'text-[#4D4052]',
-          border: 'border-[#CDAF56]',
-          button: 'bg-[#DAA520] text-[#5D4225]'
+          bg: 'bg-[#f8fafd]',
+          text: 'text-[#3c4356]',
+          border: 'border-[#dee7f2]',
+          button: 'bg-[#7c5cef] text-white'
         };
       default:
         return {
@@ -195,7 +195,7 @@ const ThemeSettings = () => {
                   />
                   <ThemePreview 
                     themeName="Warm Blend" 
-                    icon={Palette} 
+                    icon={Sparkles} 
                     isActive={theme === 'warm-blend'} 
                     onClick={() => setTheme('warm-blend')} 
                   />
@@ -257,7 +257,7 @@ const ThemeSettings = () => {
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="warm-blend" id="warm-blend" />
-                      <Label htmlFor="warm-blend"><T text="Warm Blend" /></Label>
+                      <Label htmlFor="warm-blend"><T text="Modern Glass" /></Label>
                     </div>
                   </RadioGroup>
                 </div>
@@ -266,7 +266,7 @@ const ThemeSettings = () => {
           </TabsContent>
           
           <TabsContent value="customization">
-            <Card>
+            <Card className="warm-blend:glass-effect">
               <CardHeader>
                 <CardTitle><T text="Color Customization" /></CardTitle>
                 <CardDescription>
