@@ -1,4 +1,3 @@
-
 import { Route, Routes, Navigate, Outlet } from "react-router-dom";
 import Layout from "@/components/Layout";
 import NotFound from "@/pages/NotFound";
@@ -159,18 +158,18 @@ const AdminRoutes = () => {
         <Route path="/food-safety/new-checklist" element={<NewChecklist />} />
         
         {/* Table Management */}
-        <Route path="/tables" element={<TableManagement />} />
+        <Route path="/general/table-management" element={<TableManagement />} />
         
         {/* Activity Log Routes */}
-        <Route path="/activity-log" element={<ActivityLog />} />
+        <Route path="/activity" element={<ActivityLog />} />
         
         {/* Settings Routes */}
         <Route path="/settings" element={<Settings />} />
         <Route path="/settings/profile" element={<RestaurantProfile />} />
         <Route path="/settings/users" element={<UserAccess />} />
         <Route path="/settings/printers" element={<PrintersDevices />} />
-        <Route path="/settings/integrations" element={<Integrations />} />
         <Route path="/settings/system-logs" element={<SystemLogs />} />
+        <Route path="/settings/integrations" element={<Integrations />} />
         <Route path="/settings/themes" element={<ThemeSettings />} />
         
         {/* Language Management Routes */}

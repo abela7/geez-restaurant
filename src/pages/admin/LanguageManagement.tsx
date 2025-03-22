@@ -1,401 +1,207 @@
 
-import React, { useState, useEffect } from 'react';
-import Layout from '@/components/Layout';
+import React from 'react';
 import { useLanguage, T } from '@/contexts/LanguageContext';
-import { PageHeader } from '@/components/ui/page-header';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from '@/components/ui/tabs';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Download, Upload, Search, Save, Plus, CheckCircle, Languages, Database, RefreshCw } from 'lucide-react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from "sonner";
-
-// For mock data - in a real app, this would be aggregated from UI components
-const mockUITexts = [
-  { id: 1, key: 'Dashboard', en: 'Dashboard', am: '' },
-  { id: 2, key: 'Reports', en: 'Reports', am: '' },
-  { id: 3, key: 'Staff Management', en: 'Staff Management', am: '' },
-  { id: 4, key: 'Inventory Control', en: 'Inventory Control', am: '' },
-  { id: 5, key: 'Menu Management', en: 'Menu Management', am: '' },
-  { id: 6, key: 'Tasks', en: 'Tasks', am: '' },
-  { id: 7, key: 'Communication', en: 'Communication', am: '' },
-  { id: 8, key: 'Finance', en: 'Finance', am: '' },
-  { id: 9, key: 'Language Management', en: 'Language Management', am: '' },
-  { id: 10, key: 'Habesha Restaurant Manager', en: 'Habesha Restaurant Manager', am: '' },
-  { id: 11, key: 'Today\'s Sales', en: 'Today\'s Sales', am: '' },
-  { id: 12, key: 'Active Orders', en: 'Active Orders', am: '' },
-  { id: 13, key: 'Staff Present', en: 'Staff Present', am: '' },
-  { id: 14, key: 'Inventory Alerts', en: 'Inventory Alerts', am: '' },
-  { id: 15, key: 'Administrative Dashboard', en: 'Administrative Dashboard', am: '' },
-  { id: 16, key: 'Monitor your restaurant operations in real-time', en: 'Monitor your restaurant operations in real-time', am: '' },
-  { id: 17, key: 'New Report', en: 'New Report', am: '' },
-  { id: 18, key: 'Sales', en: 'Sales', am: '' },
-  { id: 19, key: 'Popular Items', en: 'Popular Items', am: '' },
-  { id: 20, key: 'Staff', en: 'Staff', am: '' },
-];
 
 const LanguageManagement: React.FC = () => {
-  const { translations, setTranslations, isLoading, saveAllTranslations } = useLanguage();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [uiTexts, setUiTexts] = useState<Array<{ id: number; key: string; en: string; am: string }>>([]);
-  const [newKey, setNewKey] = useState('');
-  const [newTranslation, setNewTranslation] = useState('');
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const [saveInProgress, setSaveInProgress] = useState(false);
-
-  useEffect(() => {
-    // Initialize the UI texts with the mock data and any saved translations
-    const initializedTexts = mockUITexts.map(text => ({
-      ...text,
-      am: translations[text.key] || ''
-    }));
-    setUiTexts(initializedTexts);
-  }, [translations]);
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const handleTranslationChange = (id: number, value: string) => {
-    setUiTexts(prevTexts => 
-      prevTexts.map(text => 
-        text.id === id ? { ...text, am: value } : text
-      )
-    );
-  };
-
-  const handleSaveAll = async () => {
-    setSaveInProgress(true);
-    try {
-      // First update the translations in context
-      const newTranslations = { ...translations };
-      uiTexts.forEach(text => {
-        if (text.am) {
-          newTranslations[text.key] = text.am;
-        }
-      });
-      setTranslations(newTranslations);
-      
-      // Then save to database
-      await saveAllTranslations();
-      
-      setSaveSuccess(true);
-      setTimeout(() => {
-        setSaveSuccess(false);
-      }, 3000);
-    } catch (error) {
-      console.error('Error saving translations:', error);
-      toast.error("Failed to save translations");
-    } finally {
-      setSaveInProgress(false);
-    }
-  };
-
-  const handleAddNewTranslation = () => {
-    if (newKey && newTranslation) {
-      // Add to UI texts
-      const newId = uiTexts.length > 0 ? Math.max(...uiTexts.map(t => t.id)) + 1 : 1;
-      setUiTexts([...uiTexts, { 
-        id: newId,
-        key: newKey,
-        en: newKey,
-        am: newTranslation
-      }]);
-      
-      // Add to translations
-      setTranslations({
-        ...translations,
-        [newKey]: newTranslation
-      });
-      
-      // Reset form
-      setNewKey('');
-      setNewTranslation('');
-      
-      // Show success
-      setSaveSuccess(true);
-      setTimeout(() => {
-        setSaveSuccess(false);
-      }, 3000);
-    }
-  };
-
-  const handleExport = () => {
-    const dataStr = JSON.stringify(translations, null, 2);
-    const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
-    
-    const exportFileDefaultName = 'habesha_translations.json';
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-  };
-
-  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const importedTranslations = JSON.parse(e.target?.result as string);
-        setTranslations(prevTranslations => ({
-          ...prevTranslations,
-          ...importedTranslations
-        }));
-        toast.success("Translations imported successfully");
-      } catch (error) {
-        console.error('Error parsing imported translations:', error);
-        toast.error("Failed to import translations. Invalid file format.");
-      }
-    };
-    reader.readAsText(file);
-    
-    // Reset the input so the same file can be selected again
-    event.target.value = '';
-  };
-
-  // Filter texts based on search term
-  const filteredTexts = uiTexts.filter(text => 
-    text.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    text.en.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    text.am.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const { t } = useLanguage();
 
   return (
-    <Layout interface="admin">
-      <PageHeader 
-        heading={<T text="Language Management" />}
-        description={<T text="Manage translations for the Habesha Restaurant System" />}
-        icon={<Languages className="h-6 w-6" />}
-        actions={
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleExport}>
-              <Download className="mr-2 h-4 w-4" />
-              <T text="Export" />
-            </Button>
-            <Button 
-              onClick={handleSaveAll} 
-              disabled={saveInProgress || isLoading}
-            >
-              {saveInProgress ? (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  <T text="Saving..." />
-                </>
-              ) : (
-                <>
-                  <Database className="mr-2 h-4 w-4" />
-                  <T text="Save to Database" />
-                </>
-              )}
-            </Button>
-          </div>
-        }
-      />
-
-      {saveSuccess && (
-        <Alert className="mb-6 bg-green-50 text-green-800 dark:bg-green-900 dark:text-green-300 border-green-200 dark:border-green-800">
-          <CheckCircle className="h-4 w-4" />
-          <AlertDescription>
-            <T text="Translations saved successfully!" />
-          </AlertDescription>
-        </Alert>
-      )}
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">
+            <T text="Language Management" />
+          </h1>
+          <p className="text-muted-foreground">
+            <T text="Manage translations for the Habesha Restaurant System" />
+          </p>
+        </div>
+        <div className="flex space-x-2">
+          <Button variant="outline">
+            <T text="Export" />
+          </Button>
+          <Button>
+            <T text="Save to Database" />
+          </Button>
+        </div>
+      </div>
 
       <Tabs defaultValue="translations">
         <TabsList>
           <TabsTrigger value="translations">
             <T text="Translations" />
           </TabsTrigger>
-          <TabsTrigger value="add-new">
+          <TabsTrigger value="add_new">
             <T text="Add New" />
           </TabsTrigger>
           <TabsTrigger value="settings">
             <T text="Settings" />
           </TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="translations">
+
+        <TabsContent value="translations" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle><T text="UI Text Translations" /></CardTitle>
+              <CardTitle>
+                <T text="UI Text Translations" />
+              </CardTitle>
               <CardDescription>
                 <T text="Manage translations for all UI elements" />
               </CardDescription>
-              <div className="relative mt-2">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Search translations..." 
-                  className="pl-8" 
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                />
-              </div>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
-                <div className="space-y-4">
-                  {Array(8).fill(0).map((_, index) => (
-                    <div key={index} className="flex space-x-4">
-                      <Skeleton className="h-12 w-1/3" />
-                      <Skeleton className="h-12 w-1/3" />
-                      <Skeleton className="h-12 w-1/3" />
-                    </div>
-                  ))}
+              <div className="flex w-full max-w-sm items-center space-x-2 mb-4">
+                <Input 
+                  type="search" 
+                  placeholder={t("Search translations...")} 
+                  className="w-full"
+                />
+                <Button type="submit" size="icon">
+                  <Search className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="rounded-md border">
+                <div className="grid grid-cols-3 p-4 bg-muted/50">
+                  <div><T text="Key" /></div>
+                  <div><T text="English" /></div>
+                  <div><T text="Amharic" /></div>
                 </div>
-              ) : (
-                <ScrollArea className="h-[600px] rounded-md border">
-                  <Table>
-                    <TableHeader className="sticky top-0 bg-background z-10">
-                      <TableRow>
-                        <TableHead className="w-[30%]"><T text="Key" /></TableHead>
-                        <TableHead className="w-[35%]"><T text="English" /></TableHead>
-                        <TableHead className="w-[35%]"><T text="Amharic" /></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredTexts.map((text) => (
-                        <TableRow key={text.id}>
-                          <TableCell className="font-medium">{text.key}</TableCell>
-                          <TableCell>{text.en}</TableCell>
-                          <TableCell>
-                            <Input 
-                              value={text.am} 
-                              onChange={(e) => handleTranslationChange(text.id, e.target.value)}
-                              placeholder="Add Amharic translation..."
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {filteredTexts.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={3} className="text-center py-4">
-                            <T text="No results found. Try a different search term." />
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </ScrollArea>
-              )}
+                
+                <div className="divide-y">
+                  <div className="grid grid-cols-3 p-4">
+                    <div>Dashboard</div>
+                    <div>Dashboard</div>
+                    <div>
+                      <Input 
+                        value="ዳሽቦርድ" 
+                        className="h-8"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 p-4">
+                    <div>Menu</div>
+                    <div>Menu</div>
+                    <div>
+                      <Input 
+                        value="ምናሌ" 
+                        className="h-8"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 p-4">
+                    <div>Settings</div>
+                    <div>Settings</div>
+                    <div>
+                      <Input 
+                        value="ቅንብሮች" 
+                        className="h-8"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
-        
-        <TabsContent value="add-new">
+
+        <TabsContent value="add_new">
           <Card>
             <CardHeader>
-              <CardTitle><T text="Add New Translation" /></CardTitle>
+              <CardTitle>
+                <T text="Add New Translation" />
+              </CardTitle>
               <CardDescription>
-                <T text="Add a new UI text element and its Amharic translation" />
+                <T text="Add a new translation key and value" />
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    <T text="Key" />
+                  </label>
+                  <Input placeholder={t("Enter translation key")} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    <T text="English" />
+                  </label>
+                  <Input placeholder={t("Enter English translation")} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    <T text="Amharic" />
+                  </label>
+                  <Input placeholder={t("Enter Amharic translation")} />
+                </div>
+              </div>
+              <Button>
+                <T text="Add Translation" />
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="settings">
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                <T text="Translation Settings" />
+              </CardTitle>
+              <CardDescription>
+                <T text="Configure language and translation settings" />
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-6">
-                <div className="grid gap-3">
-                  <Label htmlFor="new-key"><T text="English Text" /></Label>
-                  <Input 
-                    id="new-key" 
-                    value={newKey} 
-                    onChange={(e) => setNewKey(e.target.value)}
-                    placeholder="Enter English text..."
-                  />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    <T text="Default Language" />
+                  </label>
+                  <select className="w-full p-2 border rounded">
+                    <option value="en">English</option>
+                    <option value="am">Amharic</option>
+                  </select>
                 </div>
-                <div className="grid gap-3">
-                  <Label htmlFor="new-translation"><T text="Amharic Translation" /></Label>
-                  <Input 
-                    id="new-translation" 
-                    value={newTranslation} 
-                    onChange={(e) => setNewTranslation(e.target.value)}
-                    placeholder="Enter Amharic translation..."
-                  />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    <T text="Translation Source" />
+                  </label>
+                  <select className="w-full p-2 border rounded">
+                    <option value="database">
+                      <T text="Database" />
+                    </option>
+                    <option value="json">
+                      <T text="JSON Files" />
+                    </option>
+                  </select>
                 </div>
-                <Button onClick={handleAddNewTranslation} disabled={!newKey || !newTranslation}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  <T text="Add Translation" />
+                <Button>
+                  <T text="Save Settings" />
                 </Button>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
-        
-        <TabsContent value="settings">
-          <Card>
-            <CardHeader>
-              <CardTitle><T text="Language Settings" /></CardTitle>
-              <CardDescription>
-                <T text="Configure language system behavior" />
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-medium"><T text="Default Language" /></h4>
-                    <p className="text-sm text-muted-foreground">
-                      <T text="Set the default language for new users" />
-                    </p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button variant="outline" className="bg-primary text-primary-foreground">
-                      <T text="English" />
-                    </Button>
-                    <Button variant="outline">
-                      <T text="Amharic" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <Separator />
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-medium"><T text="Import Translations" /></h4>
-                    <p className="text-sm text-muted-foreground">
-                      <T text="Upload a JSON file with translations" />
-                    </p>
-                  </div>
-                  <div className="relative">
-                    <input
-                      type="file"
-                      accept=".json"
-                      onChange={handleImport}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
-                    <Button variant="outline" className="flex items-center gap-2">
-                      <Upload size={16} />
-                      <T text="Upload File" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <Separator />
-                
-                <div className="rounded-md border p-4 bg-muted/50">
-                  <div className="flex items-center gap-3">
-                    <Languages className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <h4 className="font-medium"><T text="Translation Statistics" /></h4>
-                      <p className="text-sm text-muted-foreground">
-                        {Object.keys(translations).length} <T text="of" /> {mockUITexts.length} <T text="items translated" /> ({Math.round((Object.keys(translations).length / mockUITexts.length) * 100) || 0}%)
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
-    </Layout>
+    </div>
   );
 };
 
