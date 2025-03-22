@@ -672,6 +672,42 @@ export type Database = {
         }
         Relationships: []
       }
+      menu_notifications: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          for_role: string
+          id: string
+          message: string
+          read: boolean | null
+          title: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          for_role: string
+          id?: string
+          message: string
+          read?: boolean | null
+          title: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          for_role?: string
+          id?: string
+          message?: string
+          read?: boolean | null
+          title?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       modifier_groups: {
         Row: {
           created_at: string | null

@@ -15,17 +15,7 @@ import { FoodItem, MenuCategory } from "@/types/menu";
 import { toast } from "sonner";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Search, PlusCircle, Bell, CheckCircle2, AlertCircle } from "lucide-react";
-
-interface NotificationData {
-  id?: string;
-  message: string;
-  title: string;
-  type: "info" | "warning" | "success";
-  for_role: string;
-  created_by: string;
-  created_at?: string;
-  read?: boolean;
-}
+import { MenuNotification } from "@/types/menuNotifications";
 
 const MenuAvailability = () => {
   const { t } = useLanguage();
@@ -69,21 +59,14 @@ const MenuAvailability = () => {
   
   // Create notification mutation
   const createNotification = useMutation({
-    mutationFn: async (notification: NotificationData) => {
+    mutationFn: async (notification: Omit<MenuNotification, "id" | "created_at" | "read">) => {
       try {
-        // Here we're inserting notification data directly, not using the table relation
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from("menu_notifications")
-          .insert({
-            title: notification.title,
-            message: notification.message,
-            type: notification.type,
-            for_role: notification.for_role,
-            created_by: notification.created_by
-          });
+          .insert(notification);
           
         if (error) throw error;
-        return data;
+        return true;
       } catch (error) {
         console.error("Error creating notification:", error);
         throw error;
