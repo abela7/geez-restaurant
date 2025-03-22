@@ -88,6 +88,10 @@ const config = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
+      // Add gradients for the warm blend theme
+      backgroundImage: {
+        "warm-gradient": "linear-gradient(135deg, #F1ECE2 0%, #CDAF56 100%)",
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

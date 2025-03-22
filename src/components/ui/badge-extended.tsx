@@ -19,6 +19,15 @@ const badgeVariants = cva(
           "border-transparent bg-green-500 text-white hover:bg-green-500/80",
         warning:
           "border-transparent bg-yellow-500 text-white hover:bg-yellow-500/80",
+        // Ethiopian-themed badge variants
+        turmeric: 
+          "border-transparent bg-[#DAA520] text-[#301934] hover:bg-[#DAA520]/80",
+        sand:
+          "border-transparent bg-[#CDAF56] text-[#301934] hover:bg-[#CDAF56]/80",
+        coffee:
+          "border-transparent bg-[#5D4225] text-[#F1ECE2] hover:bg-[#5D4225]/80",
+        plum:
+          "border-transparent bg-[#4D4052] text-[#F1ECE2] hover:bg-[#4D4052]/80",
       },
     },
     defaultVariants: {

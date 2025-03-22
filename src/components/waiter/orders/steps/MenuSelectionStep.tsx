@@ -31,7 +31,7 @@ export const MenuSelectionStep: React.FC<MenuSelectionStepProps> = ({
   const { t } = useLanguage();
   
   return (
-    <Card className="mb-4 mt-4">
+    <Card className="mb-4 mt-4 border border-accent">
       <CardHeader>
         <CardTitle><T text="Menu Selection" /></CardTitle>
         <CardDescription><T text="Review the items in the cart and add any special instructions." /></CardDescription>
@@ -45,7 +45,7 @@ export const MenuSelectionStep: React.FC<MenuSelectionStepProps> = ({
           <ScrollArea className="h-[400px] mb-4">
             <div className="space-y-2">
               {cart.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-3 border-b">
+                <div key={item.id} className="flex items-center justify-between p-3 border-b border-border">
                   <div>
                     <h3 className="font-medium">{item.foodItem.name}</h3>
                     <div className="text-sm text-muted-foreground">
@@ -75,7 +75,7 @@ export const MenuSelectionStep: React.FC<MenuSelectionStepProps> = ({
           placeholder={t("Add order notes...")} 
           value={orderNotes}
           onChange={(e) => setOrderNotes(e.target.value)}
-          className="mb-4"
+          className="mb-4 border-input focus-visible:ring-primary"
         />
         
         <Button 

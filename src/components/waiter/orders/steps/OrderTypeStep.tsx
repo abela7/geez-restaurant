@@ -20,7 +20,7 @@ export const OrderTypeStep: React.FC<OrderTypeStepProps> = ({ onSelectOrderType 
   const { t } = useLanguage();
   
   return (
-    <Card className="mb-4 mt-4">
+    <Card className="mb-4 mt-4 border border-accent">
       <CardHeader>
         <CardTitle><T text="Select Order Type" /></CardTitle>
         <CardDescription><T text="Choose how the customer will receive their order." /></CardDescription>
@@ -28,7 +28,7 @@ export const OrderTypeStep: React.FC<OrderTypeStepProps> = ({ onSelectOrderType 
       <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Button 
           variant="outline" 
-          className="h-24 flex flex-col items-center justify-center gap-2"
+          className="h-24 flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/10"
           onClick={() => onSelectOrderType('dine-in')}
         >
           <Utensils className="h-5 w-5" />
@@ -36,7 +36,7 @@ export const OrderTypeStep: React.FC<OrderTypeStepProps> = ({ onSelectOrderType 
         </Button>
         <Button 
           variant="outline" 
-          className="h-24 flex flex-col items-center justify-center gap-2"
+          className="h-24 flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/10"
           onClick={() => onSelectOrderType('takeout')}
         >
           <ShoppingBag className="h-5 w-5" />
@@ -44,7 +44,7 @@ export const OrderTypeStep: React.FC<OrderTypeStepProps> = ({ onSelectOrderType 
         </Button>
         <Button 
           variant="outline" 
-          className="h-24 flex flex-col items-center justify-center gap-2"
+          className="h-24 flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/10"
           onClick={() => onSelectOrderType('delivery')}
         >
           <Truck className="h-5 w-5" />

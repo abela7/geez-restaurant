@@ -5,77 +5,157 @@
  
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Light Theme (Default - Cream-based) */
+    --background: 35 27% 92%;  /* Cream #F1ECE2 */
+    --foreground: 292 13% 28%; /* Plum #4D4052 */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 35 27% 92%;        /* Cream #F1ECE2 */
+    --card-foreground: 292 13% 28%; /* Plum #4D4052 */
  
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 35 27% 92%;     /* Cream #F1ECE2 */
+    --popover-foreground: 292 13% 28%; /* Plum #4D4052 */
  
-    --primary: 35 77% 49%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 43 69% 50%;     /* Turmeric #DAA520 */
+    --primary-foreground: 273 45% 20%; /* Eggplant #301934 */
  
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 35 27% 92%;   /* Cream #F1ECE2 */
+    --secondary-foreground: 292 13% 28%; /* Plum #4D4052 */
  
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 35 27% 92%;       /* Cream #F1ECE2 */
+    --muted-foreground: 292 13% 40%; /* Lighter Plum */
  
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 50 50% 58%;      /* Sand #CDAF56 */
+    --accent-foreground: 292 13% 28%; /* Plum #4D4052 */
  
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 35 27% 92%; /* Cream #F1ECE2 */
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 50 50% 58%;      /* Sand #CDAF56 */
+    --input: 50 50% 58%;       /* Sand #CDAF56 */
+    --ring: 43 69% 50%;        /* Turmeric #DAA520 */
  
     --radius: 0.5rem;
 
-    --sidebar: 220 5% 98%;
-    --sidebar-foreground: 222.2 47.4% 11.2%;
-    --sidebar-border: 214.3 31.8% 91.4%;
-    --sidebar-accent: 210 40% 92%;
-    --sidebar-accent-foreground: 222.2 47.4% 11.2%;
+    --sidebar: 35 27% 95%;     /* Lighter Cream */
+    --sidebar-foreground: 292 13% 28%; /* Plum #4D4052 */
+    --sidebar-border: 50 50% 58%; /* Sand #CDAF56 */
+    --sidebar-accent: 35 27% 87%; /* Darker Cream */
+    --sidebar-accent-foreground: 292 13% 28%; /* Plum #4D4052 */
   }
  
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Dark Theme (Eggplant-based) */
+    --background: 273 45% 20%; /* Eggplant #301934 */
+    --foreground: 35 27% 92%;  /* Cream #F1ECE2 */
  
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 273 45% 20%;       /* Eggplant #301934 */
+    --card-foreground: 35 27% 92%; /* Cream #F1ECE2 */
  
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 273 45% 20%;    /* Eggplant #301934 */
+    --popover-foreground: 35 27% 92%; /* Cream #F1ECE2 */
  
-    --primary: 35 77% 49%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 43 69% 50%;     /* Turmeric #DAA520 */
+    --primary-foreground: 35 27% 92%; /* Cream #F1ECE2 */
  
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 292 13% 28%;  /* Plum #4D4052 */
+    --secondary-foreground: 35 27% 92%; /* Cream #F1ECE2 */
  
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 292 13% 28%;      /* Plum #4D4052 */
+    --muted-foreground: 50 50% 68%; /* Lighter Sand */
  
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 292 13% 28%;     /* Plum #4D4052 */
+    --accent-foreground: 35 27% 92%; /* Cream #F1ECE2 */
  
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 35 27% 92%; /* Cream #F1ECE2 */
  
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 292 13% 28%;     /* Plum #4D4052 */
+    --input: 292 13% 28%;      /* Plum #4D4052 */
+    --ring: 50 50% 58%;        /* Sand #CDAF56 */
 
-    --sidebar: 223 47% 11%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-border: 215 28% 17%;
-    --sidebar-accent: 218 32% 15%;
-    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar: 273 45% 15%;    /* Darker Eggplant */
+    --sidebar-foreground: 35 27% 92%; /* Cream #F1ECE2 */
+    --sidebar-border: 292 13% 22%; /* Darker Plum */
+    --sidebar-accent: 273 45% 25%; /* Lighter Eggplant */
+    --sidebar-accent-foreground: 35 27% 92%; /* Cream #F1ECE2 */
+  }
+
+  .high-contrast {
+    /* High Contrast Theme (White background with dark text) */
+    --background: 0 0% 100%;   /* White #FFFFFF */
+    --foreground: 273 45% 20%; /* Eggplant #301934 */
+ 
+    --card: 0 0% 100%;         /* White #FFFFFF */
+    --card-foreground: 273 45% 20%; /* Eggplant #301934 */
+ 
+    --popover: 0 0% 100%;      /* White #FFFFFF */
+    --popover-foreground: 273 45% 20%; /* Eggplant #301934 */
+ 
+    --primary: 43 69% 50%;     /* Turmeric #DAA520 */
+    --primary-foreground: 273 45% 20%; /* Eggplant #301934 */
+ 
+    --secondary: 0 0% 95%;     /* Very light gray */
+    --secondary-foreground: 273 45% 20%; /* Eggplant #301934 */
+ 
+    --muted: 0 0% 95%;         /* Very light gray */
+    --muted-foreground: 273 45% 30%; /* Lighter Eggplant */
+ 
+    --accent: 43 69% 50%;      /* Turmeric #DAA520 */
+    --accent-foreground: 273 45% 20%; /* Eggplant #301934 */
+ 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%; /* White #FFFFFF */
+
+    --border: 273 45% 20%;     /* Eggplant #301934 */
+    --input: 273 45% 20%;      /* Eggplant #301934 */
+    --ring: 43 69% 50%;        /* Turmeric #DAA520 */
+ 
+    --radius: 0.5rem;
+
+    --sidebar: 0 0% 100%;      /* White #FFFFFF */
+    --sidebar-foreground: 273 45% 20%; /* Eggplant #301934 */
+    --sidebar-border: 273 45% 20%; /* Eggplant #301934 */
+    --sidebar-accent: 0 0% 95%; /* Very light gray */
+    --sidebar-accent-foreground: 273 45% 20%; /* Eggplant #301934 */
+  }
+
+  .warm-blend {
+    /* Warm Blend Theme */
+    --background: 45 30% 94%;  /* Gradient blend base of Cream and Sand at 15% opacity */
+    --foreground: 292 13% 28%; /* Plum #4D4052 */
+ 
+    --card: 0 0% 100%;         /* White #FFFFFF */
+    --card-foreground: 292 13% 28%; /* Plum #4D4052 */
+ 
+    --popover: 0 0% 100%;      /* White #FFFFFF */
+    --popover-foreground: 292 13% 28%; /* Plum #4D4052 */
+ 
+    --primary: 43 69% 50%;     /* Turmeric #DAA520 */
+    --primary-foreground: 27 37% 25%; /* Coffee #5D4225 */
+ 
+    --secondary: 0 0% 100%;    /* White #FFFFFF */
+    --secondary-foreground: 292 13% 28%; /* Plum #4D4052 */
+ 
+    --muted: 45 30% 94%;       /* Similar to background */
+    --muted-foreground: 27 37% 35%; /* Lighter Coffee */
+ 
+    --accent: 43 69% 50%;      /* Turmeric #DAA520 */
+    --accent-foreground: 292 13% 28%; /* Plum #4D4052 */
+ 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%; /* White #FFFFFF */
+
+    --border: 50 65% 58%;      /* Sand with increased saturation #CDAF56 */
+    --input: 50 65% 58%;       /* Sand with increased saturation #CDAF56 */
+    --ring: 43 69% 50%;        /* Turmeric #DAA520 */
+ 
+    --radius: 0.5rem;
+
+    --sidebar: 0 0% 100%;      /* White #FFFFFF */
+    --sidebar-foreground: 292 13% 28%; /* Plum #4D4052 */
+    --sidebar-border: 50 65% 58%; /* Sand with increased saturation #CDAF56 */
+    --sidebar-accent: 45 30% 94%; /* Similar to background */
+    --sidebar-accent-foreground: 292 13% 28%; /* Plum #4D4052 */
   }
 }
  

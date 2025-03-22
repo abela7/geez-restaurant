@@ -27,7 +27,7 @@ export const TableSelectionStep: React.FC<TableSelectionStepProps> = ({
   const { t } = useLanguage();
   
   return (
-    <Card className="mb-4 mt-4">
+    <Card className="mb-4 mt-4 border border-accent">
       <CardHeader>
         <CardTitle><T text="Select Table" /></CardTitle>
         <CardDescription><T text="Choose an available table for the dine-in order." /></CardDescription>
@@ -35,7 +35,7 @@ export const TableSelectionStep: React.FC<TableSelectionStepProps> = ({
       <CardContent>
         {isLoading ? (
           <div className="flex justify-center p-8">
-            <Loader2 className="h-8 w-8 animate-spin" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : tables.length > 0 ? (
           <ScrollArea className="h-[400px]">
@@ -44,7 +44,7 @@ export const TableSelectionStep: React.FC<TableSelectionStepProps> = ({
                 <Button 
                   key={table.id} 
                   variant="outline" 
-                  className="h-20 flex flex-col items-center justify-center"
+                  className="h-20 flex flex-col items-center justify-center hover:border-primary hover:bg-primary/10"
                   onClick={() => onSelectTable(table.id)}
                 >
                   <span className="font-medium text-lg">Table {table.table_number}</span>

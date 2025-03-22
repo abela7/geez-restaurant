@@ -1,172 +1,185 @@
-import { Route, Routes } from "react-router-dom";
 
-// Administrative Portal
-import Index from "../pages/Index";
-import Reports from "../pages/admin/Reports";
-import StaffManagement from "../pages/admin/StaffManagement";
-import InventoryControl from "../pages/admin/InventoryControl";
-import MenuManagement from "../pages/admin/MenuManagement";
-import AdminTaskManagement from "../pages/admin/TaskManagement";
-import Communication from "../pages/admin/Communication";
-import FinancialManagement from "../pages/admin/FinancialManagement";
-import LanguageManagement from "../pages/admin/LanguageManagement";
-import FoodSafety from "../pages/admin/FoodSafety";
+import { Route, Routes, Navigate, Outlet } from "react-router-dom";
+import Layout from "@/components/Layout";
+import NotFound from "@/pages/NotFound";
 
-// Menu Management Subpages
-import RecipeManagement from "../pages/admin/menu/RecipeManagement";
-import FoodManagement from "../pages/admin/menu/FoodManagement";
-import MenuDesign from "../pages/admin/menu/MenuDesign";
-import Categories from "../pages/admin/menu/Categories";
-import Modifiers from "../pages/admin/menu/Modifiers";
-import Pricing from "../pages/admin/menu/Pricing";
-import Dishes from "../pages/admin/menu/Dishes";
+// Import Admin Pages
+import Dashboard from "@/components/Dashboard";
+import StaffManagement from "@/pages/admin/StaffManagement";
+import MenuManagement from "@/pages/admin/MenuManagement";
+import InventoryControl from "@/pages/admin/InventoryControl";
+import FinancialManagement from "@/pages/admin/FinancialManagement";
+import Reports from "@/pages/admin/Reports";
+import Customers from "@/pages/admin/Customers";
+import Communication from "@/pages/admin/Communication";
+import TaskManagement from "@/pages/admin/TaskManagement";
+import FoodSafety from "@/pages/admin/FoodSafety";
+import ActivityLog from "@/pages/admin/ActivityLog";
+import Settings from "@/pages/admin/Settings";
+import LanguageManagement from "@/pages/admin/LanguageManagement";
 
-// Finance Subpages
-import DailySales from "../pages/admin/finance/DailySales";
-import FinancialReports from "../pages/admin/finance/FinancialReports";
-import PaymentManagement from "../pages/admin/finance/PaymentManagement";
-import Expenses from "../pages/admin/finance/Expenses";
-import Budgeting from "../pages/admin/finance/Budgeting";
+// Import Admin Settings Pages
+import RestaurantProfile from "@/pages/admin/settings/RestaurantProfile";
+import UserAccess from "@/pages/admin/settings/UserAccess";
+import PrintersDevices from "@/pages/admin/settings/PrintersDevices";
+import Integrations from "@/pages/admin/settings/Integrations";
+import SystemLogs from "@/pages/admin/settings/SystemLogs";
+import ThemeSettings from "@/pages/admin/settings/ThemeSettings";
 
-// Inventory Subpages
-import StockLevels from "../pages/admin/inventory/StockLevels";
-import Ingredients from "../pages/admin/inventory/Ingredients";
-import Recipes from "../pages/admin/inventory/Recipes";
-import Suppliers from "../pages/admin/inventory/Suppliers";
-import PurchaseOrders from "../pages/admin/inventory/PurchaseOrders";
-import InventoryReports from "../pages/admin/reports/InventoryReports";
+// Import Staff Management Pages
+import Directory from "@/pages/admin/staff/Directory";
+import NewStaff from "@/pages/admin/staff/NewStaff";
+import EditStaff from "@/pages/admin/staff/EditStaff";
+import StaffProfile from "@/pages/admin/staff/StaffProfile";
+import Attendance from "@/pages/admin/staff/Attendance";
+import Payroll from "@/pages/admin/staff/Payroll";
+import Performance from "@/pages/admin/staff/Performance";
+import Tasks from "@/pages/admin/staff/Tasks";
 
-// Food Safety Subpages
-import Checklists from "../pages/admin/food-safety/Checklists";
-import NewChecklist from "../pages/admin/food-safety/NewChecklist";
+// Import Menu Management Pages
+import Categories from "@/pages/admin/menu/Categories";
+import Dishes from "@/pages/admin/menu/Dishes";
+import Modifiers from "@/pages/admin/menu/Modifiers";
+import Pricing from "@/pages/admin/menu/Pricing";
+import RecipeManagement from "@/pages/admin/menu/RecipeManagement";
+import FoodManagement from "@/pages/admin/menu/FoodManagement";
+import MenuDesign from "@/pages/admin/menu/MenuDesign";
 
-// New Admin Routes
-import AdminCustomers from "../pages/admin/Customers";
-import AdminSettings from "../pages/admin/Settings";
-import AdminActivity from "../pages/admin/ActivityLog";
+// Import Inventory Pages
+import Ingredients from "@/pages/admin/inventory/Ingredients";
+import StockLevels from "@/pages/admin/inventory/StockLevels";
+import PurchaseOrders from "@/pages/admin/inventory/PurchaseOrders";
+import Suppliers from "@/pages/admin/inventory/Suppliers";
+import Recipes from "@/pages/admin/inventory/Recipes";
+import InventoryReports from "@/pages/admin/inventory/InventoryReports";
 
-// Admin Subroutes
-import SalesAnalytics from "../pages/admin/reports/SalesAnalytics";
-import StaffReports from "../pages/admin/reports/StaffReports";
-import CustomerInsights from "../pages/admin/reports/CustomerInsights";
-import CustomReports from "../pages/admin/reports/CustomReports";
+// Import Finance Pages
+import DailySales from "@/pages/admin/finance/DailySales";
+import Expenses from "@/pages/admin/finance/Expenses";
+import Budgeting from "@/pages/admin/finance/Budgeting";
+import PaymentManagement from "@/pages/admin/finance/PaymentManagement";
+import FinancialReports from "@/pages/admin/finance/FinancialReports";
 
-// Customer Pages
-import CustomerFeedback from "../pages/admin/customers/Feedback";
-import CustomerDatabase from "../pages/admin/customers/CustomerDatabase";
-import Promotions from "../pages/admin/customers/Promotions";
-import LoyaltyProgram from "../pages/admin/customers/LoyaltyProgram";
+// Import Reports Pages
+import SalesAnalytics from "@/pages/admin/reports/SalesAnalytics";
+import CustomerInsights from "@/pages/admin/reports/CustomerInsights";
+import StaffReports from "@/pages/admin/reports/StaffReports";
+import InventoryReportsPage from "@/pages/admin/reports/InventoryReports";
+import CustomReports from "@/pages/admin/reports/CustomReports";
 
-// Settings Pages
-import RestaurantProfile from "../pages/admin/settings/RestaurantProfile";
-import UserAccess from "../pages/admin/settings/UserAccess";
-import PrintersDevices from "../pages/admin/settings/PrintersDevices";
-import SystemLogs from "../pages/admin/settings/SystemLogs";
-import Integrations from "../pages/admin/settings/Integrations";
+// Import Customer Pages
+import CustomerDatabase from "@/pages/admin/customers/CustomerDatabase";
+import Feedback from "@/pages/admin/customers/Feedback";
+import Promotions from "@/pages/admin/customers/Promotions";
+import LoyaltyProgram from "@/pages/admin/customers/LoyaltyProgram";
 
-// Staff Management Pages
-import StaffProfile from "../pages/admin/staff/StaffProfile";
-import StaffAttendance from "../pages/admin/staff/Attendance";
-import StaffPerformance from "../pages/admin/staff/Performance";
-import NewStaff from "../pages/admin/staff/NewStaff";
-import EditStaff from "../pages/admin/staff/EditStaff";
-import Directory from "../pages/admin/staff/Directory";
-import Tasks from "../pages/admin/staff/Tasks";
-import Payroll from "../pages/admin/staff/Payroll";
-import StaffTaskManagement from "../pages/admin/staff/TaskManagement";
+// Import Food Safety Pages
+import Checklists from "@/pages/admin/food-safety/Checklists";
+import NewChecklist from "@/pages/admin/food-safety/NewChecklist";
 
-// General Section
-import GeneralTableManagement from "../pages/admin/general/TableManagement";
+// Import Table Management
+import TableManagement from "@/pages/admin/general/TableManagement";
 
 const AdminRoutes = () => {
+  // Check if user exists and has admin role
+  const storedUser = localStorage.getItem('user');
+  const user = storedUser ? JSON.parse(storedUser) : null;
+  
+  if (!user || user.role !== 'admin') {
+    return <Navigate to="/login" replace />;
+  }
+
   return (
     <Routes>
-      {/* Admin Portal Routes */}
-      <Route path="/" element={<Index />} />
+      <Route element={<Layout interface="admin"><Outlet /></Layout>}>
+        <Route index element={<Dashboard />} />
+        
+        {/* Staff Management Routes */}
+        <Route path="/staff" element={<StaffManagement />} />
+        <Route path="/staff/directory" element={<Directory />} />
+        <Route path="/staff/new" element={<NewStaff />} />
+        <Route path="/staff/edit/:id" element={<EditStaff />} />
+        <Route path="/staff/profile/:id" element={<StaffProfile />} />
+        <Route path="/staff/attendance" element={<Attendance />} />
+        <Route path="/staff/payroll" element={<Payroll />} />
+        <Route path="/staff/performance" element={<Performance />} />
+        <Route path="/staff/tasks" element={<Tasks />} />
+        
+        {/* Menu Management Routes */}
+        <Route path="/menu" element={<MenuManagement />} />
+        <Route path="/menu/categories" element={<Categories />} />
+        <Route path="/menu/dishes" element={<Dishes />} />
+        <Route path="/menu/modifiers" element={<Modifiers />} />
+        <Route path="/menu/pricing" element={<Pricing />} />
+        <Route path="/menu/recipes" element={<RecipeManagement />} />
+        <Route path="/menu/food" element={<FoodManagement />} />
+        <Route path="/menu/design" element={<MenuDesign />} />
+        
+        {/* Inventory Control Routes */}
+        <Route path="/inventory" element={<InventoryControl />} />
+        <Route path="/inventory/ingredients" element={<Ingredients />} />
+        <Route path="/inventory/stock" element={<StockLevels />} />
+        <Route path="/inventory/purchase-orders" element={<PurchaseOrders />} />
+        <Route path="/inventory/suppliers" element={<Suppliers />} />
+        <Route path="/inventory/recipes" element={<Recipes />} />
+        <Route path="/inventory/reports" element={<InventoryReports />} />
+        
+        {/* Financial Management Routes */}
+        <Route path="/finance" element={<FinancialManagement />} />
+        <Route path="/finance/daily-sales" element={<DailySales />} />
+        <Route path="/finance/expenses" element={<Expenses />} />
+        <Route path="/finance/budgeting" element={<Budgeting />} />
+        <Route path="/finance/payment-management" element={<PaymentManagement />} />
+        <Route path="/finance/reports" element={<FinancialReports />} />
+        
+        {/* Reports Routes */}
+        <Route path="/reports" element={<Reports />} />
+        <Route path="/reports/sales" element={<SalesAnalytics />} />
+        <Route path="/reports/customers" element={<CustomerInsights />} />
+        <Route path="/reports/staff" element={<StaffReports />} />
+        <Route path="/reports/inventory" element={<InventoryReportsPage />} />
+        <Route path="/reports/custom" element={<CustomReports />} />
+        
+        {/* Customer Management Routes */}
+        <Route path="/customers" element={<Customers />} />
+        <Route path="/customers/database" element={<CustomerDatabase />} />
+        <Route path="/customers/feedback" element={<Feedback />} />
+        <Route path="/customers/promotions" element={<Promotions />} />
+        <Route path="/customers/loyalty" element={<LoyaltyProgram />} />
+        
+        {/* Communication Routes */}
+        <Route path="/communication" element={<Communication />} />
+        
+        {/* Task Management Routes */}
+        <Route path="/tasks" element={<TaskManagement />} />
+        
+        {/* Food Safety Routes */}
+        <Route path="/food-safety" element={<FoodSafety />} />
+        <Route path="/food-safety/checklists" element={<Checklists />} />
+        <Route path="/food-safety/new-checklist" element={<NewChecklist />} />
+        
+        {/* Table Management */}
+        <Route path="/tables" element={<TableManagement />} />
+        
+        {/* Activity Log Routes */}
+        <Route path="/activity-log" element={<ActivityLog />} />
+        
+        {/* Settings Routes */}
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/settings/profile" element={<RestaurantProfile />} />
+        <Route path="/settings/users" element={<UserAccess />} />
+        <Route path="/settings/printers" element={<PrintersDevices />} />
+        <Route path="/settings/integrations" element={<Integrations />} />
+        <Route path="/settings/system-logs" element={<SystemLogs />} />
+        <Route path="/settings/themes" element={<ThemeSettings />} />
+        
+        {/* Language Management Routes */}
+        <Route path="/language" element={<LanguageManagement />} />
+      </Route>
       
-      {/* Reports Section */}
-      <Route path="/admin/reports" element={<Reports />} />
-      <Route path="/admin/reports/sales" element={<SalesAnalytics />} />
-      <Route path="/admin/reports/staff" element={<StaffReports />} />
-      <Route path="/admin/reports/inventory" element={<InventoryReports />} />
-      <Route path="/admin/reports/customers" element={<CustomerInsights />} />
-      <Route path="/admin/reports/custom" element={<CustomReports />} />
-      
-      {/* Finance Section */}
-      <Route path="/admin/finance" element={<FinancialManagement />} />
-      <Route path="/admin/finance/daily-sales" element={<DailySales />} />
-      <Route path="/admin/finance/financial-reports" element={<FinancialReports />} />
-      <Route path="/admin/finance/payment-management" element={<PaymentManagement />} />
-      <Route path="/admin/finance/expenses" element={<Expenses />} />
-      <Route path="/admin/finance/budgeting" element={<Budgeting />} />
-      
-      {/* Staff Management */}
-      <Route path="/admin/staff" element={<StaffManagement />} />
-      <Route path="/admin/staff/profile/:id" element={<StaffProfile />} />
-      <Route path="/admin/staff/attendance" element={<StaffAttendance />} />
-      <Route path="/admin/staff/performance" element={<StaffPerformance />} />
-      <Route path="/admin/staff/new" element={<NewStaff />} />
-      <Route path="/admin/staff/directory" element={<Directory />} />
-      <Route path="/admin/staff/edit/:id" element={<EditStaff />} />
-      <Route path="/admin/staff/tasks" element={<StaffTaskManagement />} />
-      <Route path="/admin/staff/payroll" element={<Payroll />} />
-      
-      {/* Inventory Management */}
-      <Route path="/admin/inventory" element={<InventoryControl />} />
-      <Route path="/admin/inventory/stock" element={<StockLevels />} />
-      <Route path="/admin/inventory/ingredients" element={<Ingredients />} />
-      <Route path="/admin/inventory/recipes" element={<Recipes />} />
-      <Route path="/admin/inventory/suppliers" element={<Suppliers />} />
-      <Route path="/admin/inventory/purchase-orders" element={<PurchaseOrders />} />
-      <Route path="/admin/inventory/reports" element={<InventoryReports />} />
-      
-      {/* Menu Management */}
-      <Route path="/admin/menu" element={<MenuManagement />} />
-      <Route path="/admin/menu/recipes" element={<RecipeManagement />} />
-      <Route path="/admin/menu/food" element={<FoodManagement />} />
-      <Route path="/admin/menu/dishes" element={<Dishes />} />
-      <Route path="/admin/menu/categories" element={<Categories />} />
-      <Route path="/admin/menu/modifiers" element={<Modifiers />} />
-      <Route path="/admin/menu/pricing" element={<Pricing />} />
-      <Route path="/admin/menu/design" element={<MenuDesign />} />
-      
-      {/* Tasks */}
-      <Route path="/admin/tasks" element={<AdminTaskManagement />} />
-      
-      {/* Food Safety */}
-      <Route path="/admin/food-safety" element={<FoodSafety />} />
-      <Route path="/admin/food-safety/checklists" element={<Checklists />} />
-      <Route path="/admin/food-safety/checklists/new" element={<NewChecklist />} />
-      
-      {/* Communication */}
-      <Route path="/admin/communication" element={<Communication />} />
-      
-      {/* Customers Section */}
-      <Route path="/admin/customers" element={<AdminCustomers />} />
-      <Route path="/admin/customers/feedback" element={<CustomerFeedback />} />
-      <Route path="/admin/customers/database" element={<CustomerDatabase />} />
-      <Route path="/admin/customers/promotions" element={<Promotions />} />
-      <Route path="/admin/customers/loyalty" element={<LoyaltyProgram />} />
-      
-      {/* Settings Section */}
-      <Route path="/admin/settings" element={<AdminSettings />} />
-      <Route path="/admin/settings/profile" element={<RestaurantProfile />} />
-      <Route path="/admin/settings/users" element={<UserAccess />} />
-      <Route path="/admin/settings/devices" element={<PrintersDevices />} />
-      <Route path="/admin/settings/logs" element={<SystemLogs />} />
-      <Route path="/admin/settings/integrations" element={<Integrations />} />
-      
-      {/* Activity Log */}
-      <Route path="/admin/activity" element={<AdminActivity />} />
-      
-      {/* Language Management */}
-      <Route path="/admin/language" element={<LanguageManagement />} />
-      
-      {/* General Section */}
-      <Route path="/admin/general/table-management" element={<GeneralTableManagement />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };
 
 export default AdminRoutes;
-
