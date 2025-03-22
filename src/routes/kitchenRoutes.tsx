@@ -19,15 +19,17 @@ const KitchenRoutes = () => {
   }
 
   return (
-    <Routes>
-      <Route path="/" element={<Layout interface="kitchen"><KitchenDashboard /></Layout>} />
-      <Route path="/orders" element={<Layout interface="kitchen"><OrderProcessing /></Layout>} />
-      <Route path="/inventory" element={<Layout interface="kitchen"><InventoryCheck /></Layout>} />
-      <Route path="/menu-availability" element={<Layout interface="kitchen"><MenuAvailability /></Layout>} />
-      <Route path="/tasks" element={<Layout interface="kitchen"><KitchenTasks /></Layout>} />
-      <Route path="/food-safety" element={<Layout interface="kitchen"><KitchenFoodSafety /></Layout>} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <Layout interface="kitchen">
+      <Routes>
+        <Route path="/" element={<KitchenDashboard />} />
+        <Route path="/orders" element={<OrderProcessing />} />
+        <Route path="/inventory" element={<InventoryCheck />} />
+        <Route path="/menu-availability" element={<MenuAvailability />} />
+        <Route path="/tasks" element={<KitchenTasks />} />
+        <Route path="/food-safety" element={<KitchenFoodSafety />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Layout>
   );
 };
 

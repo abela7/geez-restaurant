@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import Layout from "@/components/Layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -249,83 +248,81 @@ const OrderProcessing: React.FC = () => {
   };
 
   return (
-    <Layout interface="kitchen">
-      <div className="container mx-auto p-4 max-w-5xl">
-        <PageHeader
-          title={<T text="Order Processing" />}
-          description={<T text="Manage and prepare customer orders" />}
-          className="mb-4"
-        />
+    <div className="container mx-auto p-4 max-w-5xl">
+      <PageHeader
+        title={<T text="Order Processing" />}
+        description={<T text="Manage and prepare customer orders" />}
+        className="mb-4"
+      />
+      
+      <Tabs defaultValue="pending" value={activeTab} onValueChange={setActiveTab} className="mb-6">
+        <TabsList className="grid grid-cols-3 mb-4">
+          <TabsTrigger value="pending" className="relative">
+            <T text="Pending" />
+            {getOrdersByStatus('pending').length > 0 && (
+              <Badge variant="destructive" className="absolute -top-2 -right-2">
+                {getOrdersByStatus('pending').length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="preparing" className="relative">
+            <T text="Preparing" />
+            {getOrdersByStatus('preparing').length > 0 && (
+              <Badge variant="default" className="absolute -top-2 -right-2">
+                {getOrdersByStatus('preparing').length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="ready" className="relative">
+            <T text="Ready" />
+            {getOrdersByStatus('ready').length > 0 && (
+              <Badge variant="secondary" className="absolute -top-2 -right-2">
+                {getOrdersByStatus('ready').length}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
         
-        <Tabs defaultValue="pending" value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList className="grid grid-cols-3 mb-4">
-            <TabsTrigger value="pending" className="relative">
-              <T text="Pending" />
-              {getOrdersByStatus('pending').length > 0 && (
-                <Badge variant="destructive" className="absolute -top-2 -right-2">
-                  {getOrdersByStatus('pending').length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="preparing" className="relative">
-              <T text="Preparing" />
-              {getOrdersByStatus('preparing').length > 0 && (
-                <Badge variant="default" className="absolute -top-2 -right-2">
-                  {getOrdersByStatus('preparing').length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="ready" className="relative">
-              <T text="Ready" />
-              {getOrdersByStatus('ready').length > 0 && (
-                <Badge variant="secondary" className="absolute -top-2 -right-2">
-                  {getOrdersByStatus('ready').length}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="pending" className="mt-0">
-            <ScrollArea className="h-[calc(100vh-250px)]">
-              {getOrdersByStatus('pending').length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                  <AlertCircle className="h-12 w-12 mb-4 opacity-20" />
-                  <p><T text="No pending orders" /></p>
-                </div>
-              ) : (
-                getOrdersByStatus('pending').map(renderOrderCard)
-              )}
-            </ScrollArea>
-          </TabsContent>
-          
-          <TabsContent value="preparing" className="mt-0">
-            <ScrollArea className="h-[calc(100vh-250px)]">
-              {getOrdersByStatus('preparing').length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                  <AlertCircle className="h-12 w-12 mb-4 opacity-20" />
-                  <p><T text="No orders in preparation" /></p>
-                </div>
-              ) : (
-                getOrdersByStatus('preparing').map(renderOrderCard)
-              )}
-            </ScrollArea>
-          </TabsContent>
-          
-          <TabsContent value="ready" className="mt-0">
-            <ScrollArea className="h-[calc(100vh-250px)]">
-              {getOrdersByStatus('ready').length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                  <AlertCircle className="h-12 w-12 mb-4 opacity-20" />
-                  <p><T text="No orders ready for pickup" /></p>
-                </div>
-              ) : (
-                getOrdersByStatus('ready').map(renderOrderCard)
-              )}
-            </ScrollArea>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </Layout>
+        <TabsContent value="pending" className="mt-0">
+          <ScrollArea className="h-[calc(100vh-250px)]">
+            {getOrdersByStatus('pending').length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <AlertCircle className="h-12 w-12 mb-4 opacity-20" />
+                <p><T text="No pending orders" /></p>
+              </div>
+            ) : (
+              getOrdersByStatus('pending').map(renderOrderCard)
+            )}
+          </ScrollArea>
+        </TabsContent>
+        
+        <TabsContent value="preparing" className="mt-0">
+          <ScrollArea className="h-[calc(100vh-250px)]">
+            {getOrdersByStatus('preparing').length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <AlertCircle className="h-12 w-12 mb-4 opacity-20" />
+                <p><T text="No orders in preparation" /></p>
+              </div>
+            ) : (
+              getOrdersByStatus('preparing').map(renderOrderCard)
+            )}
+          </ScrollArea>
+        </TabsContent>
+        
+        <TabsContent value="ready" className="mt-0">
+          <ScrollArea className="h-[calc(100vh-250px)]">
+            {getOrdersByStatus('ready').length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <AlertCircle className="h-12 w-12 mb-4 opacity-20" />
+                <p><T text="No orders ready for pickup" /></p>
+              </div>
+            ) : (
+              getOrdersByStatus('ready').map(renderOrderCard)
+            )}
+          </ScrollArea>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 
