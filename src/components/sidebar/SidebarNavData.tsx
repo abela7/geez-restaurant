@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   LayoutDashboard, DollarSign, Users, Package, BarChart, 
@@ -19,12 +20,12 @@ export const getNavSections = (interfaceType: 'admin' | 'waiter' | 'kitchen' | '
     { 
       label: "Dashboard", 
       icon: <LayoutDashboard size={20} />, 
-      path: "/"
+      path: "/" 
     },
     { 
       label: "Sales & Finance", 
       icon: <DollarSign size={20} />, 
-      path: "/admin/finance",
+      path: "/finance",
       submenu: [
         { to: "daily-sales", label: "Daily Sales" },
         { to: "financial-reports", label: "Financial Reports" },
@@ -36,7 +37,7 @@ export const getNavSections = (interfaceType: 'admin' | 'waiter' | 'kitchen' | '
     { 
       label: "Staff Management", 
       icon: <Users size={20} />, 
-      path: "/admin/staff",
+      path: "/staff",
       submenu: [
         { to: "directory", label: "Staff Directory" },
         { to: "performance", label: "Performance" },
@@ -48,7 +49,7 @@ export const getNavSections = (interfaceType: 'admin' | 'waiter' | 'kitchen' | '
     { 
       label: "Menu Management", 
       icon: <MenuIcon size={20} />, 
-      path: "/admin/menu",
+      path: "/menu",
       submenu: [
         { to: "food", label: "Food Items" },
         { to: "categories", label: "Categories" },
@@ -61,7 +62,7 @@ export const getNavSections = (interfaceType: 'admin' | 'waiter' | 'kitchen' | '
     { 
       label: "Inventory", 
       icon: <Package size={20} />, 
-      path: "/admin/inventory",
+      path: "/inventory",
       submenu: [
         { to: "stock", label: "Stock Levels" },
         { to: "ingredients", label: "Ingredients" },
@@ -73,7 +74,7 @@ export const getNavSections = (interfaceType: 'admin' | 'waiter' | 'kitchen' | '
     { 
       label: "Food Hygiene", 
       icon: <Utensils size={20} />, 
-      path: "/admin/food-safety",
+      path: "/food-safety",
       submenu: [
         { to: "checklists", label: "Safety Checklists" },
         { to: "temperature", label: "Temperature Logs" },
@@ -84,7 +85,7 @@ export const getNavSections = (interfaceType: 'admin' | 'waiter' | 'kitchen' | '
     { 
       label: "Reports", 
       icon: <BarChart size={20} />, 
-      path: "/admin/reports",
+      path: "/reports",
       submenu: [
         { to: "sales", label: "Sales Analytics" },
         { to: "staff", label: "Staff Reports" },
@@ -96,7 +97,7 @@ export const getNavSections = (interfaceType: 'admin' | 'waiter' | 'kitchen' | '
     { 
       label: "Customers", 
       icon: <User size={20} />, 
-      path: "/admin/customers",
+      path: "/customers",
       submenu: [
         { to: "database", label: "Customer Database" },
         { to: "feedback", label: "Feedback" },
@@ -107,7 +108,7 @@ export const getNavSections = (interfaceType: 'admin' | 'waiter' | 'kitchen' | '
     {
       label: "General", 
       icon: <Settings2 size={20} />, 
-      path: "/admin/general",
+      path: "/general",
       submenu: [
         { to: "table-management", label: "Table Management" }
       ]
@@ -115,29 +116,30 @@ export const getNavSections = (interfaceType: 'admin' | 'waiter' | 'kitchen' | '
     { 
       label: "Settings", 
       icon: <Settings size={20} />, 
-      path: "/admin/settings",
+      path: "/settings",
       submenu: [
         { to: "profile", label: "Restaurant Profile" },
         { to: "users", label: "User Access" },
-        { to: "devices", label: "Printers & Devices" },
-        { to: "logs", label: "System Logs" },
-        { to: "integrations", label: "Integrations" }
+        { to: "printers", label: "Printers & Devices" },
+        { to: "system-logs", label: "System Logs" },
+        { to: "integrations", label: "Integrations" },
+        { to: "themes", label: "Theme Settings" }
       ]
     },
     { 
       label: "Activity Log", 
       icon: <ClipboardList size={20} />, 
-      path: "/admin/activity"
+      path: "/activity" 
     },
     { 
       label: "Language Management", 
       icon: <Languages size={20} />, 
-      path: "/admin/language"
+      path: "/language" 
     },
     { 
       label: "Logout", 
       icon: <LogOut size={20} />, 
-      path: "/login"
+      path: "/login" 
     }
   ];
 
