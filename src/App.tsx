@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { CartProvider } from "@/contexts/CartContext";
 
 // Import routes
 import AdminRoutes from "./routes/adminRoutes";
@@ -20,30 +21,32 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
       <ThemeProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              {/* Main route path */}
-              <Route path="/*" element={<AdminRoutes />} />
-              
-              {/* Other interface routes */}
-              <Route path="/waiter/*" element={<WaiterRoutes />} />
-              <Route path="/kitchen/*" element={<KitchenRoutes />} />
-              <Route path="/menu/*" element={<CustomerRoutes />} />
-              <Route path="/feedback/*" element={<CustomerRoutes />} />
-              <Route path="/promotions/*" element={<CustomerRoutes />} />
-              <Route path="/system/*" element={<SystemRoutes />} />
-              
-              {/* Auth routes */}
-              <Route path="/login" element={<Login />} />
-              
-              {/* Catch All */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+        <CartProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                {/* Main route path */}
+                <Route path="/*" element={<AdminRoutes />} />
+                
+                {/* Other interface routes */}
+                <Route path="/waiter/*" element={<WaiterRoutes />} />
+                <Route path="/kitchen/*" element={<KitchenRoutes />} />
+                <Route path="/menu/*" element={<CustomerRoutes />} />
+                <Route path="/feedback/*" element={<CustomerRoutes />} />
+                <Route path="/promotions/*" element={<CustomerRoutes />} />
+                <Route path="/system/*" element={<SystemRoutes />} />
+                
+                {/* Auth routes */}
+                <Route path="/login" element={<Login />} />
+                
+                {/* Catch All */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </CartProvider>
       </ThemeProvider>
     </LanguageProvider>
   </QueryClientProvider>

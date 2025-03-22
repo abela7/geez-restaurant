@@ -8,6 +8,7 @@ import KitchenTasks from "../pages/kitchen/KitchenTasks";
 import KitchenFoodSafety from "../pages/kitchen/KitchenFoodSafety";
 import MenuAvailability from "../pages/kitchen/MenuAvailability";
 import NotFound from "@/pages/NotFound";
+import { CartProvider } from "@/contexts/CartContext";
 
 const KitchenRoutes = () => {
   // Check if user exists and has kitchen role
@@ -19,17 +20,19 @@ const KitchenRoutes = () => {
   }
 
   return (
-    <Layout interface="kitchen">
-      <Routes>
-        <Route path="/" element={<KitchenDashboard />} />
-        <Route path="/orders" element={<OrderProcessing />} />
-        <Route path="/inventory" element={<InventoryCheck />} />
-        <Route path="/menu-availability" element={<MenuAvailability />} />
-        <Route path="/tasks" element={<KitchenTasks />} />
-        <Route path="/food-safety" element={<KitchenFoodSafety />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Layout>
+    <CartProvider>
+      <Layout interface="kitchen">
+        <Routes>
+          <Route path="/" element={<KitchenDashboard />} />
+          <Route path="/orders" element={<OrderProcessing />} />
+          <Route path="/inventory" element={<InventoryCheck />} />
+          <Route path="/menu-availability" element={<MenuAvailability />} />
+          <Route path="/tasks" element={<KitchenTasks />} />
+          <Route path="/food-safety" element={<KitchenFoodSafety />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Layout>
+    </CartProvider>
   );
 };
 
