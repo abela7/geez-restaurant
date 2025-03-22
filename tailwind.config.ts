@@ -88,11 +88,11 @@ const config = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
-      // Add gradients for the warm blend theme
+      // Update gradients for the warm blend theme to use sand colors (#CDAF56)
       backgroundImage: {
-        "warm-gradient": "linear-gradient(135deg, #FFFFFF 0%, #f5f3ff 100%)",
-        "warm-accent": "linear-gradient(90deg, hsla(250, 60%, 60%, 1) 0%, hsla(220, 80%, 65%, 1) 100%)",
-        "warm-card": "linear-gradient(109.6deg, rgba(223,234,247,1) 11.2%, rgba(244,248,252,1) 91.1%)",
+        "warm-gradient": "linear-gradient(135deg, #FFFFFF 0%, #f5f5dc 100%)",
+        "warm-accent": "linear-gradient(90deg, hsla(50, 57%, 57%, 1) 0%, hsla(43, 74%, 49%, 1) 100%)",
+        "warm-card": "linear-gradient(109.6deg, rgba(245,245,220,0.3) 11.2%, rgba(255,255,255,1) 91.1%)",
       },
     },
   },

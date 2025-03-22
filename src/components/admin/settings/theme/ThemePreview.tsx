@@ -46,8 +46,8 @@ const ThemePreview: React.FC<ThemePreviewProps> = ({
         return {
           bg: 'bg-white',
           text: 'text-[#33394A]',
-          border: 'border-[#dee7f2]',
-          button: 'bg-[#7c5cef] text-white'
+          border: 'border-[#CDAF56]',
+          button: 'bg-[#CDAF56] text-white'
         };
       default:
         return {

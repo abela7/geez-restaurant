@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -120,7 +119,7 @@
   }
 
   .warm-blend {
-    /* Enhanced Warm Blend Theme with more white and refined colors */
+    /* Updated Warm Blend Theme with Sand/Gold accents instead of purple */
     --background: 0 0% 100%;    /* Pure White #FFFFFF */
     --foreground: 220 20% 25%;  /* Darker blue-gray #33394A */
  
@@ -130,7 +129,7 @@
     --popover: 0 0% 100%;       /* Pure White #FFFFFF */
     --popover-foreground: 220 20% 25%; /* Darker blue-gray #33394A */
  
-    --primary: 250 60% 60%;     /* Vibrant purple #7c5cef */
+    --primary: 50 50% 58%;      /* Sand #CDAF56 */
     --primary-foreground: 0 0% 100%; /* Pure White #FFFFFF */
  
     --secondary: 210 40% 96%;   /* Light blue-gray #edf2f7 */
@@ -139,22 +138,22 @@
     --muted: 210 40% 96%;       /* Light blue-gray #edf2f7 */
     --muted-foreground: 220 20% 40%; /* Lighter blue-gray #5a6378 */
  
-    --accent: 210 80% 56%;      /* Bright blue #4299e1 */
+    --accent: 43 69% 50%;       /* Turmeric #DAA520 */
     --accent-foreground: 0 0% 100%; /* Pure White #FFFFFF */
  
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%; /* Pure White #FFFFFF */
 
-    --border: 210 30% 90%;      /* Border color #dee7f2 */
-    --input: 210 30% 90%;       /* Input border #dee7f2 */
-    --ring: 250 60% 60%;        /* Vibrant purple #7c5cef */
+    --border: 50 50% 58%;       /* Sand #CDAF56 */
+    --input: 50 50% 58%;        /* Sand #CDAF56 */
+    --ring: 50 50% 58%;         /* Sand #CDAF56 */
  
     --radius: 0.75rem;
 
     --sidebar: 0 0% 100%;       /* Pure White #FFFFFF */
     --sidebar-foreground: 220 20% 25%; /* Darker blue-gray #33394A */
-    --sidebar-border: 210 30% 90%; /* Border color #dee7f2 */
-    --sidebar-accent: 250 60% 97%; /* Very light purple #f5f3ff */
+    --sidebar-border: 50 50% 58%; /* Sand #CDAF56 */
+    --sidebar-accent: 48 56% 95%; /* Very light sand color */
     --sidebar-accent-foreground: 220 20% 25%; /* Darker blue-gray #33394A */
   }
 }
@@ -177,4 +176,3 @@
 @import './styles/language.css';
 @import './styles/layout.css';
 @import './styles/components.css';
-
