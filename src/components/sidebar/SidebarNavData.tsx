@@ -2,7 +2,8 @@ import React from 'react';
 import { 
   LayoutDashboard, DollarSign, Users, Package, BarChart, 
   User, Settings, ClipboardList, Languages, LogOut, 
-  Menu as MenuIcon, Settings2, MapPin, Utensils, Receipt
+  Menu as MenuIcon, Settings2, MapPin, Utensils, Receipt,
+  CupSoda, Clock
 } from 'lucide-react';
 
 export interface NavSection {
@@ -151,9 +152,11 @@ export const getNavSections = (interfaceType: 'admin' | 'waiter' | 'kitchen' | '
 
   const kitchenLinks: NavSection[] = [
     { label: "Dashboard", icon: <LayoutDashboard size={20} />, path: "/kitchen" },
-    { label: "Recipe Viewer", icon: <MenuIcon size={20} />, path: "/kitchen/recipes" },
+    { label: "Order Processing", icon: <Receipt size={20} />, path: "/kitchen/orders" },
     { label: "Inventory Check", icon: <Package size={20} />, path: "/kitchen/inventory" },
+    { label: "Menu Availability", icon: <MenuIcon size={20} />, path: "/kitchen/menu-availability" },
     { label: "Tasks", icon: <ClipboardList size={20} />, path: "/kitchen/tasks" },
+    { label: "Food Safety", icon: <Utensils size={20} />, path: "/kitchen/food-safety" },
     { label: "Logout", icon: <LogOut size={20} />, path: "/login" },
   ];
 

@@ -9,9 +9,11 @@ export interface FoodItem {
   is_vegan: boolean;
   is_gluten_free: boolean;
   is_spicy: boolean;
+  is_beverage?: boolean;
   categoryName?: string;
   preparation_time?: number;
   image_url?: string;
+  available?: boolean;
 }
 
 export interface MenuCategory {
@@ -26,4 +28,16 @@ export interface Modifier {
   id: string;
   name: string;
   price: number;
+  available?: boolean;
+}
+
+export interface MenuNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: string;
+  for_role: string;
+  created_by: string;
+  created_at: string;
+  read: boolean;
 }
