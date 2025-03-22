@@ -38,6 +38,9 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+// Define the Theme type to match the one in ThemeProvider
+type Theme = 'light' | 'dark' | 'high-contrast' | 'warm-blend';
+
 // Theme preview component
 const ThemePreview = ({ 
   themeName, 
@@ -126,8 +129,16 @@ const ThemeSettings = () => {
   const { theme, setTheme } = useTheme();
   const { t } = useLanguage();
   const { toast } = useToast();
-  const [defaultTheme, setDefaultTheme] = useState(theme);
+  const [defaultTheme, setDefaultTheme] = useState<Theme>(theme);
   const [autoSwitch, setAutoSwitch] = useState(true);
+  
+  // Fixed function to handle RadioGroup value changes
+  const handleThemeChange = (value: string) => {
+    // Ensure value is one of our Theme types before setting
+    if (value === 'light' || value === 'dark' || value === 'high-contrast' || value === 'warm-blend') {
+      setDefaultTheme(value);
+    }
+  };
   
   // Sample function to save theme preferences to the server/database
   const saveThemePreferences = () => {
@@ -229,7 +240,7 @@ const ThemeSettings = () => {
                   </h3>
                   <RadioGroup 
                     value={defaultTheme} 
-                    onValueChange={setDefaultTheme}
+                    onValueChange={handleThemeChange}
                     className="flex flex-col space-y-2"
                   >
                     <div className="flex items-center space-x-2">
