@@ -1,4 +1,4 @@
-// Only updating the specific line causing the type error
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -19,9 +19,8 @@ import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useTheme } from "@/components/ThemeProvider";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCart } from '@/contexts/CartContext';
-import { OrderType, OrderStep, OrderItem, Order } from '@/types/order';
-import { FoodItem } from '@/types/menu';
-import { Table as TableType } from '@/types/table';
+import { OrderType, OrderStep } from '@/types/order';
+import { Table } from '@/services/table/types';
 import { Customer } from '@/types/customer';
 import { 
   Select,
@@ -36,7 +35,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import {
   Form,
@@ -50,8 +48,10 @@ import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { supabase } from '@/integrations/supabase/client';
-import { CheckCircle, Circle, Loader2, ChevronsUpDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { CheckCircle, Circle, Loader2 } from 'lucide-react';
+import { StepOrderFlow } from '@/components/waiter/orders/StepOrderFlow';
+import { useOrderManagement } from '@/hooks/useOrderManagement';
+import { useTables } from '@/hooks/useTables';
 
 // Define Zod schema for customer info form
 const customerInfoSchema = z.object({
@@ -64,20 +64,30 @@ const customerInfoSchema = z.object({
   }).optional(),
 })
 
-const OrderManagement = () => {
+type OrderManagementProps = {
+  newOrder?: boolean;
+  search?: boolean;
+};
+
+const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder, search }) => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { theme } = useTheme();
   const isMobile = useIsMobile();
   const { cart, clearCart, calculateTotalPrice } = useCart();
+  const { 
+    orderType, setOrderType,
+    currentStep, setCurrentStep,
+    goToNextStep, goToPreviousStep,
+    selectedTable, setSelectedTable,
+    customerName, setCustomerName,
+    specialInstructions, setSpecialInstructions,
+    isSubmitting, handleSubmitOrder
+  } = useOrderManagement();
+  const { tables, isLoading: tablesLoading } = useTables();
 
-  const [orderType, setOrderType] = useState<OrderType | null>(null);
-  const [selectedTable, setSelectedTable] = useState<TableType | null>(null);
   const [customerInfo, setCustomerInfo] = useState<Customer | null>(null);
-  const [currentStep, setCurrentStep] = useState<OrderStep>("order-type");
-  const [availableTables, setAvailableTables] = useState<TableType[]>([]);
-	const [isTableDialogOpen, setIsTableDialogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isTableDialogOpen, setIsTableDialogOpen] = useState(false);
   const [orderNotes, setOrderNotes] = useState<string>('');
 
   // Form for customer information
@@ -88,46 +98,28 @@ const OrderManagement = () => {
       customerPhone: '',
       customerEmail: '',
     },
-  })
+  });
 
+  // If newOrder prop is true, start in order-type step
   useEffect(() => {
-    // Fetch available tables on component mount
-    fetchAvailableTables();
-  }, []);
-
-  const fetchAvailableTables = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('tables')
-        .select('*')
-        .eq('is_available', true);
-
-      if (error) {
-        console.error('Error fetching available tables:', error);
-        toast.error(t("Failed to fetch available tables"));
-        return;
-      }
-
-      setAvailableTables(data as TableType[]);
-    } catch (error) {
-      console.error('Unexpected error fetching available tables:', error);
-      toast.error(t("An unexpected error occurred"));
+    if (newOrder) {
+      setCurrentStep('order-type');
     }
-  };
+  }, [newOrder, setCurrentStep]);
 
   const handleSelectOrderType = (type: OrderType) => {
     setOrderType(type);
     if (type === 'dine-in') {
       setCurrentStep('table-selection');
-			setIsTableDialogOpen(true);
+      setIsTableDialogOpen(true);
     } else {
       setCurrentStep('customer-info');
     }
   };
 
-  const handleSelectTable = (table: TableType) => {
-    setSelectedTable(table);
-		setIsTableDialogOpen(false);
+  const handleSelectTable = (table: Table) => {
+    setSelectedTable(table.id);
+    setIsTableDialogOpen(false);
     setCurrentStep('customer-info');
   };
 
@@ -137,6 +129,7 @@ const OrderManagement = () => {
       phone: values.customerPhone,
       email: values.customerEmail,
     });
+    setCustomerName(values.customerName);
     setCurrentStep('menu-selection');
   };
 
@@ -145,112 +138,46 @@ const OrderManagement = () => {
   };
 
   const handlePlaceOrder = async () => {
-    if (!orderType) {
-      toast.error(t("Please select an order type"));
-      return;
-    }
-
-    if (orderType === 'dine-in' && !selectedTable) {
-      toast.error(t("Please select a table"));
-      return;
-    }
-
-    if (!customerInfo) {
-      toast.error(t("Please enter customer information"));
-      return;
-    }
-
     if (cart.length === 0) {
       toast.error(t("Your cart is empty"));
       return;
     }
-
-    setIsSubmitting(true);
-
-    try {
-      // 1. Create the order
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          order_type: orderType,
-          table_id: selectedTable?.id || null,
-          customer_name: customerInfo.name,
-          total_amount: calculateTotalPrice(),
-          status: 'pending',
-          notes: orderNotes,
-        })
-        .select()
-        .single();
-
-      if (orderError) {
-        console.error('Error creating order:', orderError);
-        toast.error(t("Failed to create order"));
-        return;
-      }
-
-      const orderId = orderData.id;
-
-      // 2. Create order items
-      const orderItemsToInsert = cart.map(item => ({
-        order_id: orderId,
-        food_item_id: item.foodItem.id,
-        quantity: item.quantity,
-        unit_price: item.foodItem.price,
-        total_price: item.foodItem.price * item.quantity,
-        special_instructions: item.special_instructions,
-      }));
-
-      const { error: orderItemsError } = await supabase
-        .from('order_items')
-        .insert(orderItemsToInsert);
-
-      if (orderItemsError) {
-        console.error('Error creating order items:', orderItemsError);
-        toast.error(t("Failed to create order items"));
-
-        // Optionally, delete the created order if items fail to create
-        await supabase
-          .from('orders')
-          .delete()
-          .eq('id', orderId);
-
-        return;
-      }
-
-      // 3. Update table availability if it's a dine-in order
-      if (selectedTable) {
-        const { error: tableError } = await supabase
-          .from('tables')
-          .update({ is_available: false })
-          .eq('id', selectedTable.id);
-
-        if (tableError) {
-          console.error('Error updating table availability:', tableError);
-          toast.error(t("Failed to update table availability"));
-        }
-      }
-
-      // If everything is successful
+    
+    setSpecialInstructions(orderNotes);
+    const orderId = await handleSubmitOrder();
+    
+    if (orderId) {
       toast.success(t("Order placed successfully"));
       clearCart();
-      navigate('/kitchen/orders'); // Redirect to order management page
-    } catch (error) {
-      console.error('Unexpected error placing order:', error);
-      toast.error(t("An unexpected error occurred"));
-    } finally {
-      setIsSubmitting(false);
+      navigate('/waiter/orders');
     }
   };
 
   const totalPrice = calculateTotalPrice();
+  
+  const availableTables = tables.filter(table => table.status === 'available');
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-semibold mb-4"><T text="New Order" /></h1>
 
+      {/* Step Order Flow component for the order steps */}
+      <StepOrderFlow 
+        currentStep={currentStep}
+        goToNextStep={goToNextStep}
+        goToPreviousStep={goToPreviousStep}
+        isSubmitting={isSubmitting}
+        canProceed={
+          (currentStep === 'menu-selection' && cart.length > 0) ||
+          (currentStep !== 'menu-selection')
+        }
+        isLastStep={currentStep === 'order-review'}
+        onSubmit={handlePlaceOrder}
+      />
+
       {/* Order Type Selection */}
       {currentStep === 'order-type' && (
-        <Card className="mb-4">
+        <Card className="mb-4 mt-4">
           <CardHeader>
             <CardTitle><T text="Select Order Type" /></CardTitle>
             <CardDescription><T text="Choose how the customer will receive their order." /></CardDescription>
@@ -269,36 +196,40 @@ const OrderManagement = () => {
         </Card>
       )}
 
-			{/* Table Selection Dialog */}
-			<Dialog open={isTableDialogOpen} onOpenChange={setIsTableDialogOpen}>
-				<DialogContent className="sm:max-w-[425px]">
-					<DialogHeader>
-						<DialogTitle><T text="Select Table" /></DialogTitle>
-						<DialogDescription><T text="Choose an available table for the dine-in order." /></DialogDescription>
-					</DialogHeader>
-					<div className="grid gap-4 py-4">
-						{availableTables.length > 0 ? (
-							<div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-								{availableTables.map(table => (
-									<Button 
-										key={table.id} 
-										variant="outline" 
-										onClick={() => handleSelectTable(table)}
-									>
-										<T text={`Table ${table.table_number}`} />
-									</Button>
-								))}
-							</div>
-						) : (
-							<p className="text-muted-foreground"><T text="No tables available at the moment." /></p>
-						)}
-					</div>
-				</DialogContent>
-			</Dialog>
+      {/* Table Selection Dialog */}
+      <Dialog open={isTableDialogOpen} onOpenChange={setIsTableDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle><T text="Select Table" /></DialogTitle>
+            <DialogDescription><T text="Choose an available table for the dine-in order." /></DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {tablesLoading ? (
+              <div className="flex justify-center">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : availableTables.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {availableTables.map(table => (
+                  <Button 
+                    key={table.id} 
+                    variant="outline" 
+                    onClick={() => handleSelectTable(table)}
+                  >
+                    <T text={`Table ${table.table_number}`} />
+                  </Button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground"><T text="No tables available at the moment." /></p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Customer Information Form */}
       {currentStep === 'customer-info' && (
-        <Card className="mb-4">
+        <Card className="mb-4 mt-4">
           <CardHeader>
             <CardTitle><T text="Customer Information" /></CardTitle>
             <CardDescription><T text="Enter the customer's details for the order." /></CardDescription>
@@ -354,7 +285,7 @@ const OrderManagement = () => {
 
       {/* Menu Selection - Display Cart Items */}
       {currentStep === 'menu-selection' && (
-        <Card className="mb-4">
+        <Card className="mb-4 mt-4">
           <CardHeader>
             <CardTitle><T text="Menu Selection" /></CardTitle>
             <CardDescription><T text="Review the items in the cart and add any special instructions." /></CardDescription>
@@ -402,8 +333,8 @@ const OrderManagement = () => {
       )}
 
       {/* Order Review */}
-      {currentStep === 'order-review' as OrderStep && (
-        <Card>
+      {currentStep === 'order-review' && (
+        <Card className="mt-4">
           <CardHeader>
             <CardTitle><T text="Order Review" /></CardTitle>
             <CardDescription><T text="Confirm the order details before placing the order." /></CardDescription>
@@ -412,7 +343,13 @@ const OrderManagement = () => {
             <div className="mb-4">
               <h2 className="text-lg font-semibold mb-2"><T text="Order Details" /></h2>
               <p><T text="Type" />: {t(orderType)}</p>
-              {selectedTable && <p><T text="Table" />: {selectedTable.table_number}</p>}
+              {orderType === 'dine-in' && selectedTable && (
+                <p>
+                  <T text="Table" />: {
+                    tables.find(t => t.id === selectedTable)?.table_number || '-'
+                  }
+                </p>
+              )}
               <p><T text="Customer" />: {customerInfo?.name}</p>
             </div>
             <div className="mb-4">

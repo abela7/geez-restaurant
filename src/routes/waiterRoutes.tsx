@@ -8,6 +8,7 @@ import PaymentProcessing from "@/pages/waiter/PaymentProcessing";
 import WaiterTasks from "@/pages/waiter/WaiterTasks";
 import WaiterFoodSafety from "@/pages/waiter/WaiterFoodSafety";
 import NotFound from "@/pages/NotFound";
+import { CartProvider } from "@/contexts/CartContext";
 
 // Protected route component
 const WaiterRoutes = () => {
@@ -20,19 +21,21 @@ const WaiterRoutes = () => {
   }
 
   return (
-    <Routes>
-      <Route element={<Layout interface="waiter"><Outlet /></Layout>}>
-        <Route index element={<WaiterDashboard />} />
-        <Route path="tables" element={<TableManagement />} />
-        <Route path="orders" element={<OrderManagement />} />
-        <Route path="orders/new" element={<OrderManagement newOrder={true} />} />
-        <Route path="orders/search" element={<OrderManagement search={true} />} />
-        <Route path="payments" element={<PaymentProcessing />} />
-        <Route path="tasks" element={<WaiterTasks />} />
-        <Route path="food-safety" element={<WaiterFoodSafety />} />
-      </Route>
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <CartProvider>
+      <Routes>
+        <Route element={<Layout interface="waiter"><Outlet /></Layout>}>
+          <Route index element={<WaiterDashboard />} />
+          <Route path="tables" element={<TableManagement />} />
+          <Route path="orders" element={<OrderManagement />} />
+          <Route path="orders/new" element={<OrderManagement newOrder={true} />} />
+          <Route path="orders/search" element={<OrderManagement search={true} />} />
+          <Route path="payments" element={<PaymentProcessing />} />
+          <Route path="tasks" element={<WaiterTasks />} />
+          <Route path="food-safety" element={<WaiterFoodSafety />} />
+        </Route>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </CartProvider>
   );
 };
 
