@@ -2,182 +2,180 @@
 import React from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useLanguage, T } from "@/contexts/LanguageContext";
-import { Clock, Package, AlertCircle, CheckCircle } from "lucide-react";
-import ActiveOrdersPanel from "@/components/kitchen/ActiveOrdersPanel";
-import KitchenTimer from "@/components/kitchen/KitchenTimer";
-
-// Sample data for the dashboard stats
-const kitchenStats = {
-  ordersInQueue: 5,
-  averagePrepTime: 14, // minutes
-  lowStockItems: 3,
-  completedOrders: 18
-};
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Clock, Users, ChefHat, AlertTriangle, CheckCircle2 } from "lucide-react";
 
 const KitchenDashboard = () => {
   const { t } = useLanguage();
   
   return (
-    <div className="container mx-auto p-4">
-      <PageHeader 
-        title="Kitchen Dashboard" 
-        description="Monitor kitchen operations and manage orders"
+    <div className="container mx-auto p-4 max-w-5xl">
+      <PageHeader
+        title={<T text="Kitchen Dashboard" />}
+        description={<T text="Overview of kitchen operations" />}
+        className="mb-4"
       />
       
-      {/* Kitchen Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card>
-          <CardContent className="flex items-center p-4">
-            <div className="p-2 rounded-full bg-amber-100 text-amber-700 mr-4">
-              <Clock className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground"><T text="Orders in Queue" /></p>
-              <p className="text-2xl font-bold">{kitchenStats.ordersInQueue}</p>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center">
+              <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+              <T text="Current Orders" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">12</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              <T text="4 pending, 8 in preparation" />
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center">
+              <ChefHat className="mr-2 h-4 w-4 text-muted-foreground" />
+              <T text="Active Staff" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">5</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              <T text="3 chefs, 2 assistants" />
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center">
+              <AlertTriangle className="mr-2 h-4 w-4 text-amber-500" />
+              <T text="Inventory Alerts" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">3</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              <T text="Items requiring attention" />
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">
+              <T text="Pending Orders" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y">
+              {[1, 2, 3, 4].map((order) => (
+                <div key={order} className="p-4 hover:bg-muted/50">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <div className="font-medium">
+                        <T text="Order" /> #{Math.floor(Math.random() * 10000)}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        <T text="Table" /> #{Math.floor(Math.random() * 20)}
+                      </div>
+                    </div>
+                    <div className="px-2 py-1 bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 rounded text-xs font-medium">
+                      <T text="Pending" />
+                    </div>
+                  </div>
+                  <div className="text-sm">
+                    <span className="font-medium">3 × </span> Doro Wat<br />
+                    <span className="font-medium">2 × </span> Tibs
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardContent className="flex items-center p-4">
-            <div className="p-2 rounded-full bg-blue-100 text-blue-700 mr-4">
-              <Clock className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground"><T text="Avg. Prep Time" /></p>
-              <p className="text-2xl font-bold">{kitchenStats.averagePrepTime} <span className="text-sm">min</span></p>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="flex items-center p-4">
-            <div className="p-2 rounded-full bg-red-100 text-red-700 mr-4">
-              <Package className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground"><T text="Low Stock Items" /></p>
-              <p className="text-2xl font-bold">{kitchenStats.lowStockItems}</p>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="flex items-center p-4">
-            <div className="p-2 rounded-full bg-green-100 text-green-700 mr-4">
-              <CheckCircle className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground"><T text="Completed Today" /></p>
-              <p className="text-2xl font-bold">{kitchenStats.completedOrders}</p>
+          <CardHeader>
+            <CardTitle className="text-lg">
+              <T text="Today's Tasks" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y">
+              {[
+                { title: "Prepare injera batter", status: "completed" },
+                { title: "Marinate beef for tibs", status: "completed" },
+                { title: "Check spice inventory", status: "pending" },
+                { title: "Clean kitchen area", status: "pending" },
+                { title: "Prepare berbere mix", status: "pending" }
+              ].map((task, index) => (
+                <div key={index} className="p-4 hover:bg-muted/50 flex items-start">
+                  {task.status === "completed" ? (
+                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 mr-3 flex-shrink-0" />
+                  ) : (
+                    <div className="h-5 w-5 border-2 rounded-full mt-0.5 mr-3 flex-shrink-0" />
+                  )}
+                  <div className={task.status === "completed" ? "line-through text-muted-foreground" : ""}>
+                    {t(task.title)}
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          {/* Active Orders Panel */}
-          <ActiveOrdersPanel />
-          
-          {/* Low Stock Alerts */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center">
-                <AlertCircle className="h-5 w-5 text-amber-500 mr-2" />
-                <T text="Inventory Alerts" />
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="low">
-                <TabsList className="mb-3">
-                  <TabsTrigger value="low"><T text="Low Stock" /></TabsTrigger>
-                  <TabsTrigger value="out"><T text="Out of Stock" /></TabsTrigger>
-                </TabsList>
-                <TabsContent value="low">
-                  <div className="space-y-2">
-                    <div className="p-2 border-b flex justify-between items-center">
-                      <div>
-                        <span className="font-medium">Berbere Spice</span>
-                        <span className="ml-2 text-sm text-muted-foreground">250g remaining</span>
-                      </div>
-                      <span className="text-sm text-amber-600 font-medium">Running Low</span>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">
+            <T text="Menu Availability" />
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Tabs defaultValue="unavailable">
+            <div className="px-4 pt-2">
+              <TabsList>
+                <TabsTrigger value="unavailable">
+                  <T text="Unavailable Items" />
+                </TabsTrigger>
+                <TabsTrigger value="available">
+                  <T text="All Items" />
+                </TabsTrigger>
+              </TabsList>
+            </div>
+            
+            <TabsContent value="unavailable" className="p-0 mt-0">
+              <div className="divide-y">
+                {[
+                  { name: "Kitfo Special", category: "Main Course" },
+                  { name: "Shiro", category: "Vegetarian" },
+                  { name: "Special Tibs", category: "Main Course" }
+                ].map((item, index) => (
+                  <div key={index} className="p-4 hover:bg-muted/50 flex justify-between items-center">
+                    <div>
+                      <div className="font-medium">{item.name}</div>
+                      <div className="text-sm text-muted-foreground">{t(item.category)}</div>
                     </div>
-                    <div className="p-2 border-b flex justify-between items-center">
-                      <div>
-                        <span className="font-medium">Chicken Breast</span>
-                        <span className="ml-2 text-sm text-muted-foreground">1.2kg remaining</span>
-                      </div>
-                      <span className="text-sm text-amber-600 font-medium">Running Low</span>
-                    </div>
-                    <div className="p-2 border-b flex justify-between items-center">
-                      <div>
-                        <span className="font-medium">Honey</span>
-                        <span className="ml-2 text-sm text-muted-foreground">350ml remaining</span>
-                      </div>
-                      <span className="text-sm text-amber-600 font-medium">Running Low</span>
-                    </div>
+                    <button className="text-sm text-green-600 hover:text-green-700 font-medium">
+                      <T text="Mark Available" />
+                    </button>
                   </div>
-                </TabsContent>
-                <TabsContent value="out">
-                  <div className="space-y-2">
-                    <div className="p-2 border-b flex justify-between items-center">
-                      <div>
-                        <span className="font-medium">Fresh Rosemary</span>
-                      </div>
-                      <span className="text-sm text-red-600 font-medium">Out of Stock</span>
-                    </div>
-                    <div className="p-2 border-b flex justify-between items-center">
-                      <div>
-                        <span className="font-medium">Tej (Honey Wine)</span>
-                      </div>
-                      <span className="text-sm text-red-600 font-medium">Out of Stock</span>
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <div>
-          {/* Kitchen Timers */}
-          <KitchenTimer />
-          
-          {/* Daily Prep Tasks */}
-          <Card className="mt-6">
-            <CardHeader className="pb-2">
-              <CardTitle><T text="Daily Preparation" /></CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex items-center">
-                  <input type="checkbox" id="task1" className="h-4 w-4 mr-2" />
-                  <label htmlFor="task1" className="text-sm">Prepare Berbere spice mix</label>
-                </div>
-                <div className="flex items-center">
-                  <input type="checkbox" id="task2" className="h-4 w-4 mr-2" />
-                  <label htmlFor="task2" className="text-sm">Make base sauce for Doro Wat</label>
-                </div>
-                <div className="flex items-center">
-                  <input type="checkbox" id="task3" className="h-4 w-4 mr-2" />
-                  <label htmlFor="task3" className="text-sm">Prepare vegetable sides</label>
-                </div>
-                <div className="flex items-center">
-                  <input type="checkbox" id="task4" className="h-4 w-4 mr-2" />
-                  <label htmlFor="task4" className="text-sm">Marinate meat for Tibs</label>
-                </div>
-                <div className="flex items-center">
-                  <input type="checkbox" id="task5" className="h-4 w-4 mr-2" />
-                  <label htmlFor="task5" className="text-sm">Prepare Injera batter</label>
-                </div>
+                ))}
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            </TabsContent>
+            
+            <TabsContent value="available" className="mt-0">
+              <div className="p-4 text-center text-muted-foreground">
+                <T text="View all menu items and their availability status" />
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 };

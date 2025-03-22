@@ -140,22 +140,20 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
   // Desktop layout
   return (
     <div className="flex min-h-screen bg-background compact-layout compact-ui">
-      {!sidebarCollapsed && (
-        <div className="w-64 flex-shrink-0 transition-all duration-300 ease-in-out">
-          <div className="fixed top-0 left-0 h-screen">
-            <MainSidebar
-              collapsed={sidebarCollapsed}
-              toggleCollapse={toggleSidebar}
-              interface={userInterface}
-            />
-          </div>
-        </div>
-      )}
-      
       <div className={cn(
-        "flex-1 flex flex-col w-full transition-all duration-300 ease-in-out",
-        !sidebarCollapsed && "ml-0"
+        "transition-all duration-300 ease-in-out",
+        sidebarCollapsed ? "w-0" : "w-64 flex-shrink-0"
       )}>
+        <div className="fixed top-0 left-0 h-screen">
+          <MainSidebar
+            collapsed={sidebarCollapsed}
+            toggleCollapse={toggleSidebar}
+            interface={userInterface}
+          />
+        </div>
+      </div>
+      
+      <div className="flex-1 flex flex-col w-full transition-all duration-300 ease-in-out">
         <Header toggleSidebar={toggleSidebar} interface={userInterface} />
         
         <main className="flex-1 overflow-auto p-3">

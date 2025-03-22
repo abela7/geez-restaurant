@@ -1,5 +1,5 @@
 
-import { Route, Routes, Navigate, Outlet } from "react-router-dom";
+import { Route, Routes, Navigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import KitchenDashboard from "../pages/kitchen/KitchenDashboard";
 import OrderProcessing from "../pages/kitchen/OrderProcessing";
@@ -20,14 +20,12 @@ const KitchenRoutes = () => {
 
   return (
     <Routes>
-      <Route element={<Layout interface="kitchen"><Outlet /></Layout>}>
-        <Route index element={<KitchenDashboard />} />
-        <Route path="/orders" element={<OrderProcessing />} />
-        <Route path="/inventory" element={<InventoryCheck />} />
-        <Route path="/menu-availability" element={<MenuAvailability />} />
-        <Route path="/tasks" element={<KitchenTasks />} />
-        <Route path="/food-safety" element={<KitchenFoodSafety />} />
-      </Route>
+      <Route path="/" element={<Layout interface="kitchen"><KitchenDashboard /></Layout>} />
+      <Route path="/orders" element={<Layout interface="kitchen"><OrderProcessing /></Layout>} />
+      <Route path="/inventory" element={<Layout interface="kitchen"><InventoryCheck /></Layout>} />
+      <Route path="/menu-availability" element={<Layout interface="kitchen"><MenuAvailability /></Layout>} />
+      <Route path="/tasks" element={<Layout interface="kitchen"><KitchenTasks /></Layout>} />
+      <Route path="/food-safety" element={<Layout interface="kitchen"><KitchenFoodSafety /></Layout>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
