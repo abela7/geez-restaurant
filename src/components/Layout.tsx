@@ -81,7 +81,7 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
         />
         
         <div className={cn(
-          "fixed inset-y-0 left-0 z-30 w-64 transition-transform duration-300 ease-in-out transform",
+          "fixed inset-y-0 left-0 z-30 transition-transform duration-300 ease-in-out transform",
           sidebarCollapsed ? "-translate-x-full" : "translate-x-0"
         )}>
           <MainSidebar
@@ -144,7 +144,10 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
         "transition-all duration-300 ease-in-out",
         sidebarCollapsed ? "w-0" : "w-64 flex-shrink-0"
       )}>
-        <div className="fixed top-0 left-0 h-screen">
+        <div className={cn(
+          "fixed top-0 left-0 h-screen",
+          sidebarCollapsed ? "w-auto" : "w-64"
+        )}>
           <MainSidebar
             collapsed={sidebarCollapsed}
             toggleCollapse={toggleSidebar}
