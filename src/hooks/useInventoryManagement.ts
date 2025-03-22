@@ -29,6 +29,16 @@ export const useInventoryManagement = () => {
     },
   });
   
+  // Calculate stock status - Define this function BEFORE it's used
+  const getStockStatus = (item: Ingredient): "normal" | "low" | "out-of-stock" => {
+    const quantity = item.stock_quantity || 0;
+    const reorderLevel = item.reorder_level || 0;
+    
+    if (quantity <= 0) return "out-of-stock";
+    if (quantity <= reorderLevel) return "low";
+    return "normal";
+  };
+  
   // Filter inventory based on search, category, and stock status
   const filteredInventory = inventoryItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -51,16 +61,6 @@ export const useInventoryManagement = () => {
   const lowStockItems = inventoryItems.filter(
     item => getStockStatus(item) === "low" || getStockStatus(item) === "out-of-stock"
   );
-  
-  // Calculate stock status
-  const getStockStatus = (item: Ingredient): "normal" | "low" | "out-of-stock" => {
-    const quantity = item.stock_quantity || 0;
-    const reorderLevel = item.reorder_level || 0;
-    
-    if (quantity <= 0) return "out-of-stock";
-    if (quantity <= reorderLevel) return "low";
-    return "normal";
-  };
   
   // Report low stock to admin
   const reportToAdmin = async (item: Ingredient) => {
