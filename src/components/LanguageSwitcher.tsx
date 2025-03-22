@@ -19,12 +19,12 @@ const LanguageSwitcher: React.FC = () => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button 
-          variant="ghost" 
-          size={isMobile ? "sm" : "icon"} 
-          className="relative language-switcher-mobile"
+          variant={currentLanguage === 'am' ? "default" : "outline"} 
+          size={isMobile ? "sm" : "default"} 
+          className="relative language-switcher px-3"
         >
-          <Globe className="h-[18px] w-[18px]" />
-          <span className="ml-1.5 text-xs font-medium">{currentLanguage === 'en' ? 'EN' : 'አማ'}</span>
+          <Globe className="h-[18px] w-[18px] mr-2" />
+          <span className="font-medium">{currentLanguage === 'en' ? 'English' : 'አማርኛ'}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[120px]">

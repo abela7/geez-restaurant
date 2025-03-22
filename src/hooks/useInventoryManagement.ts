@@ -15,6 +15,16 @@ export const useInventoryManagement = () => {
   const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Ingredient | null>(null);
   
+  // Calculate stock status
+  const getStockStatus = (item: Ingredient): "normal" | "low" | "out-of-stock" => {
+    const quantity = item.stock_quantity || 0;
+    const reorderLevel = item.reorder_level || 0;
+    
+    if (quantity <= 0) return "out-of-stock";
+    if (quantity <= reorderLevel) return "low";
+    return "normal";
+  };
+  
   // Query inventory data
   const { data: inventoryItems = [], isLoading, refetch } = useQuery({
     queryKey: ["kitchen-inventory"],
@@ -28,16 +38,6 @@ export const useInventoryManagement = () => {
       return data as Ingredient[];
     },
   });
-  
-  // Calculate stock status - Define this function BEFORE it's used
-  const getStockStatus = (item: Ingredient): "normal" | "low" | "out-of-stock" => {
-    const quantity = item.stock_quantity || 0;
-    const reorderLevel = item.reorder_level || 0;
-    
-    if (quantity <= 0) return "out-of-stock";
-    if (quantity <= reorderLevel) return "low";
-    return "normal";
-  };
   
   // Filter inventory based on search, category, and stock status
   const filteredInventory = inventoryItems.filter(item => {
@@ -73,7 +73,7 @@ export const useInventoryManagement = () => {
         previous_quantity: item.stock_quantity || 0,
         new_quantity: item.stock_quantity || 0,
         unit: item.unit,
-        notes: `${item.name} stock is ${getStockStatus(item)}. Current level: ${item.stock_quantity} ${item.unit}`,
+        notes: `${item.name} ${t("stock is")} ${t(getStockStatus(item))}. ${t("Current level")}: ${item.stock_quantity} ${item.unit}`,
         created_by: "kitchen-staff" // Would use actual user ID in production
       });
       
@@ -124,7 +124,7 @@ export const useInventoryManagement = () => {
         previous_quantity: currentQuantity,
         new_quantity: finalQuantity,
         unit: selectedItem.unit,
-        notes: adjustNote || `Stock manually ${adjustType === "add" ? "increased" : "decreased"} by kitchen staff`,
+        notes: adjustNote || `${t("Stock manually")} ${adjustType === "add" ? t("increased") : t("decreased")} ${t("by kitchen staff")}`,
         created_by: "kitchen-staff" // Would use actual user ID in production
       });
       

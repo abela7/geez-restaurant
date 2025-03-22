@@ -17,7 +17,7 @@ import { Order, OrderItem, DbOrderItem, mapDbOrderItemToOrderItem } from "@/type
 import { Clock, CheckCircle2, AlertCircle, TimerReset, Printer, Check } from "lucide-react";
 
 const OrderProcessing: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, currentLanguage } = useLanguage();
   const [activeTab, setActiveTab] = useState<string>("pending");
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
 
@@ -82,11 +82,11 @@ const OrderProcessing: React.FC = () => {
 
       if (error) throw error;
       
-      toast.success(`Order status updated to ${newStatus}`);
+      toast.success(t(`Order status updated to ${newStatus}`));
       refetch();
     } catch (error) {
       console.error('Error updating order status:', error);
-      toast.error('Failed to update order status');
+      toast.error(t('Failed to update order status'));
     }
   };
 
@@ -108,6 +108,17 @@ const OrderProcessing: React.FC = () => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId);
   };
 
+  const getOrderIdDisplay = (id: string) => {
+    return id.substring(0, 8);
+  };
+
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString(
+      currentLanguage === 'am' ? 'am-ET' : 'en-US',
+      { hour: '2-digit', minute: '2-digit' }
+    );
+  };
+
   const renderOrderCard = (order: Order) => {
     const isExpanded = expandedOrder === order.id;
     const eta = getEta(order);
@@ -118,7 +129,7 @@ const OrderProcessing: React.FC = () => {
           <div className="flex justify-between items-start mb-3">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-medium text-lg">Order #{order.id.substring(0, 8)}</h3>
+                <h3 className="font-medium text-lg">{t("Order")} #{getOrderIdDisplay(order.id)}</h3>
                 <Badge variant={order.order_type === 'dine-in' ? 'default' : 'secondary'}>
                   {order.order_type === 'dine-in' ? t('Dine In') : order.order_type === 'takeout' ? t('Takeout') : t('Delivery')}
                 </Badge>
@@ -126,9 +137,9 @@ const OrderProcessing: React.FC = () => {
               
               <div className="text-sm text-muted-foreground mt-1">
                 {order.order_type === 'dine-in' && order.table_id && (
-                  <span className="mr-3">Table: {order.table_id}</span>
+                  <span className="mr-3">{t("Table")}: {order.table_id}</span>
                 )}
-                <span>{new Date(order.created_at).toLocaleTimeString()}</span>
+                <span>{formatTime(order.created_at)}</span>
               </div>
             </div>
             
@@ -166,7 +177,11 @@ const OrderProcessing: React.FC = () => {
                 </Button>
               )}
               
-              <Button variant="outline" size="sm" onClick={() => toggleOrderExpansion(order.id)}>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => toggleOrderExpansion(order.id)}
+              >
                 {isExpanded ? t('Hide Details') : t('View Details')}
               </Button>
             </div>
@@ -176,7 +191,7 @@ const OrderProcessing: React.FC = () => {
             <div className="mb-3">
               <div className="flex justify-between text-sm mb-1">
                 <span><T text="Preparation Progress" /></span>
-                <span>{eta} min</span>
+                <span>{eta} {t("min")}</span>
               </div>
               <Progress value={33} className="h-2" />
             </div>
@@ -195,8 +210,8 @@ const OrderProcessing: React.FC = () => {
                       <div>
                         <div className="font-medium">{item.foodItem?.name}</div>
                         {item.special_instructions && (
-                          <div className="text-sm text-muted-foreground">
-                            Note: {item.special_instructions}
+                          <div className="text-sm text-amber-600 dark:text-amber-400">
+                            {t("Note")}: {item.special_instructions}
                           </div>
                         )}
                       </div>

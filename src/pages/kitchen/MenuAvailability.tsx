@@ -1,227 +1,290 @@
 
-import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import React, { useState, useEffect } from "react";
+import Layout from "@/components/Layout";
 import { PageHeader } from "@/components/ui/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { useLanguage, T } from "@/contexts/LanguageContext";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { FoodItem, MenuCategory } from "@/types/menu";
 import { toast } from "sonner";
-import { Search, AlertCircle, Check, X, Filter, CupSoda, Utensils } from "lucide-react";
-import { FoodItem } from "@/types/menu";
+import { useLanguage, T } from "@/contexts/LanguageContext";
+import { Search, PlusCircle, Bell, CheckCircle2, AlertCircle } from "lucide-react";
+
+interface NotificationData {
+  id?: string;
+  message: string;
+  title: string;
+  type: "info" | "warning" | "success";
+  for_role: string;
+  created_by: string;
+  created_at?: string;
+  read?: boolean;
+}
 
 const MenuAvailability = () => {
   const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState("all");
-  const [activeTab, setActiveTab] = useState("food");
-
+  const [activeTab, setActiveTab] = useState<string>("all");
+  const queryClient = useQueryClient();
+  
   // Fetch menu items
-  const { data: menuItems = [], isLoading, refetch } = useQuery({
+  const { data: menuItems = [], isLoading: menuLoading } = useQuery({
     queryKey: ["kitchen-menu-items"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("food_items")
-        .select(`
-          *,
-          menu_categories(id, name)
-        `)
+        .select("*, category:categories(name)")
         .order("name");
         
       if (error) throw error;
       
-      const formattedItems = data.map((item: any) => ({
+      return data.map(item => ({
         ...item,
-        categoryName: item.menu_categories ? item.menu_categories.name : "Uncategorized"
-      }));
-      
-      return formattedItems as FoodItem[];
+        categoryName: item.category ? item.category.name : null,
+        available: item.available !== false, // Default to true if not set
+      })) as FoodItem[];
     },
   });
   
-  // Get categories
-  const categories = ["all", ...new Set(menuItems.map(item => item.categoryName || "uncategorized"))];
-  
-  // Handle toggling item availability
-  const toggleItemAvailability = async (item: FoodItem) => {
-    try {
-      const { error } = await supabase
-        .from("food_items")
-        .update({ available: !item.available })
-        .eq("id", item.id);
+  // Fetch categories
+  const { data: categories = [] } = useQuery({
+    queryKey: ["menu-categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("*")
+        .eq("active", true)
+        .order("name");
         
       if (error) throw error;
-      
-      toast.success(
-        item.available 
-          ? t(`${item.name} marked as unavailable`) 
-          : t(`${item.name} marked as available`)
-      );
-      
-      // Notify waiters via realtime or through a notification table
-      await supabase
-        .from("staff_notifications")
-        .insert({
-          title: "Menu Item Availability Change",
-          message: `${item.name} is now ${!item.available ? 'available' : 'unavailable'}`,
-          type: "menu_update",
-          for_role: "waiter",
-          created_by: "kitchen"
-        })
-        .select();
-      
-      refetch();
-    } catch (error) {
-      console.error("Error updating availability:", error);
-      toast.error(t("Failed to update availability"));
+      return data as MenuCategory[];
+    },
+  });
+  
+  // Create notification mutation
+  const createNotification = useMutation({
+    mutationFn: async (notification: NotificationData) => {
+      const { data, error } = await supabase
+        .from("menu_notifications")
+        .insert([{ 
+          title: notification.title,
+          message: notification.message,
+          type: notification.type,
+          for_role: notification.for_role,
+          created_by: notification.created_by
+        }]);
+        
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success(t("Notification sent to waiters"));
+    },
+    onError: (error) => {
+      console.error("Error creating notification:", error);
+      toast.error(t("Failed to send notification"));
     }
+  });
+  
+  // Update menu item availability mutation
+  const updateItemAvailability = useMutation({
+    mutationFn: async ({ id, available }: { id: string; available: boolean }) => {
+      const { data, error } = await supabase
+        .from("food_items")
+        .update({ available })
+        .eq("id", id);
+        
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["kitchen-menu-items"] });
+      
+      // Get the item name for the notification
+      const item = menuItems.find(item => item.id === variables.id);
+      if (!item) return;
+      
+      // Create notification for waiters
+      createNotification.mutate({
+        title: variables.available ? t("Menu Item Available") : t("Menu Item Unavailable"),
+        message: variables.available 
+          ? `${item.name} ${t("is now available")}` 
+          : `${item.name} ${t("is no longer available")}`,
+        type: variables.available ? "success" : "warning",
+        for_role: "waiter",
+        created_by: "kitchen"
+      });
+    }
+  });
+  
+  // Handle toggle availability
+  const toggleAvailability = (id: string, currentValue: boolean) => {
+    updateItemAvailability.mutate({ id, available: !currentValue });
   };
   
-  // Filter menu items
+  // Filter menu items based on search and category
   const filteredItems = menuItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = activeCategory === "all" || item.categoryName?.toLowerCase() === activeCategory.toLowerCase();
-    const matchesType = activeTab === "all" 
-      || (activeTab === "food" && !item.is_beverage)
-      || (activeTab === "drinks" && item.is_beverage);
-    
-    return matchesSearch && matchesCategory && matchesType;
+    const matchesCategory = activeTab === "all" || item.category_id === activeTab;
+    return matchesSearch && matchesCategory;
   });
+  
+  // Group items by their availability status
+  const availableItems = filteredItems.filter(item => item.available);
+  const unavailableItems = filteredItems.filter(item => !item.available);
+  
+  // Get unique categories for tabs
+  const menuCategories = [{ id: "all", name: t("All Items") }, ...categories];
+
+  if (menuLoading) {
+    return (
+      <Layout interface="kitchen">
+        <div className="p-4 flex justify-center items-center h-[70vh]">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
-    <div className="container mx-auto p-4">
-      <PageHeader 
-        title="Menu Availability Management" 
-        description="Control which menu items are available for ordering"
-      />
-      
-      <div className="mb-6 flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search menu items..."
-            className="w-full pl-9"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+    <Layout interface="kitchen">
+      <div className="container mx-auto p-4 max-w-5xl">
+        <PageHeader
+          title={<T text="Menu Availability" />}
+          description={<T text="Manage which items are available to order" />}
+          className="mb-4"
+        />
+        
+        <div className="mb-4">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder={t("Search menu items...")}
+              className="pl-8"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
         
-        <div className="flex-shrink-0">
-          <select 
-            className="w-full p-2 border rounded-md" 
-            value={activeCategory}
-            onChange={(e) => setActiveCategory(e.target.value)}
-          >
-            {categories.map(category => (
-              <option key={category} value={category}>
-                {category.charAt(0).toUpperCase() + category.slice(1)}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-      
-      <Tabs defaultValue="food" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="food">
-            <Utensils className="h-4 w-4 mr-2" />
-            <T text="Food Items" />
-          </TabsTrigger>
-          <TabsTrigger value="drinks">
-            <CupSoda className="h-4 w-4 mr-2" />
-            <T text="Drinks" />
-          </TabsTrigger>
-          <TabsTrigger value="all">
-            <T text="All Items" />
-          </TabsTrigger>
-        </TabsList>
-        
-        <Card>
-          <CardHeader className="p-4 border-b">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-lg">
-                <T text="Menu Items" />
-              </CardTitle>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="flex gap-1">
-                  <Check className="h-3.5 w-3.5 text-green-500" /> <T text="Available" />
-                </Badge>
-                <Badge variant="outline" className="flex gap-1">
-                  <X className="h-3.5 w-3.5 text-red-500" /> <T text="Unavailable" />
-                </Badge>
-              </div>
-            </div>
-          </CardHeader>
+        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+          <ScrollArea className="w-full">
+            <TabsList className="mb-4 w-auto inline-flex">
+              {menuCategories.map((category) => (
+                <TabsTrigger 
+                  key={category.id} 
+                  value={category.id}
+                  className="px-3 py-1.5 whitespace-nowrap"
+                >
+                  {category.name}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </ScrollArea>
           
-          {isLoading ? (
-            <CardContent className="p-6 text-center">
-              <div className="animate-spin w-8 h-8 border-4 border-gray-300 border-t-primary rounded-full mx-auto mb-4"></div>
-              <p><T text="Loading menu items..." /></p>
-            </CardContent>
-          ) : filteredItems.length === 0 ? (
-            <CardContent className="p-6 text-center">
-              <AlertCircle className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-              <p><T text="No menu items found" /></p>
-            </CardContent>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead><T text="Item Name" /></TableHead>
-                  <TableHead><T text="Category" /></TableHead>
-                  <TableHead><T text="Price" /></TableHead>
-                  <TableHead><T text="Status" /></TableHead>
-                  <TableHead className="text-right"><T text="Actions" /></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredItems.map(item => (
-                  <TableRow key={item.id}>
-                    <TableCell>
-                      <div className="font-medium">{item.name}</div>
-                      <div className="text-sm text-muted-foreground">{item.description}</div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{item.categoryName}</Badge>
-                    </TableCell>
-                    <TableCell>${item.price.toFixed(2)}</TableCell>
-                    <TableCell>
-                      {item.available ? (
-                        <Badge variant="default" className="bg-green-500">
-                          <Check className="h-3.5 w-3.5 mr-1" /> <T text="Available" />
-                        </Badge>
-                      ) : (
-                        <Badge variant="destructive">
-                          <X className="h-3.5 w-3.5 mr-1" /> <T text="Unavailable" />
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant={item.available ? "destructive" : "default"}
-                        size="sm"
-                        onClick={() => toggleItemAvailability(item)}
-                      >
-                        {item.available ? (
-                          <><X className="h-4 w-4 mr-2" /><T text="Mark Unavailable" /></>
-                        ) : (
-                          <><Check className="h-4 w-4 mr-2" /><T text="Mark Available" /></>
-                        )}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </Card>
-      </Tabs>
-    </div>
+          <TabsContent value={activeTab} className="mt-0 space-y-4">
+            {availableItems.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center">
+                    <CheckCircle2 className="h-5 w-5 mr-2 text-green-500" />
+                    <T text="Available Items" />
+                    <Badge variant="outline" className="ml-2">{availableItems.length}</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <ScrollArea className="h-[calc(100vh-450px)]">
+                    <div className="divide-y">
+                      {availableItems.map((item) => (
+                        <div 
+                          key={item.id} 
+                          className="flex items-center justify-between p-4 hover:bg-muted/50"
+                        >
+                          <div>
+                            <div className="font-medium">{item.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {item.categoryName} • {item.price.toFixed(2)} ETB
+                              {item.preparation_time && ` • ${item.preparation_time} ${t("min")}`}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={item.available}
+                              onCheckedChange={() => toggleAvailability(item.id, item.available || false)}
+                              aria-label={t("Toggle availability")}
+                            />
+                            <span className="text-sm text-green-600 font-medium">
+                              <T text="Available" />
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            )}
+            
+            {unavailableItems.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center">
+                    <AlertCircle className="h-5 w-5 mr-2 text-amber-500" />
+                    <T text="Unavailable Items" />
+                    <Badge variant="outline" className="ml-2">{unavailableItems.length}</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <ScrollArea className="h-[calc(100vh-450px)]">
+                    <div className="divide-y">
+                      {unavailableItems.map((item) => (
+                        <div 
+                          key={item.id} 
+                          className="flex items-center justify-between p-4 hover:bg-muted/50"
+                        >
+                          <div>
+                            <div className="font-medium">{item.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {item.categoryName} • {item.price.toFixed(2)} ETB
+                              {item.preparation_time && ` • ${item.preparation_time} ${t("min")}`}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={item.available}
+                              onCheckedChange={() => toggleAvailability(item.id, item.available || false)}
+                              aria-label={t("Toggle availability")}
+                            />
+                            <span className="text-sm text-amber-600 font-medium">
+                              <T text="Unavailable" />
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            )}
+            
+            {filteredItems.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <AlertCircle className="h-12 w-12 mb-4 opacity-20" />
+                <p><T text="No menu items found" /></p>
+                <p className="text-sm mt-2"><T text="Try adjusting your search or category filter" /></p>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+    </Layout>
   );
 };
 

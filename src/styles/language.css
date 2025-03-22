@@ -4,3 +4,54 @@
   /* Amharic text might need slightly different styles */
   --amharic-font-scale: 1.05;
 }
+
+/* Make all buttons have enough space for translated text */
+button {
+  min-width: fit-content;
+  white-space: nowrap;
+}
+
+/* Ensure menu items have enough space for longer Amharic text */
+[data-language="am"] .sidebar-item-content span {
+  letter-spacing: -0.02em;
+}
+
+/* Improve readability of Amharic text in cards */
+[data-language="am"] .card-content {
+  line-height: 1.6;
+}
+
+/* Badge styles for multilingual support */
+[data-language="am"] .badge {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+/* Ensure tabs have enough space for translated text */
+[data-language="am"] .tabs-trigger {
+  min-width: 80px;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+/* Make sure form labels have enough space */
+[data-language="am"] label {
+  line-height: 1.5;
+}
+
+/* Language switcher enhancement */
+.language-switcher {
+  font-weight: 500;
+}
+
+/* Header title for Amharic */
+[data-language="am"] .page-title {
+  font-size: 1.3rem;
+  line-height: 1.4;
+}
+
+/* Ensure inputs have proper RTL support if needed */
+[dir="rtl"] input,
+[dir="rtl"] textarea {
+  text-align: right;
+}
