@@ -70,7 +70,7 @@ const ThemeSwitcher: React.FC = () => {
         >
           <Sparkles className="mr-2 h-4 w-4" />
           <span><T text="Warm Blend" /></span>
-          <span className="ml-auto text-xs opacity-60">(White & Purple)</span>
+          <span className="ml-auto text-xs opacity-60">(White & Sand)</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -60,6 +60,9 @@ const config = {
         turmeric: "#DAA520",    // Buttons, highlights, calls-to-action
         sand: "#CDAF56",        // Borders, edges, dividers, accents
         coffee: "#5D4225",      // Tertiary elements, footer
+        amber: {
+          DEFAULT: "#F59E0B",   // Updated from f59e0b to #F59E0B
+        },
         
         // Sidebar specific colors
         sidebar: "hsl(var(--sidebar))",
