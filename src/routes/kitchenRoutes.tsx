@@ -23,7 +23,7 @@ const KitchenRoutes = () => {
     <CartProvider>
       <Layout interface="kitchen">
         <Routes>
-          <Route path="/" element={<KitchenDashboard />} />
+          <Route index element={<KitchenDashboard />} />
           <Route path="/orders" element={<OrderProcessing />} />
           <Route path="/inventory" element={<InventoryCheck />} />
           <Route path="/menu-availability" element={<MenuAvailability />} />

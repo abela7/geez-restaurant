@@ -86,11 +86,25 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
           sidebarCollapsed ? "-translate-x-full" : "translate-x-0"
         )}>
           <MainSidebar
-            collapsed={sidebarCollapsed}
+            collapsed={false} // Always show full sidebar on mobile when opened
             toggleCollapse={toggleSidebar}
             interface={userInterface}
           />
         </div>
+        
+        {sidebarCollapsed && (
+          <div className="fixed top-4 left-4 z-40">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleSidebar}
+              className="bg-background shadow-md border border-border"
+              aria-label="Open sidebar"
+            >
+              <PanelLeft className="h-5 w-5" />
+            </Button>
+          </div>
+        )}
         
         <div className="flex-1 flex flex-col w-full">
           <Header toggleSidebar={toggleSidebar} interface={userInterface} />

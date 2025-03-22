@@ -1,5 +1,5 @@
 
-import { Route, Routes, Navigate, Outlet } from "react-router-dom";
+import { Route, Routes, Navigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import WaiterDashboard from "../pages/waiter/WaiterDashboard";
 import OrderManagement from "../pages/waiter/OrderManagement";
@@ -21,8 +21,8 @@ const WaiterRoutes = () => {
 
   return (
     <CartProvider>
-      <Routes>
-        <Route element={<Layout interface="waiter"><Outlet /></Layout>}>
+      <Layout interface="waiter">
+        <Routes>
           <Route index element={<WaiterDashboard />} />
           <Route path="/orders" element={<OrderManagement />} />
           <Route path="/orders/new" element={<OrderManagement newOrder={true} />} />
@@ -31,9 +31,9 @@ const WaiterRoutes = () => {
           <Route path="/payments" element={<PaymentProcessing />} />
           <Route path="/tasks" element={<WaiterTasks />} />
           <Route path="/food-safety" element={<WaiterFoodSafety />} />
-        </Route>
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Layout>
     </CartProvider>
   );
 };
