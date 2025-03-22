@@ -44,8 +44,8 @@ const ThemePreview: React.FC<ThemePreviewProps> = ({
         };
       case 'warm blend':
         return {
-          bg: 'bg-[#f8fafd]',
-          text: 'text-[#3c4356]',
+          bg: 'bg-white',
+          text: 'text-[#33394A]',
           border: 'border-[#dee7f2]',
           button: 'bg-[#7c5cef] text-white'
         };

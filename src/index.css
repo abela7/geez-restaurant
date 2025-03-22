@@ -120,30 +120,30 @@
   }
 
   .warm-blend {
-    /* Modern Glassy Theme */
-    --background: 210 50% 98%;  /* Very light blue-gray #f8fafd */
-    --foreground: 220 20% 30%;  /* Dark blue-gray #3c4356 */
+    /* Enhanced Warm Blend Theme with more white and refined colors */
+    --background: 0 0% 100%;    /* Pure White #FFFFFF */
+    --foreground: 220 20% 25%;  /* Darker blue-gray #33394A */
  
-    --card: 0 0% 100%;          /* White #FFFFFF */
-    --card-foreground: 220 20% 30%; /* Dark blue-gray #3c4356 */
+    --card: 0 0% 100%;          /* Pure White #FFFFFF */
+    --card-foreground: 220 20% 25%; /* Darker blue-gray #33394A */
  
-    --popover: 0 0% 100%;       /* White #FFFFFF */
-    --popover-foreground: 220 20% 30%; /* Dark blue-gray #3c4356 */
+    --popover: 0 0% 100%;       /* Pure White #FFFFFF */
+    --popover-foreground: 220 20% 25%; /* Darker blue-gray #33394A */
  
     --primary: 250 60% 60%;     /* Vibrant purple #7c5cef */
-    --primary-foreground: 0 0% 100%; /* White #FFFFFF */
+    --primary-foreground: 0 0% 100%; /* Pure White #FFFFFF */
  
     --secondary: 210 40% 96%;   /* Light blue-gray #edf2f7 */
-    --secondary-foreground: 220 20% 30%; /* Dark blue-gray #3c4356 */
+    --secondary-foreground: 220 20% 25%; /* Darker blue-gray #33394A */
  
     --muted: 210 40% 96%;       /* Light blue-gray #edf2f7 */
     --muted-foreground: 220 20% 40%; /* Lighter blue-gray #5a6378 */
  
-    --accent: 190 80% 50%;      /* Teal blue #17bbd0 */
-    --accent-foreground: 220 20% 30%; /* Dark blue-gray #3c4356 */
+    --accent: 210 80% 56%;      /* Bright blue #4299e1 */
+    --accent-foreground: 0 0% 100%; /* Pure White #FFFFFF */
  
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%; /* White #FFFFFF */
+    --destructive-foreground: 0 0% 100%; /* Pure White #FFFFFF */
 
     --border: 210 30% 90%;      /* Border color #dee7f2 */
     --input: 210 30% 90%;       /* Input border #dee7f2 */
@@ -151,11 +151,11 @@
  
     --radius: 0.75rem;
 
-    --sidebar: 0 0% 100%;       /* White #FFFFFF */
-    --sidebar-foreground: 220 20% 30%; /* Dark blue-gray #3c4356 */
+    --sidebar: 0 0% 100%;       /* Pure White #FFFFFF */
+    --sidebar-foreground: 220 20% 25%; /* Darker blue-gray #33394A */
     --sidebar-border: 210 30% 90%; /* Border color #dee7f2 */
-    --sidebar-accent: 210 50% 98%; /* Very light blue-gray #f8fafd */
-    --sidebar-accent-foreground: 220 20% 30%; /* Dark blue-gray #3c4356 */
+    --sidebar-accent: 250 60% 97%; /* Very light purple #f5f3ff */
+    --sidebar-accent-foreground: 220 20% 25%; /* Darker blue-gray #33394A */
   }
 }
  
@@ -177,3 +177,4 @@
 @import './styles/language.css';
 @import './styles/layout.css';
 @import './styles/components.css';
+

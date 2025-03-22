@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Sun, Moon, Eye, Palette } from 'lucide-react';
+import { Sun, Moon, Eye, Sparkles } from 'lucide-react';
 import { useLanguage, T } from '@/contexts/LanguageContext';
 
 const ThemeSwitcher: React.FC = () => {
@@ -32,7 +32,7 @@ const ThemeSwitcher: React.FC = () => {
             "absolute h-5 w-5 rotate-90 scale-0 transition-all", 
             theme === "high-contrast" && "rotate-0 scale-100 opacity-100"
           )} />
-          <Palette className={cn(
+          <Sparkles className={cn(
             "absolute h-5 w-5 rotate-90 scale-0 transition-all", 
             theme === "warm-blend" && "rotate-0 scale-100 opacity-100"
           )} />
@@ -68,9 +68,9 @@ const ThemeSwitcher: React.FC = () => {
           onClick={() => setTheme('warm-blend')}
           className={cn("cursor-pointer", theme === 'warm-blend' && "bg-accent")}
         >
-          <Palette className="mr-2 h-4 w-4" />
+          <Sparkles className="mr-2 h-4 w-4" />
           <span><T text="Warm Blend" /></span>
-          <span className="ml-auto text-xs opacity-60">(Gradient)</span>
+          <span className="ml-auto text-xs opacity-60">(White & Purple)</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
