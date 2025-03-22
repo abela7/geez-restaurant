@@ -10,7 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useLanguage, T } from "@/contexts/LanguageContext";
-import { Plus, CheckCircle2, CheckCircle, AlertTriangle, Thermometer, Clock, ListChecks } from "lucide-react";
+import { Plus, CheckCircle2, CheckCircle, AlertTriangle, Thermometer, Clock, ListChecks, Grid, List, Search, Filter } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Simple representation of a checklist template
 interface ChecklistTemplate {
@@ -34,6 +36,9 @@ interface TemperatureLog {
 const KitchenFoodSafety = () => {
   const { t, currentLanguage } = useLanguage();
   const [activeTab, setActiveTab] = useState<string>("checklists");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [frequencyFilter, setFrequencyFilter] = useState("all");
   
   // Query for checklists
   const { data: checklists = [], isLoading: checklistsLoading } = useQuery({
@@ -79,6 +84,13 @@ const KitchenFoodSafety = () => {
     }
   ];
   
+  // Filter checklists based on search term and frequency
+  const filteredChecklists = checklists.filter(checklist => {
+    const matchesSearch = checklist.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFrequency = frequencyFilter === "all" || checklist.frequency.toLowerCase() === frequencyFilter.toLowerCase();
+    return matchesSearch && matchesFrequency;
+  });
+  
   const startChecklist = (checklist: ChecklistTemplate) => {
     // In a real app, this would navigate to a dedicated checklist completion page
     toast.info(t(`Starting ${checklist.name} checklist`));
@@ -122,10 +134,12 @@ const KitchenFoodSafety = () => {
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-5xl">
-      <h1 className="text-2xl font-bold mb-6 flex items-center">
-        <T text="Food Safety" />
-      </h1>
+    <div className="container mx-auto p-4 max-w-7xl">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">
+          <T text="Food Safety" />
+        </h1>
+      </div>
       
       <Tabs defaultValue="checklists" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full mb-4">
@@ -140,42 +154,123 @@ const KitchenFoodSafety = () => {
         </TabsList>
         
         <TabsContent value="checklists" className="mt-0">
-          <div className="flex justify-end mb-4">
-            <Button variant="outline" size="sm" className="flex items-center gap-1.5">
-              <Clock className="h-4 w-4" />
-              <T text="View Completed" />
-            </Button>
+          <div className="mb-4 flex flex-col sm:flex-row gap-3 items-center justify-between">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder={t("Search checklists...")}
+                className="pl-9 w-full"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <div className="flex items-center gap-2 flex-wrap">
+              <Select value={frequencyFilter} onValueChange={setFrequencyFilter}>
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue placeholder={t("Frequency")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all"><T text="All Frequencies" /></SelectItem>
+                  <SelectItem value="daily"><T text="Daily" /></SelectItem>
+                  <SelectItem value="weekly"><T text="Weekly" /></SelectItem>
+                  <SelectItem value="monthly"><T text="Monthly" /></SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <div className="border rounded-md flex">
+                <Button 
+                  variant={viewMode === "grid" ? "default" : "ghost"} 
+                  size="icon" 
+                  className="h-9 w-9 rounded-r-none"
+                  onClick={() => setViewMode("grid")}
+                >
+                  <Grid className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant={viewMode === "list" ? "default" : "ghost"} 
+                  size="icon" 
+                  className="h-9 w-9 rounded-l-none"
+                  onClick={() => setViewMode("list")}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <Button variant="outline" size="sm" className="flex items-center gap-1.5">
+                <Clock className="h-4 w-4" />
+                <T text="View Completed" />
+              </Button>
+            </div>
           </div>
           
-          <ScrollArea className="h-[calc(100vh-200px)]">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {checklists.map((checklist) => (
-                <Card key={checklist.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-medium text-base">{checklist.name}</h3>
-                        <div className="text-sm text-muted-foreground mt-1">
-                          <span className="capitalize">{t(checklist.frequency)}</span>
-                          {checklist.required_time && (
-                            <span className="ml-2">• {checklist.required_time}</span>
-                          )}
+          <ScrollArea className="h-[calc(100vh-240px)]">
+            {viewMode === "grid" ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredChecklists.map((checklist) => (
+                  <Card key={checklist.id}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-medium text-base">{checklist.name}</h3>
+                          <div className="text-sm text-muted-foreground mt-1">
+                            <span className="capitalize">{t(checklist.frequency)}</span>
+                            {checklist.required_time && (
+                              <span className="ml-2">• {checklist.required_time}</span>
+                            )}
+                          </div>
                         </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => startChecklist(checklist)}
+                          className="flex items-center gap-1.5"
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                          <T text="Start" />
+                        </Button>
                       </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => startChecklist(checklist)}
-                        className="flex items-center gap-1.5"
-                      >
-                        <CheckCircle2 className="h-4 w-4" />
-                        <T text="Start" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="p-0">
+                  <table className="w-full">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="text-left p-4 font-medium"><T text="Checklist Name" /></th>
+                        <th className="text-left p-4 font-medium"><T text="Frequency" /></th>
+                        <th className="text-left p-4 font-medium"><T text="Required Time" /></th>
+                        <th className="text-right p-4 font-medium"><T text="Actions" /></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {filteredChecklists.map((checklist) => (
+                        <tr key={checklist.id}>
+                          <td className="p-4">{checklist.name}</td>
+                          <td className="p-4 capitalize">{t(checklist.frequency)}</td>
+                          <td className="p-4">{checklist.required_time || "-"}</td>
+                          <td className="p-4 text-right">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => startChecklist(checklist)}
+                              className="flex items-center gap-1.5"
+                            >
+                              <CheckCircle2 className="h-4 w-4" />
+                              <T text="Start" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </CardContent>
+              </Card>
+            )}
           </ScrollArea>
         </TabsContent>
         
@@ -192,38 +287,85 @@ const KitchenFoodSafety = () => {
                 <T text="Critical: 8-54°C" />
               </Badge>
             </div>
-            <Button size="sm" onClick={recordTemperature} className="flex items-center gap-1.5">
-              <Plus className="h-4 w-4" />
-              <T text="Record" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <div className="border rounded-md flex">
+                <Button 
+                  variant={viewMode === "grid" ? "default" : "ghost"} 
+                  size="icon" 
+                  className="h-9 w-9 rounded-r-none"
+                  onClick={() => setViewMode("grid")}
+                >
+                  <Grid className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant={viewMode === "list" ? "default" : "ghost"} 
+                  size="icon" 
+                  className="h-9 w-9 rounded-l-none"
+                  onClick={() => setViewMode("list")}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+              <Button size="sm" onClick={recordTemperature} className="flex items-center gap-1.5">
+                <Plus className="h-4 w-4" />
+                <T text="Record" />
+              </Button>
+            </div>
           </div>
           
-          <ScrollArea className="h-[calc(100vh-200px)]">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg"><T text="Today's Temperature Logs" /></CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y">
-                  {temperatureLogs.map((log) => (
-                    <div key={log.id} className="p-4">
-                      <div className="flex items-center justify-between flex-wrap gap-2">
+          <ScrollArea className="h-[calc(100vh-240px)]">
+            {viewMode === "grid" ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {temperatureLogs.map((log) => (
+                  <Card key={log.id}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between">
                         <div>
-                          <h3 className="font-medium">{log.location}</h3>
+                          <h3 className="font-medium text-base">{log.location}</h3>
                           <div className="text-sm text-muted-foreground mt-1">
                             {formatTime(log.recorded_at)} • {log.recorded_by}
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-col items-end gap-2">
                           <div className="text-xl font-semibold">{log.temperature}°C</div>
                           {renderStatusBadge(log.status)}
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg"><T text="Today's Temperature Logs" /></CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <table className="w-full">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="text-left p-4 font-medium"><T text="Location" /></th>
+                        <th className="text-left p-4 font-medium"><T text="Time" /></th>
+                        <th className="text-left p-4 font-medium"><T text="Recorded By" /></th>
+                        <th className="text-left p-4 font-medium"><T text="Temperature" /></th>
+                        <th className="text-right p-4 font-medium"><T text="Status" /></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {temperatureLogs.map((log) => (
+                        <tr key={log.id}>
+                          <td className="p-4">{log.location}</td>
+                          <td className="p-4">{formatTime(log.recorded_at)}</td>
+                          <td className="p-4">{log.recorded_by}</td>
+                          <td className="p-4 font-semibold">{log.temperature}°C</td>
+                          <td className="p-4 text-right">{renderStatusBadge(log.status)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </CardContent>
+              </Card>
+            )}
           </ScrollArea>
         </TabsContent>
       </Tabs>
