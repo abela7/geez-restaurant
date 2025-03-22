@@ -1,91 +1,98 @@
 
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import React from 'react';
+import { 
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useLanguage, T } from "@/contexts/LanguageContext";
-import { UserRound } from "lucide-react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { 
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+
+// This should match the schema in the parent component
+const customerInfoSchema = z.object({
+  customerName: z.string().min(2, {
+    message: "Customer name must be at least 2 characters.",
+  }),
+  customerPhone: z.string().optional(),
+  customerEmail: z.string().email({
+    message: "Invalid email address.",
+  }).optional(),
+});
+
+type CustomerInfoFormValues = z.infer<typeof customerInfoSchema>;
 
 interface CustomerInfoStepProps {
-  orderType: string;
-  customerName: string;
-  setCustomerName: (name: string) => void;
-  customerCount: string;
-  setCustomerCount: (count: string) => void;
-  goToNextStep: () => void;
+  form: ReturnType<typeof useForm<CustomerInfoFormValues>>;
+  onSubmit: (values: CustomerInfoFormValues) => void;
 }
 
-export const CustomerInfoStep: React.FC<CustomerInfoStepProps> = ({
-  orderType,
-  customerName,
-  setCustomerName,
-  customerCount,
-  setCustomerCount,
-  goToNextStep
-}) => {
+export const CustomerInfoStep: React.FC<CustomerInfoStepProps> = ({ form, onSubmit }) => {
   const { t } = useLanguage();
-  const [isReady, setIsReady] = useState(false);
-  
-  const handleCustomerCountChange = (value: string) => {
-    setCustomerCount(value);
-    // If we have a value, mark as ready for auto-navigation
-    setIsReady(true);
-  };
-  
-  // For takeout/delivery, auto-continue after a short delay
-  useEffect(() => {
-    if (orderType !== "dine-in" || isReady) {
-      const timer = setTimeout(() => {
-        goToNextStep();
-      }, 500);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [orderType, isReady, goToNextStep]);
   
   return (
-    <Card>
-      <CardContent className="p-4">
-        <h3 className="text-lg font-medium mb-4">
-          <T text="Customer Information" />
-        </h3>
-        
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium mb-1 block">
-              <T text="Customer Name" /> <span className="text-muted-foreground">(<T text="optional" />)</span>
-            </label>
-            <div className="relative">
-              <UserRound className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder={t("Enter customer name")} 
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                className="pl-8"
-              />
-            </div>
-          </div>
-          
-          {orderType === "dine-in" && (
-            <div>
-              <label className="text-sm font-medium mb-1 block">
-                <T text="Number of Guests" />
-              </label>
-              <Select value={customerCount} onValueChange={handleCustomerCountChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("Select guest count")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                    <SelectItem key={num} value={num.toString()}>
-                      {num}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-        </div>
+    <Card className="mb-4 mt-4">
+      <CardHeader>
+        <CardTitle><T text="Customer Information" /></CardTitle>
+        <CardDescription><T text="Enter the customer's details for the order." /></CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="customerName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel><T text="Customer Name" /></FormLabel>
+                  <FormControl>
+                    <Input placeholder={t("Customer name")} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="customerPhone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel><T text="Phone Number" /> (optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder={t("Phone number")} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="customerEmail"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel><T text="Email Address" /> (optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder={t("Email address")} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit"><T text="Continue to Menu" /></Button>
+          </form>
+        </Form>
       </CardContent>
     </Card>
   );

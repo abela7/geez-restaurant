@@ -1,59 +1,55 @@
 
 import React from 'react';
-import { Card, CardContent } from "@/components/ui/card";
+import { 
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage, T } from "@/contexts/LanguageContext";
-import { Store, Home, Truck } from "lucide-react";
-import { cn } from '@/lib/utils';
+import { OrderType } from '@/types/order';
+import { Utensils, ShoppingBag, Truck } from 'lucide-react';
 
 interface OrderTypeStepProps {
-  orderType: string;
-  setOrderType: (type: "dine-in" | "takeout" | "delivery") => void;
-  goToNextStep: () => void;
+  onSelectOrderType: (type: OrderType) => void;
 }
 
-export const OrderTypeStep: React.FC<OrderTypeStepProps> = ({
-  orderType,
-  setOrderType,
-  goToNextStep
-}) => {
+export const OrderTypeStep: React.FC<OrderTypeStepProps> = ({ onSelectOrderType }) => {
   const { t } = useLanguage();
   
-  const orderTypes = [
-    { id: 'dine-in', label: t('Dine In'), icon: <Home className="h-5 w-5 mb-2" /> },
-    { id: 'takeout', label: t('Takeout'), icon: <Store className="h-5 w-5 mb-2" /> },
-    { id: 'delivery', label: t('Delivery'), icon: <Truck className="h-5 w-5 mb-2" /> },
-  ];
-  
-  const handleOrderTypeSelect = (type: "dine-in" | "takeout" | "delivery") => {
-    setOrderType(type);
-    // Auto-navigate to the next step after selection
-    setTimeout(() => goToNextStep(), 300);
-  };
-  
   return (
-    <Card>
-      <CardContent className="p-4">
-        <h3 className="text-lg font-medium mb-4">
-          <T text="Select Order Type" />
-        </h3>
-        
-        <div className="grid grid-cols-3 gap-3">
-          {orderTypes.map((type) => (
-            <Button
-              key={type.id}
-              variant="outline"
-              className={cn(
-                "flex flex-col items-center justify-center h-24 p-2",
-                orderType === type.id && "border-primary bg-primary/10 text-primary"
-              )}
-              onClick={() => handleOrderTypeSelect(type.id as "dine-in" | "takeout" | "delivery")}
-            >
-              {type.icon}
-              <span>{type.label}</span>
-            </Button>
-          ))}
-        </div>
+    <Card className="mb-4 mt-4">
+      <CardHeader>
+        <CardTitle><T text="Select Order Type" /></CardTitle>
+        <CardDescription><T text="Choose how the customer will receive their order." /></CardDescription>
+      </CardHeader>
+      <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Button 
+          variant="outline" 
+          className="h-24 flex flex-col items-center justify-center gap-2"
+          onClick={() => onSelectOrderType('dine-in')}
+        >
+          <Utensils className="h-5 w-5" />
+          <span><T text="Dine-in" /></span>
+        </Button>
+        <Button 
+          variant="outline" 
+          className="h-24 flex flex-col items-center justify-center gap-2"
+          onClick={() => onSelectOrderType('takeout')}
+        >
+          <ShoppingBag className="h-5 w-5" />
+          <span><T text="Takeout" /></span>
+        </Button>
+        <Button 
+          variant="outline" 
+          className="h-24 flex flex-col items-center justify-center gap-2"
+          onClick={() => onSelectOrderType('delivery')}
+        >
+          <Truck className="h-5 w-5" />
+          <span><T text="Delivery" /></span>
+        </Button>
       </CardContent>
     </Card>
   );
