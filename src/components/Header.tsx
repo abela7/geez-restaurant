@@ -30,7 +30,7 @@ const Header: React.FC<HeaderProps> = ({
             <Input
               type="search"
               placeholder={t("Search...")}
-              className="w-64 pl-10 rounded-full bg-muted/50"
+              className="w-80 pl-10 rounded-full bg-muted/50"
             />
           </div>
           

@@ -22,7 +22,7 @@ const SidebarHeader: React.FC<SidebarHeaderProps> = ({ collapsed, toggleCollapse
         variant="ghost"
         size="icon"
         onClick={toggleCollapse}
-        className="ml-auto sidebar-toggle"
+        className={collapsed ? "ml-0" : "ml-auto"}
         aria-label="Toggle sidebar"
       >
         <PanelLeft size={18} className={collapsed ? "rotate-180 transform transition-transform duration-200" : "transition-transform duration-200"} />

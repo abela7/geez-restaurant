@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { MainSidebar } from './MainSidebar';
@@ -5,6 +6,8 @@ import { cn } from '@/lib/utils';
 import { useLanguage, T } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import Header from './Header';
+import { Button } from './ui/button';
+import { PanelLeft } from 'lucide-react';
 
 import { 
   Breadcrumb, 
@@ -142,7 +145,7 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
         sidebarCollapsed ? "w-0" : "w-64 flex-shrink-0"
       )}>
         <div className={cn(
-          "fixed top-0 left-0 h-screen",
+          "fixed top-0 left-0 h-screen z-30",
           sidebarCollapsed ? "w-auto" : "w-64"
         )}>
           <MainSidebar
@@ -152,6 +155,20 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
           />
         </div>
       </div>
+      
+      {sidebarCollapsed && (
+        <div className="fixed top-4 left-4 z-40">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="bg-background shadow-md border border-border"
+            aria-label="Open sidebar"
+          >
+            <PanelLeft className="h-5 w-5" />
+          </Button>
+        </div>
+      )}
       
       <div className="flex-1 flex flex-col w-full transition-all duration-300 ease-in-out">
         <Header toggleSidebar={toggleSidebar} interface={userInterface} />
