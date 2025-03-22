@@ -28,18 +28,18 @@
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 0.375rem;
-  background-color: var(--amber-400);
-  color: var(--amber-800);
-  border: 1px solid var(--amber-500);
+  background-color: transparent;
+  color: var(--sidebar-foreground);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .sidebar-toggle:hover {
-  background-color: var(--amber-500);
+  background-color: var(--sidebar-accent);
 }
 
 /* Fixed sidebar positioning */
 .fixed.top-0.left-0.h-screen.z-30 {
   z-index: 40;
 }
+

@@ -3,7 +3,7 @@ import React from 'react';
 import ThemeSwitcher from './ThemeSwitcher';
 import LanguageSwitcher from './LanguageSwitcher';
 import { Button } from './ui/button';
-import { Bell, Menu, Search, User } from 'lucide-react';
+import { Bell, PanelLeft, Search, User } from 'lucide-react';
 import { Input } from './ui/input';
 import { useLanguage, T } from '@/contexts/LanguageContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -30,7 +30,7 @@ const Header: React.FC<HeaderProps> = ({
             onClick={toggleSidebar}
             aria-label={t("Toggle sidebar")}
           >
-            <Menu className="size-5" />
+            <PanelLeft className="size-5" />
             <span className="sr-only">{t("Toggle sidebar")}</span>
           </Button>
           
