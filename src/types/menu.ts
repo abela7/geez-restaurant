@@ -14,6 +14,10 @@ export interface FoodItem {
   preparation_time?: number;
   image_url?: string;
   available?: boolean;
+  menu_categories?: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface MenuCategory {

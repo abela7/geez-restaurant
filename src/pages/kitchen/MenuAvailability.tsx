@@ -39,14 +39,14 @@ const MenuAvailability = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("food_items")
-        .select("*, category:categories(name)")
+        .select("*, menu_categories(id, name)")
         .order("name");
         
       if (error) throw error;
       
       return data.map(item => ({
         ...item,
-        categoryName: item.category ? item.category.name : null,
+        categoryName: item.menu_categories ? item.menu_categories.name : null,
         available: item.available !== false, // Default to true if not set
       })) as FoodItem[];
     },
@@ -57,7 +57,7 @@ const MenuAvailability = () => {
     queryKey: ["menu-categories"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("categories")
+        .from("menu_categories")
         .select("*")
         .eq("active", true)
         .order("name");
@@ -70,18 +70,24 @@ const MenuAvailability = () => {
   // Create notification mutation
   const createNotification = useMutation({
     mutationFn: async (notification: NotificationData) => {
-      const { data, error } = await supabase
-        .from("menu_notifications")
-        .insert([{ 
-          title: notification.title,
-          message: notification.message,
-          type: notification.type,
-          for_role: notification.for_role,
-          created_by: notification.created_by
-        }]);
-        
-      if (error) throw error;
-      return data;
+      try {
+        // Here we're inserting notification data directly, not using the table relation
+        const { data, error } = await supabase
+          .from("menu_notifications")
+          .insert({
+            title: notification.title,
+            message: notification.message,
+            type: notification.type,
+            for_role: notification.for_role,
+            created_by: notification.created_by
+          });
+          
+        if (error) throw error;
+        return data;
+      } catch (error) {
+        console.error("Error creating notification:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast.success(t("Notification sent to waiters"));
