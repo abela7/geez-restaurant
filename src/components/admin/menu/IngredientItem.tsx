@@ -45,7 +45,7 @@ const IngredientItem: React.FC<IngredientItemProps> = ({
             )}
           </Badge>
           <Badge variant="outline" className="text-xs px-1.5 py-0">
-            ${cost.toFixed(2)}/{unit}
+            £{cost.toFixed(2)}/{unit}
           </Badge>
         </div>
       </div>
