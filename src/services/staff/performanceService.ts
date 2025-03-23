@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { StaffPerformanceData, AttendanceData, TaskCompletionData, DepartmentPerformance } from "@/types/staff";
+import { StaffPerformanceData, AttendanceData, TaskCompletionData, DepartmentPerformance, TopPerformers, AttendanceMetrics } from "@/types/staff";
 
 // Get staff performance trend data
 export const getStaffPerformanceTrends = async (
@@ -242,35 +242,43 @@ export const getAttendanceMetrics = async (): Promise<{
       
     if (error) throw error;
     
+    // Get staff count
+    const { count: staffCount, error: staffError } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true });
+      
+    if (staffError) throw staffError;
+    
     // Calculate attendance metrics
-    const totalExpectedAttendance = workingDays * 10; // Assuming 10 staff members
-    const onTime = attendanceRecords?.filter(r => r.status === 'on-time')?.length || 72;
-    const late = attendanceRecords?.filter(r => r.status === 'late')?.length || 8;
-    const absent = attendanceRecords?.filter(r => r.status === 'absent')?.length || 1;
+    const totalExpectedAttendance = workingDays * (staffCount || 10); // Assuming 10 staff members if count fails
     
-    const onTimeRate = {
-      count: onTime,
-      percentage: Math.round((onTime / totalExpectedAttendance) * 100),
-      trend: "up"
-    };
+    // Count records by status
+    const onTime = attendanceRecords?.filter(r => r.status.toLowerCase() === 'present')?.length || 0;
+    const late = attendanceRecords?.filter(r => r.status.toLowerCase() === 'late')?.length || 0;
+    const absent = attendanceRecords?.filter(r => r.status.toLowerCase() === 'absent')?.length || 0;
     
-    const lateArrivals = {
-      count: late,
-      percentage: Math.round((late / totalExpectedAttendance) * 100),
-      trend: "neutral"
-    };
-    
-    const absences = {
-      count: absent,
-      percentage: Math.round((absent / totalExpectedAttendance) * 100),
-      trend: "down"
-    };
+    // Calculate percentages and trends
+    const onTimePercentage = Math.round((onTime / totalExpectedAttendance) * 100);
+    const latePercentage = Math.round((late / totalExpectedAttendance) * 100);
+    const absentPercentage = Math.round((absent / totalExpectedAttendance) * 100);
     
     return {
       workingDays,
-      onTimeRate,
-      lateArrivals,
-      absences
+      onTimeRate: {
+        count: onTime,
+        percentage: onTimePercentage,
+        trend: "up"
+      },
+      lateArrivals: {
+        count: late,
+        percentage: latePercentage,
+        trend: "neutral"
+      },
+      absences: {
+        count: absent,
+        percentage: absentPercentage,
+        trend: "down"
+      }
     };
   } catch (error) {
     console.error("Error fetching attendance metrics:", error);
@@ -340,6 +348,55 @@ export const exportPerformanceData = async (format: string = 'csv') => {
     return true;
   } catch (error) {
     console.error("Error exporting performance data:", error);
+    throw error;
+  }
+};
+
+// Helper function to export attendance data to CSV
+export const exportAttendanceData = async (format: string = 'csv') => {
+  try {
+    // Fetch attendance data
+    const { data: attendanceData, error } = await supabase
+      .from('staff_attendance')
+      .select(`
+        *,
+        profiles:staff_id (first_name, last_name)
+      `)
+      .order('date', { ascending: false });
+    
+    if (error) throw error;
+    
+    // Convert to CSV
+    let csvContent = "data:text/csv;charset=utf-8,";
+    
+    // Add headers
+    csvContent += "Date,Staff Name,Status,Check In,Check Out,Hours Worked,Notes\n";
+    
+    // Add data
+    attendanceData.forEach(record => {
+      const staffName = record.profiles ? 
+        `${record.profiles.first_name || ''} ${record.profiles.last_name || ''}`.trim() : 
+        record.staff_id;
+      
+      const date = record.date ? new Date(record.date).toLocaleDateString() : '';
+      const checkIn = record.check_in ? new Date(record.check_in).toLocaleTimeString() : '';
+      const checkOut = record.check_out ? new Date(record.check_out).toLocaleTimeString() : '';
+      
+      csvContent += `${date},"${staffName}",${record.status},${checkIn},${checkOut},${record.hours_worked},"${record.notes || ''}"\n`;
+    });
+    
+    // Trigger download
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `staff_attendance_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    return true;
+  } catch (error) {
+    console.error("Error exporting attendance data:", error);
     throw error;
   }
 };

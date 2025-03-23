@@ -12,6 +12,8 @@ export type StaffAttendance = {
   check_out: string | null;
   hours_worked: number;
   notes: string | null;
+  check_in_time?: string; // For UI purposes only
+  check_out_time?: string; // For UI purposes only
 };
 
 export const useStaffAttendance = (staffId?: string) => {
@@ -73,6 +75,14 @@ export const useStaffAttendance = (staffId?: string) => {
         description: "Attendance record added successfully"
       });
       
+      // Update the staff member's attendance status in profiles table
+      if (newRecord.status) {
+        await supabase
+          .from('profiles')
+          .update({ attendance: newRecord.status })
+          .eq('id', newRecord.staff_id);
+      }
+      
       return data;
     } catch (err: any) {
       console.error('Error adding attendance record:', err);
@@ -87,9 +97,12 @@ export const useStaffAttendance = (staffId?: string) => {
 
   const updateAttendanceRecord = async (id: string, updates: Partial<StaffAttendance>) => {
     try {
+      // Filter out UI-only fields
+      const { check_in_time, check_out_time, ...validUpdates } = updates;
+      
       const { data, error } = await supabase
         .from('staff_attendance')
-        .update(updates)
+        .update(validUpdates)
         .eq('id', id)
         .select()
         .single();
@@ -106,6 +119,14 @@ export const useStaffAttendance = (staffId?: string) => {
         title: "Success",
         description: "Attendance record updated successfully"
       });
+      
+      // If status was updated, also update the staff profile
+      if (updates.status && data) {
+        await supabase
+          .from('profiles')
+          .update({ attendance: updates.status })
+          .eq('id', (data as StaffAttendance).staff_id);
+      }
       
       return data;
     } catch (err: any) {
