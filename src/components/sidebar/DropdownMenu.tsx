@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -21,15 +22,12 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({
   
   if (!isOpen || !isExpanded) return null;
   
-  // Clean up the path construction to ensure correct navigation
+  // Fix the path construction to always start with /admin
   const constructPath = (to: string) => {
-    // If parentPath already starts with a slash, use it directly
-    if (parentPath.startsWith('/')) {
-      return `${parentPath}/${to}`.replace(/\/\//g, '/');
+    if (parentPath.startsWith('/admin')) {
+      return `${parentPath}/${to}`;
     }
-    
-    // Otherwise ensure we have a leading slash
-    return `/${parentPath}/${to}`.replace(/\/\//g, '/');
+    return `/admin${parentPath}/${to}`;
   };
   
   return (
