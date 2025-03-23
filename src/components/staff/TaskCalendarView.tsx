@@ -26,8 +26,10 @@ const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({ tasks, staffNames }
       )
     : [];
   
-  // Function to highlight dates with tasks
-  const highlightedDays = tasks
+  // Function to determine which dates have tasks
+  // Instead of using highlightedDays which isn't supported, we'll use
+  // the modifiers.highlighted property which is supported by the Calendar component
+  const datesWithTasks = tasks
     .filter(task => task.due_date)
     .map(task => new Date(task.due_date as string));
   
@@ -53,8 +55,16 @@ const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({ tasks, staffNames }
             mode="single"
             selected={selectedDate}
             onSelect={setSelectedDate}
-            className="rounded-md border"
-            highlightedDays={highlightedDays}
+            className="rounded-md border pointer-events-auto"
+            modifiers={{
+              highlighted: datesWithTasks
+            }}
+            modifiersStyles={{
+              highlighted: {
+                backgroundColor: 'rgba(var(--primary), 0.1)',
+                fontWeight: 'bold'
+              }
+            }}
           />
         </CardContent>
       </Card>
