@@ -47,7 +47,7 @@ export function SideModal({
           {title && <SheetTitle>{title}</SheetTitle>}
           {description && <SheetDescription>{description}</SheetDescription>}
         </SheetHeader>
-        <div className="overflow-y-auto side-modal-body">
+        <div className="overflow-y-auto side-modal-body h-[calc(100vh-150px)]">
           {children}
         </div>
       </SheetContent>
