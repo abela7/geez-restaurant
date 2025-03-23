@@ -14,6 +14,8 @@ export type StaffTask = {
   due_time: string | null;
   completed_at: string | null;
   category: string | null;
+  created_at?: string;
+  updated_at?: string;
 };
 
 export const useStaffTasks = (staffId: string) => {
@@ -26,6 +28,7 @@ export const useStaffTasks = (staffId: string) => {
     setIsLoading(true);
     setError(null);
     try {
+      console.log(`Fetching tasks for staff ID: ${staffId}`);
       const { data, error } = await supabase
         .from('staff_tasks')
         .select('*')
@@ -36,6 +39,7 @@ export const useStaffTasks = (staffId: string) => {
         throw error;
       }
       
+      console.log(`Retrieved ${data?.length || 0} tasks for staff ID: ${staffId}`);
       // Ensure the data is properly typed as StaffTask[]
       setTasks((data || []) as StaffTask[]);
     } catch (err: any) {
@@ -53,6 +57,7 @@ export const useStaffTasks = (staffId: string) => {
 
   const addTask = async (newTask: Omit<StaffTask, 'id' | 'completed_at'>) => {
     try {
+      console.log("Adding new task:", newTask);
       // Ensure category is a string, not a number
       const taskToAdd = {
         ...newTask,
@@ -69,6 +74,7 @@ export const useStaffTasks = (staffId: string) => {
         throw error;
       }
       
+      console.log("Task added successfully:", data);
       // Sort tasks by due date after adding a new one
       setTasks(prev => {
         const updatedTasks = [...prev, data as StaffTask];
@@ -98,6 +104,7 @@ export const useStaffTasks = (staffId: string) => {
 
   const updateTask = async (id: string, updates: Partial<StaffTask>) => {
     try {
+      console.log(`Updating task ${id} with:`, updates);
       const { data, error } = await supabase
         .from('staff_tasks')
         .update(updates)
@@ -109,6 +116,7 @@ export const useStaffTasks = (staffId: string) => {
         throw error;
       }
       
+      console.log("Task updated successfully:", data);
       // Sort tasks by due date after updating
       setTasks(prev => {
         const updatedTasks = prev.map(task => task.id === id ? (data as StaffTask) : task);
@@ -138,6 +146,7 @@ export const useStaffTasks = (staffId: string) => {
 
   const deleteTask = async (id: string) => {
     try {
+      console.log(`Deleting task ${id}`);
       const { error } = await supabase
         .from('staff_tasks')
         .delete()
@@ -147,6 +156,7 @@ export const useStaffTasks = (staffId: string) => {
         throw error;
       }
       
+      console.log(`Task ${id} deleted successfully`);
       setTasks(prev => prev.filter(task => task.id !== id));
       
       toast({

@@ -55,20 +55,25 @@ export const getStaffImagesMap = (staffMembers?: StaffMember[]) => {
 export const formatTaskDate = (dateString: string | null, timeString: string | null) => {
   if (!dateString) return '';
   
-  const date = new Date(dateString);
-  const options: Intl.DateTimeFormatOptions = { 
-    year: 'numeric', 
-    month: 'short', 
-    day: 'numeric' 
-  };
-  
-  let formattedDate = date.toLocaleDateString('en-GB', options);
-  
-  if (timeString) {
-    formattedDate += ` ${timeString}`;
+  try {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    };
+    
+    let formattedDate = date.toLocaleDateString('en-GB', options);
+    
+    if (timeString) {
+      formattedDate += ` ${timeString}`;
+    }
+    
+    return formattedDate;
+  } catch (err) {
+    console.error('Error formatting date:', err);
+    return dateString; // Return the original string if parsing fails
   }
-  
-  return formattedDate;
 };
 
 // Create and download a CSV file from tasks data

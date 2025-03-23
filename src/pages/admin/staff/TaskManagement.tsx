@@ -54,6 +54,7 @@ const TaskManagement = () => {
   const fetchTasks = async () => {
     setIsLoading(true);
     try {
+      console.log("Fetching tasks from database...");
       const { data, error } = await supabase
         .from('staff_tasks')
         .select('*')
@@ -63,6 +64,7 @@ const TaskManagement = () => {
         throw error;
       }
       
+      console.log("Tasks fetched:", data);
       setTasks((data || []) as StaffTask[]);
     } catch (err: any) {
       console.error('Error fetching tasks:', err);
@@ -120,6 +122,7 @@ const TaskManagement = () => {
         category: newTask.category
       };
       
+      console.log("Creating new task:", taskData);
       const { data, error } = await supabase
         .from('staff_tasks')
         .insert([taskData])
@@ -128,6 +131,7 @@ const TaskManagement = () => {
       
       if (error) throw error;
       
+      console.log("Task created:", data);
       setTasks(prev => [...prev, data as StaffTask]);
       
       toast({
@@ -157,6 +161,7 @@ const TaskManagement = () => {
 
   const handleUpdateTaskStatus = async (taskId: string, status: string) => {
     try {
+      console.log(`Updating task ${taskId} status to ${status}`);
       const updates = { 
         status,
         completed_at: status === 'Completed' ? new Date().toISOString() : null
@@ -171,6 +176,7 @@ const TaskManagement = () => {
       
       if (error) throw error;
       
+      console.log("Task updated:", data);
       setTasks(prev => prev.map(task => task.id === taskId ? (data as StaffTask) : task));
       
       toast({
@@ -189,6 +195,7 @@ const TaskManagement = () => {
 
   const handleDeleteTask = async (taskId: string) => {
     try {
+      console.log(`Deleting task ${taskId}`);
       const { error } = await supabase
         .from('staff_tasks')
         .delete()
@@ -336,7 +343,10 @@ const TaskManagement = () => {
         </TabsContent>
         
         <TabsContent value="calendar">
-          <TaskCalendarView />
+          <TaskCalendarView 
+            tasks={filteredTasks}
+            staffNames={staffNamesMap}
+          />
         </TabsContent>
       </Tabs>
 
@@ -346,7 +356,7 @@ const TaskManagement = () => {
         newTask={newTask}
         setNewTask={setNewTask}
         handleCreateTask={handleCreateTask}
-        staffMembers={staffMembers}
+        staffMembers={staffMembers || []}
       />
     </>
   );

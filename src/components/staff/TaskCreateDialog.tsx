@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,6 +8,7 @@ import { useLanguage, T } from "@/contexts/LanguageContext";
 import { taskCategories } from "@/constants/taskCategories";
 import { StaffMember } from "@/hooks/useStaffMembers";
 import { SideModal } from "@/components/ui/side-modal";
+import { Loader2 } from "lucide-react";
 
 export type NewTaskFormData = {
   title: string;
@@ -38,6 +38,16 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
   staffMembers
 }) => {
   const { t } = useLanguage();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const onSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      await handleCreateTask();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <SideModal 
@@ -152,11 +162,18 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
         </div>
       
         <div className="flex justify-end space-x-2 pt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
             <T text="Cancel" />
           </Button>
-          <Button onClick={handleCreateTask}>
-            <T text="Create Task" />
+          <Button onClick={onSubmit} disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <T text="Creating..." />
+              </>
+            ) : (
+              <T text="Create Task" />
+            )}
           </Button>
         </div>
       </div>
