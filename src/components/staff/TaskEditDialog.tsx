@@ -10,33 +10,24 @@ import { taskCategories } from "@/constants/taskCategories";
 import { StaffMember } from "@/hooks/useStaffMembers";
 import { SideModal } from "@/components/ui/side-modal";
 import { Loader2 } from "lucide-react";
+import { StaffTask } from "@/hooks/useStaffTasks";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-export type NewTaskFormData = {
-  title: string;
-  description: string;
-  staff_id: string;
-  due_date: string;
-  due_time: string;
-  priority: string;
-  category: string;
-};
-
-type TaskCreateDialogProps = {
+type TaskEditDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  newTask: NewTaskFormData;
-  setNewTask: React.Dispatch<React.SetStateAction<NewTaskFormData>>;
-  handleCreateTask: () => Promise<void>;
+  task: StaffTask;
+  setTask: React.Dispatch<React.SetStateAction<StaffTask | null>>;
+  handleEditTask: () => Promise<void>;
   staffMembers: StaffMember[];
 };
 
-const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
+const TaskEditDialog: React.FC<TaskEditDialogProps> = ({
   open,
   onOpenChange,
-  newTask,
-  setNewTask,
-  handleCreateTask,
+  task,
+  setTask,
+  handleEditTask,
   staffMembers
 }) => {
   const { t } = useLanguage();
@@ -45,7 +36,7 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
   const onSubmit = async () => {
     setIsSubmitting(true);
     try {
-      await handleCreateTask();
+      await handleEditTask();
     } finally {
       setIsSubmitting(false);
     }
@@ -55,8 +46,8 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
     <SideModal 
       open={open} 
       onOpenChange={onOpenChange}
-      title={<T text="Create New Task" />}
-      description={<T text="Assign a new task to a staff member" />}
+      title={<T text="Edit Task" />}
+      description={<T text="Update task details" />}
       width="md"
     >
       <ScrollArea className="h-[calc(100vh-180px)] pr-4">
@@ -65,8 +56,8 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
             <Label htmlFor="title"><T text="Task Title" /></Label>
             <Input 
               id="title" 
-              value={newTask.title}
-              onChange={(e) => setNewTask({...newTask, title: e.target.value})}
+              value={task.title}
+              onChange={(e) => setTask({...task, title: e.target.value})}
               placeholder={t("Enter task title")}
               required
             />
@@ -76,8 +67,8 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
             <Label htmlFor="description"><T text="Description" /></Label>
             <Textarea 
               id="description" 
-              value={newTask.description}
-              onChange={(e) => setNewTask({...newTask, description: e.target.value})}
+              value={task.description || ""}
+              onChange={(e) => setTask({...task, description: e.target.value})}
               placeholder={t("Describe the task details")}
             />
           </div>
@@ -86,8 +77,8 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
             <div className="grid gap-2">
               <Label htmlFor="assignee"><T text="Assign To" /></Label>
               <Select 
-                value={newTask.staff_id}
-                onValueChange={(value) => setNewTask({...newTask, staff_id: value})}
+                value={task.staff_id}
+                onValueChange={(value) => setTask({...task, staff_id: value})}
               >
                 <SelectTrigger id="assignee">
                   <SelectValue placeholder={t("Select staff member")} />
@@ -105,8 +96,8 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
             <div className="grid gap-2">
               <Label htmlFor="category"><T text="Category" /></Label>
               <Select 
-                value={newTask.category}
-                onValueChange={(value) => setNewTask({...newTask, category: value})}
+                value={task.category || "1"}
+                onValueChange={(value) => setTask({...task, category: value})}
               >
                 <SelectTrigger id="category">
                   <SelectValue placeholder={t("Select category")} />
@@ -131,8 +122,8 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
               <Input 
                 id="dueDate" 
                 type="date" 
-                value={newTask.due_date}
-                onChange={(e) => setNewTask({...newTask, due_date: e.target.value})}
+                value={task.due_date || ""}
+                onChange={(e) => setTask({...task, due_date: e.target.value})}
                 required
               />
             </div>
@@ -142,8 +133,8 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
               <Input 
                 id="dueTime" 
                 type="time" 
-                value={newTask.due_time}
-                onChange={(e) => setNewTask({...newTask, due_time: e.target.value})}
+                value={task.due_time || ""}
+                onChange={(e) => setTask({...task, due_time: e.target.value})}
               />
             </div>
           </div>
@@ -151,8 +142,8 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
           <div className="grid gap-2">
             <Label htmlFor="priority"><T text="Priority" /></Label>
             <Select 
-              value={newTask.priority}
-              onValueChange={(value) => setNewTask({...newTask, priority: value})}
+              value={task.priority}
+              onValueChange={(value) => setTask({...task, priority: value})}
             >
               <SelectTrigger id="priority">
                 <SelectValue placeholder={t("Select priority")} />
@@ -161,6 +152,23 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
                 <SelectItem value="High"><T text="High" /></SelectItem>
                 <SelectItem value="Medium"><T text="Medium" /></SelectItem>
                 <SelectItem value="Low"><T text="Low" /></SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="status"><T text="Status" /></Label>
+            <Select 
+              value={task.status}
+              onValueChange={(value) => setTask({...task, status: value})}
+            >
+              <SelectTrigger id="status">
+                <SelectValue placeholder={t("Select status")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Pending"><T text="Pending" /></SelectItem>
+                <SelectItem value="In Progress"><T text="In Progress" /></SelectItem>
+                <SelectItem value="Completed"><T text="Completed" /></SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -175,10 +183,10 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              <T text="Creating..." />
+              <T text="Updating..." />
             </>
           ) : (
-            <T text="Create Task" />
+            <T text="Update Task" />
           )}
         </Button>
       </div>
@@ -186,4 +194,4 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
   );
 };
 
-export default TaskCreateDialog;
+export default TaskEditDialog;

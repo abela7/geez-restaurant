@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -7,14 +8,17 @@ import { Avatar } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, CheckCircle2, Clock, AlertCircle, ListChecks, Calendar, Filter } from "lucide-react";
+import { Search, Plus, CheckCircle2, Clock, AlertCircle, ListChecks, Calendar, Filter, Pencil, Trash2 } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { StaffMember } from "@/hooks/useStaffMembers";
 import TaskCreateDialog from "@/components/staff/TaskCreateDialog";
 import { useToast } from "@/hooks/use-toast";
 import useStaffTasks, { StaffTask } from "@/hooks/useStaffTasks";
-import { format } from "date-fns";
+import { format, isToday, isFuture, parseISO } from "date-fns";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import TaskEditDialog from "@/components/staff/TaskEditDialog";
 
 const Tasks = () => {
   const { t } = useLanguage();
@@ -25,6 +29,9 @@ const Tasks = () => {
   const [staffNames, setStaffNames] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [newTaskDialogOpen, setNewTaskDialogOpen] = useState(false);
+  const [editTaskDialogOpen, setEditTaskDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<StaffTask | null>(null);
   const { toast } = useToast();
   
   // Initialize empty task state
@@ -39,7 +46,7 @@ const Tasks = () => {
   });
   
   // Using the useStaffTasks hook for all staff members
-  const { tasks, isLoading: tasksLoading, addTask, updateTask } = useStaffTasks("");
+  const { tasks, isLoading: tasksLoading, addTask, updateTask, deleteTask } = useStaffTasks("");
   
   // Fetch staff members from profiles table
   useEffect(() => {
@@ -80,15 +87,29 @@ const Tasks = () => {
     fetchStaffMembers();
   }, []);
   
-  // Filter tasks based on search and status filter
-  const filteredTasks = tasks.filter(task => {
-    const matchesSearch = 
-      task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (task.description && task.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    if (statusFilter === "all") return matchesSearch;
-    return matchesSearch && task.status.toLowerCase() === statusFilter.toLowerCase();
-  });
+  // Filter tasks based on search, status filter and tab
+  const getFilteredTasks = (tab: string) => {
+    return tasks.filter(task => {
+      const matchesSearch = 
+        task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (task.description && task.description.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      // Status filter
+      const matchesStatus = 
+        statusFilter === "all" || 
+        task.status.toLowerCase() === statusFilter.toLowerCase();
+      
+      // Tab filtering
+      let matchesTab = true;
+      if (tab === "today") {
+        matchesTab = task.due_date ? isToday(parseISO(task.due_date)) : false;
+      } else if (tab === "upcoming") {
+        matchesTab = task.due_date ? isFuture(parseISO(task.due_date)) && !isToday(parseISO(task.due_date)) : false;
+      }
+      
+      return matchesSearch && matchesStatus && matchesTab;
+    });
+  };
   
   const handleCreateTask = async () => {
     try {
@@ -137,6 +158,48 @@ const Tasks = () => {
       });
     }
   };
+
+  const handleEditTask = async () => {
+    if (!selectedTask) return;
+    
+    try {
+      await updateTask(selectedTask.id, selectedTask);
+      setEditTaskDialogOpen(false);
+      setSelectedTask(null);
+      
+      toast({
+        title: "Success",
+        description: "Task updated successfully"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: `Failed to update task: ${error.message}`,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteTask = async () => {
+    if (!selectedTask) return;
+    
+    try {
+      await deleteTask(selectedTask.id);
+      setDeleteDialogOpen(false);
+      setSelectedTask(null);
+      
+      toast({
+        title: "Success",
+        description: "Task deleted successfully"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: `Failed to delete task: ${error.message}`,
+        variant: "destructive"
+      });
+    }
+  };
   
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -179,6 +242,124 @@ const Tasks = () => {
       });
     }
   };
+
+  const openEditDialog = (task: StaffTask) => {
+    setSelectedTask(task);
+    setEditTaskDialogOpen(true);
+  };
+
+  const openDeleteDialog = (task: StaffTask) => {
+    setSelectedTask(task);
+    setDeleteDialogOpen(true);
+  };
+  
+  const renderTasksTable = (filteredTasks: StaffTask[]) => {
+    if (tasksLoading) {
+      return (
+        <div className="flex justify-center items-center p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      );
+    }
+    
+    if (error) {
+      return (
+        <div className="text-center text-red-500 p-6">
+          <p>{error}</p>
+        </div>
+      );
+    }
+    
+    if (filteredTasks.length === 0) {
+      return (
+        <div className="text-center p-6 text-muted-foreground">
+          <p>No tasks found. Create a new task to get started.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="overflow-auto">
+        <Table>
+          <TableHeader className="sticky top-0 bg-background z-10">
+            <TableRow>
+              <TableHead><T text="Task" /></TableHead>
+              <TableHead className="hidden md:table-cell"><T text="Assigned To" /></TableHead>
+              <TableHead className="hidden lg:table-cell"><T text="Due Date" /></TableHead>
+              <TableHead className="hidden sm:table-cell"><T text="Priority" /></TableHead>
+              <TableHead><T text="Status" /></TableHead>
+              <TableHead className="text-right"><T text="Actions" /></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredTasks.map((task) => (
+              <TableRow key={task.id}>
+                <TableCell className="font-medium">
+                  <div>
+                    <div className="font-medium">{task.title}</div>
+                    <div className="text-sm text-muted-foreground hidden sm:block">{task.description}</div>
+                    <div className="text-xs text-muted-foreground md:hidden mt-1">
+                      {staffNames[task.staff_id] || "Unknown"}
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell className="hidden md:table-cell">
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8">
+                      <div className="h-full w-full bg-primary/10 flex items-center justify-center text-primary font-medium">
+                        {staffNames[task.staff_id] ? 
+                          staffNames[task.staff_id].charAt(0).toUpperCase() : "?"}
+                      </div>
+                    </Avatar>
+                    <span>{staffNames[task.staff_id] || "Unknown"}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="hidden lg:table-cell">
+                  {task.due_date && (
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span>{formatDate(task.due_date)}</span>
+                      {task.due_time && <span> {task.due_time}</span>}
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell className="hidden sm:table-cell">
+                  <Badge variant={
+                    task.priority === "High" ? "destructive" : 
+                    task.priority === "Medium" ? "default" : 
+                    "outline"
+                  }>
+                    {task.priority}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    {getStatusIcon(task.status)}
+                    <span>{task.status}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    {task.status !== "Completed" && (
+                      <Button variant="ghost" size="icon" onClick={() => handleCompleteTask(task.id)} title="Mark as completed">
+                        <CheckCircle2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <Button variant="ghost" size="icon" onClick={() => openEditDialog(task)} title="Edit task">
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => openDeleteDialog(task)} title="Delete task">
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    );
+  };
   
   return (
     <>
@@ -205,9 +386,9 @@ const Tasks = () => {
           />
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex items-center gap-2">
           <select 
-            className="border rounded p-2 bg-background"
+            className="border rounded p-2 bg-background h-9"
             value={statusFilter} 
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -219,124 +400,36 @@ const Tasks = () => {
         </div>
       </div>
       
-      <Tabs defaultValue="all">
-        <TabsList className="mb-4">
-          <TabsTrigger value="all">
-            <ListChecks className="mr-2 h-4 w-4" />
-            <T text="All Tasks" />
-          </TabsTrigger>
-          <TabsTrigger value="today">
-            <Calendar className="mr-2 h-4 w-4" />
-            <T text="Due Today" />
-          </TabsTrigger>
-          <TabsTrigger value="upcoming">
-            <Clock className="mr-2 h-4 w-4" />
-            <T text="Upcoming" />
-          </TabsTrigger>
-        </TabsList>
+      <Card className="mb-8">
+        <Tabs defaultValue="all">
+          <TabsList className="p-4 border-b w-full justify-start overflow-x-auto">
+            <TabsTrigger value="all">
+              <ListChecks className="mr-2 h-4 w-4" />
+              <T text="All Tasks" />
+            </TabsTrigger>
+            <TabsTrigger value="today">
+              <Calendar className="mr-2 h-4 w-4" />
+              <T text="Due Today" />
+            </TabsTrigger>
+            <TabsTrigger value="upcoming">
+              <Clock className="mr-2 h-4 w-4" />
+              <T text="Upcoming" />
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="all">
-          <Card>
-            {tasksLoading ? (
-              <div className="flex justify-center items-center p-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            ) : error ? (
-              <div className="text-center text-red-500 p-6">
-                <p>{error}</p>
-              </div>
-            ) : filteredTasks.length === 0 ? (
-              <div className="text-center p-6 text-muted-foreground">
-                <p>No tasks found. Create a new task to get started.</p>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead><T text="Task" /></TableHead>
-                    <TableHead><T text="Assigned To" /></TableHead>
-                    <TableHead><T text="Due Date" /></TableHead>
-                    <TableHead><T text="Priority" /></TableHead>
-                    <TableHead><T text="Status" /></TableHead>
-                    <TableHead className="text-right"><T text="Actions" /></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredTasks.map((task) => (
-                    <TableRow key={task.id}>
-                      <TableCell className="font-medium">
-                        <div>
-                          <div className="font-medium">{task.title}</div>
-                          <div className="text-sm text-muted-foreground">{task.description}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-8 w-8">
-                            <div className="h-full w-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-                              {staffNames[task.staff_id] ? 
-                                staffNames[task.staff_id].charAt(0).toUpperCase() : "?"}
-                            </div>
-                          </Avatar>
-                          <span>{staffNames[task.staff_id] || "Unknown"}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {task.due_date && (
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span>{formatDate(task.due_date)}</span>
-                            {task.due_time && <span> {task.due_time}</span>}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={
-                          task.priority === "High" ? "destructive" : 
-                          task.priority === "Medium" ? "default" : 
-                          "outline"
-                        }>
-                          {task.priority}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {getStatusIcon(task.status)}
-                          <span>{task.status}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {task.status !== "Completed" && (
-                          <Button variant="ghost" size="sm" onClick={() => handleCompleteTask(task.id)}>
-                            <CheckCircle2 className="mr-2 h-4 w-4" />
-                            <T text="Complete" />
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="today">
-          <Card className="p-4">
-            <div className="text-center p-8 text-muted-foreground">
-              <T text="Tasks due today will appear here" />
-            </div>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="upcoming">
-          <Card className="p-4">
-            <div className="text-center p-8 text-muted-foreground">
-              <T text="Upcoming tasks will appear here" />
-            </div>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="all" className="p-0">
+            {renderTasksTable(getFilteredTasks("all"))}
+          </TabsContent>
+          
+          <TabsContent value="today" className="p-0">
+            {renderTasksTable(getFilteredTasks("today"))}
+          </TabsContent>
+          
+          <TabsContent value="upcoming" className="p-0">
+            {renderTasksTable(getFilteredTasks("upcoming"))}
+          </TabsContent>
+        </Tabs>
+      </Card>
       
       {/* Task Creation Dialog */}
       <TaskCreateDialog
@@ -347,6 +440,39 @@ const Tasks = () => {
         handleCreateTask={handleCreateTask}
         staffMembers={staffMembers}
       />
+
+      {/* Task Edit Dialog */}
+      {selectedTask && (
+        <TaskEditDialog
+          open={editTaskDialogOpen}
+          onOpenChange={setEditTaskDialogOpen}
+          task={selectedTask}
+          setTask={setSelectedTask}
+          handleEditTask={handleEditTask}
+          staffMembers={staffMembers}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle><T text="Delete Task" /></AlertDialogTitle>
+            <AlertDialogDescription>
+              <T text="Are you sure you want to delete this task? This action cannot be undone." />
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel><T text="Cancel" /></AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteTask}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              <T text="Delete" />
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

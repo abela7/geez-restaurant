@@ -42,12 +42,14 @@ export function SideModal({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className={`p-4 ${widthClass}`} side="right">
-        <SheetHeader className="mb-4">
+      <SheetContent className={`p-4 ${widthClass} overflow-y-auto side-modal-content`} side="right">
+        <SheetHeader className="mb-4 sticky top-0 bg-background z-10 pb-2">
           {title && <SheetTitle>{title}</SheetTitle>}
           {description && <SheetDescription>{description}</SheetDescription>}
         </SheetHeader>
-        {children}
+        <div className="overflow-y-auto side-modal-body">
+          {children}
+        </div>
       </SheetContent>
     </Sheet>
   );

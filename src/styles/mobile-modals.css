@@ -11,14 +11,53 @@
   [data-state="open"] .overflow-auto {
     -webkit-overflow-scrolling: touch;
   }
+  
+  /* Ensure the modal content is scrollable on mobile */
+  .side-modal-content {
+    max-height: 100vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 64px !important; /* Provide space for buttons at bottom */
+  }
+  
+  /* Make sure the header stays at the top */
+  [data-state="open"] .side-modal-content .sticky {
+    background-color: hsl(var(--background));
+    border-bottom: 1px solid hsl(var(--border));
+    margin-bottom: 1rem;
+  }
+  
+  /* Ensure forms in modals are properly spaced */
+  .side-modal-content .grid.gap-4 {
+    gap: 0.75rem !important;
+  }
 }
 
 @media (max-width: 640px) {
-  /* Ensure we can scroll on mobile */
+  /* Additional enhancements for very small screens */
   .side-modal-content {
-    max-height: 100%;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    padding: 0.75rem !important;
+  }
+  
+  /* Make form inputs more touch-friendly */
+  .side-modal-content .h-9 {
+    height: 2.75rem !important;
+  }
+  
+  /* Improve button spacing */
+  .side-modal-content .space-x-2 {
+    gap: 0.5rem !important;
+  }
+  
+  /* Adjust footer positioning */
+  .side-modal-content .border-t {
+    position: sticky;
+    bottom: 0;
+    background-color: hsl(var(--background));
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    margin-top: 1rem;
+    z-index: 10;
   }
 }
 
@@ -39,4 +78,10 @@
 .side-modal-exit-active {
   transform: translateX(100%);
   transition: transform 300ms ease-in-out;
+}
+
+/* ScrollArea enhancements */
+.h-\[calc\(100vh-180px\)\] {
+  height: calc(100vh - 180px);
+  max-height: calc(100vh - 180px);
 }
