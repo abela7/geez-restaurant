@@ -150,7 +150,19 @@ const Payroll = () => {
         ? `Payroll Report - ${staffNames[selectedStaffId]}`
         : `Payroll Report - ${payPeriod === 'current' ? 'Current Period' : 'Previous Periods'}`;
         
-      exportPayrollToPDF(recordsToExport, staffNames, title);
+      const success = exportPayrollToPDF(recordsToExport, staffNames, title);
+      if (success) {
+        toast({
+          title: "Success",
+          description: "Payroll data exported to PDF"
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to export payroll data",
+          variant: "destructive"
+        });
+      }
     }
   };
   
@@ -179,7 +191,12 @@ const Payroll = () => {
           
           <Button variant="outline" onClick={() => handleExport('csv')}>
             <Download className="mr-2 h-4 w-4" />
-            <T text="Export" />
+            <T text="Export CSV" />
+          </Button>
+          
+          <Button variant="outline" onClick={() => handleExport('pdf')}>
+            <Download className="mr-2 h-4 w-4" />
+            <T text="Export PDF" />
           </Button>
           
           <Button onClick={() => setIsRunPayrollModalOpen(true)}>

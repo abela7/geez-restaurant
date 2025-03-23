@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Clock, DollarSign, CreditCard } from "lucide-react";
+import { Clock, PoundSterling, CreditCard } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { format, endOfMonth } from "date-fns";
 import { PayrollRecord } from "@/hooks/useStaffPayroll";
@@ -43,7 +43,7 @@ const PayrollStatCards: React.FC<PayrollStatCardsProps> = ({ payrollRecords }) =
             </p>
             <div className="text-2xl font-bold">£{totalPay.toFixed(2)}</div>
           </div>
-          <DollarSign className="h-8 w-8 text-primary opacity-80" />
+          <PoundSterling className="h-8 w-8 text-primary opacity-80" />
         </CardContent>
       </Card>
       

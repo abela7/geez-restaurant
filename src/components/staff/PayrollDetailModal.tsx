@@ -6,10 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Download, Printer, Clock, DollarSign, CalendarDays, User } from "lucide-react";
+import { Download, Printer, Clock, PoundSterling, CalendarDays, User } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { PayrollRecord } from "@/hooks/useStaffPayroll";
 import { format } from "date-fns";
+import { exportPayrollRecordToPDF } from "@/services/staff/payrollExportService";
 
 interface PayrollDetailModalProps {
   open: boolean;
@@ -29,6 +30,16 @@ const PayrollDetailModal: React.FC<PayrollDetailModalProps> = ({
   const { t } = useLanguage();
 
   if (!record) return null;
+  
+  const handleExportPDF = () => {
+    if (record) {
+      const title = staffName 
+        ? `Payroll Record - ${staffName} - ${record.pay_period}`
+        : `Payroll Record - ${record.pay_period}`;
+      
+      exportPayrollRecordToPDF(record, staffName, title);
+    }
+  };
 
   return (
     <SideModal
@@ -123,7 +134,7 @@ const PayrollDetailModal: React.FC<PayrollDetailModalProps> = ({
           <div className="flex justify-between items-center">
             <p className="font-semibold"><T text="Total Pay" /></p>
             <p className="text-xl font-bold flex items-center">
-              <DollarSign className="h-5 w-5 mr-1 text-primary" />
+              <PoundSterling className="h-5 w-5 mr-1 text-primary" />
               £{record.total_pay.toFixed(2)}
             </p>
           </div>
@@ -134,7 +145,7 @@ const PayrollDetailModal: React.FC<PayrollDetailModalProps> = ({
             <Printer className="h-4 w-4 mr-2" />
             <T text="Print" />
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleExportPDF}>
             <Download className="h-4 w-4 mr-2" />
             <T text="Export PDF" />
           </Button>

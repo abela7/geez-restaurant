@@ -20,6 +20,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { SideModal } from "@/components/ui/side-modal";
 import useStaffPayroll from "@/hooks/useStaffPayroll";
+import { exportPayrollRecordToPDF } from "@/services/staff/payrollExportService";
 
 interface PayrollSectionProps {
   staffId: string;
@@ -84,6 +85,16 @@ const PayrollSection: React.FC<PayrollSectionProps> = ({ staffId }) => {
   const viewPayrollDetails = (record: any) => {
     setSelectedPayroll(record);
     setIsDetailModalOpen(true);
+  };
+  
+  const handleExportPDF = (record: any) => {
+    if (record) {
+      exportPayrollRecordToPDF(record, `Staff Record ${staffId}`, `Payroll Record - ${record.pay_period}`);
+      toast({
+        title: "Success",
+        description: "Payroll record exported to PDF"
+      });
+    }
   };
   
   return (
@@ -170,15 +181,26 @@ const PayrollSection: React.FC<PayrollSectionProps> = ({ staffId }) => {
                         <span className="text-lg font-medium">
                           £{record.total_pay.toFixed(2)}
                         </span>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-7 mt-1"
-                          onClick={() => viewPayrollDetails(record)}
-                        >
-                          <FileText className="h-3.5 w-3.5 mr-1.5" />
-                          <span className="text-xs"><T text="Details" /></span>
-                        </Button>
+                        <div className="flex mt-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-7"
+                            onClick={() => handleExportPDF(record)}
+                          >
+                            <FileText className="h-3.5 w-3.5 mr-1.5" />
+                            <span className="text-xs"><T text="PDF" /></span>
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-7"
+                            onClick={() => viewPayrollDetails(record)}
+                          >
+                            <FileText className="h-3.5 w-3.5 mr-1.5" />
+                            <span className="text-xs"><T text="Details" /></span>
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </li>
@@ -257,8 +279,18 @@ const PayrollSection: React.FC<PayrollSectionProps> = ({ staffId }) => {
               )}
             </div>
             
-            <div className="flex justify-end pt-4 border-t">
-              <Button variant="outline" onClick={() => setIsDetailModalOpen(false)}>
+            <div className="flex justify-end space-x-2 pt-4 border-t">
+              <Button 
+                variant="outline" 
+                onClick={() => handleExportPDF(selectedPayroll)}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                <T text="Export PDF" />
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setIsDetailModalOpen(false)}
+              >
                 <T text="Close" />
               </Button>
             </div>
