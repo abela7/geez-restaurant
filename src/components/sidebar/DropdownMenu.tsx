@@ -22,11 +22,17 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({
   
   if (!isOpen || !isExpanded) return null;
   
-  // Fix the path construction to always start with /admin
+  // Ensure consistent path construction for menu items
   const constructPath = (to: string) => {
-    if (parentPath.startsWith('/admin')) {
-      return `${parentPath}/${to}`;
+    // If parentPath already contains /admin, don't add it again
+    if (parentPath.startsWith('/admin/')) {
+      return `${parentPath}${to}`;
     }
+    // If parentPath is just /admin, append the path without a duplicate slash
+    if (parentPath === '/admin') {
+      return `/admin/${to}`;
+    }
+    // Default case, ensure proper formatting
     return `/admin${parentPath}/${to}`;
   };
   
@@ -34,7 +40,6 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({
     <div className="ml-8 pl-2 border-l border-border/50">
       {items.map((item) => {
         const fullPath = constructPath(item.to);
-        console.log(`Menu item path: ${fullPath}, current location: ${location.pathname}`);
         
         return (
           <Link

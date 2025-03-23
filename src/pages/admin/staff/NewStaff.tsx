@@ -1,34 +1,61 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Upload } from "lucide-react";
+import { ArrowLeft, Save, Upload, Loader2 } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { v4 as uuidv4 } from 'uuid';
 
-// Add console logs to track component loading
-console.log("NewStaff component loaded");
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const roles = [
+  { value: "Chef", label: "Chef" },
+  { value: "Sous Chef", label: "Sous Chef" },
+  { value: "Line Cook", label: "Line Cook" },
+  { value: "Server", label: "Server" },
+  { value: "Host", label: "Host" },
+  { value: "Bartender", label: "Bartender" },
+  { value: "Manager", label: "Manager" },
+  { value: "Assistant Manager", label: "Assistant Manager" },
+];
+
+const departments = [
+  { value: "Kitchen", label: "Kitchen" },
+  { value: "Front of House", label: "Front of House" },
+  { value: "Management", label: "Management" },
+];
 
 const NewStaff = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
-  
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { errors, isSubmitting },
-  } = useForm({
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const form = useForm({
     defaultValues: {
       first_name: "",
       last_name: "",
@@ -42,10 +69,68 @@ const NewStaff = () => {
       image_url: "",
     },
   });
-  
-  const onSubmit = async (data) => {
-    console.log("Form submitted with data:", data);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setProfileImage(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setImagePreview(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImage = async (): Promise<string | null> => {
+    if (!profileImage) return null;
+    
+    setUploading(true);
+    const fileExt = profileImage.name.split('.').pop();
+    const filePath = `${uuidv4()}.${fileExt}`;
+    
     try {
+      const { error: uploadError } = await supabase.storage
+        .from('staff_images')
+        .upload(filePath, profileImage);
+      
+      if (uploadError) {
+        throw uploadError;
+      }
+      
+      const { data } = supabase.storage
+        .from('staff_images')
+        .getPublicUrl(filePath);
+      
+      return data.publicUrl;
+    } catch (error: any) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: "Upload Error",
+        description: error.message || "Failed to upload image",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const onSubmit = async (data: any) => {
+    try {
+      setUploading(true);
+      
+      // Upload image if selected
+      let imageUrl = null;
+      if (profileImage) {
+        imageUrl = await uploadImage();
+        if (imageUrl) {
+          data.image_url = imageUrl;
+        }
+      }
+      
       // Format numeric values
       const formattedData = {
         ...data,
@@ -67,15 +152,17 @@ const NewStaff = () => {
         description: "Staff member has been added successfully",
       });
       
-      // Navigate to the staff directory after successful addition
-      navigate("/admin/staff/directory");
-    } catch (error) {
+      // Navigate to the staff profile page
+      navigate(`/admin/staff/profile/${insertedStaff.id}`);
+    } catch (error: any) {
       console.error("Error adding staff:", error);
       toast({
         title: "Error",
         description: `Failed to add staff member: ${error.message}`,
         variant: "destructive",
       });
+    } finally {
+      setUploading(false);
     }
   };
   
@@ -95,166 +182,249 @@ const NewStaff = () => {
         }
       />
       
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle><T text="Personal Information" /></CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="first_name"><T text="First Name" /></Label>
-                <Input 
-                  id="first_name" 
-                  {...register("first_name", { required: "First name is required" })} 
-                  className={errors.first_name ? "border-red-500" : ""}
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle><T text="Personal Information" /></CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="first_name"
+                  rules={{ required: "First name is required" }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel><T text="First Name" /></FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                {errors.first_name && (
-                  <p className="text-sm text-red-500">{errors.first_name.message}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="last_name"><T text="Last Name" /></Label>
-                <Input 
-                  id="last_name" 
-                  {...register("last_name", { required: "Last name is required" })} 
-                  className={errors.last_name ? "border-red-500" : ""}
+                
+                <FormField
+                  control={form.control}
+                  name="last_name"
+                  rules={{ required: "Last name is required" }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel><T text="Last Name" /></FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                {errors.last_name && (
-                  <p className="text-sm text-red-500">{errors.last_name.message}</p>
-                )}
               </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="email"><T text="Email" /></Label>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  {...register("email", { 
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  rules={{
                     required: "Email is required",
                     pattern: {
                       value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: "Invalid email address"
-                    }
-                  })} 
-                  className={errors.email ? "border-red-500" : ""}
+                      message: "Invalid email address",
+                    },
+                  }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel><T text="Email" /></FormLabel>
+                      <FormControl>
+                        <Input type="email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                {errors.email && (
-                  <p className="text-sm text-red-500">{errors.email.message}</p>
+                
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel><T text="Phone Number" /></FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="bio"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel><T text="Bio" /></FormLabel>
+                    <FormControl>
+                      <Textarea {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone"><T text="Phone Number" /></Label>
-                <Input 
-                  id="phone" 
-                  {...register("phone")} 
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="bio"><T text="Bio" /></Label>
-              <Textarea 
-                id="bio" 
-                {...register("bio")} 
               />
-            </div>
-            
-            <div className="space-y-2">
-              <Label><T text="Profile Image" /></Label>
-              <div className="border rounded-md p-4">
-                <Button type="button" variant="outline" className="w-full">
-                  <Upload className="mr-2 h-4 w-4" />
-                  <T text="Upload Image" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle><T text="Employment Details" /></CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
               <div className="space-y-2">
-                <Label htmlFor="role"><T text="Role" /></Label>
-                <Select 
-                  onValueChange={(value) => setValue("role", value)}
-                  defaultValue={watch("role")}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("Select role")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Chef">Chef</SelectItem>
-                    <SelectItem value="Sous Chef">Sous Chef</SelectItem>
-                    <SelectItem value="Line Cook">Line Cook</SelectItem>
-                    <SelectItem value="Server">Server</SelectItem>
-                    <SelectItem value="Host">Host</SelectItem>
-                    <SelectItem value="Bartender">Bartender</SelectItem>
-                    <SelectItem value="Manager">Manager</SelectItem>
-                    <SelectItem value="Assistant Manager">Assistant Manager</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormLabel><T text="Profile Image" /></FormLabel>
+                <div className="border rounded-md p-4 space-y-4">
+                  {imagePreview && (
+                    <div className="flex justify-center mb-4">
+                      <img 
+                        src={imagePreview} 
+                        alt="Profile preview" 
+                        className="h-32 w-32 object-cover rounded-full border"
+                      />
+                    </div>
+                  )}
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                    id="profile-image"
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => document.getElementById('profile-image')?.click()}
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    <T text="Upload Image" />
+                  </Button>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="department"><T text="Department" /></Label>
-                <Select 
-                  onValueChange={(value) => setValue("department", value)}
-                  defaultValue={watch("department")}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("Select department")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Kitchen">Kitchen</SelectItem>
-                    <SelectItem value="Front of House">Front of House</SelectItem>
-                    <SelectItem value="Management">Management</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="start_date"><T text="Start Date" /></Label>
-                <Input 
-                  id="start_date" 
-                  type="date" 
-                  {...register("start_date")} 
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle><T text="Employment Details" /></CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="role"
+                  rules={{ required: "Role is required" }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel><T text="Role" /></FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t("Select role")} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {roles.map((role) => (
+                            <SelectItem key={role.value} value={role.value}>
+                              {role.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="department"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel><T text="Department" /></FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t("Select department")} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {departments.map((dept) => (
+                            <SelectItem key={dept.value} value={dept.value}>
+                              {dept.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="hourly_rate"><T text="Hourly Rate (£)" /></Label>
-                <Input 
-                  id="hourly_rate" 
-                  type="number" 
-                  step="0.01" 
-                  {...register("hourly_rate")} 
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="start_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel><T text="Start Date" /></FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="hourly_rate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel><T text="Hourly Rate (£)" /></FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <div className="flex justify-end space-x-2">
-          <Button 
-            type="button" 
-            variant="outline"
-            onClick={() => navigate("/admin/staff/directory")}
-          >
-            <T text="Cancel" />
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            <Save className="mr-2 h-4 w-4" />
-            <T text="Save Staff" />
-          </Button>
-        </div>
-      </form>
+            </CardContent>
+          </Card>
+          
+          <div className="flex justify-end space-x-2">
+            <Button 
+              type="button" 
+              variant="outline"
+              onClick={() => navigate("/admin/staff/directory")}
+            >
+              <T text="Cancel" />
+            </Button>
+            <Button type="submit" disabled={uploading}>
+              {uploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <T text="Saving..." />
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  <T text="Save Staff" />
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      </Form>
     </>
   );
 };

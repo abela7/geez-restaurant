@@ -23,6 +23,12 @@ export const setupStorage = async () => {
       }
       
       console.log('Created staff_images storage bucket');
+      
+      // Set up public access for staff_images bucket
+      const { error: policyError } = await supabase.storage.from('staff_images').createSignedUrl('test.jpg', 60);
+      if (policyError && policyError.message !== "The resource path was not found") {
+        console.error('Error creating storage policy:', policyError);
+      }
     } else {
       console.log('staff_images bucket already exists');
     }
@@ -40,16 +46,14 @@ export const setupStorage = async () => {
       }
       
       console.log('Created food_images storage bucket');
+      
+      // Set up public access for food_images bucket
+      const { error: policyError } = await supabase.storage.from('food_images').createSignedUrl('test.jpg', 60);
+      if (policyError && policyError.message !== "The resource path was not found") {
+        console.error('Error creating storage policy:', policyError);
+      }
     } else {
       console.log('food_images bucket already exists');
-    }
-
-    // Set up storage policies
-    try {
-      // We don't need to create policies here anymore as they're created in the SQL migration
-      // This helps avoid errors when the policies already exist
-    } catch (policyError) {
-      console.error('Error setting up storage policies:', policyError);
     }
     
   } catch (error) {
