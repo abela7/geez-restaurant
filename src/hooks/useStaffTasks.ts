@@ -29,17 +29,23 @@ export const useStaffTasks = (staffId: string) => {
     setError(null);
     try {
       console.log(`Fetching tasks for staff ID: ${staffId}`);
-      const { data, error } = await supabase
+      let query = supabase
         .from('staff_tasks')
         .select('*')
-        .eq('staff_id', staffId)
         .order('due_date', { ascending: true });
+      
+      // If staffId is provided, filter by staff_id
+      if (staffId) {
+        query = query.eq('staff_id', staffId);
+      }
+      
+      const { data, error } = await query;
       
       if (error) {
         throw error;
       }
       
-      console.log(`Retrieved ${data?.length || 0} tasks for staff ID: ${staffId}`);
+      console.log(`Retrieved ${data?.length || 0} tasks${staffId ? ` for staff ID: ${staffId}` : ''}`);
       // Ensure the data is properly typed as StaffTask[]
       setTasks((data || []) as StaffTask[]);
     } catch (err: any) {
@@ -177,9 +183,7 @@ export const useStaffTasks = (staffId: string) => {
   };
 
   useEffect(() => {
-    if (staffId) {
-      fetchTasks();
-    }
+    fetchTasks();
   }, [staffId]);
 
   return {

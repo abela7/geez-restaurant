@@ -131,6 +131,7 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
               type="date" 
               value={newTask.due_date}
               onChange={(e) => setNewTask({...newTask, due_date: e.target.value})}
+              required
             />
           </div>
           

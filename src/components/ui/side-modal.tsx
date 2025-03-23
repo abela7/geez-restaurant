@@ -1,20 +1,14 @@
 
-import * as React from "react"
-import { cn } from "@/lib/utils"
-import { useIsMobile } from "@/hooks/use-mobile"
-import { Sheet, SheetContent } from "@/components/ui/sheet"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import * as React from "react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 
 interface SideModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  title?: React.ReactNode
-  description?: React.ReactNode
-  children: React.ReactNode
-  className?: string
-  width?: "sm" | "md" | "lg" | "xl" | "full"
-  showCloseButton?: boolean
-  fullScreenOnMobile?: boolean
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+  children: React.ReactNode;
+  width?: "sm" | "md" | "lg" | "xl" | "2xl" | "full";
 }
 
 export function SideModal({
@@ -23,46 +17,37 @@ export function SideModal({
   title,
   description,
   children,
-  className,
-  width = "md",
-  fullScreenOnMobile = true,
+  width = "md"
 }: SideModalProps) {
-  const isMobile = useIsMobile()
-  
-  const widthClasses = {
-    sm: "sm:max-w-sm",
-    md: "sm:max-w-md",
-    lg: "sm:max-w-lg",
-    xl: "sm:max-w-xl",
-    full: "sm:max-w-screen-sm md:max-w-screen-md",
-  }
+  const getWidthClass = (width: string) => {
+    switch (width) {
+      case "sm":
+        return "sm:max-w-sm";
+      case "md":
+        return "sm:max-w-md";
+      case "lg":
+        return "sm:max-w-lg";
+      case "xl":
+        return "sm:max-w-xl";
+      case "2xl":
+        return "sm:max-w-2xl";
+      case "full":
+        return "sm:max-w-full";
+      default:
+        return "sm:max-w-md";
+    }
+  };
+
+  const widthClass = getWidthClass(width);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent 
-        side="right" 
-        className={cn(
-          "pt-6 flex flex-col h-full p-0 gap-0 border-l overflow-hidden", 
-          widthClasses[width],
-          fullScreenOnMobile && isMobile ? "w-full max-w-full" : "",
-          className
-        )}
-      >
-        {title && (
-          <div className="px-6 py-4 border-b">
-            <div className="flex items-center justify-between w-full">
-              <div className="text-xl font-semibold">{title}</div>
-            </div>
-            {description && (
-              <p className="text-sm text-muted-foreground">{description}</p>
-            )}
-          </div>
-        )}
-        <ScrollArea className="flex-1 w-full h-full">
-          <div className="p-6">
-            {children}
-          </div>
-        </ScrollArea>
+      <SheetContent className={`p-4 ${widthClass}`} side="right">
+        <SheetHeader className="mb-4">
+          {title && <SheetTitle>{title}</SheetTitle>}
+          {description && <SheetDescription>{description}</SheetDescription>}
+        </SheetHeader>
+        {children}
       </SheetContent>
     </Sheet>
   );

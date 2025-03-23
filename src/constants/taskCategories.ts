@@ -12,6 +12,8 @@ export const taskCategories: TaskCategory[] = [
   { id: "3", name: "Cleaning", color: "bg-green-500" },
   { id: "4", name: "Inventory", color: "bg-purple-500" },
   { id: "5", name: "Administration", color: "bg-slate-500" },
+  { id: "6", name: "Training", color: "bg-rose-500" },
+  { id: "7", name: "Maintenance", color: "bg-cyan-500" },
 ];
 
 export const getCategoryName = (categoryId?: string | null) => {
