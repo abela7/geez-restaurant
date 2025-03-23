@@ -159,7 +159,7 @@ const Payroll = () => {
                     <TableCell>31 Mar 2025</TableCell>
                     <TableCell>860</TableCell>
                     <TableCell>12,340.75</TableCell>
-                    <TableCell><Badge variant="success">Paid</Badge></TableCell>
+                    <TableCell><Badge variant="default" className="bg-green-500 hover:bg-green-600">Paid</Badge></TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium">March P1</TableCell>
@@ -167,7 +167,7 @@ const Payroll = () => {
                     <TableCell>15 Mar 2025</TableCell>
                     <TableCell>842</TableCell>
                     <TableCell>11,980.50</TableCell>
-                    <TableCell><Badge variant="success">Paid</Badge></TableCell>
+                    <TableCell><Badge variant="default" className="bg-green-500 hover:bg-green-600">Paid</Badge></TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium">February P2</TableCell>
@@ -175,7 +175,7 @@ const Payroll = () => {
                     <TableCell>28 Feb 2025</TableCell>
                     <TableCell>756</TableCell>
                     <TableCell>10,830.25</TableCell>
-                    <TableCell><Badge variant="success">Paid</Badge></TableCell>
+                    <TableCell><Badge variant="default" className="bg-green-500 hover:bg-green-600">Paid</Badge></TableCell>
                   </TableRow>
                 </TableBody>
               </Table>

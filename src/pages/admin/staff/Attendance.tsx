@@ -20,7 +20,7 @@ const Attendance = () => {
     isLoading
   } = useStaffAttendance();
   
-  const { data: staffMembers } = useStaffMembers();
+  const { data: staffMembers = [] } = useStaffMembers({});
   
   // Create a mapping of staff IDs to full names
   const staffNames = staffMembers.reduce((acc, staff) => {
