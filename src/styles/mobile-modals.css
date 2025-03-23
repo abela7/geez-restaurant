@@ -1,0 +1,42 @@
+
+/* Mobile modal styles */
+@media (max-width: 768px) {
+  /* Make sure side modals display properly on mobile */
+  [data-state="open"] > .fixed.inset-y-0.right-0 {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  /* Side modal scroll improvements */
+  [data-state="open"] .overflow-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Ensure we can scroll on mobile */
+  .side-modal-content {
+    max-height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Side modal enhancements */
+.side-modal-enter {
+  transform: translateX(100%);
+}
+
+.side-modal-enter-active {
+  transform: translateX(0);
+  transition: transform 300ms ease-in-out;
+}
+
+.side-modal-exit {
+  transform: translateX(0);
+}
+
+.side-modal-exit-active {
+  transform: translateX(100%);
+  transition: transform 300ms ease-in-out;
+}
