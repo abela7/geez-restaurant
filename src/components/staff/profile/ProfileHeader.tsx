@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { type StaffMember } from "@/hooks/useStaffMembers";
-import { ChevronDown } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -45,7 +44,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ staff }) => {
   return (
     <Card>
       <CardContent className="p-6">
-        <Accordion type="single" collapsible defaultValue="details" className="w-full">
+        <Accordion type="single" collapsible className="w-full">
           <AccordionItem value="details" className="border-b-0">
             <AccordionTrigger className="py-2 hover:no-underline">
               <h3 className="text-lg font-medium"><T text="Staff Details" /></h3>

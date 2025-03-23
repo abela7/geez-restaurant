@@ -9,15 +9,6 @@ import Header from './Header';
 import { Button } from './ui/button';
 import { PanelLeft } from 'lucide-react';
 
-import { 
-  Breadcrumb, 
-  BreadcrumbItem, 
-  BreadcrumbLink, 
-  BreadcrumbList, 
-  BreadcrumbPage, 
-  BreadcrumbSeparator 
-} from '@/components/ui/breadcrumb';
-
 interface LayoutProps {
   children: React.ReactNode;
   interface?: 'admin' | 'waiter' | 'kitchen' | 'customer' | 'system';
@@ -28,8 +19,6 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useIsMobile();
   const location = useLocation();
-  
-  console.log("Current location in Layout:", location.pathname);
   
   useEffect(() => {
     const storedCollapsed = localStorage.getItem('sidebarCollapsed');
@@ -45,47 +34,6 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
   const toggleSidebar = () => {
     setSidebarCollapsed(prev => !prev);
   };
-
-  const getBreadcrumbs = () => {
-    const paths = location.pathname.split('/').filter(path => path);
-    
-    if (paths.length === 0) {
-      return [{ label: 'Dashboard', path: '/' }];
-    }
-    
-    const breadcrumbs = [];
-    let basePath = '';
-    
-    if (userInterface === 'admin') {
-      breadcrumbs.push({ label: 'Dashboard', path: '/admin' });
-      basePath = '/admin';
-    } else {
-      basePath = `/${paths[0]}`;
-      breadcrumbs.push({ label: paths[0].charAt(0).toUpperCase() + paths[0].slice(1), path: basePath });
-    }
-    
-    const startIdx = userInterface === 'admin' && paths[0] === 'admin' ? 1 : 1;
-    
-    for (let i = startIdx; i < paths.length; i++) {
-      const path = paths[i];
-      basePath += `/${path}`;
-      const label = path
-        .split('-')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-      
-      breadcrumbs.push({ label, path: basePath });
-    }
-    
-    console.log("Generated breadcrumbs:", breadcrumbs);
-    return breadcrumbs;
-  };
-  
-  const breadcrumbs = getBreadcrumbs();
-
-  if (contentOnly) {
-    return <div className="compact-layout compact-ui">{children}</div>;
-  }
 
   // Mobile layout
   if (isMobile) {
@@ -125,37 +73,6 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
           <Header toggleSidebar={toggleSidebar} interface={userInterface} />
           
           <main className="flex-1 overflow-auto p-2">
-            {!contentOnly && (
-              <div className="mb-2">
-                <Breadcrumb>
-                  <BreadcrumbList className="text-xs">
-                    {breadcrumbs.map((crumb, index) => (
-                      <React.Fragment key={crumb.path}>
-                        {index < breadcrumbs.length - 1 ? (
-                          <>
-                            <BreadcrumbItem>
-                              <BreadcrumbLink asChild>
-                                <Link to={crumb.path}>
-                                  <T text={crumb.label} />
-                                </Link>
-                              </BreadcrumbLink>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator />
-                          </>
-                        ) : (
-                          <BreadcrumbItem>
-                            <BreadcrumbPage>
-                              <T text={crumb.label} />
-                            </BreadcrumbPage>
-                          </BreadcrumbItem>
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </BreadcrumbList>
-                </Breadcrumb>
-              </div>
-            )}
-            
             {children}
           </main>
           
@@ -203,38 +120,7 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
       <div className="flex-1 flex flex-col w-full transition-all duration-300 ease-in-out">
         <Header toggleSidebar={toggleSidebar} interface={userInterface} />
         
-        <main className="flex-1 overflow-auto p-3">
-          {!contentOnly && (
-            <div className="mb-3">
-              <Breadcrumb>
-                <BreadcrumbList>
-                  {breadcrumbs.map((crumb, index) => (
-                    <React.Fragment key={crumb.path}>
-                      {index < breadcrumbs.length - 1 ? (
-                        <>
-                          <BreadcrumbItem>
-                            <BreadcrumbLink asChild>
-                              <Link to={crumb.path}>
-                                <T text={crumb.label} />
-                              </Link>
-                            </BreadcrumbLink>
-                          </BreadcrumbItem>
-                          <BreadcrumbSeparator />
-                        </>
-                      ) : (
-                        <BreadcrumbItem>
-                          <BreadcrumbPage>
-                            <T text={crumb.label} />
-                          </BreadcrumbPage>
-                        </BreadcrumbItem>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </BreadcrumbList>
-              </Breadcrumb>
-            </div>
-          )}
-          
+        <main className="flex-1 overflow-auto p-3">  
           {children}
         </main>
         

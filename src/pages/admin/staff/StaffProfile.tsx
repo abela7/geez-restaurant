@@ -1,7 +1,6 @@
 
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { 
   ArrowLeft, Loader2, Edit, Trash, CalendarDays, 
@@ -78,91 +77,54 @@ const StaffProfile = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <PageHeader 
-          heading={<T text="Staff Profile" />}
-          description={<T text="View detailed staff information" />}
-          actions={
-            <Button 
-              variant="outline"
-              onClick={() => navigate("/admin/staff/directory")}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              <T text="Back to Directory" />
-            </Button>
-          }
-        />
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        </div>
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
 
   if (error || !staffMember) {
     return (
-      <div className="space-y-4">
-        <PageHeader 
-          heading={<T text="Staff Profile" />}
-          description={<T text="View detailed staff information" />}
-          actions={
-            <Button 
-              variant="outline"
-              onClick={() => navigate("/admin/staff/directory")}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              <T text="Back to Directory" />
-            </Button>
-          }
-        />
-        <ErrorState message={error || "Staff member not found"} />
-      </div>
+      <ErrorState message={error || "Staff member not found"} />
     );
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader 
-        heading={<T text="Staff Profile" />}
-        description={`${staffMember.first_name || ""} ${staffMember.last_name || ""} - ${staffMember.role || "Staff Member"}`}
-        actions={
-          <div className="flex space-x-2">
-            <Button 
-              variant="outline"
-              onClick={() => navigate("/admin/staff/directory")}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              <T text="Back to Directory" />
-            </Button>
-            
-            <Button 
-              variant="outline"
-              onClick={() => navigate(`/admin/staff/edit/${id}`)}
-            >
-              <Edit className="mr-2 h-4 w-4" />
-              <T text="Edit" />
-            </Button>
-            <Button 
-              variant="destructive"
-              onClick={() => setDeleteDialogOpen(true)}
-            >
-              <Trash className="mr-2 h-4 w-4" />
-              <T text="Delete" />
-            </Button>
-          </div>
-        }
-      />
+    <div className="space-y-4">
+      {/* Action buttons at the top right */}
+      <div className="flex justify-end space-x-2">
+        <Button 
+          variant="outline"
+          onClick={() => navigate("/admin/staff/directory")}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          <T text="Back to Directory" />
+        </Button>
+        
+        <Button 
+          variant="outline"
+          onClick={() => navigate(`/admin/staff/edit/${id}`)}
+        >
+          <Edit className="mr-2 h-4 w-4" />
+          <T text="Edit" />
+        </Button>
+        
+        <Button 
+          variant="destructive"
+          onClick={() => setDeleteDialogOpen(true)}
+        >
+          <Trash className="mr-2 h-4 w-4" />
+          <T text="Delete" />
+        </Button>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div className="lg:col-span-1">
           <ProfileSidebar staff={staffMember} />
         </div>
         
-        <div className="lg:col-span-3 space-y-6">
-          <ProfileHeader staff={staffMember} />
-          
-          <PerformanceMetrics staff={staffMember} />
-          
+        <div className="lg:col-span-3 space-y-4">
+          {/* Tabs section moved to the top for important info */}
           <Tabs defaultValue="attendance">
             <TabsList>
               <TabsTrigger value="attendance">
@@ -191,6 +153,12 @@ const StaffProfile = () => {
               <TasksSection staffId={staffMember.id} />
             </TabsContent>
           </Tabs>
+          
+          {/* Staff info (default collapsed) */}
+          <ProfileHeader staff={staffMember} />
+          
+          {/* Performance metrics moved to bottom */}
+          <PerformanceMetrics staff={staffMember} />
         </div>
       </div>
 
