@@ -1,5 +1,12 @@
 
-export const taskCategories = [
+// Define the TaskCategory type and export it
+export type TaskCategory = {
+  id: string;
+  name: string;
+  color: string;
+};
+
+export const taskCategories: TaskCategory[] = [
   { id: "1", name: "Kitchen", color: "bg-amber-500" },
   { id: "2", name: "Service", color: "bg-blue-500" },
   { id: "3", name: "Cleaning", color: "bg-green-500" },

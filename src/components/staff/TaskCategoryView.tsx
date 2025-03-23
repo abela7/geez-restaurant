@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Clock, CheckCircle, PlusCircle, X } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { StaffTask } from "@/hooks/useStaffTasks";
-import { taskCategories, TaskCategory } from "@/constants/taskCategories";
+import { taskCategories, getCategoryName, TaskCategory } from "@/constants/taskCategories";
 import { format } from "date-fns";
 
 type TaskWithCategory = TaskCategory & {
