@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from "react";
-import Layout from "@/components/Layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +28,8 @@ import {
   getStaffImagesMap, 
   createCSVExport 
 } from "@/utils/taskUtils";
+
+// Removed the Layout import
 
 const TaskManagement = () => {
   const { t } = useLanguage();
@@ -245,7 +246,7 @@ const TaskManagement = () => {
   const staffImagesMap = getStaffImagesMap(staffMembers);
 
   return (
-    <Layout interface="admin">
+    <>
       <PageHeader 
         heading={<T text="Task Management" />}
         description={<T text="Assign and manage tasks for your restaurant staff" />}
@@ -348,7 +349,7 @@ const TaskManagement = () => {
         handleCreateTask={handleCreateTask}
         staffMembers={staffMembers}
       />
-    </Layout>
+    </>
   );
 };
 

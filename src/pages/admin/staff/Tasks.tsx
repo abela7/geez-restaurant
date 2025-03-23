@@ -1,6 +1,4 @@
-
 import React, { useState } from "react";
-import Layout from "@/components/Layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -154,7 +152,7 @@ const Tasks = () => {
   };
 
   return (
-    <Layout interface="admin">
+    <>
       <PageHeader 
         heading={<T text="Staff Tasks" />}
         description={<T text="Assign, track, and manage tasks for your restaurant staff" />}
@@ -389,7 +387,7 @@ const Tasks = () => {
           </Card>
         </TabsContent>
       </Tabs>
-    </Layout>
+    </>
   );
 };
 

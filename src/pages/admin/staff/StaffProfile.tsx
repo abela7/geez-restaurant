@@ -1,7 +1,5 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import Layout from "@/components/Layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, Edit, Trash } from "lucide-react";
@@ -107,17 +105,15 @@ const StaffProfile = () => {
 
   if (isLoading) {
     return (
-      <Layout interface="admin">
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        </div>
-      </Layout>
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
     );
   }
 
   if (error || !staff) {
     return (
-      <Layout interface="admin">
+      <>
         <PageHeader 
           heading={<T text="Staff Profile" />}
           description={<T text="View detailed staff information" />}
@@ -132,14 +128,14 @@ const StaffProfile = () => {
           }
         />
         <ErrorState message={error || "Staff member not found"} />
-      </Layout>
+      </>
     );
   }
 
   const fullName = `${staff.first_name || ""} ${staff.last_name || ""}`.trim();
 
   return (
-    <Layout interface="admin">
+    <>
       <PageHeader 
         heading={<T text="Staff Profile" />}
         description={`${fullName} - ${staff.role || "Staff Member"}`}
@@ -204,7 +200,7 @@ const StaffProfile = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Layout>
+    </>
   );
 };
 

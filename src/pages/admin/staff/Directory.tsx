@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from "react";
-import Layout from "@/components/Layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +23,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+// Removed the Layout import as it should only be in adminRoutes.tsx
 
 const Directory = () => {
   const { t } = useLanguage();
@@ -102,7 +103,7 @@ const Directory = () => {
   };
 
   return (
-    <Layout interface="admin">
+    <>
       <PageHeader 
         heading={<T text="Staff Directory" />}
         description={<T text="View and manage all restaurant staff members" />}
@@ -298,7 +299,7 @@ const Directory = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Layout>
+    </>
   );
 };
 
