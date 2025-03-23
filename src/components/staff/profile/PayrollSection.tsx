@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
   PoundSterling, Clock, CalendarDays, ArrowUpDown,
-  Filter, ChevronLeft, ChevronRight
+  Filter, ChevronLeft, ChevronRight, FileText
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -17,65 +17,42 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { SideModal } from "@/components/ui/side-modal";
+import useStaffPayroll from "@/hooks/useStaffPayroll";
 
 interface PayrollSectionProps {
   staffId: string;
 }
 
-interface PayrollRecord {
-  id: string;
-  staff_id: string;
-  pay_period: string;
-  regular_hours: number;
-  overtime_hours: number;
-  total_hours: number;
-  total_pay: number;
-  payment_status: string;
-  payment_date: string | null;
-}
-
 const PayrollSection: React.FC<PayrollSectionProps> = ({ staffId }) => {
-  const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+  const { payrollRecords, isLoading, error } = useStaffPayroll(staffId);
+  
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [sorting, setSorting] = useState<{field: string, direction: 'asc' | 'desc'}>({
     field: "pay_period",
     direction: "desc"
   });
+  const [selectedPayroll, setSelectedPayroll] = useState<any>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  
   const pageSize = 5;
   
-  useEffect(() => {
-    fetchPayroll();
-  }, [staffId, statusFilter, page, sorting]);
-  
-  const fetchPayroll = async () => {
-    setIsLoading(true);
-    try {
-      let query = supabase
-        .from('staff_payroll')
-        .select('*')
-        .eq('staff_id', staffId)
-        .order(sorting.field, { ascending: sorting.direction === 'asc' })
-        .range((page - 1) * pageSize, page * pageSize - 1);
-      
-      if (statusFilter !== "all") {
-        query = query.eq('payment_status', statusFilter);
+  // Apply filters and sorting
+  const filteredPayroll = payrollRecords
+    .filter(record => statusFilter === "all" || record.payment_status === statusFilter)
+    .sort((a, b) => {
+      if (sorting.direction === 'asc') {
+        return a[sorting.field as keyof typeof a] > b[sorting.field as keyof typeof b] ? 1 : -1;
+      } else {
+        return a[sorting.field as keyof typeof a] < b[sorting.field as keyof typeof b] ? 1 : -1;
       }
-      
-      const { data, error } = await query;
-      
-      if (error) throw error;
-      
-      setPayrollRecords(data as PayrollRecord[]);
-    } catch (err: any) {
-      console.error('Error fetching payroll:', err);
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    });
+  
+  // Paginate the records
+  const paginatedPayroll = filteredPayroll.slice((page - 1) * pageSize, page * pageSize);
   
   const toggleSort = () => {
     setSorting(prev => ({
@@ -104,122 +81,191 @@ const PayrollSection: React.FC<PayrollSectionProps> = ({ staffId }) => {
     }
   };
   
+  const viewPayrollDetails = (record: any) => {
+    setSelectedPayroll(record);
+    setIsDetailModalOpen(true);
+  };
+  
   return (
-    <Card>
-      <CardHeader className="pb-2 flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center text-lg font-medium">
-          <PoundSterling className="mr-2 h-5 w-5" />
-          <T text="Payroll History" />
-        </CardTitle>
-        
-        <div className="flex items-center space-x-2">
-          <Select
-            value={statusFilter}
-            onValueChange={(value) => {
-              setStatusFilter(value);
-              setPage(1);
-            }}
-          >
-            <SelectTrigger className="w-[130px] h-8">
-              <Filter className="h-3.5 w-3.5 mr-2" />
-              <SelectValue placeholder="Filter" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all"><T text="All Status" /></SelectItem>
-              <SelectItem value="Paid"><T text="Paid" /></SelectItem>
-              <SelectItem value="Pending"><T text="Pending" /></SelectItem>
-            </SelectContent>
-          </Select>
+    <>
+      <Card>
+        <CardHeader className="pb-2 flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center text-lg font-medium">
+            <PoundSterling className="mr-2 h-5 w-5" />
+            <T text="Payroll History" />
+          </CardTitle>
           
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={toggleSort}
-            className="h-8 px-2"
-          >
-            <ArrowUpDown className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="text-center p-4">
-            <div className="animate-spin inline-block w-6 h-6 border-2 border-current border-t-transparent text-primary rounded-full"></div>
-          </div>
-        ) : error ? (
-          <div className="text-center text-red-500 p-4">
-            <p>{error}</p>
-          </div>
-        ) : payrollRecords.length === 0 ? (
-          <div className="text-center p-4 text-muted-foreground">
-            <p><T text="No payroll records found" /></p>
-          </div>
-        ) : (
-          <>
-            <ul className="space-y-3">
-              {payrollRecords.map((record) => (
-                <li key={record.id} className="border p-3 rounded-md">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="flex items-center">
-                        <span className="font-medium text-base">{record.pay_period}</span>
-                        <Badge className={`ml-2 ${getStatusColor(record.payment_status)}`}>
-                          {record.payment_status}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center mt-2 space-x-4 text-sm text-muted-foreground">
-                        <div className="flex items-center">
-                          <Clock className="h-3.5 w-3.5 mr-1" />
-                          <span>
-                            {record.regular_hours} <T text="reg" /> + {record.overtime_hours} <T text="OT" /> = {record.total_hours} <T text="hours" />
-                          </span>
-                        </div>
-                        {record.payment_date && (
-                          <div className="flex items-center">
-                            <CalendarDays className="h-3.5 w-3.5 mr-1" />
-                            <span><T text="Paid on" />: {formatDate(record.payment_date)}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="text-right">
-                      <span className="text-lg font-medium">
-                        £{record.total_pay.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
+          <div className="flex items-center space-x-2">
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => {
+                setStatusFilter(value);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[130px] h-8">
+                <Filter className="h-3.5 w-3.5 mr-2" />
+                <SelectValue placeholder="Filter" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all"><T text="All Status" /></SelectItem>
+                <SelectItem value="Paid"><T text="Paid" /></SelectItem>
+                <SelectItem value="Pending"><T text="Pending" /></SelectItem>
+              </SelectContent>
+            </Select>
             
-            <div className="flex items-center justify-between mt-4">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                <T text="Previous" />
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                <T text="Page" /> {page}
-              </span>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setPage(p => p + 1)}
-                disabled={payrollRecords.length < pageSize}
-              >
-                <T text="Next" />
-                <ChevronRight className="h-4 w-4 ml-1" />
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={toggleSort}
+              className="h-8 px-2"
+            >
+              <ArrowUpDown className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="text-center p-4">
+              <div className="animate-spin inline-block w-6 h-6 border-2 border-current border-t-transparent text-primary rounded-full"></div>
+            </div>
+          ) : error ? (
+            <div className="text-center text-red-500 p-4">
+              <p>{error}</p>
+            </div>
+          ) : paginatedPayroll.length === 0 ? (
+            <div className="text-center p-4 text-muted-foreground">
+              <p><T text="No payroll records found" /></p>
+            </div>
+          ) : (
+            <>
+              <ul className="space-y-3">
+                {paginatedPayroll.map((record) => (
+                  <li key={record.id} className="border p-3 rounded-md">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="flex items-center">
+                          <span className="font-medium text-base">{record.pay_period}</span>
+                          <Badge className={`ml-2 ${getStatusColor(record.payment_status)}`}>
+                            {record.payment_status}
+                          </Badge>
+                        </div>
+                        <div className="flex flex-col sm:flex-row sm:items-center mt-2 space-y-1 sm:space-y-0 sm:space-x-4 text-sm text-muted-foreground">
+                          <div className="flex items-center">
+                            <Clock className="h-3.5 w-3.5 mr-1" />
+                            <span>
+                              {record.regular_hours} <T text="reg" /> + {record.overtime_hours} <T text="OT" /> = {record.total_hours} <T text="hours" />
+                            </span>
+                          </div>
+                          {record.payment_date && (
+                            <div className="flex items-center">
+                              <CalendarDays className="h-3.5 w-3.5 mr-1" />
+                              <span><T text="Paid on" />: {formatDate(record.payment_date)}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-col items-end">
+                        <span className="text-lg font-medium">
+                          £{record.total_pay.toFixed(2)}
+                        </span>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-7 mt-1"
+                          onClick={() => viewPayrollDetails(record)}
+                        >
+                          <FileText className="h-3.5 w-3.5 mr-1.5" />
+                          <span className="text-xs"><T text="Details" /></span>
+                        </Button>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              
+              <div className="flex items-center justify-between mt-4">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  <T text="Previous" />
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  <T text="Page" /> {page}
+                </span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setPage(p => p + 1)}
+                  disabled={paginatedPayroll.length < pageSize}
+                >
+                  <T text="Next" />
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+      
+      <SideModal
+        open={isDetailModalOpen}
+        onOpenChange={setIsDetailModalOpen}
+        title={<T text="Payroll Details" />}
+        width="md"
+      >
+        {selectedPayroll && (
+          <div className="space-y-6">
+            <div className="p-4 bg-muted rounded-lg">
+              <h3 className="font-semibold text-lg mb-4">{selectedPayroll.pay_period}</h3>
+              
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground"><T text="Regular Hours" /></span>
+                  <span>{selectedPayroll.regular_hours}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground"><T text="Overtime Hours" /></span>
+                  <span>{selectedPayroll.overtime_hours}</span>
+                </div>
+                <div className="flex justify-between items-center border-t pt-2">
+                  <span className="font-medium"><T text="Total Hours" /></span>
+                  <span className="font-medium">{selectedPayroll.total_hours}</span>
+                </div>
+                <div className="flex justify-between items-center border-t pt-2">
+                  <span className="font-medium"><T text="Total Pay" /></span>
+                  <span className="font-bold">£{selectedPayroll.total_pay.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="text-sm font-medium mb-2"><T text="Payment Status" /></h4>
+              <Badge className={getStatusColor(selectedPayroll.payment_status)}>
+                {selectedPayroll.payment_status}
+              </Badge>
+              {selectedPayroll.payment_date && (
+                <div className="mt-2 text-sm">
+                  <span className="text-muted-foreground"><T text="Paid on" />: </span>
+                  {formatDate(selectedPayroll.payment_date)}
+                </div>
+              )}
+            </div>
+            
+            <div className="flex justify-end pt-4 border-t">
+              <Button variant="outline" onClick={() => setIsDetailModalOpen(false)}>
+                <T text="Close" />
               </Button>
             </div>
-          </>
+          </div>
         )}
-      </CardContent>
-    </Card>
+      </SideModal>
+    </>
   );
 };
 
