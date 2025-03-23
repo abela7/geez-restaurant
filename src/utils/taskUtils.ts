@@ -1,81 +1,121 @@
 
-import { format } from "date-fns";
-import { StaffTask } from "@/hooks/useStaffTasks";
 import { StaffMember } from "@/hooks/useStaffMembers";
+import { StaffTask } from "@/hooks/useStaffTasks";
 import { getCategoryName } from "@/constants/taskCategories";
 
-export const getStaffName = (staffMembers: StaffMember[], id: string): string => {
-  const staff = staffMembers.find(staff => staff.id === id);
-  return staff ? `${staff.first_name || ''} ${staff.last_name || ''}`.trim() : "Unassigned";
-};
-
-export const getStaffInitials = (staffMembers: StaffMember[], id: string): string => {
-  const staff = staffMembers.find(staff => staff.id === id);
-  if (!staff) return "NA";
+// Generate staff names map for easier lookup
+export const getStaffNamesMap = (staffMembers?: StaffMember[]) => {
+  if (!staffMembers) return {};
   
-  const firstName = staff.first_name || '';
-  const lastName = staff.last_name || '';
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  return staffMembers.reduce(
+    (acc, staff) => {
+      acc[staff.id] = `${staff.first_name || ''} ${staff.last_name || ''}`.trim();
+      return acc;
+    }, 
+    {} as Record<string, string>
+  );
 };
 
-export const getStaffImageUrl = (staffMembers: StaffMember[], id: string): string | undefined => {
-  const staff = staffMembers.find(staff => staff.id === id);
-  return staff?.image_url;
+// Generate staff initials map for avatar fallbacks
+export const getStaffInitialsMap = (staffMembers?: StaffMember[]) => {
+  if (!staffMembers) return {};
+  
+  return staffMembers.reduce(
+    (acc, staff) => {
+      const firstName = staff.first_name || '';
+      const lastName = staff.last_name || '';
+      
+      // Get first letter of first name and first letter of last name
+      const firstInitial = firstName.charAt(0);
+      const lastInitial = lastName.charAt(0);
+      
+      acc[staff.id] = (firstInitial + lastInitial).toUpperCase();
+      return acc;
+    }, 
+    {} as Record<string, string>
+  );
 };
 
-export const getStaffNamesMap = (staffMembers: StaffMember[]): Record<string, string> => {
-  const namesMap: Record<string, string> = {};
-  staffMembers.forEach(staff => {
-    namesMap[staff.id] = `${staff.first_name || ''} ${staff.last_name || ''}`.trim();
-  });
-  return namesMap;
+// Generate staff images map for avatars
+export const getStaffImagesMap = (staffMembers?: StaffMember[]) => {
+  if (!staffMembers) return {};
+  
+  return staffMembers.reduce(
+    (acc, staff) => {
+      if (staff.image_url) {
+        acc[staff.id] = staff.image_url;
+      }
+      return acc;
+    }, 
+    {} as Record<string, string>
+  );
 };
 
-export const getStaffInitialsMap = (staffMembers: StaffMember[]): Record<string, string> => {
-  const initialsMap: Record<string, string> = {};
-  staffMembers.forEach(staff => {
-    const firstName = staff.first_name || '';
-    const lastName = staff.last_name || '';
-    initialsMap[staff.id] = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-  });
-  return initialsMap;
+// Helper function to format date for display
+export const formatTaskDate = (dateString: string | null, timeString: string | null) => {
+  if (!dateString) return '';
+  
+  const date = new Date(dateString);
+  const options: Intl.DateTimeFormatOptions = { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  };
+  
+  let formattedDate = date.toLocaleDateString('en-GB', options);
+  
+  if (timeString) {
+    formattedDate += ` ${timeString}`;
+  }
+  
+  return formattedDate;
 };
 
-export const getStaffImagesMap = (staffMembers: StaffMember[]): Record<string, string | undefined> => {
-  const imagesMap: Record<string, string | undefined> = {};
-  staffMembers.forEach(staff => {
-    imagesMap[staff.id] = staff.image_url;
-  });
-  return imagesMap;
-};
-
-export const createCSVExport = (tasks: StaffTask[], staffNamesMap: Record<string, string>): void => {
-  if (!tasks.length) return;
-
-  const headers = ['Title', 'Description', 'Assigned To', 'Priority', 'Status', 'Due Date', 'Due Time', 'Category'];
-  const csvRows = [
-    headers.join(','),
-    ...tasks.map(task => [
-      `"${task.title}"`,
-      `"${task.description || ''}"`,
-      `"${staffNamesMap[task.staff_id] || task.staff_id}"`,
-      `"${task.priority}"`,
-      `"${task.status}"`,
-      task.due_date ? `"${format(new Date(task.due_date), 'MMM dd, yyyy')}"` : '""',
-      task.due_time ? `"${task.due_time}"` : '""',
-      `"${getCategoryName(task.category)}"` 
-    ].join(','))
+// Create and download a CSV file from tasks data
+export const createCSVExport = (tasks: StaffTask[], staffNames: Record<string, string>) => {
+  // Define CSV headers
+  const headers = [
+    'Task ID',
+    'Title',
+    'Description',
+    'Assigned To',
+    'Priority',
+    'Status',
+    'Category',
+    'Due Date',
+    'Completed At'
   ];
   
-  const csvContent = csvRows.join('\n');
+  // Map tasks to CSV rows
+  const rows = tasks.map(task => {
+    return [
+      task.id,
+      task.title,
+      task.description || '',
+      staffNames[task.staff_id] || task.staff_id,
+      task.priority,
+      task.status,
+      getCategoryName(task.category),
+      formatTaskDate(task.due_date, task.due_time),
+      task.completed_at ? new Date(task.completed_at).toLocaleString() : ''
+    ];
+  });
+  
+  // Combine headers and rows
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+  ].join('\n');
+  
+  // Create a download link
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
-  
   const link = document.createElement('a');
   link.setAttribute('href', url);
-  link.setAttribute('download', `Tasks_Export_${new Date().toISOString().split('T')[0]}.csv`);
-  link.style.display = 'none';
+  link.setAttribute('download', `tasks_export_${new Date().toISOString().split('T')[0]}.csv`);
   document.body.appendChild(link);
+  
+  // Trigger download and clean up
   link.click();
   document.body.removeChild(link);
 };

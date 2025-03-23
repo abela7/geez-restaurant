@@ -65,5 +65,5 @@ export function SideModal({
         </ScrollArea>
       </SheetContent>
     </Sheet>
-  )
+  );
 }
