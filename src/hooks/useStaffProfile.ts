@@ -99,10 +99,10 @@ export const useStaffProfile = (id: string) => {
       // Create a unique filename using UUID
       const fileExt = file.name.split('.').pop();
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
-      const filePath = `staff_profiles/${fileName}`;
+      const filePath = `${fileName}`;
       
       // Upload to staff_profiles bucket
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError, data: uploadData } = await supabase.storage
         .from('staff_profiles')
         .upload(filePath, file);
       
