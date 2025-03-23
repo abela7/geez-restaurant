@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import * as React from 'react';
 import { fetchTranslations, saveTranslation, saveTranslations } from '@/services/settings/translationService';
 import { toast } from "sonner";
 
@@ -14,16 +14,16 @@ type LanguageContextType = {
   isLoading: boolean;
 };
 
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+const LanguageContext = React.createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [translations, setTranslations] = useState<Record<string, string>>({});
-  const [currentLanguage, setCurrentLanguage] = useState<'en' | 'am'>('en');
-  const [initialized, setInitialized] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [translations, setTranslations] = React.useState<Record<string, string>>({});
+  const [currentLanguage, setCurrentLanguage] = React.useState<'en' | 'am'>('en');
+  const [initialized, setInitialized] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   // Load translations from database when component mounts
-  useEffect(() => {
+  React.useEffect(() => {
     const loadTranslations = async () => {
       try {
         setIsLoading(true);
@@ -61,7 +61,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   // Save translations to localStorage whenever they change
-  useEffect(() => {
+  React.useEffect(() => {
     if (initialized) {
       try {
         localStorage.setItem('translations', JSON.stringify(translations));
@@ -72,7 +72,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [translations, initialized]);
 
   // Save language preference to localStorage
-  useEffect(() => {
+  React.useEffect(() => {
     if (initialized) {
       try {
         localStorage.setItem('language', currentLanguage);
@@ -148,7 +148,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 };
 
 export const useLanguage = () => {
-  const context = useContext(LanguageContext);
+  const context = React.useContext(LanguageContext);
   if (context === undefined) {
     throw new Error('useLanguage must be used within a LanguageProvider');
   }
