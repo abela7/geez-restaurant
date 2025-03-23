@@ -5,6 +5,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { type StaffMember } from "@/hooks/useStaffMembers";
+import { ChevronDown } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface ProfileHeaderProps {
   staff: StaffMember;
@@ -38,67 +45,76 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ staff }) => {
   return (
     <Card>
       <CardContent className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 gap-x-6">
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground"><T text="Role" /></h3>
-            <p className="mt-1 flex items-center">
-              <span className="font-medium">{staff.role}</span>
-              {staff.department && (
-                <Badge variant="outline" className="ml-2">
-                  {staff.department}
-                </Badge>
+        <Accordion type="single" collapsible defaultValue="details" className="w-full">
+          <AccordionItem value="details" className="border-b-0">
+            <AccordionTrigger className="py-2 hover:no-underline">
+              <h3 className="text-lg font-medium"><T text="Staff Details" /></h3>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 gap-x-6">
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground"><T text="Role" /></h3>
+                  <div className="mt-1 flex items-center">
+                    <span className="font-medium">{staff.role}</span>
+                    {staff.department && (
+                      <Badge variant="outline" className="ml-2">
+                        {staff.department}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground"><T text="Status" /></h3>
+                  <div className="mt-1">
+                    {staff.attendance ? (
+                      <Badge variant={getAttendanceVariant(staff.attendance)}>
+                        {staff.attendance}
+                      </Badge>
+                    ) : (
+                      <span className="text-muted-foreground">Not set</span>
+                    )}
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground"><T text="Start Date" /></h3>
+                  <p className="mt-1 font-medium">
+                    {formatDate(staff.start_date)}
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground"><T text="Email" /></h3>
+                  <p className="mt-1 font-medium">
+                    {staff.email || <span className="text-muted-foreground">Not provided</span>}
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground"><T text="Phone" /></h3>
+                  <p className="mt-1 font-medium">
+                    {staff.phone || <span className="text-muted-foreground">Not provided</span>}
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground"><T text="Hourly Rate" /></h3>
+                  <p className="mt-1 font-medium">
+                    {staff.hourly_rate ? `£${staff.hourly_rate.toFixed(2)}` : <span className="text-muted-foreground">Not set</span>}
+                  </p>
+                </div>
+              </div>
+              
+              {staff.bio && (
+                <div className="mt-6">
+                  <h3 className="text-sm font-medium text-muted-foreground mb-2"><T text="Bio" /></h3>
+                  <p className="text-sm">{staff.bio}</p>
+                </div>
               )}
-            </p>
-          </div>
-          
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground"><T text="Status" /></h3>
-            <p className="mt-1">
-              {staff.attendance ? (
-                <Badge variant={getAttendanceVariant(staff.attendance)}>
-                  {staff.attendance}
-                </Badge>
-              ) : (
-                <span className="text-muted-foreground">Not set</span>
-              )}
-            </p>
-          </div>
-          
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground"><T text="Start Date" /></h3>
-            <p className="mt-1 font-medium">
-              {formatDate(staff.start_date)}
-            </p>
-          </div>
-          
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground"><T text="Email" /></h3>
-            <p className="mt-1 font-medium">
-              {staff.email || <span className="text-muted-foreground">Not provided</span>}
-            </p>
-          </div>
-          
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground"><T text="Phone" /></h3>
-            <p className="mt-1 font-medium">
-              {staff.phone || <span className="text-muted-foreground">Not provided</span>}
-            </p>
-          </div>
-          
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground"><T text="Hourly Rate" /></h3>
-            <p className="mt-1 font-medium">
-              {staff.hourly_rate ? `£${staff.hourly_rate.toFixed(2)}` : <span className="text-muted-foreground">Not set</span>}
-            </p>
-          </div>
-        </div>
-        
-        {staff.bio && (
-          <div className="mt-6">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2"><T text="Bio" /></h3>
-            <p className="text-sm">{staff.bio}</p>
-          </div>
-        )}
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </CardContent>
     </Card>
   );

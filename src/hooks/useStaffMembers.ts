@@ -69,13 +69,67 @@ export const useStaffMembers = () => {
     fetchStaffData();
   }, []);
 
-  const addStaffMember = async (staffData: Omit<StaffMember, 'id'>) => {
+  // Upload staff image to storage
+  const uploadStaffImage = async (file: File): Promise<string | null> => {
+    try {
+      // Create a unique filename using UUID
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+      const filePath = `staff_profiles/${fileName}`;
+      
+      // Ensure the staff_profiles bucket exists or is accessible
+      const { error: uploadError } = await supabase.storage
+        .from('staff_profiles')
+        .upload(filePath, file);
+      
+      if (uploadError) {
+        console.error('Error uploading image:', uploadError);
+        toast({
+          title: "Error",
+          description: `Failed to upload image: ${uploadError.message}`,
+          variant: "destructive"
+        });
+        return null;
+      }
+      
+      // Get the public URL
+      const { data } = supabase.storage
+        .from('staff_profiles')
+        .getPublicUrl(filePath);
+      
+      return data.publicUrl;
+    } catch (err: any) {
+      console.error('Error in image upload:', err);
+      toast({
+        title: "Error",
+        description: `Image upload failed: ${err.message}`,
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
+  const addStaffMember = async (staffData: Omit<StaffMember, 'id'>, profileImage?: File | null) => {
     setIsLoading(true);
     setError(null);
     try {
+      // Handle image upload if provided
+      let imageUrl = staffData.image_url;
+      if (profileImage) {
+        const uploadedUrl = await uploadStaffImage(profileImage);
+        if (uploadedUrl) {
+          imageUrl = uploadedUrl;
+        }
+      }
+      
+      const dataToInsert = {
+        ...staffData,
+        image_url: imageUrl
+      };
+      
       const { data, error } = await supabase
         .from('profiles')
-        .insert([staffData])
+        .insert([dataToInsert])
         .select();
       
       if (error) {
@@ -103,13 +157,27 @@ export const useStaffMembers = () => {
     }
   };
 
-  const updateStaffMember = async (id: string, staffData: Partial<StaffMember>) => {
+  const updateStaffMember = async (id: string, staffData: Partial<StaffMember>, profileImage?: File | null) => {
     setIsLoading(true);
     setError(null);
     try {
+      // Handle image upload if provided
+      let imageUrl = staffData.image_url;
+      if (profileImage) {
+        const uploadedUrl = await uploadStaffImage(profileImage);
+        if (uploadedUrl) {
+          imageUrl = uploadedUrl;
+        }
+      }
+      
+      const dataToUpdate = {
+        ...staffData,
+        image_url: imageUrl
+      };
+      
       const { data, error } = await supabase
         .from('profiles')
-        .update(staffData)
+        .update(dataToUpdate)
         .eq('id', id)
         .select();
       
@@ -185,7 +253,8 @@ export const useStaffMembers = () => {
     fetchStaffData,
     addStaffMember,
     updateStaffMember,
-    deleteStaffMember
+    deleteStaffMember,
+    uploadStaffImage
   };
 };
 

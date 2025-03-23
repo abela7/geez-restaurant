@@ -78,7 +78,7 @@ const StaffProfile = () => {
 
   if (isLoading) {
     return (
-      <>
+      <div className="space-y-4">
         <PageHeader 
           heading={<T text="Staff Profile" />}
           description={<T text="View detailed staff information" />}
@@ -95,13 +95,13 @@ const StaffProfile = () => {
         <div className="flex items-center justify-center min-h-[50vh]">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
         </div>
-      </>
+      </div>
     );
   }
 
   if (error || !staffMember) {
     return (
-      <>
+      <div className="space-y-4">
         <PageHeader 
           heading={<T text="Staff Profile" />}
           description={<T text="View detailed staff information" />}
@@ -116,12 +116,12 @@ const StaffProfile = () => {
           }
         />
         <ErrorState message={error || "Staff member not found"} />
-      </>
+      </div>
     );
   }
 
   return (
-    <>
+    <div className="space-y-6">
       <PageHeader 
         heading={<T text="Staff Profile" />}
         description={`${staffMember.first_name || ""} ${staffMember.last_name || ""} - ${staffMember.role || "Staff Member"}`}
@@ -221,7 +221,7 @@ const StaffProfile = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   );
 };
 
