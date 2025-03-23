@@ -21,6 +21,11 @@
     max-width: 100% !important;
   }
   
+  /* Side modal scroll improvements */
+  [data-state="open"] .overflow-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+  
   /* Language-specific adjustments for mobile */
   [data-language="am"] h1,
   [data-language="am"] h2,
@@ -115,8 +120,9 @@
   
   /* Ensure we can scroll on mobile */
   .side-modal-content {
-    max-height: calc(100vh - 100px);
+    max-height: 100%;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 

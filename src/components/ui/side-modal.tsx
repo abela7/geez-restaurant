@@ -1,15 +1,14 @@
 
 import * as React from "react"
-import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface SideModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  title: React.ReactNode
+  title?: React.ReactNode
   description?: React.ReactNode
   children: React.ReactNode
   className?: string
@@ -26,7 +25,6 @@ export function SideModal({
   children,
   className,
   width = "md",
-  showCloseButton = true,
   fullScreenOnMobile = true,
 }: SideModalProps) {
   const isMobile = useIsMobile()
@@ -44,34 +42,27 @@ export function SideModal({
       <SheetContent 
         side="right" 
         className={cn(
-          "pt-6 flex flex-col h-full p-0 gap-0 border-l", 
+          "pt-6 flex flex-col h-full p-0 gap-0 border-l overflow-hidden", 
           widthClasses[width],
           fullScreenOnMobile && isMobile ? "w-full max-w-full" : "",
           className
         )}
       >
-        <SheetHeader className="px-6 py-4 border-b">
-          <div className="flex items-center justify-between w-full">
-            <SheetTitle className="text-xl font-semibold">{title}</SheetTitle>
-            {showCloseButton && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 rounded-full"
-                onClick={() => onOpenChange(false)}
-              >
-                <X className="h-4 w-4" />
-                <span className="sr-only">Close</span>
-              </Button>
+        {title && (
+          <div className="px-6 py-4 border-b">
+            <div className="flex items-center justify-between w-full">
+              <div className="text-xl font-semibold">{title}</div>
+            </div>
+            {description && (
+              <p className="text-sm text-muted-foreground">{description}</p>
             )}
           </div>
-          {description && (
-            <p className="text-sm text-muted-foreground">{description}</p>
-          )}
-        </SheetHeader>
-        <div className="flex-1 overflow-auto p-6">
-          {children}
-        </div>
+        )}
+        <ScrollArea className="flex-1 w-full h-full">
+          <div className="p-6">
+            {children}
+          </div>
+        </ScrollArea>
       </SheetContent>
     </Sheet>
   )
