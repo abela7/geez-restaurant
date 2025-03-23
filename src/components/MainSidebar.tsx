@@ -49,7 +49,7 @@ export const MainSidebar: React.FC<{
           <nav className="px-2">
             {interfaceType === 'admin' ? (
               navSections.map((section: NavSection) => (
-                <React.Fragment key={section.path}>
+                <div key={section.path}>
                   <SidebarLink
                     to={section.submenu ? '#' : section.path}
                     icon={section.icon}
@@ -72,7 +72,7 @@ export const MainSidebar: React.FC<{
                       parentPath={section.path}
                     />
                   )}
-                </React.Fragment>
+                </div>
               ))
             ) : (
               navSections.map((link: NavSection) => (

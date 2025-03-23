@@ -1,7 +1,5 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Layout from "@/components/Layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -124,7 +122,7 @@ const NewStaff = () => {
           gender: data.gender,
           attendance: "Present", // Default attendance
           performance: 90, // Default performance
-          hiring_date: new Date().toISOString().split('T')[0],
+          start_date: new Date().toISOString().split('T')[0], // Using start_date instead of hiring_date
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -173,7 +171,7 @@ const NewStaff = () => {
   };
 
   return (
-    <Layout interface="admin">
+    <>
       <PageHeader 
         heading={<T text="Add New Staff" />}
         description={<T text="Create a new staff record" />}
@@ -426,7 +424,7 @@ const NewStaff = () => {
           </Button>
         </div>
       </form>
-    </Layout>
+    </>
   );
 };
 

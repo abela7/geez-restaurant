@@ -1,9 +1,10 @@
+
 import React from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { BarChart, LineChart, Activity, Calendar, Users } from "lucide-react";
+import { BarChart, LineChart, Activity, Calendar, Users, Download, Filter } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 
 const Performance = () => {
@@ -15,9 +16,16 @@ const Performance = () => {
         heading={<T text="Staff Performance" />}
         description={<T text="Track and manage staff performance metrics" />}
         actions={
-          <Button>
-            <T text="Export Report" />
-          </Button>
+          <div className="flex space-x-2">
+            <Button variant="outline">
+              <Filter className="mr-2 h-4 w-4" />
+              <T text="Filter" />
+            </Button>
+            <Button>
+              <Download className="mr-2 h-4 w-4" />
+              <T text="Export Report" />
+            </Button>
+          </div>
         }
       />
 
