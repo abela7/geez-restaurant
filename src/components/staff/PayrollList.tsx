@@ -4,7 +4,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, FileText, ChevronDown } from "lucide-react";
+import { Loader2, FileText } from "lucide-react";
 import { PayrollRecord } from "@/hooks/useStaffPayroll";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { format } from "date-fns";
@@ -15,6 +15,7 @@ type PayrollListProps = {
   onUpdateStatus?: (id: string, status: string) => void;
   showStaffInfo?: boolean;
   staffNames?: Record<string, string>;
+  onViewDetails?: (record: PayrollRecord) => void;
 };
 
 const PayrollList: React.FC<PayrollListProps> = ({ 
@@ -22,7 +23,8 @@ const PayrollList: React.FC<PayrollListProps> = ({
   isLoading, 
   onUpdateStatus,
   showStaffInfo = false,
-  staffNames = {}
+  staffNames = {},
+  onViewDetails
 }) => {
   const { t } = useLanguage();
 
@@ -55,7 +57,7 @@ const PayrollList: React.FC<PayrollListProps> = ({
             <TableHead><T text="Total Pay" /></TableHead>
             <TableHead><T text="Status" /></TableHead>
             <TableHead className="hidden sm:table-cell"><T text="Payment Date" /></TableHead>
-            {onUpdateStatus && <TableHead className="text-right"><T text="Actions" /></TableHead>}
+            <TableHead className="text-right"><T text="Actions" /></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -83,8 +85,8 @@ const PayrollList: React.FC<PayrollListProps> = ({
                       </Badge>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Paid">Paid</SelectItem>
-                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="Paid"><T text="Paid" /></SelectItem>
+                      <SelectItem value="Pending"><T text="Pending" /></SelectItem>
                     </SelectContent>
                   </Select>
                 ) : (
@@ -98,14 +100,16 @@ const PayrollList: React.FC<PayrollListProps> = ({
                   ? format(new Date(record.payment_date), 'MMM dd, yyyy')
                   : '-'}
               </TableCell>
-              {onUpdateStatus && (
-                <TableCell className="text-right">
-                  <Button variant="ghost" size="sm">
-                    <FileText className="h-4 w-4 mr-2" />
-                    <T text="Details" />
-                  </Button>
-                </TableCell>
-              )}
+              <TableCell className="text-right">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => onViewDetails ? onViewDetails(record) : null}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  <T text="Details" />
+                </Button>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

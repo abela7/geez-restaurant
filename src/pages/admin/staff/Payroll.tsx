@@ -1,20 +1,23 @@
 
 import React, { useState, useEffect } from "react";
-import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { SideModal } from "@/components/ui/side-modal";
-import { Calendar, Download, Plus, Filter, DollarSign, Clock, CreditCard, Users } from "lucide-react";
+import { Calendar, Download, Plus, List, Grid, DollarSign, Clock, CreditCard } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import useStaffMembers from "@/hooks/useStaffMembers";
 import useStaffPayroll, { PayrollRecord } from "@/hooks/useStaffPayroll";
 import PayrollList from "@/components/staff/PayrollList";
-import { format, parseISO, startOfMonth, endOfMonth, isAfter } from "date-fns";
+import PayrollGridView from "@/components/staff/PayrollGridView";
+import PayrollFilter, { PayrollFilterOptions } from "@/components/staff/PayrollFilter";
+import PayrollDetailModal from "@/components/staff/PayrollDetailModal";
+import { format, parseISO, startOfMonth, endOfMonth, isAfter, isBefore, isEqual } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { exportPayrollToCSV, exportPayrollToPDF } from "@/services/staff/payrollExportService";
 
 interface RunPayrollFormData {
   payPeriod: string;
@@ -30,14 +33,18 @@ const Payroll = () => {
   const { payrollRecords, isLoading, addPayrollRecord, updatePayrollRecord } = useStaffPayroll();
   
   const [payPeriod, setPayPeriod] = useState("current");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [isRunPayrollModalOpen, setIsRunPayrollModalOpen] = useState(false);
   const [selectedStaffId, setSelectedStaffId] = useState<string>("");
+  const [filterOptions, setFilterOptions] = useState<PayrollFilterOptions>({});
   const [runPayrollData, setRunPayrollData] = useState<RunPayrollFormData>({
     payPeriod: `${format(new Date(), 'MMMM yyyy')} - Period 1`,
     startDate: format(startOfMonth(new Date()), 'yyyy-MM-dd'),
     endDate: format(endOfMonth(new Date()), 'yyyy-MM-dd'),
     selectedStaffIds: []
   });
+  const [selectedRecord, setSelectedRecord] = useState<PayrollRecord | undefined>(undefined);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   
   // Create a staffNames lookup for easier display
   const staffNames = staffMembers.reduce((acc, staff) => {
@@ -53,10 +60,51 @@ const Payroll = () => {
   const totalHours = currentPeriodRecords.reduce((sum, record) => sum + record.total_hours, 0);
   const totalPay = currentPeriodRecords.reduce((sum, record) => sum + record.total_pay, 0);
   
+  // Apply filters to records
+  const applyFilters = (records: PayrollRecord[]) => {
+    return records.filter(record => {
+      // Filter by pay period
+      if (filterOptions.period && !record.pay_period.toLowerCase().includes(filterOptions.period.toLowerCase())) {
+        return false;
+      }
+      
+      // Filter by payment status
+      if (filterOptions.status && record.payment_status !== filterOptions.status) {
+        return false;
+      }
+      
+      // Filter by staff name
+      if (filterOptions.staffName && staffNames[record.staff_id]) {
+        const name = staffNames[record.staff_id].toLowerCase();
+        if (!name.includes(filterOptions.staffName.toLowerCase())) {
+          return false;
+        }
+      }
+      
+      // Filter by date range
+      if (filterOptions.dateFrom && record.payment_date) {
+        const paymentDate = new Date(record.payment_date);
+        if (isBefore(paymentDate, filterOptions.dateFrom) && !isEqual(paymentDate, filterOptions.dateFrom)) {
+          return false;
+        }
+      }
+      
+      if (filterOptions.dateTo && record.payment_date) {
+        const paymentDate = new Date(record.payment_date);
+        if (isAfter(paymentDate, filterOptions.dateTo) && !isEqual(paymentDate, filterOptions.dateTo)) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+  };
+  
   // Filter records for each tab
   const getFilteredRecords = (period: string, staffId?: string) => {
     if (staffId) {
-      return payrollRecords.filter(record => record.staff_id === staffId);
+      const staffRecords = payrollRecords.filter(record => record.staff_id === staffId);
+      return applyFilters(staffRecords);
     }
     
     const isCurrentMonth = (record: PayrollRecord) => {
@@ -75,14 +123,20 @@ const Payroll = () => {
       }
     };
     
+    let filteredRecords: PayrollRecord[] = [];
+    
     switch (period) {
       case 'current':
-        return payrollRecords.filter(isCurrentMonth);
+        filteredRecords = payrollRecords.filter(isCurrentMonth);
+        break;
       case 'previous':
-        return payrollRecords.filter(isPreviousPeriod);
+        filteredRecords = payrollRecords.filter(isPreviousPeriod);
+        break;
       default:
-        return payrollRecords;
+        filteredRecords = payrollRecords;
     }
+    
+    return applyFilters(filteredRecords);
   };
   
   const handleUpdatePayrollStatus = async (id: string, status: string) => {
@@ -139,7 +193,8 @@ const Payroll = () => {
           total_hours: totalHours,
           total_pay: Number(totalPay.toFixed(2)),
           payment_status: 'Pending',
-          payment_date: null
+          payment_date: null,
+          hourly_rate: hourlyRate
         });
       }
       
@@ -165,6 +220,45 @@ const Payroll = () => {
     }
   };
   
+  const handleExport = (format: 'csv' | 'pdf') => {
+    // Get the correct records based on the current tab
+    let recordsToExport = getFilteredRecords(payPeriod, selectedStaffId);
+    
+    // Set a meaningful filename
+    let filename = `payroll_${payPeriod}`;
+    if (selectedStaffId) {
+      filename = `payroll_${staffNames[selectedStaffId].replace(/\s+/g, '_').toLowerCase()}`;
+    }
+    
+    if (format === 'csv') {
+      const success = exportPayrollToCSV(recordsToExport, staffNames, filename);
+      if (success) {
+        toast({
+          title: "Success",
+          description: "Payroll data exported to CSV"
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to export payroll data",
+          variant: "destructive"
+        });
+      }
+    } else {
+      // For PDF export
+      const title = selectedStaffId 
+        ? `Payroll Report - ${staffNames[selectedStaffId]}`
+        : `Payroll Report - ${payPeriod === 'current' ? 'Current Period' : 'Previous Periods'}`;
+        
+      exportPayrollToPDF(recordsToExport, staffNames, title);
+    }
+  };
+  
+  const handleViewDetails = (record: PayrollRecord) => {
+    setSelectedRecord(record);
+    setIsDetailModalOpen(true);
+  };
+  
   const nextPaymentDate = () => {
     // Simple logic - if we're before the 15th, next payment is 15th, otherwise end of month
     const today = new Date();
@@ -179,26 +273,47 @@ const Payroll = () => {
 
   return (
     <>
-      <PageHeader 
-        heading={<T text="Staff Payroll" />}
-        description={<T text="Manage staff payroll and compensation" />}
-        actions={
-          <div className="flex space-x-2">
-            <Button variant="outline">
-              <Filter className="mr-2 h-4 w-4" />
-              <T text="Filter" />
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight"><T text="Staff Payroll" /></h1>
+          <p className="text-muted-foreground"><T text="Manage staff payroll and compensation" /></p>
+        </div>
+        <div className="flex space-x-2 mt-4 md:mt-0">
+          <PayrollFilter 
+            onFilter={setFilterOptions} 
+            onReset={() => setFilterOptions({})} 
+          />
+          
+          <div className="flex items-center border rounded-md p-1 h-9">
+            <Button 
+              variant={viewMode === "list" ? "default" : "ghost"} 
+              size="sm" 
+              className="h-7 w-7 p-0" 
+              onClick={() => setViewMode("list")}
+            >
+              <List className="h-4 w-4" />
             </Button>
-            <Button variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              <T text="Export Report" />
-            </Button>
-            <Button onClick={() => setIsRunPayrollModalOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              <T text="Run Payroll" />
+            <Button 
+              variant={viewMode === "grid" ? "default" : "ghost"} 
+              size="sm" 
+              className="h-7 w-7 p-0" 
+              onClick={() => setViewMode("grid")}
+            >
+              <Grid className="h-4 w-4" />
             </Button>
           </div>
-        }
-      />
+          
+          <Button variant="outline" onClick={() => handleExport('csv')}>
+            <Download className="mr-2 h-4 w-4" />
+            <T text="Export" />
+          </Button>
+          
+          <Button onClick={() => setIsRunPayrollModalOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            <T text="Run Payroll" />
+          </Button>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card>
@@ -254,13 +369,25 @@ const Payroll = () => {
         <TabsContent value="current">
           <Card>
             <CardContent className="p-0">
-              <PayrollList 
-                payrollRecords={getFilteredRecords('current')} 
-                isLoading={isLoading} 
-                onUpdateStatus={handleUpdatePayrollStatus}
-                showStaffInfo={true}
-                staffNames={staffNames}
-              />
+              {viewMode === "list" ? (
+                <PayrollList 
+                  payrollRecords={getFilteredRecords('current')} 
+                  isLoading={isLoading} 
+                  onUpdateStatus={handleUpdatePayrollStatus}
+                  showStaffInfo={true}
+                  staffNames={staffNames}
+                />
+              ) : (
+                <div className="p-4">
+                  <PayrollGridView 
+                    payrollRecords={getFilteredRecords('current')} 
+                    isLoading={isLoading}
+                    showStaffInfo={true}
+                    staffNames={staffNames}
+                    onViewDetails={handleViewDetails}
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -268,13 +395,25 @@ const Payroll = () => {
         <TabsContent value="previous">
           <Card>
             <CardContent className="p-0">
-              <PayrollList 
-                payrollRecords={getFilteredRecords('previous')} 
-                isLoading={isLoading} 
-                onUpdateStatus={handleUpdatePayrollStatus}
-                showStaffInfo={true}
-                staffNames={staffNames}
-              />
+              {viewMode === "list" ? (
+                <PayrollList 
+                  payrollRecords={getFilteredRecords('previous')} 
+                  isLoading={isLoading} 
+                  onUpdateStatus={handleUpdatePayrollStatus}
+                  showStaffInfo={true}
+                  staffNames={staffNames}
+                />
+              ) : (
+                <div className="p-4">
+                  <PayrollGridView 
+                    payrollRecords={getFilteredRecords('previous')} 
+                    isLoading={isLoading}
+                    showStaffInfo={true}
+                    staffNames={staffNames}
+                    onViewDetails={handleViewDetails}
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -309,11 +448,21 @@ const Payroll = () => {
                     {staffNames[selectedStaffId]} - <T text="Payroll History" />
                   </h3>
                 </div>
-                <PayrollList 
-                  payrollRecords={getFilteredRecords('all', selectedStaffId)} 
-                  isLoading={isLoading} 
-                  onUpdateStatus={handleUpdatePayrollStatus}
-                />
+                {viewMode === "list" ? (
+                  <PayrollList 
+                    payrollRecords={getFilteredRecords('all', selectedStaffId)} 
+                    isLoading={isLoading} 
+                    onUpdateStatus={handleUpdatePayrollStatus}
+                  />
+                ) : (
+                  <div className="p-4">
+                    <PayrollGridView 
+                      payrollRecords={getFilteredRecords('all', selectedStaffId)} 
+                      isLoading={isLoading}
+                      onViewDetails={handleViewDetails}
+                    />
+                  </div>
+                )}
                 <div className="p-4 border-t">
                   <Button variant="outline" onClick={() => setSelectedStaffId("")}>
                     <T text="Back to Staff Selection" />
@@ -429,6 +578,15 @@ const Payroll = () => {
           </div>
         </div>
       </SideModal>
+      
+      {/* Payroll Detail Modal */}
+      <PayrollDetailModal
+        open={isDetailModalOpen}
+        onOpenChange={setIsDetailModalOpen}
+        record={selectedRecord}
+        staffName={selectedRecord ? staffNames[selectedRecord.staff_id] : undefined}
+        onUpdateStatus={handleUpdatePayrollStatus}
+      />
     </>
   );
 };

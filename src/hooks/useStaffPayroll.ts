@@ -13,6 +13,7 @@ export type PayrollRecord = {
   total_pay: number;
   payment_status: string;
   payment_date: string | null;
+  hourly_rate?: number;
 };
 
 export const useStaffPayroll = (staffId?: string) => {
