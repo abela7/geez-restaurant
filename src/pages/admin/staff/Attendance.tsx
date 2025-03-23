@@ -18,9 +18,9 @@ const Attendance = () => {
   const { 
     attendanceRecords,
     isLoading
-  } = useStaffAttendance();
+  } = useStaffAttendance(); // No parameter needed since it's now optional
   
-  const { data: staffMembers = [] } = useStaffMembers({});
+  const { data: staffMembers = [] } = useStaffMembers(); // No parameter needed
   
   // Create a mapping of staff IDs to full names
   const staffNames = staffMembers.reduce((acc, staff) => {

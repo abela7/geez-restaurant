@@ -14,7 +14,7 @@ export type StaffAttendance = {
   notes: string | null;
 };
 
-export const useStaffAttendance = (staffId: string) => {
+export const useStaffAttendance = (staffId?: string) => {
   const [attendanceRecords, setAttendanceRecords] = useState<StaffAttendance[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,11 +24,18 @@ export const useStaffAttendance = (staffId: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      const { data, error } = await supabase
+      // Build the query based on whether we have a specific staff ID
+      let query = supabase
         .from('staff_attendance')
         .select('*')
-        .eq('staff_id', staffId)
         .order('date', { ascending: false });
+      
+      // If a staff ID is provided, filter by that staff member
+      if (staffId) {
+        query = query.eq('staff_id', staffId);
+      }
+      
+      const { data, error } = await query;
       
       if (error) {
         throw error;
@@ -113,9 +120,7 @@ export const useStaffAttendance = (staffId: string) => {
   };
 
   useEffect(() => {
-    if (staffId) {
-      fetchAttendanceData();
-    }
+    fetchAttendanceData();
   }, [staffId]);
 
   return {
