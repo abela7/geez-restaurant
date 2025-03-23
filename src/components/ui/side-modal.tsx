@@ -1,6 +1,8 @@
 
 import * as React from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose } from "@/components/ui/sheet";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface SideModalProps {
   open: boolean;
@@ -43,10 +45,22 @@ export function SideModal({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className={`p-4 ${widthClass} overflow-y-auto side-modal-content`} side="right">
-        <SheetHeader className="mb-4 sticky top-0 bg-background z-10 pb-2">
-          {title && <SheetTitle>{title}</SheetTitle>}
-          {description && <SheetDescription>{description}</SheetDescription>}
-        </SheetHeader>
+        <div className="flex justify-between items-center sticky top-0 bg-background z-10 pb-2">
+          <SheetHeader className="mb-4">
+            {title && <SheetTitle>{title}</SheetTitle>}
+            {description && <SheetDescription>{description}</SheetDescription>}
+          </SheetHeader>
+          <SheetClose asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="rounded-full h-8 w-8 absolute right-2 top-2"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </SheetClose>
+        </div>
         <div className="overflow-y-auto side-modal-body h-[calc(100vh-150px)]">
           {children}
         </div>

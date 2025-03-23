@@ -1,7 +1,7 @@
 
 /* Mobile modal styles */
 @media (max-width: 768px) {
-  /* Make sure side modals display properly on mobile */
+  /* Make sure side modals display properly on mobile - full screen */
   [data-state="open"] > .fixed.inset-y-0.right-0 {
     width: 100% !important;
     max-width: 100% !important;
@@ -25,6 +25,15 @@
     background-color: hsl(var(--background));
     border-bottom: 1px solid hsl(var(--border));
     margin-bottom: 1rem;
+    padding-top: 0.75rem;
+  }
+  
+  /* Position the close button properly */
+  [data-state="open"] .side-modal-content .rounded-full.h-8.w-8.absolute {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 50;
   }
   
   /* Ensure forms in modals are properly spaced */
