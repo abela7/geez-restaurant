@@ -18,6 +18,8 @@ export type StaffMember = {
   bio: string | null;
   skills: string[] | null;
   start_date: string | null;
+  // Address field that was missing
+  address: string | null;
   // New fields
   total_hours_worked: number | null;
   dishes_prepared: number | null;
