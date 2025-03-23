@@ -67,7 +67,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ staff }) => {
           <div>
             <h3 className="text-sm font-medium text-muted-foreground"><T text="Start Date" /></h3>
             <p className="mt-1 font-medium">
-              {formatDate(staff.start_date || staff.hiring_date)}
+              {formatDate(staff.start_date)}
             </p>
           </div>
           
