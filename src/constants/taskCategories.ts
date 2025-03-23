@@ -1,60 +1,38 @@
 
-export type TaskCategory = {
-  id: string;
-  name: string;
-  color: string;
-};
-
-export const taskCategories = [
-  {
-    id: "general",
-    name: "General",
-    color: "bg-gray-500"
-  },
-  {
-    id: "food_prep",
-    name: "Food Preparation",
-    color: "bg-yellow-500"
-  },
-  {
-    id: "cleaning",
-    name: "Cleaning",
-    color: "bg-green-500"
-  },
-  {
-    id: "inventory",
-    name: "Inventory",
-    color: "bg-blue-500"
-  },
-  {
-    id: "service",
-    name: "Customer Service",
-    color: "bg-purple-500"
-  },
-  {
-    id: "maintenance",
-    name: "Maintenance",
-    color: "bg-red-500"
-  },
-  {
-    id: "admin",
-    name: "Administration",
-    color: "bg-indigo-500"
-  },
-  {
-    id: "training",
-    name: "Training",
-    color: "bg-pink-500"
+export const getCategoryName = (category: string) => {
+  switch (category) {
+    case 'inventory':
+      return 'Inventory';
+    case 'training':
+      return 'Training';
+    case 'menu':
+      return 'Menu';
+    case 'cleaning':
+      return 'Cleaning';
+    case 'maintenance':
+      return 'Maintenance';
+    case 'admin':
+      return 'Admin';
+    default:
+      return category;
   }
-];
-
-// Helper functions to get category properties by ID
-export const getCategoryName = (categoryId: string): string => {
-  const category = taskCategories.find(cat => cat.id === categoryId);
-  return category ? category.name : "Uncategorized";
 };
 
-export const getCategoryColor = (categoryId: string): string => {
-  const category = taskCategories.find(cat => cat.id === categoryId);
-  return category ? category.color : "bg-gray-500";
+export const getCategoryColor = (category: string) => {
+  switch (category) {
+    case 'inventory':
+      return 'text-blue-600 border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800';
+    case 'training':
+      return 'text-purple-600 border-purple-200 bg-purple-50 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800';
+    case 'menu':
+      return 'text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800';
+    case 'cleaning':
+      return 'text-green-600 border-green-200 bg-green-50 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800';
+    case 'maintenance':
+      return 'text-red-600 border-red-200 bg-red-50 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800';
+    case 'admin':
+      return 'text-gray-600 border-gray-200 bg-gray-50 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800';
+    default:
+      return 'text-gray-600 border-gray-200 bg-gray-50 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800';
+  }
 };

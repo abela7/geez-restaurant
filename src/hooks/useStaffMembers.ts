@@ -18,6 +18,17 @@ export type StaffMember = {
   bio: string | null;
   skills: string[] | null;
   start_date: string | null;
+  // New fields
+  total_hours_worked: number | null;
+  dishes_prepared: number | null;
+  efficiency_rating: number | null;
+  total_orders_completed: number | null;
+  total_customers_served: number | null;
+  // Summary stats from related tables (not in the DB)
+  total_pay?: number;
+  completed_tasks?: number;
+  pending_tasks?: number;
+  on_time_percentage?: number;
 };
 
 export const useStaffMembers = () => {

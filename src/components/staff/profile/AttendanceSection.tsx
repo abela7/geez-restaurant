@@ -2,9 +2,21 @@
 import React, { useState, useEffect } from "react";
 import { T } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, CheckCircle2, Clock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { 
+  Calendar, CheckCircle2, Clock, Filter, ArrowUpDown, 
+  ChevronRight, ChevronLeft
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface AttendanceSectionProps {
   staffId: string;
@@ -17,37 +29,58 @@ interface AttendanceRecord {
   check_in: string | null;
   check_out: string | null;
   hours_worked: number;
+  notes: string | null;
 }
 
 const AttendanceSection: React.FC<AttendanceSectionProps> = ({ staffId }) => {
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [page, setPage] = useState(1);
+  const [sorting, setSorting] = useState<{field: string, direction: 'asc' | 'desc'}>({
+    field: "date",
+    direction: "desc"
+  });
+  const pageSize = 5;
   
   useEffect(() => {
-    const fetchAttendance = async () => {
-      setIsLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('staff_attendance')
-          .select('*')
-          .eq('staff_id', staffId)
-          .order('date', { ascending: false })
-          .limit(5);
-        
-        if (error) throw error;
-        
-        setAttendanceRecords(data as AttendanceRecord[]);
-      } catch (err: any) {
-        console.error('Error fetching attendance:', err);
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
     fetchAttendance();
-  }, [staffId]);
+  }, [staffId, statusFilter, page, sorting]);
+  
+  const fetchAttendance = async () => {
+    setIsLoading(true);
+    try {
+      let query = supabase
+        .from('staff_attendance')
+        .select('*')
+        .eq('staff_id', staffId)
+        .order(sorting.field, { ascending: sorting.direction === 'asc' })
+        .range((page - 1) * pageSize, page * pageSize - 1);
+      
+      if (statusFilter !== "all") {
+        query = query.eq('status', statusFilter);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      
+      setAttendanceRecords(data as AttendanceRecord[]);
+    } catch (err: any) {
+      console.error('Error fetching attendance:', err);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const toggleSort = () => {
+    setSorting(prev => ({
+      ...prev,
+      direction: prev.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
   
   const formatTime = (timeString: string | null) => {
     if (!timeString) return "N/A";
@@ -73,7 +106,7 @@ const AttendanceSection: React.FC<AttendanceSectionProps> = ({ staffId }) => {
   
   const formatDate = (dateString: string) => {
     try {
-      return format(new Date(dateString), "MMM d, yyyy");
+      return format(new Date(dateString), "EEE, MMM d, yyyy");
     } catch (error) {
       return "Invalid date";
     }
@@ -81,11 +114,41 @@ const AttendanceSection: React.FC<AttendanceSectionProps> = ({ staffId }) => {
   
   return (
     <Card>
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-2 flex flex-row items-center justify-between">
         <CardTitle className="flex items-center text-lg font-medium">
           <Calendar className="mr-2 h-5 w-5" />
-          <T text="Recent Attendance" />
+          <T text="Attendance Records" />
         </CardTitle>
+        
+        <div className="flex items-center space-x-2">
+          <Select
+            value={statusFilter}
+            onValueChange={(value) => {
+              setStatusFilter(value);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-[130px] h-8">
+              <Filter className="h-3.5 w-3.5 mr-2" />
+              <SelectValue placeholder="Filter" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all"><T text="All Status" /></SelectItem>
+              <SelectItem value="Present"><T text="Present" /></SelectItem>
+              <SelectItem value="Late"><T text="Late" /></SelectItem>
+              <SelectItem value="Absent"><T text="Absent" /></SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={toggleSort}
+            className="h-8 px-2"
+          >
+            <ArrowUpDown className="h-3.5 w-3.5" />
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -101,39 +164,71 @@ const AttendanceSection: React.FC<AttendanceSectionProps> = ({ staffId }) => {
             <p><T text="No attendance records found" /></p>
           </div>
         ) : (
-          <ul className="space-y-3">
-            {attendanceRecords.map((record) => (
-              <li key={record.id} className="border-b pb-3 last:border-b-0 last:pb-0">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="font-medium">{formatDate(record.date)}</p>
-                    <div className="flex items-center mt-1 space-x-4 text-sm text-muted-foreground">
+          <>
+            <ul className="space-y-3">
+              {attendanceRecords.map((record) => (
+                <li key={record.id} className="border p-3 rounded-md">
+                  <div className="flex justify-between items-start">
+                    <div>
                       <div className="flex items-center">
-                        <Clock className="h-3.5 w-3.5 mr-1" />
-                        <span>{formatTime(record.check_in)}</span>
+                        <span className="font-medium text-base">{formatDate(record.date)}</span>
+                        <Badge className={`ml-2 ${getStatusColor(record.status)}`}>
+                          {record.status}
+                        </Badge>
                       </div>
-                      {record.check_out && (
+                      <div className="flex items-center mt-2 space-x-4 text-sm text-muted-foreground">
                         <div className="flex items-center">
                           <Clock className="h-3.5 w-3.5 mr-1" />
-                          <span>{formatTime(record.check_out)}</span>
+                          <span><T text="In" />: {formatTime(record.check_in)}</span>
+                        </div>
+                        {record.check_out && (
+                          <div className="flex items-center">
+                            <Clock className="h-3.5 w-3.5 mr-1" />
+                            <span><T text="Out" />: {formatTime(record.check_out)}</span>
+                          </div>
+                        )}
+                      </div>
+                      {record.notes && (
+                        <p className="mt-2 text-sm italic">"{record.notes}"</p>
+                      )}
+                    </div>
+                    
+                    <div className="text-right">
+                      {record.hours_worked > 0 && (
+                        <div className="text-sm font-medium">
+                          {record.hours_worked.toFixed(2)} <T text="hours" />
                         </div>
                       )}
                     </div>
                   </div>
-                  <div className="flex flex-col items-end">
-                    <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(record.status)}`}>
-                      {record.status}
-                    </span>
-                    {record.hours_worked > 0 && (
-                      <span className="text-xs mt-1 text-muted-foreground">
-                        {record.hours_worked.toFixed(2)} hours
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+            
+            <div className="flex items-center justify-between mt-4">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                <T text="Previous" />
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                <T text="Page" /> {page}
+              </span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setPage(p => p + 1)}
+                disabled={attendanceRecords.length < pageSize}
+              >
+                <T text="Next" />
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </>
         )}
       </CardContent>
     </Card>

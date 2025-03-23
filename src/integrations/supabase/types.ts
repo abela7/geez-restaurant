@@ -988,6 +988,8 @@ export type Database = {
           bio: string | null
           created_at: string | null
           department: string | null
+          dishes_prepared: number | null
+          efficiency_rating: number | null
           email: string | null
           first_name: string | null
           gender: string | null
@@ -1001,6 +1003,9 @@ export type Database = {
           role: string
           skills: string[] | null
           start_date: string | null
+          total_customers_served: number | null
+          total_hours_worked: number | null
+          total_orders_completed: number | null
           updated_at: string | null
         }
         Insert: {
@@ -1009,6 +1014,8 @@ export type Database = {
           bio?: string | null
           created_at?: string | null
           department?: string | null
+          dishes_prepared?: number | null
+          efficiency_rating?: number | null
           email?: string | null
           first_name?: string | null
           gender?: string | null
@@ -1022,6 +1029,9 @@ export type Database = {
           role: string
           skills?: string[] | null
           start_date?: string | null
+          total_customers_served?: number | null
+          total_hours_worked?: number | null
+          total_orders_completed?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -1030,6 +1040,8 @@ export type Database = {
           bio?: string | null
           created_at?: string | null
           department?: string | null
+          dishes_prepared?: number | null
+          efficiency_rating?: number | null
           email?: string | null
           first_name?: string | null
           gender?: string | null
@@ -1043,6 +1055,9 @@ export type Database = {
           role?: string
           skills?: string[] | null
           start_date?: string | null
+          total_customers_served?: number | null
+          total_hours_worked?: number | null
+          total_orders_completed?: number | null
           updated_at?: string | null
         }
         Relationships: []

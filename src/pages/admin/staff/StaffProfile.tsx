@@ -1,22 +1,28 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, Edit, Trash, Clock, Calendar } from "lucide-react";
+import { 
+  ArrowLeft, Loader2, Edit, Trash, CalendarDays, 
+  DollarSign, ClipboardCheck
+} from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { type StaffMember } from "@/hooks/useStaffMembers";
 import useStaffProfile from "@/hooks/useStaffProfile";
 
 // Import profile components
-import ProfileHeader from "@/components/staff/profile/ProfileHeader";
 import ProfileSidebar from "@/components/staff/profile/ProfileSidebar";
+import ProfileHeader from "@/components/staff/profile/ProfileHeader";
 import AttendanceSection from "@/components/staff/profile/AttendanceSection";
 import PayrollSection from "@/components/staff/profile/PayrollSection";
 import TasksSection from "@/components/staff/profile/TasksSection";
+import PerformanceMetrics from "@/components/staff/profile/PerformanceMetrics";
 import ErrorState from "@/components/staff/profile/ErrorState";
+
+import {
+  Tabs, TabsList, TabsTrigger, TabsContent
+} from "@/components/ui/tabs";
 
 import {
   AlertDialog,
@@ -29,39 +35,26 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-
 const StaffProfile = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [seedDialogOpen, setSeedDialogOpen] = useState(false);
-  const [isSeedingData, setIsSeedingData] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const { t } = useLanguage();
   
   // Use the custom hook to fetch the staff profile
-  const { staffMember, isLoading, error, fetchStaffProfile } = useStaffProfile(id || '');
+  const { staffMember, isLoading, error, fetchStaffProfile, deleteStaffProfile } = useStaffProfile(id || '');
   
   const handleDeleteStaff = async () => {
     if (!id) return;
     
+    setIsDeleting(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', id);
+      const result = await deleteStaffProfile();
       
-      if (error) {
-        throw error;
+      if (!result.success) {
+        throw new Error(result.error || "An unknown error occurred");
       }
       
       toast({
@@ -78,177 +71,8 @@ const StaffProfile = () => {
         variant: "destructive"
       });
     } finally {
+      setIsDeleting(false);
       setDeleteDialogOpen(false);
-    }
-  };
-
-  const handleSeedData = async () => {
-    if (!id) return;
-    
-    setIsSeedingData(true);
-    try {
-      // Seed attendance data
-      const attendanceData = [
-        {
-          staff_id: id,
-          date: new Date(Date.now() - 86400000 * 0).toISOString().split('T')[0], // Today
-          status: 'Present',
-          check_in: new Date(Date.now() - 86400000 * 0 + 28800000).toISOString(), // 8:00 AM
-          check_out: new Date(Date.now() - 86400000 * 0 + 61200000).toISOString(), // 5:00 PM
-          hours_worked: 8,
-          notes: 'On time'
-        },
-        {
-          staff_id: id,
-          date: new Date(Date.now() - 86400000 * 1).toISOString().split('T')[0], // Yesterday
-          status: 'Present',
-          check_in: new Date(Date.now() - 86400000 * 1 + 29700000).toISOString(), // 8:15 AM
-          check_out: new Date(Date.now() - 86400000 * 1 + 61200000).toISOString(), // 5:00 PM
-          hours_worked: 7.75,
-          notes: 'Slightly late'
-        },
-        {
-          staff_id: id,
-          date: new Date(Date.now() - 86400000 * 2).toISOString().split('T')[0], // 2 days ago
-          status: 'Late',
-          check_in: new Date(Date.now() - 86400000 * 2 + 32400000).toISOString(), // 9:00 AM
-          check_out: new Date(Date.now() - 86400000 * 2 + 61200000).toISOString(), // 5:00 PM
-          hours_worked: 7,
-          notes: 'Traffic delay'
-        },
-        {
-          staff_id: id,
-          date: new Date(Date.now() - 86400000 * 3).toISOString().split('T')[0], // 3 days ago
-          status: 'Present',
-          check_in: new Date(Date.now() - 86400000 * 3 + 28800000).toISOString(), // 8:00 AM
-          check_out: new Date(Date.now() - 86400000 * 3 + 61200000).toISOString(), // 5:00 PM
-          hours_worked: 8,
-          notes: 'On time'
-        },
-        {
-          staff_id: id,
-          date: new Date(Date.now() - 86400000 * 4).toISOString().split('T')[0], // 4 days ago
-          status: 'Absent',
-          check_in: null,
-          check_out: null,
-          hours_worked: 0,
-          notes: 'Called in sick'
-        }
-      ];
-      
-      // Add attendance records
-      const { error: attendanceError } = await supabase
-        .from('staff_attendance')
-        .upsert(attendanceData, { onConflict: 'staff_id, date' });
-      
-      if (attendanceError) throw attendanceError;
-      
-      // Seed payroll data
-      const payrollData = [
-        {
-          staff_id: id,
-          pay_period: 'June 2023 - Week 1',
-          regular_hours: 38,
-          overtime_hours: 2,
-          total_hours: 40,
-          total_pay: 480,
-          payment_status: 'Paid',
-          payment_date: new Date(Date.now() - 86400000 * 14).toISOString() // 14 days ago
-        },
-        {
-          staff_id: id,
-          pay_period: 'June 2023 - Week 2',
-          regular_hours: 40,
-          overtime_hours: 0,
-          total_hours: 40,
-          total_pay: 440,
-          payment_status: 'Paid',
-          payment_date: new Date(Date.now() - 86400000 * 7).toISOString() // 7 days ago
-        },
-        {
-          staff_id: id,
-          pay_period: 'June 2023 - Week 3',
-          regular_hours: 32,
-          overtime_hours: 5,
-          total_hours: 37,
-          total_pay: 435,
-          payment_status: 'Pending',
-          payment_date: null
-        }
-      ];
-      
-      // Add payroll records
-      const { error: payrollError } = await supabase
-        .from('staff_payroll')
-        .upsert(payrollData, { onConflict: 'staff_id, pay_period' });
-      
-      if (payrollError) throw payrollError;
-      
-      // Seed task data
-      const taskData = [
-        {
-          staff_id: id,
-          title: 'Complete inventory check',
-          description: 'Verify all kitchen supplies and update the inventory system',
-          priority: 'High',
-          status: 'Pending',
-          due_date: new Date(Date.now() + 86400000 * 2).toISOString(), // 2 days from now
-          category: 'inventory'
-        },
-        {
-          staff_id: id,
-          title: 'Staff training',
-          description: 'Conduct training session for new kitchen staff',
-          priority: 'Medium',
-          status: 'In Progress',
-          due_date: new Date(Date.now() + 86400000 * 5).toISOString(), // 5 days from now
-          category: 'training'
-        },
-        {
-          staff_id: id,
-          title: 'Review menu items',
-          description: 'Evaluate current menu performance and suggest changes',
-          priority: 'Low',
-          status: 'Pending',
-          due_date: new Date(Date.now() + 86400000 * 7).toISOString(), // 7 days from now
-          category: 'menu'
-        },
-        {
-          staff_id: id,
-          title: 'Clean refrigerator',
-          description: 'Deep clean the walk-in refrigerator',
-          priority: 'Medium',
-          status: 'Completed',
-          due_date: new Date(Date.now() - 86400000 * 1).toISOString(), // 1 day ago
-          completed_at: new Date(Date.now() - 86400000 * 1).toISOString(),
-          category: 'cleaning'
-        }
-      ];
-      
-      // Add task records
-      const { error: taskError } = await supabase
-        .from('staff_tasks')
-        .upsert(taskData);
-      
-      if (taskError) throw taskError;
-      
-      toast({
-        title: "Success",
-        description: "Sample data has been added for this staff member",
-      });
-      
-      // Refresh the staff profile
-      fetchStaffProfile();
-    } catch (err: any) {
-      console.error('Error seeding data:', err);
-      toast({
-        title: "Error",
-        description: `Failed to seed data: ${err.message}`,
-        variant: "destructive"
-      });
-    } finally {
-      setIsSeedingData(false);
-      setSeedDialogOpen(false);
     }
   };
 
@@ -311,44 +135,6 @@ const StaffProfile = () => {
               <T text="Back to Directory" />
             </Button>
             
-            <Dialog open={seedDialogOpen} onOpenChange={setSeedDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Calendar className="mr-2 h-4 w-4" />
-                  <T text="Add Sample Data" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle><T text="Add Sample Data" /></DialogTitle>
-                  <DialogDescription>
-                    <T text="This will add sample attendance, payroll, and task data for this staff member." />
-                  </DialogDescription>
-                </DialogHeader>
-                <DialogFooter>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setSeedDialogOpen(false)}
-                  >
-                    <T text="Cancel" />
-                  </Button>
-                  <Button 
-                    onClick={handleSeedData}
-                    disabled={isSeedingData}
-                  >
-                    {isSeedingData ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        <T text="Adding..." />
-                      </>
-                    ) : (
-                      <T text="Add Sample Data" />
-                    )}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-            
             <Button 
               variant="outline"
               onClick={() => navigate(`/admin/staff/edit/${id}`)}
@@ -375,12 +161,36 @@ const StaffProfile = () => {
         <div className="lg:col-span-3 space-y-6">
           <ProfileHeader staff={staffMember} />
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <AttendanceSection staffId={staffMember.id} />
-            <PayrollSection staffId={staffMember.id} />
-          </div>
+          <PerformanceMetrics staff={staffMember} />
           
-          <TasksSection staffId={staffMember.id} />
+          <Tabs defaultValue="attendance">
+            <TabsList>
+              <TabsTrigger value="attendance">
+                <CalendarDays className="h-4 w-4 mr-2" />
+                <T text="Attendance" />
+              </TabsTrigger>
+              <TabsTrigger value="payroll">
+                <DollarSign className="h-4 w-4 mr-2" />
+                <T text="Payroll" />
+              </TabsTrigger>
+              <TabsTrigger value="tasks">
+                <ClipboardCheck className="h-4 w-4 mr-2" />
+                <T text="Tasks" />
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="attendance" className="mt-4">
+              <AttendanceSection staffId={staffMember.id} />
+            </TabsContent>
+            
+            <TabsContent value="payroll" className="mt-4">
+              <PayrollSection staffId={staffMember.id} />
+            </TabsContent>
+            
+            <TabsContent value="tasks" className="mt-4">
+              <TasksSection staffId={staffMember.id} />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
 
@@ -394,8 +204,19 @@ const StaffProfile = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel><T text="Cancel" /></AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteStaff} className="bg-red-500 hover:bg-red-600">
-              <T text="Delete" />
+            <AlertDialogAction 
+              onClick={handleDeleteStaff} 
+              className="bg-red-500 hover:bg-red-600"
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <T text="Deleting..." />
+                </>
+              ) : (
+                <T text="Delete" />
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

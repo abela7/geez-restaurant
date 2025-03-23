@@ -14,6 +14,7 @@ export const useStaffProfile = (id: string) => {
     setIsLoading(true);
     setError(null);
     try {
+      // Get the staff profile details
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -23,8 +24,60 @@ export const useStaffProfile = (id: string) => {
       if (error) {
         throw error;
       }
+
+      // Get the summary stats from related tables
+      const [attendanceResult, payrollResult, tasksResult] = await Promise.all([
+        // Get attendance count and hours
+        supabase
+          .from('staff_attendance')
+          .select('hours_worked, status')
+          .eq('staff_id', id),
+        
+        // Get payroll summary
+        supabase
+          .from('staff_payroll')
+          .select('total_hours, total_pay')
+          .eq('staff_id', id),
+        
+        // Get task completion stats
+        supabase
+          .from('staff_tasks')
+          .select('status')
+          .eq('staff_id', id)
+      ]);
+
+      // Calculate summary stats if data available
+      let summaryStats = {
+        total_hours_worked: data.total_hours_worked || 0,
+        total_pay: 0,
+        completed_tasks: 0,
+        pending_tasks: 0,
+        on_time_percentage: 0,
+      };
+
+      if (attendanceResult.data && attendanceResult.data.length > 0) {
+        const totalHours = attendanceResult.data.reduce((sum, record) => 
+          sum + (record.hours_worked || 0), 0);
+        summaryStats.total_hours_worked = totalHours;
+      }
+
+      if (payrollResult.data && payrollResult.data.length > 0) {
+        const totalPay = payrollResult.data.reduce((sum, record) => 
+          sum + (record.total_pay || 0), 0);
+        summaryStats.total_pay = totalPay;
+      }
+
+      if (tasksResult.data && tasksResult.data.length > 0) {
+        const tasks = tasksResult.data;
+        summaryStats.completed_tasks = tasks.filter(task => task.status === 'Completed').length;
+        summaryStats.pending_tasks = tasks.filter(task => task.status === 'Pending').length;
+        summaryStats.on_time_percentage = tasks.length > 0 
+          ? Math.round((summaryStats.completed_tasks / tasks.length) * 100) 
+          : 0;
+      }
       
-      setStaffMember(data as StaffMember);
+      // Merge the profile data with summary stats
+      setStaffMember({ ...data, ...summaryStats } as StaffMember);
     } catch (err: any) {
       console.error('Error fetching staff profile:', err);
       setError(err.message || 'Failed to load staff profile');
@@ -38,6 +91,27 @@ export const useStaffProfile = (id: string) => {
     }
   };
 
+  const deleteStaffProfile = async () => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      return { success: true };
+    } catch (err: any) {
+      console.error('Error deleting staff profile:', err);
+      toast({
+        title: "Error",
+        description: `Failed to delete profile: ${err.message}`,
+        variant: "destructive"
+      });
+      return { success: false, error: err.message };
+    }
+  }
+
   useEffect(() => {
     if (id) {
       fetchStaffProfile();
@@ -49,6 +123,7 @@ export const useStaffProfile = (id: string) => {
     isLoading,
     error,
     fetchStaffProfile,
+    deleteStaffProfile
   };
 };
 
