@@ -57,9 +57,10 @@ export const PayrollModal: React.FC<PayrollModalProps> = ({
     (formData.overtimeHours * formData.hourlyRate * 1.5)
   ).toFixed(2);
   
-  // Fix the error by using the correct format for the title
+  // Fix by using the correct format for the title based on how the t function is implemented in LanguageContext
+  const staffFullName = staffMember ? `${staffMember.first_name} ${staffMember.last_name}` : '';
   const title = staffMember 
-    ? t("Payroll for {0}", [staffMember.first_name + " " + staffMember.last_name]) 
+    ? t(`Payroll for ${staffFullName}`)
     : t("Create Payroll Record");
 
   return (
