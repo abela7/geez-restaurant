@@ -1,181 +1,215 @@
 
-import React from "react";
-import { PageHeader } from "@/components/ui/page-header";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Clock, Users, ChefHat, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Loader2, Utensils, AlertCircle, Package, ShoppingBag } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { StaffMember } from "@/hooks/useStaffMembers";
+import { T } from "@/contexts/LanguageContext";
+
+// Import our new components
+import ClockInOutCard from "@/components/staff/ClockInOutCard";
+import TasksWidget from "@/components/staff/TasksWidget";
+import StaffDashboardHeader from "@/components/staff/StaffDashboardHeader";
 
 const KitchenDashboard = () => {
-  const { t } = useLanguage();
-  
+  const [isLoading, setIsLoading] = useState(true);
+  const [staffProfile, setStaffProfile] = useState<StaffMember | null>(null);
+  const [kitchenStats, setKitchenStats] = useState({
+    orders: 0,
+    pending: 0,
+    completed: 0,
+    lowStock: 0
+  });
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          throw new Error("User not authenticated");
+        }
+        
+        // Get staff profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        if (profileError) {
+          throw profileError;
+        }
+        
+        setStaffProfile(profileData as StaffMember);
+        
+        // For sample data, we'll set some dummy stats
+        // In a production app, you would fetch real data from the database
+        setKitchenStats({
+          orders: 15,
+          pending: 4,
+          completed: 11,
+          lowStock: 3
+        });
+        
+      } catch (error: any) {
+        console.error("Error fetching data:", error);
+        toast({
+          title: "Error loading dashboard",
+          description: error.message,
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-[calc(100vh-200px)]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Fallback if staff profile not found
+  if (!staffProfile) {
+    return (
+      <div className="text-center py-12">
+        <h2 className="text-2xl font-bold mb-2"><T text="Staff Profile Not Found" /></h2>
+        <p className="text-muted-foreground">
+          <T text="Please contact an administrator to set up your staff profile." />
+        </p>
+      </div>
+    );
+  }
+
+  const staffName = `${staffProfile.first_name || ""} ${staffProfile.last_name || ""}`.trim();
+
   return (
-    <div className="container mx-auto p-4 max-w-5xl">
-      <PageHeader
-        title={<T text="Kitchen Dashboard" />}
-        description={<T text="Overview of kitchen operations" />}
-        className="mb-4"
+    <div className="space-y-6">
+      <StaffDashboardHeader 
+        staffId={staffProfile.id}
+        staffName={staffName}
+        role={staffProfile.role}
       />
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center">
-              <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
-              <T text="Current Orders" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              <T text="4 pending, 8 in preparation" />
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center">
-              <ChefHat className="mr-2 h-4 w-4 text-muted-foreground" />
-              <T text="Active Staff" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">5</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              <T text="3 chefs, 2 assistants" />
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center">
-              <AlertTriangle className="mr-2 h-4 w-4 text-amber-500" />
-              <T text="Inventory Alerts" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">3</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              <T text="Items requiring attention" />
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">
-              <T text="Pending Orders" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y">
-              {[1, 2, 3, 4].map((order) => (
-                <div key={order} className="p-4 hover:bg-muted/50">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <div className="font-medium">
-                        <T text="Order" /> #{Math.floor(Math.random() * 10000)}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        <T text="Table" /> #{Math.floor(Math.random() * 20)}
-                      </div>
-                    </div>
-                    <div className="px-2 py-1 bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 rounded text-xs font-medium">
-                      <T text="Pending" />
-                    </div>
-                  </div>
-                  <div className="text-sm">
-                    <span className="font-medium">3 × </span> Doro Wat<br />
-                    <span className="font-medium">2 × </span> Tibs
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">
-              <T text="Today's Tasks" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y">
-              {[
-                { title: "Prepare injera batter", status: "completed" },
-                { title: "Marinate beef for tibs", status: "completed" },
-                { title: "Check spice inventory", status: "pending" },
-                { title: "Clean kitchen area", status: "pending" },
-                { title: "Prepare berbere mix", status: "pending" }
-              ].map((task, index) => (
-                <div key={index} className="p-4 hover:bg-muted/50 flex items-start">
-                  {task.status === "completed" ? (
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 mr-3 flex-shrink-0" />
-                  ) : (
-                    <div className="h-5 w-5 border-2 rounded-full mt-0.5 mr-3 flex-shrink-0" />
-                  )}
-                  <div className={task.status === "completed" ? "line-through text-muted-foreground" : ""}>
-                    {t(task.title)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">
-            <T text="Menu Availability" />
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Tabs defaultValue="unavailable">
-            <div className="px-4 pt-2">
-              <TabsList>
-                <TabsTrigger value="unavailable">
-                  <T text="Unavailable Items" />
-                </TabsTrigger>
-                <TabsTrigger value="available">
-                  <T text="All Items" />
-                </TabsTrigger>
-              </TabsList>
-            </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2">
+          <Tabs defaultValue="overview" className="h-full space-y-6">
+            <TabsList>
+              <TabsTrigger value="overview"><T text="Overview" /></TabsTrigger>
+              <TabsTrigger value="orders"><T text="Orders" /></TabsTrigger>
+              <TabsTrigger value="inventory"><T text="Inventory" /></TabsTrigger>
+            </TabsList>
             
-            <TabsContent value="unavailable" className="p-0 mt-0">
-              <div className="divide-y">
-                {[
-                  { name: "Kitfo Special", category: "Main Course" },
-                  { name: "Shiro", category: "Vegetarian" },
-                  { name: "Special Tibs", category: "Main Course" }
-                ].map((item, index) => (
-                  <div key={index} className="p-4 hover:bg-muted/50 flex justify-between items-center">
-                    <div>
-                      <div className="font-medium">{item.name}</div>
-                      <div className="text-sm text-muted-foreground">{t(item.category)}</div>
-                    </div>
-                    <button className="text-sm text-green-600 hover:text-green-700 font-medium">
-                      <T text="Mark Available" />
-                    </button>
-                  </div>
-                ))}
+            <TabsContent value="overview" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      <T text="Today's Orders" />
+                    </CardTitle>
+                    <Utensils className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{kitchenStats.orders}</div>
+                    <p className="text-xs text-muted-foreground">
+                      +{Math.floor(Math.random() * 20)}% <T text="from yesterday" />
+                    </p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      <T text="Pending Orders" />
+                    </CardTitle>
+                    <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{kitchenStats.pending}</div>
+                    <p className="text-xs text-muted-foreground">
+                      <T text="Need your attention" />
+                    </p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      <T text="Low Stock Items" />
+                    </CardTitle>
+                    <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{kitchenStats.lowStock}</div>
+                    <p className="text-xs text-muted-foreground">
+                      <T text="Items need restocking" />
+                    </p>
+                  </CardContent>
+                </Card>
               </div>
+              
+              <Card className="border-2 border-dashed">
+                <CardHeader>
+                  <CardTitle><T text="Kitchen Productivity" /></CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-center text-muted-foreground py-6">
+                    <Package className="h-8 w-8 mx-auto mb-2" />
+                    <T text="Productivity metrics will be available soon" />
+                  </p>
+                  {/* We will implement this in future updates */}
+                </CardContent>
+              </Card>
             </TabsContent>
             
-            <TabsContent value="available" className="mt-0">
-              <div className="p-4 text-center text-muted-foreground">
-                <T text="View all menu items and their availability status" />
-              </div>
+            <TabsContent value="orders" className="space-y-4">
+              <Card className="border-2 border-dashed">
+                <CardHeader>
+                  <CardTitle><T text="Pending Orders" /></CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-center text-muted-foreground py-6">
+                    <ShoppingBag className="h-8 w-8 mx-auto mb-2" />
+                    <T text="Order queue will be available soon" />
+                  </p>
+                  {/* We will implement this in future updates */}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="inventory" className="space-y-4">
+              <Card className="border-2 border-dashed">
+                <CardHeader>
+                  <CardTitle><T text="Low Stock Alerts" /></CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-center text-muted-foreground py-6">
+                    <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+                    <T text="Inventory alerts will be available soon" />
+                  </p>
+                  {/* We will implement this in future updates */}
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
-        </CardContent>
-      </Card>
+        </div>
+        
+        <div className="space-y-6">
+          <ClockInOutCard staffId={staffProfile.id} staffName={staffName} />
+          <TasksWidget staffId={staffProfile.id} staffName={staffName} />
+        </div>
+      </div>
     </div>
   );
 };
