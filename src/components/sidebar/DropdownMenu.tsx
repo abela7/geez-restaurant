@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -24,16 +23,18 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({
   
   // Ensure consistent path construction for menu items
   const constructPath = (to: string) => {
-    // If parentPath already contains /admin, don't add it again
-    if (parentPath.startsWith('/admin/')) {
+    // If to is already a full path starting with /, just return it
+    if (to.startsWith('/')) {
+      return to;
+    }
+    
+    // If parentPath already ends with a /, don't add another slash
+    if (parentPath.endsWith('/')) {
       return `${parentPath}${to}`;
     }
-    // If parentPath is just /admin, append the path without a duplicate slash
-    if (parentPath === '/admin') {
-      return `/admin/${to}`;
-    }
-    // Default case, ensure proper formatting
-    return `/admin${parentPath}/${to}`;
+    
+    // Otherwise, add a / between parentPath and to
+    return `${parentPath}/${to}`;
   };
   
   return (

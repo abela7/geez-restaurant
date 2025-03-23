@@ -12,6 +12,7 @@ import { useForm, Controller } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
+import useRoles from "@/hooks/useRoles";
 
 import {
   Form,
@@ -30,17 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const roles = [
-  { value: "Chef", label: "Chef" },
-  { value: "Sous Chef", label: "Sous Chef" },
-  { value: "Line Cook", label: "Line Cook" },
-  { value: "Server", label: "Server" },
-  { value: "Host", label: "Host" },
-  { value: "Bartender", label: "Bartender" },
-  { value: "Manager", label: "Manager" },
-  { value: "Assistant Manager", label: "Assistant Manager" },
-];
-
+// Static department options
 const departments = [
   { value: "Kitchen", label: "Kitchen" },
   { value: "Front of House", label: "Front of House" },
@@ -54,6 +45,9 @@ const NewStaff = () => {
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  
+  // Fetch roles from the database
+  const { data: roles, isLoading: rolesLoading, error: rolesError } = useRoles();
 
   const form = useForm({
     defaultValues: {
@@ -165,6 +159,16 @@ const NewStaff = () => {
       setUploading(false);
     }
   };
+  
+  // Show loading state for roles if needed
+  if (rolesLoading) {
+    console.log('Loading roles...');
+  }
+
+  // Show error state for roles if needed
+  if (rolesError) {
+    console.error('Error loading roles:', rolesError);
+  }
   
   return (
     <>
@@ -328,11 +332,18 @@ const NewStaff = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
+                          {/* Use dynamic roles from database instead of hardcoded values */}
                           {roles.map((role) => (
-                            <SelectItem key={role.value} value={role.value}>
-                              {role.label}
+                            <SelectItem key={role.id} value={role.name}>
+                              {role.name}
                             </SelectItem>
                           ))}
+                          {/* Fallback if no roles are found */}
+                          {roles.length === 0 && (
+                            <SelectItem value="default" disabled>
+                              No roles available
+                            </SelectItem>
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
