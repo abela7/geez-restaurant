@@ -1,8 +1,17 @@
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { StaffMember } from "./useStaffMembers";
+import { 
+  fetchStaffProfileById, 
+  fetchAttendanceStats, 
+  fetchPayrollData, 
+  fetchTaskStats,
+  updateStaffProfileData,
+  deleteStaffProfileData
+} from "@/services/staff/profileService";
+import { uploadStaffImage } from "@/utils/staffUtils";
+import { handleApiError } from "@/utils/staffUtils";
 
 export const useStaffProfile = (id: string) => {
   const [staffMember, setStaffMember] = useState<StaffMember | null>(null);
@@ -17,60 +26,38 @@ export const useStaffProfile = (id: string) => {
     setError(null);
     try {
       // Get the staff profile details
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', id)
-        .single();
-      
-      if (error) {
-        throw error;
-      }
+      const profileData = await fetchStaffProfileById(id);
 
-      // Get the summary stats from related tables
-      const [attendanceResult, payrollResult, tasksResult] = await Promise.all([
-        // Get attendance count and hours
-        supabase
-          .from('staff_attendance')
-          .select('hours_worked, status')
-          .eq('staff_id', id),
-        
-        // Get payroll summary
-        supabase
-          .from('staff_payroll')
-          .select('total_hours, total_pay')
-          .eq('staff_id', id),
-        
-        // Get task completion stats
-        supabase
-          .from('staff_tasks')
-          .select('status')
-          .eq('staff_id', id)
+      // Get the related data in parallel
+      const [attendanceData, payrollData, tasksData] = await Promise.all([
+        fetchAttendanceStats(id),
+        fetchPayrollData(id),
+        fetchTaskStats(id)
       ]);
 
       // Calculate summary stats if data available
       let summaryStats = {
-        total_hours_worked: data.total_hours_worked || 0,
+        total_hours_worked: profileData.total_hours_worked || 0,
         total_pay: 0,
         completed_tasks: 0,
         pending_tasks: 0,
         on_time_percentage: 0,
       };
 
-      if (attendanceResult.data && attendanceResult.data.length > 0) {
-        const totalHours = attendanceResult.data.reduce((sum, record) => 
+      if (attendanceData && attendanceData.length > 0) {
+        const totalHours = attendanceData.reduce((sum, record) => 
           sum + (record.hours_worked || 0), 0);
         summaryStats.total_hours_worked = totalHours;
       }
 
-      if (payrollResult.data && payrollResult.data.length > 0) {
-        const totalPay = payrollResult.data.reduce((sum, record) => 
+      if (payrollData && payrollData.length > 0) {
+        const totalPay = payrollData.reduce((sum, record) => 
           sum + (record.total_pay || 0), 0);
         summaryStats.total_pay = totalPay;
       }
 
-      if (tasksResult.data && tasksResult.data.length > 0) {
-        const tasks = tasksResult.data;
+      if (tasksData && tasksData.length > 0) {
+        const tasks = tasksData;
         summaryStats.completed_tasks = tasks.filter(task => task.status === 'Completed').length;
         summaryStats.pending_tasks = tasks.filter(task => task.status === 'Pending').length;
         summaryStats.on_time_percentage = tasks.length > 0 
@@ -79,57 +66,12 @@ export const useStaffProfile = (id: string) => {
       }
       
       // Merge the profile data with summary stats
-      setStaffMember({ ...data, ...summaryStats } as StaffMember);
+      setStaffMember({ ...profileData, ...summaryStats } as StaffMember);
     } catch (err: any) {
-      console.error('Error fetching staff profile:', err);
-      setError(err.message || 'Failed to load staff profile');
-      toast({
-        title: "Error",
-        description: `Failed to load staff profile: ${err.message}`,
-        variant: "destructive"
-      });
+      const errorMessage = handleApiError(err, 'Failed to load staff profile', toast);
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  // Upload staff image to storage
-  const uploadStaffImage = async (file: File): Promise<string | null> => {
-    try {
-      // Create a unique filename using UUID
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${crypto.randomUUID()}.${fileExt}`;
-      const filePath = `${fileName}`;
-      
-      // Upload to staff_profiles bucket
-      const { error: uploadError, data: uploadData } = await supabase.storage
-        .from('staff_profiles')
-        .upload(filePath, file);
-      
-      if (uploadError) {
-        console.error('Error uploading image:', uploadError);
-        toast({
-          title: "Error",
-          description: `Failed to upload image: ${uploadError.message}`,
-          variant: "destructive"
-        });
-        return null;
-      }
-      
-      // Get the public URL
-      const { data } = supabase.storage
-        .from('staff_profiles')
-        .getPublicUrl(filePath);
-      
-      return data.publicUrl;
-    } catch (err: any) {
-      console.error('Error in image upload:', err);
-      toast({
-        title: "Error",
-        description: `Image upload failed: ${err.message}`,
-        variant: "destructive"
-      });
-      return null;
     }
   };
 
@@ -137,34 +79,11 @@ export const useStaffProfile = (id: string) => {
     if (!id) return null;
     
     try {
-      // Handle image upload if provided
-      let imageUrl = updates.image_url;
-      if (profileImage) {
-        const uploadedUrl = await uploadStaffImage(profileImage);
-        if (uploadedUrl) {
-          imageUrl = uploadedUrl;
-        }
-      }
-      
-      const dataToUpdate = {
-        ...updates,
-        image_url: imageUrl
-      };
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .update(dataToUpdate)
-        .eq('id', id)
-        .select()
-        .single();
-      
-      if (error) {
-        throw error;
-      }
+      const updatedData = await updateStaffProfileData(id, updates, profileImage);
       
       // Update the local state with new data
       if (staffMember) {
-        setStaffMember({ ...staffMember, ...data });
+        setStaffMember({ ...staffMember, ...updatedData });
       }
       
       toast({
@@ -172,35 +91,19 @@ export const useStaffProfile = (id: string) => {
         description: "Profile updated successfully",
       });
       
-      return data;
+      return updatedData;
     } catch (err: any) {
-      console.error('Error updating staff profile:', err);
-      toast({
-        title: "Error",
-        description: `Failed to update profile: ${err.message}`,
-        variant: "destructive"
-      });
+      handleApiError(err, 'Failed to update profile', toast);
       return null;
     }
   };
 
   const deleteStaffProfile = async () => {
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-      
+      await deleteStaffProfileData(id);
       return { success: true };
     } catch (err: any) {
-      console.error('Error deleting staff profile:', err);
-      toast({
-        title: "Error",
-        description: `Failed to delete profile: ${err.message}`,
-        variant: "destructive"
-      });
+      handleApiError(err, 'Failed to delete profile', toast);
       return { success: false, error: err.message };
     }
   }
