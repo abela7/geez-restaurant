@@ -1,6 +1,5 @@
 
 import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -13,6 +12,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { StaffAttendance } from "@/hooks/useStaffAttendance";
 import { cn } from "@/lib/utils";
+import { SideModal } from "@/components/ui/side-modal";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type StaffMember = {
   id: string;
@@ -118,12 +119,13 @@ const AttendanceRecordDialog: React.FC<AttendanceRecordDialogProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle><T text="Record Staff Attendance" /></DialogTitle>
-        </DialogHeader>
-        
+    <SideModal 
+      open={isOpen} 
+      onOpenChange={() => onClose()}
+      title={<T text="Record Staff Attendance" />}
+      width="md"
+    >
+      <ScrollArea className="h-full pr-4">
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="staff"><T text="Staff Member" /></Label>
@@ -232,24 +234,24 @@ const AttendanceRecordDialog: React.FC<AttendanceRecordDialogProps> = ({
               placeholder={t("Optional notes about this attendance record")}
             />
           </div>
+
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button variant="outline" onClick={onClose}>
+              <T text="Cancel" />
+            </Button>
+            <Button 
+              onClick={handleSubmit} 
+              disabled={isSubmitting || !formData.staff_id}
+            >
+              {isSubmitting ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : null}
+              <T text="Save Record" />
+            </Button>
+          </div>
         </div>
-        
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            <T text="Cancel" />
-          </Button>
-          <Button 
-            onClick={handleSubmit} 
-            disabled={isSubmitting || !formData.staff_id}
-          >
-            {isSubmitting ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : null}
-            <T text="Save Record" />
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </ScrollArea>
+    </SideModal>
   );
 };
 

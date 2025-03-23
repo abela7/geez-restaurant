@@ -1,4 +1,3 @@
-
 /* Fix for mobile sidebar overlay */
 @media (max-width: 768px) {
   /* Ensure sidebar is above the overlay */
@@ -112,6 +111,12 @@
     padding: 0.5rem;
     background-color: hsl(var(--background));
     border-top: 1px solid hsl(var(--border));
+  }
+  
+  /* Ensure we can scroll on mobile */
+  .side-modal-content {
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
   }
 }
 

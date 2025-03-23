@@ -27,7 +27,7 @@ export function SideModal({
   className,
   width = "md",
   showCloseButton = true,
-  fullScreenOnMobile = false,
+  fullScreenOnMobile = true,
 }: SideModalProps) {
   const isMobile = useIsMobile()
   

@@ -1,6 +1,5 @@
 
 import React from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { taskCategories } from "@/constants/taskCategories";
 import { StaffMember } from "@/hooks/useStaffMembers";
+import { SideModal } from "@/components/ui/side-modal";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export type NewTaskFormData = {
   title: string;
@@ -40,15 +41,14 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
   const { t } = useLanguage();
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle><T text="Create New Task" /></DialogTitle>
-          <DialogDescription>
-            <T text="Assign a new task to a staff member" />
-          </DialogDescription>
-        </DialogHeader>
-        
+    <SideModal 
+      open={open} 
+      onOpenChange={onOpenChange}
+      title={<T text="Create New Task" />}
+      description={<T text="Assign a new task to a staff member" />}
+      width="md"
+    >
+      <ScrollArea className="h-full pr-4">
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
             <Label htmlFor="title"><T text="Task Title" /></Label>
@@ -152,18 +152,18 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
               </SelectContent>
             </Select>
           </div>
-        </div>
         
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            <T text="Cancel" />
-          </Button>
-          <Button onClick={handleCreateTask}>
-            <T text="Create Task" />
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              <T text="Cancel" />
+            </Button>
+            <Button onClick={handleCreateTask}>
+              <T text="Create Task" />
+            </Button>
+          </div>
+        </div>
+      </ScrollArea>
+    </SideModal>
   );
 };
 

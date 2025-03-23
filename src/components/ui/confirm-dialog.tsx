@@ -1,16 +1,8 @@
 
 import React from "react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { useLanguage, T } from "@/contexts/LanguageContext";
+import { SideModal } from "@/components/ui/side-modal";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -39,20 +31,22 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   };
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>{cancelLabel || t("Cancel")}</AlertDialogCancel>
-          <AlertDialogAction onClick={handleConfirm}>
-            {confirmLabel || t("Confirm")}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <SideModal
+      open={isOpen}
+      onOpenChange={onClose}
+      title={title}
+      description={description}
+      width="sm"
+    >
+      <div className="flex justify-end space-x-2 pt-4">
+        <Button variant="outline" onClick={onClose}>
+          {cancelLabel || t("Cancel")}
+        </Button>
+        <Button onClick={handleConfirm}>
+          {confirmLabel || t("Confirm")}
+        </Button>
+      </div>
+    </SideModal>
   );
 };
 
