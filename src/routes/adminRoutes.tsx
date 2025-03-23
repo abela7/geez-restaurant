@@ -94,6 +94,8 @@ const mockUser = {
 };
 
 const AdminRoutes = () => {
+  console.log("AdminRoutes component loaded");
+  
   // Check if user exists and is authenticated
   if (!isAuthenticated()) {
     // For now, let's create a mock user

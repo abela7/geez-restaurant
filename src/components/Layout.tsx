@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { MainSidebar } from './MainSidebar';
@@ -25,10 +24,11 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'admin', contentOnly = false }) => {
-  // Changed initial state to false so the sidebar is open by default
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useIsMobile();
   const location = useLocation();
+  
+  console.log("Current location in Layout:", location.pathname);
   
   useEffect(() => {
     const storedCollapsed = localStorage.getItem('sidebarCollapsed');
@@ -52,23 +52,35 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
       return [{ label: 'Dashboard', path: '/' }];
     }
     
-    const breadcrumbs = [{ label: 'Dashboard', path: '/' }];
+    const breadcrumbs = [];
+    let basePath = '';
     
-    let currentPath = '';
-    paths.forEach((path) => {
-      currentPath += `/${path}`;
+    if (userInterface === 'admin') {
+      breadcrumbs.push({ label: 'Dashboard', path: '/admin' });
+      basePath = '/admin';
+    } else {
+      basePath = `/${paths[0]}`;
+      breadcrumbs.push({ label: paths[0].charAt(0).toUpperCase() + paths[0].slice(1), path: basePath });
+    }
+    
+    const startIdx = userInterface === 'admin' && paths[0] === 'admin' ? 1 : 1;
+    
+    for (let i = startIdx; i < paths.length; i++) {
+      const path = paths[i];
+      basePath += `/${path}`;
       const label = path
         .split('-')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
       
-      breadcrumbs.push({ label, path: currentPath });
-    });
+      breadcrumbs.push({ label, path: basePath });
+    }
     
     return breadcrumbs;
   };
   
   const breadcrumbs = getBreadcrumbs();
+  console.log("Generated breadcrumbs:", breadcrumbs);
 
   if (contentOnly) {
     return <div className="compact-layout compact-ui">{children}</div>;
@@ -87,7 +99,7 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
           sidebarCollapsed ? "-translate-x-full" : "translate-x-0"
         )}>
           <MainSidebar
-            collapsed={false} // Always show full sidebar on mobile when opened
+            collapsed={false}
             toggleCollapse={toggleSidebar}
             interface={userInterface}
           />
