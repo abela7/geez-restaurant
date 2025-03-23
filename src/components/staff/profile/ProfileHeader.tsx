@@ -98,6 +98,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ staff }) => {
                 </div>
                 
                 <div>
+                  <h3 className="text-sm font-medium text-muted-foreground"><T text="Username" /></h3>
+                  <p className="mt-1 font-medium">
+                    {staff.username || <span className="text-muted-foreground">Not set</span>}
+                  </p>
+                </div>
+                
+                <div>
                   <h3 className="text-sm font-medium text-muted-foreground"><T text="Hourly Rate" /></h3>
                   <p className="mt-1 font-medium">
                     {staff.hourly_rate ? `£${staff.hourly_rate.toFixed(2)}` : <span className="text-muted-foreground">Not set</span>}

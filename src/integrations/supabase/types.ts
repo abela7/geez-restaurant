@@ -998,6 +998,7 @@ export type Database = {
           id: string
           image_url: string | null
           last_name: string | null
+          password: string | null
           performance: number | null
           phone: string | null
           role: string
@@ -1007,6 +1008,7 @@ export type Database = {
           total_hours_worked: number | null
           total_orders_completed: number | null
           updated_at: string | null
+          username: string | null
         }
         Insert: {
           address?: string | null
@@ -1024,6 +1026,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           last_name?: string | null
+          password?: string | null
           performance?: number | null
           phone?: string | null
           role: string
@@ -1033,6 +1036,7 @@ export type Database = {
           total_hours_worked?: number | null
           total_orders_completed?: number | null
           updated_at?: string | null
+          username?: string | null
         }
         Update: {
           address?: string | null
@@ -1050,6 +1054,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           last_name?: string | null
+          password?: string | null
           performance?: number | null
           phone?: string | null
           role?: string
@@ -1059,6 +1064,7 @@ export type Database = {
           total_hours_worked?: number | null
           total_orders_completed?: number | null
           updated_at?: string | null
+          username?: string | null
         }
         Relationships: []
       }

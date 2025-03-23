@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -27,6 +26,8 @@ type StaffFormValues = {
   hourly_rate: string;
   bio: string;
   gender: string;
+  username: string;
+  password: string;
 };
 
 const EditStaff = () => {
@@ -51,7 +52,9 @@ const EditStaff = () => {
       address: "",
       hourly_rate: "",
       bio: "",
-      gender: ""
+      gender: "",
+      username: "",
+      password: ""
     }
   });
 
@@ -84,7 +87,9 @@ const EditStaff = () => {
             address: data.address || "",
             hourly_rate: data.hourly_rate?.toString() || "",
             bio: data.bio || "",
-            gender: data.gender || ""
+            gender: data.gender || "",
+            username: data.username || "",
+            password: ""
           });
           
           setImageUrl(data.image_url || null);
@@ -112,26 +117,22 @@ const EditStaff = () => {
     setUploadingImage(true);
     
     try {
-      // Create a unique file name using timestamp and original file name
       const fileExt = file.name.split('.').pop();
       const fileName = `${id}-${Date.now()}.${fileExt}`;
       const filePath = `staff_images/${fileName}`;
       
-      // Upload image to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('staff_images')
         .upload(filePath, file);
       
       if (uploadError) throw uploadError;
       
-      // Get public URL for the uploaded image
       const { data } = supabase.storage
         .from('staff_images')
         .getPublicUrl(filePath);
       
       const publicUrl = data.publicUrl;
       
-      // Update staff profile with new image URL
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ image_url: publicUrl })
@@ -163,7 +164,6 @@ const EditStaff = () => {
     setUploadingImage(true);
     
     try {
-      // Update staff profile to remove image URL
       const { error } = await supabase
         .from('profiles')
         .update({ image_url: null })
@@ -196,21 +196,28 @@ const EditStaff = () => {
     setError(null);
     
     try {
+      const updateData: Record<string, any> = {
+        first_name: data.first_name,
+        last_name: data.last_name,
+        role: data.role,
+        department: data.department,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        hourly_rate: data.hourly_rate ? parseFloat(data.hourly_rate) : null,
+        bio: data.bio,
+        gender: data.gender,
+        username: data.username,
+        updated_at: new Date().toISOString()
+      };
+      
+      if (data.password && data.password.trim().length > 0) {
+        updateData.password = data.password;
+      }
+      
       const { error } = await supabase
         .from('profiles')
-        .update({
-          first_name: data.first_name,
-          last_name: data.last_name,
-          role: data.role,
-          department: data.department,
-          email: data.email,
-          phone: data.phone,
-          address: data.address,
-          hourly_rate: data.hourly_rate ? parseFloat(data.hourly_rate) : null,
-          bio: data.bio,
-          gender: data.gender,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', id);
       
       if (error) {
@@ -236,16 +243,14 @@ const EditStaff = () => {
     }
   };
 
-  // Get initials for Avatar fallback
   const getInitials = () => {
     const firstName = form.watch("first_name") || "";
     const lastName = form.watch("last_name") || "";
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
 
-  // Handle the image select button click without triggering form submission
   const handleSelectImageClick = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent form submission
+    e.preventDefault();
     document.getElementById("profile-picture")?.click();
   };
 
@@ -290,7 +295,6 @@ const EditStaff = () => {
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            {/* Personal Information Card */}
             <Card>
               <CardHeader>
                 <CardTitle><T text="Personal Information" /></CardTitle>
@@ -332,6 +336,28 @@ const EditStaff = () => {
                   </div>
                 </div>
                 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="username"><T text="Username" /></Label>
+                    <Input 
+                      id="username" 
+                      {...form.register("username")}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password"><T text="Password" /></Label>
+                    <Input 
+                      id="password" 
+                      type="password" 
+                      placeholder="Leave blank to keep current password"
+                      {...form.register("password")}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      <T text="Leave blank to keep the current password" />
+                    </p>
+                  </div>
+                </div>
+                
                 <div className="space-y-2">
                   <Label htmlFor="address"><T text="Address" /></Label>
                   <Input 
@@ -370,7 +396,6 @@ const EditStaff = () => {
               </CardContent>
             </Card>
 
-            {/* Employment Details Card */}
             <Card>
               <CardHeader>
                 <CardTitle><T text="Employment Details" /></CardTitle>
@@ -480,7 +505,7 @@ const EditStaff = () => {
                       <T text="Drag and drop or click to browse" />
                     </p>
                     <Button
-                      type="button" // Added type="button" to prevent form submission
+                      type="button"
                       variant="outline"
                       size="sm"
                       className="mt-4"
@@ -513,7 +538,7 @@ const EditStaff = () => {
         
         <div className="mt-6 flex justify-end space-x-2">
           <Button 
-            type="button" // Changed to button type to prevent form submission
+            type="button"
             variant="outline" 
             onClick={() => navigate("/admin/staff/directory")}
             disabled={isSaving}

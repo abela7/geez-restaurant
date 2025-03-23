@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { StaffMember } from "@/hooks/useStaffMembers";
 import { uploadStaffImage } from "@/utils/staffUtils";
+import * as bcrypt from 'bcryptjs';
 
 /**
  * Fetches all staff profiles
@@ -28,9 +29,16 @@ export const addStaffMemberData = async (staffData: Omit<StaffMember, 'id'>, pro
     }
   }
   
+  // Hash password if provided
+  let hashedPassword = staffData.password;
+  if (staffData.password) {
+    hashedPassword = await bcrypt.hash(staffData.password, 10);
+  }
+  
   const dataToInsert = {
     ...staffData,
-    image_url: imageUrl
+    image_url: imageUrl,
+    password: hashedPassword
   };
   
   const { data, error } = await supabase
@@ -55,9 +63,16 @@ export const updateStaffMemberData = async (id: string, staffData: Partial<Staff
     }
   }
   
+  // Hash password if provided and changed
+  let hashedPassword = staffData.password;
+  if (staffData.password && staffData.password.length > 0) {
+    hashedPassword = await bcrypt.hash(staffData.password, 10);
+  }
+  
   const dataToUpdate = {
     ...staffData,
-    image_url: imageUrl
+    image_url: imageUrl,
+    password: hashedPassword
   };
   
   const { data, error } = await supabase

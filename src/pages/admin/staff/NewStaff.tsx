@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -31,7 +30,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Static department options
 const departments = [
   { value: "Kitchen", label: "Kitchen" },
   { value: "Front of House", label: "Front of House" },
@@ -46,7 +44,6 @@ const NewStaff = () => {
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   
-  // Fetch roles from the database
   const { data: roles, isLoading: rolesLoading, error: rolesError } = useRoles();
 
   const form = useForm({
@@ -61,6 +58,8 @@ const NewStaff = () => {
       hourly_rate: "",
       bio: "",
       image_url: "",
+      username: "",
+      password: ""
     },
   });
 
@@ -69,7 +68,6 @@ const NewStaff = () => {
       const file = e.target.files[0];
       setProfileImage(file);
       
-      // Create preview
       const reader = new FileReader();
       reader.onload = (event) => {
         setImagePreview(event.target?.result as string);
@@ -116,7 +114,6 @@ const NewStaff = () => {
     try {
       setUploading(true);
       
-      // Upload image if selected
       let imageUrl = null;
       if (profileImage) {
         imageUrl = await uploadImage();
@@ -125,7 +122,6 @@ const NewStaff = () => {
         }
       }
       
-      // Format numeric values
       const formattedData = {
         ...data,
         hourly_rate: data.hourly_rate ? parseFloat(data.hourly_rate) : null,
@@ -146,7 +142,6 @@ const NewStaff = () => {
         description: "Staff member has been added successfully",
       });
       
-      // Navigate to the staff profile page
       navigate(`/admin/staff/profile/${insertedStaff.id}`);
     } catch (error: any) {
       console.error("Error adding staff:", error);
@@ -159,13 +154,11 @@ const NewStaff = () => {
       setUploading(false);
     }
   };
-  
-  // Show loading state for roles if needed
+
   if (rolesLoading) {
     console.log('Loading roles...');
   }
 
-  // Show error state for roles if needed
   if (rolesError) {
     console.error('Error loading roles:', rolesError);
   }
@@ -262,6 +255,38 @@ const NewStaff = () => {
                 />
               </div>
               
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="username"
+                  rules={{ required: "Username is required" }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel><T text="Username" /></FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="password"
+                  rules={{ required: "Password is required" }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel><T text="Password" /></FormLabel>
+                      <FormControl>
+                        <Input type="password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
               <FormField
                 control={form.control}
                 name="bio"
@@ -332,13 +357,11 @@ const NewStaff = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {/* Use dynamic roles from database instead of hardcoded values */}
                           {roles.map((role) => (
                             <SelectItem key={role.id} value={role.name}>
                               {role.name}
                             </SelectItem>
                           ))}
-                          {/* Fallback if no roles are found */}
                           {roles.length === 0 && (
                             <SelectItem value="default" disabled>
                               No roles available

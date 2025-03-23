@@ -31,6 +31,8 @@ export type StaffMember = {
   efficiency_rating: number | null;
   total_orders_completed: number | null;
   total_customers_served: number | null;
+  username: string | null;
+  password: string | null;
   // Summary stats from related tables (not in the DB)
   total_pay?: number;
   completed_tasks?: number;
