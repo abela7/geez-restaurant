@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -49,27 +48,21 @@ const Tasks = () => {
         setIsLoading(true);
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, first_name, last_name, role')
+          .select('*')
           .order('first_name', { ascending: true });
         
         if (error) {
           throw error;
         }
         
-        const staffData = data.map(staff => ({
-          id: staff.id,
-          first_name: staff.first_name || '',
-          last_name: staff.last_name || '',
-          role: staff.role || 'Unknown'
-        }));
-        
         // Create a mapping of staff IDs to full names
-        const namesMap = staffData.reduce((acc, staff) => {
-          acc[staff.id] = `${staff.first_name} ${staff.last_name}`.trim();
+        const namesMap = data.reduce((acc, staff) => {
+          acc[staff.id] = `${staff.first_name || ''} ${staff.last_name || ''}`.trim();
           return acc;
         }, {} as Record<string, string>);
         
-        setStaffMembers(staffData);
+        // Set staffMembers with the full data - this ensures all StaffMember properties are available
+        setStaffMembers(data as StaffMember[]);
         setStaffNames(namesMap);
       } catch (err: any) {
         console.error('Error fetching staff members:', err);
