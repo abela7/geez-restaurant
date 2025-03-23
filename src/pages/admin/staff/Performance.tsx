@@ -3,35 +3,37 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { BarChart, LineChart, Activity, Calendar, Users, Download, Filter, ChefHat, Coffee, Clock } from "lucide-react";
+import { BarChart, LineChart, Activity, Calendar, Users, Download, Filter, ChefHat, Coffee, Clock, FileDown, Sliders, Loader2 } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { ResponsiveContainer, BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart as RechartsLineChart, Line } from "recharts";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { 
+  getStaffPerformanceTrends, 
+  getAttendanceByDepartment, 
+  getTaskCompletionByDepartment, 
+  getTopPerformers,
+  getPerformanceMetricsByCategory,
+  getAttendanceMetrics,
+  exportPerformanceData
+} from "@/services/staff/performanceService";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-// Fake data for demonstration
-const staffPerformanceData = [
-  { name: 'Jan', attendance: 98, tasks: 92, efficiency: 85 },
-  { name: 'Feb', attendance: 96, tasks: 88, efficiency: 82 },
-  { name: 'Mar', attendance: 99, tasks: 95, efficiency: 90 },
-  { name: 'Apr', attendance: 97, tasks: 90, efficiency: 86 },
-  { name: 'May', attendance: 95, tasks: 87, efficiency: 81 },
-  { name: 'Jun', attendance: 98, tasks: 93, efficiency: 89 },
-];
-
-const attendanceData = [
-  { name: 'Kitchen', onTime: 28, late: 2, absent: 1 },
-  { name: 'Waiters', onTime: 32, late: 5, absent: 0 },
-  { name: 'Management', onTime: 12, late: 1, absent: 0 },
-];
-
-const taskCompletionData = [
-  { name: 'Kitchen', completed: 156, pending: 12, late: 8 },
-  { name: 'Waiters', completed: 142, pending: 15, late: 10 },
-  { name: 'Management', completed: 78, pending: 5, late: 3 },
-];
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const Performance = () => {
   const { t } = useLanguage();
@@ -39,19 +41,77 @@ const Performance = () => {
   const [timePeriod, setTimePeriod] = useState("month");
   const [loading, setLoading] = useState(false);
   const [department, setDepartment] = useState("all");
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  
+  // Performance data states
+  const [performanceTrends, setPerformanceTrends] = useState([]);
+  const [attendanceData, setAttendanceData] = useState([]);
+  const [taskCompletionData, setTaskCompletionData] = useState([]);
+  const [topPerformers, setTopPerformers] = useState<any>({});
+  const [categoryMetrics, setCategoryMetrics] = useState([]);
+  const [attendanceMetrics, setAttendanceMetrics] = useState<any>({});
 
-  const fetchPerformanceData = () => {
+  const fetchPerformanceData = async () => {
     setLoading(true);
-    // In a real implementation, this would fetch actual data from the database
-    // For now, we're just simulating the loading state
-    setTimeout(() => {
+    try {
+      const [trends, attendance, tasks, performers, metrics, attnMetrics] = await Promise.all([
+        getStaffPerformanceTrends(timePeriod, department),
+        getAttendanceByDepartment(timePeriod),
+        getTaskCompletionByDepartment(timePeriod),
+        getTopPerformers(),
+        getPerformanceMetricsByCategory(),
+        getAttendanceMetrics()
+      ]);
+      
+      setPerformanceTrends(trends);
+      setAttendanceData(attendance);
+      setTaskCompletionData(tasks);
+      setTopPerformers(performers);
+      setCategoryMetrics(metrics);
+      setAttendanceMetrics(attnMetrics);
+      
+    } catch (error) {
+      console.error("Error fetching performance data:", error);
+      toast({
+        title: "Error loading performance data",
+        description: "There was a problem fetching staff performance metrics.",
+        variant: "destructive",
+      });
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
   useEffect(() => {
     fetchPerformanceData();
   }, [timePeriod, department]);
+
+  const handleRefresh = () => {
+    fetchPerformanceData();
+  };
+
+  const handleExport = async () => {
+    try {
+      await exportPerformanceData();
+      toast({
+        title: "Export successful",
+        description: "Performance data has been exported to CSV.",
+      });
+    } catch (error) {
+      toast({
+        title: "Export failed",
+        description: "There was a problem exporting the performance data.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleFilterApply = () => {
+    fetchPerformanceData();
+    setFiltersOpen(false);
+  };
 
   return (
     <div className="space-y-4">
@@ -81,20 +141,83 @@ const Performance = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all"><T text="All Staff" /></SelectItem>
-              <SelectItem value="kitchen"><T text="Kitchen" /></SelectItem>
-              <SelectItem value="waiters"><T text="Waiters" /></SelectItem>
-              <SelectItem value="management"><T text="Management" /></SelectItem>
+              <SelectItem value="Kitchen"><T text="Kitchen" /></SelectItem>
+              <SelectItem value="Front of House"><T text="Waiters" /></SelectItem>
+              <SelectItem value="Management"><T text="Management" /></SelectItem>
             </SelectContent>
           </Select>
           
-          <Button variant="outline" size="sm">
-            <Filter className="mr-2 h-4 w-4" />
-            <T text="More Filters" />
-          </Button>
+          <Popover open={filtersOpen} onOpenChange={setFiltersOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Filter className="mr-2 h-4 w-4" />
+                <T text="More Filters" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80">
+              <div className="space-y-4">
+                <h4 className="font-medium"><T text="Additional Filters" /></h4>
+                
+                <div className="space-y-2">
+                  <Label><T text="Date Range" /></Label>
+                  <div className="flex gap-2">
+                    <DatePicker 
+                      placeholder={t("Start date")} 
+                      value={startDate}
+                      onChange={setStartDate}
+                    />
+                    <DatePicker 
+                      placeholder={t("End date")} 
+                      value={endDate}
+                      onChange={setEndDate}
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label><T text="Metrics" /></Label>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="attendance" defaultChecked />
+                      <label htmlFor="attendance" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        <T text="Attendance" />
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="tasks" defaultChecked />
+                      <label htmlFor="tasks" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        <T text="Tasks" />
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="efficiency" defaultChecked />
+                      <label htmlFor="efficiency" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                        <T text="Efficiency" />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" size="sm" onClick={() => setFiltersOpen(false)}>
+                    <T text="Cancel" />
+                  </Button>
+                  <Button size="sm" onClick={handleFilterApply}>
+                    <T text="Apply" />
+                  </Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
           
-          <Button size="sm">
+          <Button size="sm" onClick={handleExport}>
             <Download className="mr-2 h-4 w-4" />
             <T text="Export" />
+          </Button>
+
+          <Button variant="outline" size="sm" onClick={handleRefresh}>
+            <Loader2 className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <T text="Refresh" />
           </Button>
         </div>
       </div>
@@ -138,9 +261,12 @@ const Performance = () => {
                 <Clock className="h-8 w-8 text-primary" />
               </div>
               <h3 className="text-lg font-medium mb-1"><T text="Overall Attendance" /></h3>
-              <p className="text-3xl font-bold text-primary">96%</p>
+              <p className="text-3xl font-bold text-primary">{attendanceMetrics?.onTimeRate?.percentage || 96}%</p>
               <p className="text-sm text-muted-foreground mt-1">
-                <span className="text-amber-500">↔ 0%</span> <T text="vs last month" />
+                <span className={`text-${attendanceMetrics?.onTimeRate?.trend === 'up' ? 'green' : attendanceMetrics?.onTimeRate?.trend === 'down' ? 'red' : 'amber'}-500`}>
+                  {attendanceMetrics?.onTimeRate?.trend === 'up' ? '↑' : attendanceMetrics?.onTimeRate?.trend === 'down' ? '↓' : '↔'} 
+                </span> 
+                <T text="vs last month" />
               </p>
             </div>
           </CardContent>
@@ -170,48 +296,54 @@ const Performance = () => {
                 <T text="Performance Trends" />
               </h3>
               
-              <div className="h-80 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartsLineChart
-                    data={staffPerformanceData}
-                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="attendance"
-                      stroke="#8884d8"
-                      activeDot={{ r: 8 }}
-                      name={t("Attendance")}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="tasks"
-                      stroke="#82ca9d"
-                      name={t("Task Completion")}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="efficiency"
-                      stroke="#ffc658"
-                      name={t("Efficiency")}
-                    />
-                  </RechartsLineChart>
-                </ResponsiveContainer>
-              </div>
+              {loading ? (
+                <div className="h-80 w-full flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <div className="h-80 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsLineChart
+                      data={performanceTrends}
+                      margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="attendance"
+                        stroke="#8884d8"
+                        activeDot={{ r: 8 }}
+                        name={t("Attendance")}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="tasks"
+                        stroke="#82ca9d"
+                        name={t("Task Completion")}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="efficiency"
+                        stroke="#ffc658"
+                        name={t("Efficiency")}
+                      />
+                    </RechartsLineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
               
               <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card className="p-4 border border-border/70 shadow-none">
                   <h4 className="text-sm font-medium mb-1 text-muted-foreground">
                     <T text="Top Performer" />
                   </h4>
-                  <p className="font-semibold">Aida Mekonnen</p>
+                  <p className="font-semibold">{topPerformers?.topPerformer?.name || "Loading..."}</p>
                   <p className="text-xs text-muted-foreground">
-                    <T text="Kitchen Staff | 97% Efficiency" />
+                    <T text={topPerformers?.topPerformer?.department || ""} /> | {topPerformers?.topPerformer?.efficiency || 0}% <T text="Efficiency" />
                   </p>
                 </Card>
                 
@@ -219,9 +351,9 @@ const Performance = () => {
                   <h4 className="text-sm font-medium mb-1 text-muted-foreground">
                     <T text="Most Improved" />
                   </h4>
-                  <p className="font-semibold">Dawit Hagos</p>
+                  <p className="font-semibold">{topPerformers?.mostImproved?.name || "Loading..."}</p>
                   <p className="text-xs text-muted-foreground">
-                    <T text="Waiter | +12% Improvement" />
+                    <T text={topPerformers?.mostImproved?.department || ""} /> | +{topPerformers?.mostImproved?.improvement || 0}% <T text="Improvement" />
                   </p>
                 </Card>
                 
@@ -229,9 +361,9 @@ const Performance = () => {
                   <h4 className="text-sm font-medium mb-1 text-muted-foreground">
                     <T text="Needs Attention" />
                   </h4>
-                  <p className="font-semibold">Selam Tesfaye</p>
+                  <p className="font-semibold">{topPerformers?.needsAttention?.name || "Loading..."}</p>
                   <p className="text-xs text-muted-foreground">
-                    <T text="Server | 3 Late Arrivals" />
+                    <T text={topPerformers?.needsAttention?.department || ""} /> | <T text={topPerformers?.needsAttention?.issue || ""} />
                   </p>
                 </Card>
               </div>
@@ -246,23 +378,29 @@ const Performance = () => {
                 <T text="Attendance by Department" />
               </h3>
               
-              <div className="h-80 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartsBarChart
-                    data={attendanceData}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="onTime" stackId="a" fill="#82ca9d" name={t("On Time")} />
-                    <Bar dataKey="late" stackId="a" fill="#ffc658" name={t("Late")} />
-                    <Bar dataKey="absent" stackId="a" fill="#ff8042" name={t("Absent")} />
-                  </RechartsBarChart>
-                </ResponsiveContainer>
-              </div>
+              {loading ? (
+                <div className="h-80 w-full flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <div className="h-80 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsBarChart
+                      data={attendanceData}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="onTime" stackId="a" fill="#82ca9d" name={t("On Time")} />
+                      <Bar dataKey="late" stackId="a" fill="#ffc658" name={t("Late")} />
+                      <Bar dataKey="absent" stackId="a" fill="#ff8042" name={t("Absent")} />
+                    </RechartsBarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
               
               <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card className="p-4 border border-border/70 shadow-none">
@@ -274,7 +412,7 @@ const Performance = () => {
                       <T text="This Month" />
                     </Badge>
                   </div>
-                  <p className="text-2xl font-bold mt-2">22</p>
+                  <p className="text-2xl font-bold mt-2">{attendanceMetrics?.workingDays || 0}</p>
                   <div className="flex items-center mt-1 text-xs text-muted-foreground">
                     <span className="text-green-500 mr-1">↑</span>
                     <T text="2 days more than last month" />
@@ -286,9 +424,9 @@ const Performance = () => {
                     <h4 className="text-sm font-medium text-muted-foreground">
                       <T text="On Time Rate" />
                     </h4>
-                    <Badge className="bg-green-500">96%</Badge>
+                    <Badge className="bg-green-500">{attendanceMetrics?.onTimeRate?.percentage || 0}%</Badge>
                   </div>
-                  <p className="text-2xl font-bold mt-2">72</p>
+                  <p className="text-2xl font-bold mt-2">{attendanceMetrics?.onTimeRate?.count || 0}</p>
                   <div className="flex items-center mt-1 text-xs text-muted-foreground">
                     <span className="text-green-500 mr-1">↑</span>
                     <T text="2% better than target" />
@@ -300,9 +438,9 @@ const Performance = () => {
                     <h4 className="text-sm font-medium text-muted-foreground">
                       <T text="Late Arrivals" />
                     </h4>
-                    <Badge className="bg-amber-500">3.5%</Badge>
+                    <Badge className="bg-amber-500">{attendanceMetrics?.lateArrivals?.percentage || 0}%</Badge>
                   </div>
-                  <p className="text-2xl font-bold mt-2">8</p>
+                  <p className="text-2xl font-bold mt-2">{attendanceMetrics?.lateArrivals?.count || 0}</p>
                   <div className="flex items-center mt-1 text-xs text-muted-foreground">
                     <span className="text-amber-500 mr-1">↔</span>
                     <T text="Same as last month" />
@@ -314,9 +452,9 @@ const Performance = () => {
                     <h4 className="text-sm font-medium text-muted-foreground">
                       <T text="Absences" />
                     </h4>
-                    <Badge className="bg-red-500">0.5%</Badge>
+                    <Badge className="bg-red-500">{attendanceMetrics?.absences?.percentage || 0}%</Badge>
                   </div>
-                  <p className="text-2xl font-bold mt-2">1</p>
+                  <p className="text-2xl font-bold mt-2">{attendanceMetrics?.absences?.count || 0}</p>
                   <div className="flex items-center mt-1 text-xs text-muted-foreground">
                     <span className="text-green-500 mr-1">↓</span>
                     <T text="2 less than last month" />
@@ -334,23 +472,29 @@ const Performance = () => {
                 <T text="Task Performance by Department" />
               </h3>
               
-              <div className="h-80 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RechartsBarChart
-                    data={taskCompletionData}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="completed" fill="#82ca9d" name={t("Completed")} />
-                    <Bar dataKey="pending" fill="#8884d8" name={t("Pending")} />
-                    <Bar dataKey="late" fill="#ff8042" name={t("Late")} />
-                  </RechartsBarChart>
-                </ResponsiveContainer>
-              </div>
+              {loading ? (
+                <div className="h-80 w-full flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <div className="h-80 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsBarChart
+                      data={taskCompletionData}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="completed" fill="#82ca9d" name={t("Completed")} />
+                      <Bar dataKey="pending" fill="#8884d8" name={t("Pending")} />
+                      <Bar dataKey="late" fill="#ff8042" name={t("Late")} />
+                    </RechartsBarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
               
               <div className="mt-6 space-y-4">
                 <h4 className="text-sm font-medium">
@@ -358,45 +502,20 @@ const Performance = () => {
                 </h4>
                 
                 <div className="space-y-3">
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-sm"><T text="Food Preparation" /></span>
-                      <span className="text-sm font-medium">95%</span>
+                  {categoryMetrics.map((metric: any, index: number) => (
+                    <div key={index}>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm"><T text={metric.category} /></span>
+                        <span className="text-sm font-medium">{metric.completion}%</span>
+                      </div>
+                      <div className="w-full bg-muted rounded-full h-2.5">
+                        <div 
+                          className="bg-green-500 h-2.5 rounded-full" 
+                          style={{ width: `${metric.completion}%` }}
+                        ></div>
+                      </div>
                     </div>
-                    <div className="w-full bg-muted rounded-full h-2.5">
-                      <div className="bg-green-500 h-2.5 rounded-full" style={{ width: '95%' }}></div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-sm"><T text="Cleaning Tasks" /></span>
-                      <span className="text-sm font-medium">88%</span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2.5">
-                      <div className="bg-green-500 h-2.5 rounded-full" style={{ width: '88%' }}></div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-sm"><T text="Inventory Management" /></span>
-                      <span className="text-sm font-medium">92%</span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2.5">
-                      <div className="bg-green-500 h-2.5 rounded-full" style={{ width: '92%' }}></div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-sm"><T text="Customer Service" /></span>
-                      <span className="text-sm font-medium">97%</span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2.5">
-                      <div className="bg-green-500 h-2.5 rounded-full" style={{ width: '97%' }}></div>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
             </CardContent>
