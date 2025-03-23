@@ -107,7 +107,7 @@ const NewStaff = () => {
                 <Input 
                   id="first_name" 
                   {...register("first_name", { required: "First name is required" })} 
-                  error={errors.first_name?.message}
+                  className={errors.first_name ? "border-red-500" : ""}
                 />
                 {errors.first_name && (
                   <p className="text-sm text-red-500">{errors.first_name.message}</p>
@@ -118,7 +118,7 @@ const NewStaff = () => {
                 <Input 
                   id="last_name" 
                   {...register("last_name", { required: "Last name is required" })} 
-                  error={errors.last_name?.message}
+                  className={errors.last_name ? "border-red-500" : ""}
                 />
                 {errors.last_name && (
                   <p className="text-sm text-red-500">{errors.last_name.message}</p>
@@ -139,7 +139,7 @@ const NewStaff = () => {
                       message: "Invalid email address"
                     }
                   })} 
-                  error={errors.email?.message}
+                  className={errors.email ? "border-red-500" : ""}
                 />
                 {errors.email && (
                   <p className="text-sm text-red-500">{errors.email.message}</p>
