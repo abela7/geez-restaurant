@@ -1,196 +1,132 @@
 
-import React, { useState } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { PlusCircle, DownloadIcon, Printer } from "lucide-react";
-import PayrollList from "@/components/staff/PayrollList";
-import ErrorDisplay from "@/components/staff/ErrorDisplay";
-import { PayrollRecord } from "@/hooks/useStaffPayroll";
-import { StaffMember } from "@/hooks/useStaffMembers";
-import { useLanguage, T } from "@/contexts/LanguageContext";
+import React, { useState, useEffect } from "react";
+import { T } from "@/contexts/LanguageContext";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PoundSterling, Clock, CalendarDays } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 
-type PayrollSectionProps = {
+interface PayrollSectionProps {
   staffId: string;
-  staffMember: StaffMember;
-  payrollRecords: PayrollRecord[];
-  isLoading: boolean;
-  error: string | null;
-  addPayrollRecord: (record: Omit<PayrollRecord, 'id'>) => Promise<any>;
-  updatePayrollRecord: (id: string, updates: Partial<PayrollRecord>) => Promise<any>;
-  onExportData: (data: any[], filename: string) => void;
-};
+}
 
-const PayrollSection: React.FC<PayrollSectionProps> = ({
-  staffId,
-  staffMember,
-  payrollRecords,
-  isLoading,
-  error,
-  addPayrollRecord,
-  updatePayrollRecord,
-  onExportData
-}) => {
-  const { t } = useLanguage();
-  const [newPayrollDialog, setNewPayrollDialog] = useState(false);
+interface PayrollRecord {
+  id: string;
+  staff_id: string;
+  pay_period: string;
+  regular_hours: number;
+  overtime_hours: number;
+  total_hours: number;
+  total_pay: number;
+  payment_status: string;
+  payment_date: string | null;
+}
 
-  const getFullName = () => {
-    return `${staffMember.first_name || ""} ${staffMember.last_name || ""}`.trim() || "No Name";
-  };
-
-  const handlePayrollSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+const PayrollSection: React.FC<PayrollSectionProps> = ({ staffId }) => {
+  const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const fetchPayroll = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('staff_payroll')
+          .select('*')
+          .eq('staff_id', staffId)
+          .order('pay_period', { ascending: false })
+          .limit(5);
+        
+        if (error) throw error;
+        
+        setPayrollRecords(data as PayrollRecord[]);
+      } catch (err: any) {
+        console.error('Error fetching payroll:', err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
     
-    if (!staffId) return;
-    
-    const formData = new FormData(e.currentTarget);
-    const payPeriod = formData.get('payPeriod') as string;
-    const regularHours = parseFloat(formData.get('regularHours') as string);
-    const overtimeHours = parseFloat(formData.get('overtimeHours') as string);
-    const hourlyRate = staffMember.hourly_rate || 0;
-    
-    const totalHours = regularHours + overtimeHours;
-    const totalPay = (regularHours * hourlyRate) + (overtimeHours * hourlyRate * 1.5);
-    
-    try {
-      const newPayroll = {
-        staff_id: staffId,
-        pay_period: payPeriod,
-        regular_hours: regularHours,
-        overtime_hours: overtimeHours,
-        total_hours: totalHours,
-        total_pay: totalPay,
-        payment_status: 'Pending',
-        payment_date: null
-      };
-      
-      await addPayrollRecord(newPayroll);
-      setNewPayrollDialog(false);
-    } catch (error) {
-      console.error('Failed to add payroll record:', error);
+    fetchPayroll();
+  }, [staffId]);
+  
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Paid":
+        return "text-green-600 bg-green-100 dark:bg-green-900/20 dark:text-green-400";
+      case "Pending":
+        return "text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20 dark:text-yellow-400";
+      default:
+        return "text-gray-600 bg-gray-100 dark:bg-gray-900/20 dark:text-gray-400";
     }
   };
-
-  const handleUpdatePaymentStatus = async (payrollId: string, status: string) => {
+  
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "N/A";
     try {
-      await updatePayrollRecord(payrollId, { 
-        payment_status: status,
-        payment_date: status === 'Paid' ? new Date().toISOString() : null
-      });
+      return format(new Date(dateString), "MMM d, yyyy");
     } catch (error) {
-      console.error('Failed to update payment status:', error);
+      return "Invalid date";
     }
   };
-
+  
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <div>
-          <CardTitle><T text="Payroll Records" /></CardTitle>
-          <CardDescription><T text="Staff payment history" /></CardDescription>
-        </div>
-        <Dialog open={newPayrollDialog} onOpenChange={setNewPayrollDialog}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              <T text="Add Payroll" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle><T text="Add Payroll Record" /></DialogTitle>
-              <DialogDescription>
-                <T text="Add a new payroll record for" /> {getFullName()}
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handlePayrollSubmit}>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="payPeriod" className="text-right">
-                    <T text="Pay Period" />
-                  </Label>
-                  <Input
-                    id="payPeriod"
-                    name="payPeriod"
-                    placeholder="e.g. July 1-15, 2023"
-                    className="col-span-3"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="regularHours" className="text-right">
-                    <T text="Regular Hours" />
-                  </Label>
-                  <Input
-                    id="regularHours"
-                    name="regularHours"
-                    type="number"
-                    min="0"
-                    step="0.5"
-                    defaultValue="80"
-                    className="col-span-3"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="overtimeHours" className="text-right">
-                    <T text="Overtime Hours" />
-                  </Label>
-                  <Input
-                    id="overtimeHours"
-                    name="overtimeHours"
-                    type="number"
-                    min="0"
-                    step="0.5"
-                    defaultValue="0"
-                    className="col-span-3"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="hourlyRate" className="text-right">
-                    <T text="Hourly Rate" />
-                  </Label>
-                  <div className="col-span-3 flex items-center">
-                    <span className="text-muted-foreground">£{staffMember.hourly_rate?.toFixed(2) || '0.00'}</span>
-                    <span className="ml-2 text-xs text-muted-foreground">(<T text="Defined in profile" />)</span>
-                  </div>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="submit"><T text="Save Record" /></Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center text-lg font-medium">
+          <PoundSterling className="mr-2 h-5 w-5" />
+          <T text="Recent Payroll" />
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        {error ? (
-          <ErrorDisplay error={error} />
+        {isLoading ? (
+          <div className="text-center p-4">
+            <div className="animate-spin inline-block w-6 h-6 border-2 border-current border-t-transparent text-primary rounded-full"></div>
+          </div>
+        ) : error ? (
+          <div className="text-center text-red-500 p-4">
+            <p>{error}</p>
+          </div>
+        ) : payrollRecords.length === 0 ? (
+          <div className="text-center p-4 text-muted-foreground">
+            <p><T text="No payroll records found" /></p>
+          </div>
         ) : (
-          <PayrollList 
-            payrollRecords={payrollRecords}
-            isLoading={isLoading}
-            onUpdateStatus={handleUpdatePaymentStatus}
-          />
+          <ul className="space-y-3">
+            {payrollRecords.map((record) => (
+              <li key={record.id} className="border-b pb-3 last:border-b-0 last:pb-0">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-medium">{record.pay_period}</p>
+                    <div className="flex items-center mt-1 space-x-4 text-sm text-muted-foreground">
+                      <div className="flex items-center">
+                        <Clock className="h-3.5 w-3.5 mr-1" />
+                        <span>{record.total_hours.toFixed(2)} hours</span>
+                      </div>
+                      {record.payment_date && (
+                        <div className="flex items-center">
+                          <CalendarDays className="h-3.5 w-3.5 mr-1" />
+                          <span>{formatDate(record.payment_date)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(record.payment_status)}`}>
+                      {record.payment_status}
+                    </span>
+                    <span className="text-sm mt-1 font-medium">
+                      £{record.total_pay.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
         )}
       </CardContent>
-      <CardFooter className="flex justify-between">
-        <Button 
-          variant="outline" 
-          onClick={() => onExportData(payrollRecords, `${getFullName()}_Payroll`)}
-          disabled={payrollRecords.length === 0}
-        >
-          <DownloadIcon className="mr-2 h-4 w-4" />
-          <T text="Export Data" />
-        </Button>
-        <Button variant="outline" disabled={payrollRecords.length === 0}>
-          <Printer className="mr-2 h-4 w-4" />
-          <T text="Print Report" />
-        </Button>
-      </CardFooter>
     </Card>
   );
 };

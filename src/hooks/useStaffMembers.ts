@@ -56,11 +56,123 @@ export const useStaffMembers = () => {
     fetchStaffData();
   }, []);
 
+  const addStaffMember = async (staffData: Omit<StaffMember, 'id'>) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert([staffData])
+        .select();
+      
+      if (error) {
+        throw error;
+      }
+      
+      setData(prevData => [...prevData, ...(data as StaffMember[])]);
+      toast({
+        title: "Success",
+        description: "Staff member added successfully",
+      });
+      
+      return data[0];
+    } catch (err: any) {
+      console.error('Error adding staff:', err);
+      setError(err.message || 'Failed to add staff member');
+      toast({
+        title: "Error",
+        description: `Failed to add staff member: ${err.message}`,
+        variant: "destructive"
+      });
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateStaffMember = async (id: string, staffData: Partial<StaffMember>) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(staffData)
+        .eq('id', id)
+        .select();
+      
+      if (error) {
+        throw error;
+      }
+      
+      setData(prevData => 
+        prevData.map(staff => 
+          staff.id === id ? { ...staff, ...data[0] } : staff
+        )
+      );
+      
+      toast({
+        title: "Success",
+        description: "Staff member updated successfully",
+      });
+      
+      return data[0];
+    } catch (err: any) {
+      console.error('Error updating staff:', err);
+      setError(err.message || 'Failed to update staff member');
+      toast({
+        title: "Error",
+        description: `Failed to update staff member: ${err.message}`,
+        variant: "destructive"
+      });
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteStaffMember = async (id: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        throw error;
+      }
+      
+      setData(prevData => prevData.filter(staff => staff.id !== id));
+      
+      toast({
+        title: "Success",
+        description: "Staff member deleted successfully",
+      });
+      
+      return true;
+    } catch (err: any) {
+      console.error('Error deleting staff:', err);
+      setError(err.message || 'Failed to delete staff member');
+      toast({
+        title: "Error",
+        description: `Failed to delete staff member: ${err.message}`,
+        variant: "destructive"
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     data,
     isLoading,
     error,
     fetchStaffData,
+    addStaffMember,
+    updateStaffMember,
+    deleteStaffMember
   };
 };
 

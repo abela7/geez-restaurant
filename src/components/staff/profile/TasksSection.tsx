@@ -1,262 +1,157 @@
 
-import React, { useState } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, DownloadIcon, Printer, Clock, Tag } from "lucide-react";
-import TasksList from "@/components/staff/TasksList";
-import ErrorDisplay from "@/components/staff/ErrorDisplay";
-import { StaffTask } from "@/hooks/useStaffTasks";
-import { useLanguage, T } from "@/contexts/LanguageContext";
+import React, { useState, useEffect } from "react";
+import { T } from "@/contexts/LanguageContext";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { CheckSquare, Clock } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { getCategoryName, getCategoryColor } from "@/constants/taskCategories";
 
-// Task categories for selection
-const taskCategories = [
-  { id: "1", name: "Kitchen", color: "bg-amber-500" },
-  { id: "2", name: "Service", color: "bg-blue-500" },
-  { id: "3", name: "Cleaning", color: "bg-green-500" },
-  { id: "4", name: "Inventory", color: "bg-purple-500" },
-  { id: "5", name: "Administration", color: "bg-slate-500" },
-];
-
-type TasksSectionProps = {
+interface TasksSectionProps {
   staffId: string;
-  fullName: string;
-  tasks: StaffTask[];
-  isLoading: boolean;
-  error: string | null;
-  addTask: (task: Omit<StaffTask, 'id' | 'completed_at'>) => Promise<any>;
-  updateTask: (id: string, updates: Partial<StaffTask>) => Promise<any>;
-  deleteTask: (id: string) => Promise<boolean>;
-  onExportData: (data: any[], filename: string) => void;
-};
+}
 
-const TasksSection: React.FC<TasksSectionProps> = ({
-  staffId,
-  fullName,
-  tasks,
-  isLoading,
-  error,
-  addTask,
-  updateTask,
-  deleteTask,
-  onExportData
-}) => {
-  const { t } = useLanguage();
-  const [newTaskDialog, setNewTaskDialog] = useState(false);
+interface Task {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  priority: string;
+  due_date: string | null;
+  completed_at: string | null;
+  category: string | null;
+}
 
-  const handleTaskSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    
-    if (!staffId) return;
-    
-    const formData = new FormData(e.currentTarget);
-    const title = formData.get('title') as string;
-    const description = formData.get('description') as string;
-    const priority = formData.get('priority') as string;
-    const dueDate = formData.get('dueDate') as string;
-    const dueTime = formData.get('dueTime') as string;
-    const category = formData.get('category') as string;
-    
-    try {
-      // Combine date and time if both are provided
-      let dueDateTime = null;
-      if (dueDate) {
-        const dateObj = new Date(dueDate);
+const TasksSection: React.FC<TasksSectionProps> = ({ staffId }) => {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const fetchTasks = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('staff_tasks')
+          .select('*')
+          .eq('staff_id', staffId)
+          .order('due_date', { ascending: true })
+          .limit(5);
         
-        // If time is also provided, set it
-        if (dueTime) {
-          const [hours, minutes] = dueTime.split(':');
-          dateObj.setHours(parseInt(hours, 10), parseInt(minutes, 10));
-        } else {
-          // Default to end of day if no time specified
-          dateObj.setHours(23, 59, 59);
-        }
+        if (error) throw error;
         
-        dueDateTime = dateObj.toISOString();
+        setTasks(data as Task[]);
+      } catch (err: any) {
+        console.error('Error fetching tasks:', err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
       }
-      
-      const newTask = {
-        staff_id: staffId,
-        title,
-        description,
-        priority,
-        status: 'Pending',
-        due_date: dueDate || null,
-        due_time: dueTime || null,
-        category: category || null,
-      };
-      
-      await addTask(newTask);
-      setNewTaskDialog(false);
-    } catch (error) {
-      console.error('Failed to add task:', error);
-    }
-  };
-
-  const handleUpdateTaskStatus = async (taskId: string, status: string) => {
-    try {
-      await updateTask(taskId, { 
-        status,
-        completed_at: status === 'Completed' ? new Date().toISOString() : null
-      });
-    } catch (error) {
-      console.error('Failed to update task status:', error);
+    };
+    
+    fetchTasks();
+  }, [staffId]);
+  
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "High":
+        return "text-red-600 bg-red-100 dark:bg-red-900/20 dark:text-red-400";
+      case "Medium":
+        return "text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20 dark:text-yellow-400";
+      case "Low":
+        return "text-green-600 bg-green-100 dark:bg-green-900/20 dark:text-green-400";
+      default:
+        return "text-gray-600 bg-gray-100 dark:bg-gray-900/20 dark:text-gray-400";
     }
   };
   
-  const handleDeleteTask = async (taskId: string) => {
-    try {
-      await deleteTask(taskId);
-    } catch (error) {
-      console.error('Failed to delete task:', error);
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Completed":
+        return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400";
+      case "In Progress":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400";
+      case "Pending":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400";
     }
   };
-
+  
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return null;
+    try {
+      return format(new Date(dateString), "MMM d, yyyy");
+    } catch (error) {
+      return "Invalid date";
+    }
+  };
+  
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <div>
-          <CardTitle><T text="Tasks" /></CardTitle>
-          <CardDescription><T text="Assigned tasks and deadlines" /></CardDescription>
-        </div>
-        <Dialog open={newTaskDialog} onOpenChange={setNewTaskDialog}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              <T text="Add Task" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle><T text="Assign New Task" /></DialogTitle>
-              <DialogDescription>
-                <T text="Assign a new task to" /> {fullName}
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleTaskSubmit}>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="title" className="text-right">
-                    <T text="Title" />
-                  </Label>
-                  <Input
-                    id="title"
-                    name="title"
-                    placeholder={t("Task title")}
-                    className="col-span-3"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="description" className="text-right">
-                    <T text="Description" />
-                  </Label>
-                  <Input
-                    id="description"
-                    name="description"
-                    placeholder={t("Task description")}
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="category" className="text-right">
-                    <T text="Category" />
-                  </Label>
-                  <Select name="category" defaultValue="1">
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder={t("Select category")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {taskCategories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${category.color}`}></div>
-                            <span>{category.name}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="priority" className="text-right">
-                    <T text="Priority" />
-                  </Label>
-                  <Select name="priority" defaultValue="Medium">
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder={t("Select priority")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="High">High</SelectItem>
-                      <SelectItem value="Medium">Medium</SelectItem>
-                      <SelectItem value="Low">Low</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="dueDate" className="text-right">
-                    <T text="Due Date" />
-                  </Label>
-                  <Input
-                    id="dueDate"
-                    name="dueDate"
-                    type="date"
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="dueTime" className="text-right">
-                    <T text="Due Time" /> (optional)
-                  </Label>
-                  <Input
-                    id="dueTime"
-                    name="dueTime"
-                    type="time"
-                    className="col-span-3"
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setNewTaskDialog(false)}>
-                  <T text="Cancel" />
-                </Button>
-                <Button type="submit"><T text="Assign Task" /></Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center text-lg font-medium">
+          <CheckSquare className="mr-2 h-5 w-5" />
+          <T text="Assigned Tasks" />
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        {error ? (
-          <ErrorDisplay error={error} />
+        {isLoading ? (
+          <div className="text-center p-4">
+            <div className="animate-spin inline-block w-6 h-6 border-2 border-current border-t-transparent text-primary rounded-full"></div>
+          </div>
+        ) : error ? (
+          <div className="text-center text-red-500 p-4">
+            <p>{error}</p>
+          </div>
+        ) : tasks.length === 0 ? (
+          <div className="text-center p-4 text-muted-foreground">
+            <p><T text="No tasks assigned" /></p>
+          </div>
         ) : (
-          <TasksList 
-            tasks={tasks}
-            isLoading={isLoading}
-            onUpdateStatus={handleUpdateTaskStatus}
-            onDelete={handleDeleteTask}
-            maxHeight="350px"
-          />
+          <ul className="space-y-4">
+            {tasks.map((task) => (
+              <li key={task.id} className="border-b pb-4 last:border-b-0 last:pb-0">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="flex items-center">
+                      <h4 className="font-medium">{task.title}</h4>
+                      <Badge className={`ml-2 ${getStatusColor(task.status)}`}>
+                        {task.status}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 mt-1">
+                      {task.category && (
+                        <Badge variant="outline" className={getCategoryColor(task.category)}>
+                          {getCategoryName(task.category)}
+                        </Badge>
+                      )}
+                      <Badge variant="outline" className={getPriorityColor(task.priority)}>
+                        {task.priority}
+                      </Badge>
+                    </div>
+                    
+                    {task.description && (
+                      <p className="text-sm text-muted-foreground mt-2">
+                        {task.description}
+                      </p>
+                    )}
+                  </div>
+                  
+                  {task.due_date && (
+                    <div className="text-sm text-muted-foreground flex items-center whitespace-nowrap ml-4">
+                      <Clock className="h-4 w-4 mr-1" />
+                      {formatDate(task.due_date)}
+                    </div>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
         )}
       </CardContent>
-      <CardFooter className="flex justify-between">
-        <Button 
-          variant="outline" 
-          onClick={() => onExportData(tasks, `${fullName}_Tasks`)}
-          disabled={tasks.length === 0}
-        >
-          <DownloadIcon className="mr-2 h-4 w-4" />
-          <T text="Export Data" />
-        </Button>
-        <Button variant="outline" disabled={tasks.length === 0}>
-          <Printer className="mr-2 h-4 w-4" />
-          <T text="Print Report" />
-        </Button>
-      </CardFooter>
     </Card>
   );
 };

@@ -1,208 +1,209 @@
 
-import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { PageHeader } from "@/components/ui/page-header";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Loader2, Edit, Trash } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { type StaffMember } from "@/hooks/useStaffMembers";
 
-// Custom hooks for staff data
-import useStaffProfile from "@/hooks/useStaffProfile";
-import useStaffAttendance from "@/hooks/useStaffAttendance";
-import useStaffPayroll from "@/hooks/useStaffPayroll";
-import useStaffTasks from "@/hooks/useStaffTasks";
-
-// Refactored components
+// Import profile components
 import ProfileHeader from "@/components/staff/profile/ProfileHeader";
 import ProfileSidebar from "@/components/staff/profile/ProfileSidebar";
-import PerformanceSection from "@/components/staff/profile/PerformanceSection";
 import AttendanceSection from "@/components/staff/profile/AttendanceSection";
 import PayrollSection from "@/components/staff/profile/PayrollSection";
 import TasksSection from "@/components/staff/profile/TasksSection";
+import PerformanceSection from "@/components/staff/profile/PerformanceSection";
 import ErrorState from "@/components/staff/profile/ErrorState";
-import StaffLoadingState from "@/components/staff/StaffLoadingState";
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const StaffProfile = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [staff, setStaff] = useState<StaffMember | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { toast } = useToast();
   
-  // Fetch staff profile data
-  const { 
-    staffMember, 
-    isLoading: isProfileLoading, 
-    error: profileError 
-  } = useStaffProfile(id || '');
-  
-  // Fetch attendance records
-  const { 
-    attendanceRecords, 
-    isLoading: isAttendanceLoading, 
-    error: attendanceError,
-    addAttendanceRecord,
-    updateAttendanceRecord 
-  } = useStaffAttendance(id || '');
-  
-  // Fetch payroll records
-  const { 
-    payrollRecords, 
-    isLoading: isPayrollLoading, 
-    error: payrollError,
-    addPayrollRecord,
-    updatePayrollRecord 
-  } = useStaffPayroll(id || '');
-  
-  // Fetch tasks
-  const { 
-    tasks, 
-    isLoading: isTasksLoading, 
-    error: tasksError,
-    addTask,
-    updateTask,
-    deleteTask 
-  } = useStaffTasks(id || '');
-  
-  // Export data to CSV
-  const exportToCSV = (data: any[], filename: string) => {
-    if (!data.length) {
+  const fetchStaffMember = async () => {
+    if (!id) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      setStaff(data as StaffMember);
+    } catch (err: any) {
+      console.error('Error fetching staff member:', err);
+      setError(err.message || 'Failed to load staff member');
       toast({
         title: "Error",
-        description: "No data to export",
+        description: `Failed to load staff member: ${err.message}`,
         variant: "destructive"
       });
-      return;
+    } finally {
+      setIsLoading(false);
     }
-
-    const headers = Object.keys(data[0]);
-    const csvRows = [
-      headers.join(','),
-      ...data.map(row => 
-        headers.map(header => {
-          let value = row[header];
-          // Handle special formatting
-          if (value === null || value === undefined) value = '';
-          if (typeof value === 'string') value = `"${value.replace(/"/g, '""')}"`;
-          return value;
-        }).join(',')
-      )
-    ];
-    
-    const csvContent = csvRows.join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    
-    // Create a link to download
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `${filename}.csv`);
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    toast({
-      title: "Success",
-      description: `${filename} exported successfully`,
-    });
   };
   
-  // Display loading state
-  if (isProfileLoading) {
+  useEffect(() => {
+    fetchStaffMember();
+  }, [id]);
+  
+  const handleDelete = async () => {
+    if (!id) return;
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast({
+        title: "Success",
+        description: "Staff member has been deleted",
+      });
+      
+      navigate("/admin/staff/directory");
+    } catch (err: any) {
+      console.error('Error deleting staff:', err);
+      toast({
+        title: "Error",
+        description: `Failed to delete staff: ${err.message}`,
+        variant: "destructive"
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+    }
+  };
+
+  if (isLoading) {
     return (
       <Layout interface="admin">
-        <div className="container mx-auto py-6">
-          <PageHeader 
-            heading={<T text="Staff Profile" />}
-            description={<T text="Loading staff details..." />}
-          />
-          <Card>
-            <StaffLoadingState />
-          </Card>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
         </div>
       </Layout>
     );
   }
 
-  // Display error state
-  if (profileError || !staffMember) {
+  if (error || !staff) {
     return (
       <Layout interface="admin">
-        <ErrorState error={profileError} />
+        <PageHeader 
+          heading={<T text="Staff Profile" />}
+          description={<T text="View detailed staff information" />}
+          actions={
+            <Button 
+              variant="outline"
+              onClick={() => navigate("/admin/staff/directory")}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              <T text="Back to Directory" />
+            </Button>
+          }
+        />
+        <ErrorState message={error || "Staff member not found"} />
       </Layout>
     );
   }
 
-  const getFullName = () => {
-    return `${staffMember.first_name || ""} ${staffMember.last_name || ""}`.trim() || "No Name";
-  };
+  const fullName = `${staff.first_name || ""} ${staff.last_name || ""}`.trim();
 
   return (
     <Layout interface="admin">
-      <ProfileHeader id={id || ''} />
+      <PageHeader 
+        heading={<T text="Staff Profile" />}
+        description={`${fullName} - ${staff.role || "Staff Member"}`}
+        actions={
+          <div className="flex space-x-2">
+            <Button 
+              variant="outline"
+              onClick={() => navigate("/admin/staff/directory")}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              <T text="Back to Directory" />
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => navigate(`/admin/staff/edit/${id}`)}
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              <T text="Edit" />
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              <Trash className="mr-2 h-4 w-4" />
+              <T text="Delete" />
+            </Button>
+          </div>
+        }
+      />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1">
-          <ProfileSidebar staffMember={staffMember} />
+          <ProfileSidebar staff={staff} />
         </div>
         
-        <div className="lg:col-span-2">
-          <Tabs defaultValue="performance">
-            <TabsList className="mb-4">
-              <TabsTrigger value="performance"><T text="Performance" /></TabsTrigger>
-              <TabsTrigger value="attendance"><T text="Attendance" /></TabsTrigger>
-              <TabsTrigger value="payroll"><T text="Payroll" /></TabsTrigger>
-              <TabsTrigger value="tasks"><T text="Tasks" /></TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="performance">
-              <PerformanceSection 
-                staffMember={staffMember}
-                onExportData={exportToCSV}
-              />
-            </TabsContent>
-            
-            <TabsContent value="attendance">
-              <AttendanceSection 
-                staffId={id || ''}
-                fullName={getFullName()}
-                attendanceRecords={attendanceRecords}
-                isLoading={isAttendanceLoading}
-                error={attendanceError}
-                addAttendanceRecord={addAttendanceRecord}
-                onExportData={exportToCSV}
-              />
-            </TabsContent>
-            
-            <TabsContent value="payroll">
-              <PayrollSection 
-                staffId={id || ''}
-                staffMember={staffMember}
-                payrollRecords={payrollRecords}
-                isLoading={isPayrollLoading}
-                error={payrollError}
-                addPayrollRecord={addPayrollRecord}
-                updatePayrollRecord={updatePayrollRecord}
-                onExportData={exportToCSV}
-              />
-            </TabsContent>
-            
-            <TabsContent value="tasks">
-              <TasksSection 
-                staffId={id || ''}
-                fullName={getFullName()}
-                tasks={tasks}
-                isLoading={isTasksLoading}
-                error={tasksError}
-                addTask={addTask}
-                updateTask={updateTask}
-                deleteTask={deleteTask}
-                onExportData={exportToCSV}
-              />
-            </TabsContent>
-          </Tabs>
+        <div className="lg:col-span-3 space-y-6">
+          <ProfileHeader staff={staff} />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <AttendanceSection staffId={staff.id} />
+            <PayrollSection staffId={staff.id} />
+          </div>
+          
+          <TasksSection staffId={staff.id} />
+          <PerformanceSection staffId={staff.id} />
         </div>
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle><T text="Are you sure?" /></AlertDialogTitle>
+            <AlertDialogDescription>
+              <T text="This action cannot be undone. This will permanently delete the staff member from the system." />
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel><T text="Cancel" /></AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
+              <T text="Delete" />
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 };

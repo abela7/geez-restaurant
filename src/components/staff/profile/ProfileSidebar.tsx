@@ -1,84 +1,75 @@
 
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { T } from "@/contexts/LanguageContext";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { PhoneCall, Mail, Calendar, DollarSign } from "lucide-react";
-import { StaffMember } from "@/hooks/useStaffMembers";
-import { format } from "date-fns";
-import { useLanguage, T } from "@/contexts/LanguageContext";
+import { type StaffMember } from "@/hooks/useStaffMembers";
 
-type ProfileSidebarProps = {
-  staffMember: StaffMember;
-};
+interface ProfileSidebarProps {
+  staff: StaffMember;
+}
 
-const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ staffMember }) => {
-  const { t } = useLanguage();
+const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ staff }) => {
+  const fullName = `${staff.first_name || ""} ${staff.last_name || ""}`.trim();
   
-  const getFullName = () => {
-    return `${staffMember.first_name || ""} ${staffMember.last_name || ""}`.trim() || "No Name";
-  };
-
-  // Get first letter of first and last name for avatar fallback
   const getInitials = () => {
-    const firstName = staffMember.first_name || "";
-    const lastName = staffMember.last_name || "";
+    const firstName = staff.first_name || "";
+    const lastName = staff.last_name || "";
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
-
+  
   return (
-    <>
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="flex flex-col items-center text-center">
-            <Avatar className="h-24 w-24 mb-4">
-              {staffMember.image_url ? (
-                <AvatarImage
-                  src={staffMember.image_url}
-                  alt={getFullName()}
-                />
-              ) : (
-                <AvatarFallback>{getInitials()}</AvatarFallback>
-              )}
-            </Avatar>
-            <h2 className="text-xl font-bold">{getFullName()}</h2>
-            <div className="mt-1 flex items-center">
-              <Badge>{staffMember.role}</Badge>
-            </div>
-            <p className="mt-3 text-sm text-muted-foreground">{staffMember.bio || "No bio available"}</p>
-            
-            <div className="mt-6 w-full space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <PhoneCall className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span className="text-sm">{staffMember.phone || "No phone"}</span>
+    <Card>
+      <CardContent className="p-6 flex flex-col items-center text-center">
+        <Avatar className="h-24 w-24 mb-4">
+          {staff.image_url ? (
+            <AvatarImage 
+              src={staff.image_url} 
+              alt={fullName} 
+              className="object-cover"
+            />
+          ) : null}
+          <AvatarFallback className="text-xl">{getInitials()}</AvatarFallback>
+        </Avatar>
+        
+        <h2 className="text-xl font-bold mb-1">{fullName}</h2>
+        <p className="text-muted-foreground mb-4">{staff.role}</p>
+        
+        {staff.skills && staff.skills.length > 0 && (
+          <div className="w-full mt-4">
+            <h3 className="text-sm font-medium mb-2"><T text="Skills" /></h3>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {staff.skills.map((skill, index) => (
+                <div 
+                  key={index}
+                  className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full"
+                >
+                  {skill}
                 </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span className="text-sm">{staffMember.email || "No email"}</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span className="text-sm">
-                    <T text="Started on" /> {staffMember.start_date ? format(new Date(staffMember.start_date), 'MMM dd, yyyy') : 'N/A'}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <DollarSign className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span className="text-sm">£{staffMember.hourly_rate?.toFixed(2) || '0.00'}/hr</span>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
-        </CardContent>
-      </Card>
-    </>
+        )}
+        
+        <div className="w-full mt-6">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-sm font-medium"><T text="Performance" /></h3>
+            <span className="text-sm font-medium">
+              {staff.performance ? `${staff.performance}%` : 'N/A'}
+            </span>
+          </div>
+          
+          {staff.performance && (
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+              <div 
+                className="bg-primary h-2.5 rounded-full" 
+                style={{ width: `${staff.performance}%` }}
+              ></div>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

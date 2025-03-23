@@ -1,282 +1,141 @@
 
-import React, { useState } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, DownloadIcon, Printer, Clock } from "lucide-react";
-import AttendanceList from "@/components/staff/AttendanceList";
-import ErrorDisplay from "@/components/staff/ErrorDisplay";
-import { StaffAttendance } from "@/hooks/useStaffAttendance";
-import { useToast } from "@/hooks/use-toast";
-import { useLanguage, T } from "@/contexts/LanguageContext";
+import React, { useState, useEffect } from "react";
+import { T } from "@/contexts/LanguageContext";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar, CheckCircle2, Clock } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 
-type AttendanceSectionProps = {
+interface AttendanceSectionProps {
   staffId: string;
-  fullName: string;
-  attendanceRecords: StaffAttendance[];
-  isLoading: boolean;
-  error: string | null;
-  addAttendanceRecord: (record: Omit<StaffAttendance, 'id'>) => Promise<any>;
-  onExportData: (data: any[], filename: string) => void;
-};
+}
 
-const AttendanceSection: React.FC<AttendanceSectionProps> = ({
-  staffId,
-  fullName,
-  attendanceRecords,
-  isLoading,
-  error,
-  addAttendanceRecord,
-  onExportData
-}) => {
-  const { t } = useLanguage();
-  const { toast } = useToast();
-  const [newAttendanceDialog, setNewAttendanceDialog] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    date: format(new Date(), 'yyyy-MM-dd'),
-    status: "Present",
-    checkIn: "",
-    checkOut: "",
-    notes: ""
-  });
+interface AttendanceRecord {
+  id: string;
+  date: string;
+  status: string;
+  check_in: string | null;
+  check_out: string | null;
+  hours_worked: number;
+}
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const calculateHoursWorked = (checkIn: string, checkOut: string): number => {
-    if (!checkIn || !checkOut) return 0;
+const AttendanceSection: React.FC<AttendanceSectionProps> = ({ staffId }) => {
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const fetchAttendance = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('staff_attendance')
+          .select('*')
+          .eq('staff_id', staffId)
+          .order('date', { ascending: false })
+          .limit(5);
+        
+        if (error) throw error;
+        
+        setAttendanceRecords(data as AttendanceRecord[]);
+      } catch (err: any) {
+        console.error('Error fetching attendance:', err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
     
-    const checkInDate = new Date(`2000-01-01T${checkIn}`);
-    const checkOutDate = new Date(`2000-01-01T${checkOut}`);
-    
-    // Handle case where checkout is before checkin (next day)
-    if (checkOutDate < checkInDate) {
-      checkOutDate.setDate(checkOutDate.getDate() + 1);
-    }
-    
-    return (checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60);
-  };
-
-  const handleAttendanceSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    
-    if (!staffId) return;
-    
-    setIsSubmitting(true);
-    
+    fetchAttendance();
+  }, [staffId]);
+  
+  const formatTime = (timeString: string | null) => {
+    if (!timeString) return "N/A";
     try {
-      const hoursWorked = calculateHoursWorked(formData.checkIn, formData.checkOut);
-      
-      const newRecord = {
-        staff_id: staffId,
-        date: formData.date,
-        status: formData.status,
-        check_in: formData.checkIn ? `${formData.date}T${formData.checkIn}:00` : null,
-        check_out: formData.checkOut ? `${formData.date}T${formData.checkOut}:00` : null,
-        hours_worked: hoursWorked,
-        notes: formData.notes || null
-      };
-      
-      await addAttendanceRecord(newRecord);
-      
-      // Reset form
-      setFormData({
-        date: format(new Date(), 'yyyy-MM-dd'),
-        status: "Present",
-        checkIn: "",
-        checkOut: "",
-        notes: ""
-      });
-      
-      setNewAttendanceDialog(false);
-      
-      toast({
-        title: "Success",
-        description: "Attendance record added successfully",
-      });
-    } catch (error: any) {
-      console.error('Failed to add attendance record:', error);
-      toast({
-        title: "Error",
-        description: `Failed to add attendance record: ${error.message}`,
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
+      return format(new Date(timeString), "h:mm a");
+    } catch (error) {
+      return "Invalid time";
     }
   };
-
-  const handlePrintReport = () => {
-    toast({
-      title: "Information",
-      description: "Print functionality will be implemented in a future update.",
-    });
+  
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Present":
+        return "text-green-600 bg-green-100 dark:bg-green-900/20 dark:text-green-400";
+      case "Late":
+        return "text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20 dark:text-yellow-400";
+      case "Absent":
+        return "text-red-600 bg-red-100 dark:bg-red-900/20 dark:text-red-400";
+      default:
+        return "text-gray-600 bg-gray-100 dark:bg-gray-900/20 dark:text-gray-400";
+    }
   };
-
+  
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), "MMM d, yyyy");
+    } catch (error) {
+      return "Invalid date";
+    }
+  };
+  
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <div>
-          <CardTitle><T text="Attendance Records" /></CardTitle>
-          <CardDescription><T text="Staff check-in and check-out times" /></CardDescription>
-        </div>
-        <Dialog open={newAttendanceDialog} onOpenChange={setNewAttendanceDialog}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              <T text="Add Record" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle><T text="Add Attendance Record" /></DialogTitle>
-              <DialogDescription>
-                <T text="Add a new attendance record for" /> {fullName}
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleAttendanceSubmit}>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="date" className="text-right">
-                    <T text="Date" />
-                  </Label>
-                  <Input
-                    id="date"
-                    name="date"
-                    type="date"
-                    value={formData.date}
-                    onChange={handleInputChange}
-                    className="col-span-3"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="status" className="text-right">
-                    <T text="Status" />
-                  </Label>
-                  <Select 
-                    name="status" 
-                    value={formData.status}
-                    onValueChange={(value) => handleSelectChange("status", value)}
-                  >
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder={t("Select status")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Present">Present</SelectItem>
-                      <SelectItem value="Late">Late</SelectItem>
-                      <SelectItem value="Absent">Absent</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                {formData.status !== "Absent" && (
-                  <>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="checkIn" className="text-right">
-                        <T text="Check In" />
-                      </Label>
-                      <div className="col-span-3 flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="checkIn"
-                          name="checkIn"
-                          type="time"
-                          value={formData.checkIn}
-                          onChange={handleInputChange}
-                          className="flex-1"
-                          required={formData.status !== "Absent"}
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="checkOut" className="text-right">
-                        <T text="Check Out" />
-                      </Label>
-                      <div className="col-span-3 flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="checkOut"
-                          name="checkOut"
-                          type="time"
-                          value={formData.checkOut}
-                          onChange={handleInputChange}
-                          className="flex-1"
-                          required={formData.status !== "Absent"}
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
-                
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="notes" className="text-right">
-                    <T text="Notes" />
-                  </Label>
-                  <Input
-                    id="notes"
-                    name="notes"
-                    value={formData.notes}
-                    onChange={handleInputChange}
-                    className="col-span-3"
-                    placeholder={formData.status === "Absent" ? "Reason for absence..." : "Additional notes..."}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? <T text="Saving..." /> : <T text="Save Record" />}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center text-lg font-medium">
+          <Calendar className="mr-2 h-5 w-5" />
+          <T text="Recent Attendance" />
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        {error ? (
-          <ErrorDisplay error={error} />
+        {isLoading ? (
+          <div className="text-center p-4">
+            <div className="animate-spin inline-block w-6 h-6 border-2 border-current border-t-transparent text-primary rounded-full"></div>
+          </div>
+        ) : error ? (
+          <div className="text-center text-red-500 p-4">
+            <p>{error}</p>
+          </div>
+        ) : attendanceRecords.length === 0 ? (
+          <div className="text-center p-4 text-muted-foreground">
+            <p><T text="No attendance records found" /></p>
+          </div>
         ) : (
-          <AttendanceList 
-            attendanceRecords={attendanceRecords}
-            isLoading={isLoading}
-          />
+          <ul className="space-y-3">
+            {attendanceRecords.map((record) => (
+              <li key={record.id} className="border-b pb-3 last:border-b-0 last:pb-0">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-medium">{formatDate(record.date)}</p>
+                    <div className="flex items-center mt-1 space-x-4 text-sm text-muted-foreground">
+                      <div className="flex items-center">
+                        <Clock className="h-3.5 w-3.5 mr-1" />
+                        <span>{formatTime(record.check_in)}</span>
+                      </div>
+                      {record.check_out && (
+                        <div className="flex items-center">
+                          <Clock className="h-3.5 w-3.5 mr-1" />
+                          <span>{formatTime(record.check_out)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(record.status)}`}>
+                      {record.status}
+                    </span>
+                    {record.hours_worked > 0 && (
+                      <span className="text-xs mt-1 text-muted-foreground">
+                        {record.hours_worked.toFixed(2)} hours
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
         )}
       </CardContent>
-      <CardFooter className="flex justify-between">
-        <Button 
-          variant="outline" 
-          onClick={() => onExportData(attendanceRecords, `${fullName}_Attendance`)}
-          disabled={attendanceRecords.length === 0}
-        >
-          <DownloadIcon className="mr-2 h-4 w-4" />
-          <T text="Export Data" />
-        </Button>
-        <Button 
-          variant="outline" 
-          onClick={handlePrintReport}
-          disabled={attendanceRecords.length === 0}
-        >
-          <Printer className="mr-2 h-4 w-4" />
-          <T text="Print Report" />
-        </Button>
-      </CardFooter>
     </Card>
   );
 };

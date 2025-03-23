@@ -5,15 +5,15 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Search, ChevronRight, Phone, Mail, FilterX, Trash2, AlertCircle } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
+import useStaffMembers from "@/hooks/useStaffMembers";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,22 +25,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// Define the staff member type based on the profiles table schema
-type StaffMember = {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  email: string | null;
-  phone: string | null;
-  role: string;
-  department: string | null;
-  attendance: string | null;
-  performance: number | null;
-  hourly_rate: number | null;
-  image_url: string | null;
-  hiring_date: string | null;
-};
-
 const Directory = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -48,41 +32,16 @@ const Directory = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
-  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [staffToDelete, setStaffToDelete] = useState<string | null>(null);
 
-  const fetchStaff = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*');
-      
-      if (error) {
-        throw error;
-      }
-      
-      setStaffMembers(data || []);
-    } catch (err: any) {
-      console.error('Error fetching staff:', err);
-      setError(err.message || 'Failed to load staff data');
-      toast({
-        title: "Error",
-        description: `Failed to load staff data: ${err.message}`,
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchStaff();
-  }, []);
+  const { 
+    data: staffMembers, 
+    isLoading, 
+    error,
+    deleteStaffMember,
+    fetchStaffData
+  } = useStaffMembers();
 
   const filteredStaff = staffMembers.filter(staff => {
     const fullName = `${staff.first_name || ""} ${staff.last_name || ""}`.toLowerCase();
@@ -112,37 +71,21 @@ const Directory = () => {
   const handleDeleteStaff = async () => {
     if (!staffToDelete) return;
     
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', staffToDelete);
-      
-      if (error) {
-        throw error;
-      }
-      
-      setStaffMembers(staffMembers.filter(staff => staff.id !== staffToDelete));
-      
-      toast({
-        title: "Success",
-        description: "Staff member has been deleted",
-      });
-    } catch (err: any) {
-      console.error('Error deleting staff:', err);
-      toast({
-        title: "Error",
-        description: `Failed to delete staff: ${err.message}`,
-        variant: "destructive"
-      });
-    } finally {
+    const success = await deleteStaffMember(staffToDelete);
+    if (success) {
       setDeleteDialogOpen(false);
       setStaffToDelete(null);
     }
   };
 
-  const getFullName = (staff: StaffMember) => {
+  const getFullName = (staff: any) => {
     return `${staff.first_name || ""} ${staff.last_name || ""}`.trim() || "No Name";
+  };
+
+  const getInitials = (staff: any) => {
+    const firstName = staff.first_name || "";
+    const lastName = staff.last_name || "";
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
 
   const getAttendanceVariant = (attendance: string | null) => {
@@ -208,9 +151,9 @@ const Directory = () => {
           <Tabs defaultValue="all" onValueChange={setActiveTab} className="w-full">
             <TabsList className="w-full sm:w-auto flex justify-start overflow-x-auto pb-1">
               <TabsTrigger value="all"><T text="All Staff" /></TabsTrigger>
-              <TabsTrigger value="Kitchen"><T text="Kitchen" /></TabsTrigger>
-              <TabsTrigger value="Front of House"><T text="Front of House" /></TabsTrigger>
-              <TabsTrigger value="Management"><T text="Management" /></TabsTrigger>
+              <TabsTrigger value="kitchen"><T text="Kitchen" /></TabsTrigger>
+              <TabsTrigger value="front of house"><T text="Front of House" /></TabsTrigger>
+              <TabsTrigger value="management"><T text="Management" /></TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -264,11 +207,14 @@ const Directory = () => {
                 <div className="flex items-start justify-between mb-4 flex-wrap gap-2">
                   <div className="flex items-center gap-3 sm:gap-4">
                     <Avatar className="h-12 w-12 sm:h-16 sm:w-16 flex-shrink-0">
-                      <img 
-                        src={staff.image_url || "/placeholder.svg"} 
-                        alt={getFullName(staff)} 
-                        className="aspect-square h-full w-full object-cover"
-                      />
+                      {staff.image_url ? (
+                        <AvatarImage 
+                          src={staff.image_url} 
+                          alt={getFullName(staff)} 
+                          className="aspect-square h-full w-full object-cover"
+                        />
+                      ) : null}
+                      <AvatarFallback>{getInitials(staff)}</AvatarFallback>
                     </Avatar>
                     <div>
                       <h3 className="font-semibold text-base sm:text-lg">{getFullName(staff)}</h3>
