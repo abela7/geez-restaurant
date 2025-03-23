@@ -135,7 +135,7 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
           </div>
           
           <div className="grid gap-2">
-            <Label htmlFor="dueTime"><T text="Due Time" /> (optional)</Label>
+            <Label htmlFor="dueTime"><T text="Due Time" /></Label>
             <Input 
               id="dueTime" 
               type="time" 
