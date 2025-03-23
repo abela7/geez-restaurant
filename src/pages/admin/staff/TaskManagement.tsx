@@ -29,8 +29,6 @@ import {
   createCSVExport 
 } from "@/utils/taskUtils";
 
-// Removed the Layout import
-
 const TaskManagement = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
@@ -257,6 +255,7 @@ const TaskManagement = () => {
             <T text="Create Task" />
           </Button>
         }
+        compact
       />
 
       <TaskFilters 
