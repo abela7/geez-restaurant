@@ -44,7 +44,7 @@ const NewStaff = () => {
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   
-  const { data: roles, isLoading: rolesLoading, error: rolesError } = useRoles();
+  const { data: roles, isLoading: rolesLoading } = useRoles();
 
   const form = useForm({
     defaultValues: {
@@ -155,14 +155,6 @@ const NewStaff = () => {
     }
   };
 
-  if (rolesLoading) {
-    console.log('Loading roles...');
-  }
-
-  if (rolesError) {
-    console.error('Error loading roles:', rolesError);
-  }
-  
   return (
     <>
       <PageHeader 
@@ -357,12 +349,18 @@ const NewStaff = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {roles.map((role) => (
-                            <SelectItem key={role.id} value={role.name}>
-                              {role.name}
+                          {rolesLoading ? (
+                            <SelectItem value="loading" disabled>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin inline" />
+                              Loading roles...
                             </SelectItem>
-                          ))}
-                          {roles.length === 0 && (
+                          ) : roles && roles.length > 0 ? (
+                            roles.map((role) => (
+                              <SelectItem key={role.id} value={role.name}>
+                                {role.name}
+                              </SelectItem>
+                            ))
+                          ) : (
                             <SelectItem value="default" disabled>
                               No roles available
                             </SelectItem>

@@ -1,569 +1,474 @@
+
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import Layout from "@/components/Layout";
+import { useParams, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
 import { PageHeader } from "@/components/ui/page-header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Upload, Loader2, AlertCircle, X } from "lucide-react";
+import { ArrowLeft, Save, Upload, Loader2 } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
-import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import useStaffProfile from "@/hooks/useStaffProfile";
+import useRoles from "@/hooks/useRoles";
 
-type StaffFormValues = {
-  first_name: string;
-  last_name: string;
-  role: string;
-  department: string;
-  email: string;
-  phone: string;
-  address: string;
-  hourly_rate: string;
-  bio: string;
-  gender: string;
-  username: string;
-  password: string;
-};
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const departments = [
+  { value: "Kitchen", label: "Kitchen" },
+  { value: "Front of House", label: "Front of House" },
+  { value: "Management", label: "Management" },
+];
 
 const EditStaff = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { t } = useLanguage();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
+  const { t } = useLanguage();
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const form = useForm<StaffFormValues>({
+  const { data: roles, isLoading: rolesLoading } = useRoles();
+  const { 
+    staffMember,
+    isLoading,
+    error,
+    updateStaffProfile
+  } = useStaffProfile(id || '');
+
+  const form = useForm({
     defaultValues: {
       first_name: "",
       last_name: "",
-      role: "",
-      department: "",
       email: "",
       phone: "",
-      address: "",
+      role: "",
+      department: "",
+      start_date: "",
       hourly_rate: "",
       bio: "",
-      gender: "",
+      image_url: "",
       username: "",
       password: ""
     }
   });
 
   useEffect(() => {
-    const fetchStaffMember = async () => {
-      if (!id) return;
+    if (staffMember) {
+      // Set form values
+      form.reset({
+        first_name: staffMember.first_name || "",
+        last_name: staffMember.last_name || "",
+        email: staffMember.email || "",
+        phone: staffMember.phone || "",
+        role: staffMember.role || "",
+        department: staffMember.department || "",
+        start_date: staffMember.start_date || "",
+        hourly_rate: staffMember.hourly_rate?.toString() || "",
+        bio: staffMember.bio || "",
+        image_url: staffMember.image_url || "",
+        username: staffMember.username || "",
+        password: "" // Don't pre-fill password for security
+      });
       
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', id)
-          .single();
-        
-        if (error) {
-          throw error;
-        }
-        
-        if (data) {
-          form.reset({
-            first_name: data.first_name || "",
-            last_name: data.last_name || "",
-            role: data.role || "",
-            department: data.department || "",
-            email: data.email || "",
-            phone: data.phone || "",
-            address: data.address || "",
-            hourly_rate: data.hourly_rate?.toString() || "",
-            bio: data.bio || "",
-            gender: data.gender || "",
-            username: data.username || "",
-            password: ""
-          });
-          
-          setImageUrl(data.image_url || null);
-        }
-      } catch (err: any) {
-        console.error('Error fetching staff member:', err);
-        setError(err.message || 'Failed to load staff member data');
-        toast({
-          title: "Error",
-          description: `Failed to load staff member: ${err.message}`,
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
+      // Set image preview if exists
+      if (staffMember.image_url) {
+        setImagePreview(staffMember.image_url);
       }
-    };
-    
-    fetchStaffMember();
-  }, [id, form, toast]);
+    }
+  }, [staffMember, form]);
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !id) return;
-    
-    setUploadingImage(true);
-    
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${id}-${Date.now()}.${fileExt}`;
-      const filePath = `staff_images/${fileName}`;
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setProfileImage(file);
       
-      const { error: uploadError } = await supabase.storage
-        .from('staff_images')
-        .upload(filePath, file);
-      
-      if (uploadError) throw uploadError;
-      
-      const { data } = supabase.storage
-        .from('staff_images')
-        .getPublicUrl(filePath);
-      
-      const publicUrl = data.publicUrl;
-      
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ image_url: publicUrl })
-        .eq('id', id);
-      
-      if (updateError) throw updateError;
-      
-      setImageUrl(publicUrl);
-      
-      toast({
-        title: "Success",
-        description: "Profile image uploaded successfully",
-      });
-    } catch (err: any) {
-      console.error('Error uploading image:', err);
-      toast({
-        title: "Error",
-        description: `Failed to upload image: ${err.message}`,
-        variant: "destructive"
-      });
-    } finally {
-      setUploadingImage(false);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setImagePreview(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  const removeProfileImage = async () => {
-    if (!id || !imageUrl) return;
-    
-    setUploadingImage(true);
-    
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ image_url: null })
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      setImageUrl(null);
-      
-      toast({
-        title: "Success",
-        description: "Profile image removed successfully",
-      });
-    } catch (err: any) {
-      console.error('Error removing image:', err);
-      toast({
-        title: "Error",
-        description: `Failed to remove image: ${err.message}`,
-        variant: "destructive"
-      });
-    } finally {
-      setUploadingImage(false);
-    }
-  };
-
-  const onSubmit = async (data: StaffFormValues) => {
+  const onSubmit = async (data: any) => {
     if (!id) return;
     
-    setIsSaving(true);
-    setError(null);
-    
+    setIsSubmitting(true);
     try {
-      const updateData: Record<string, any> = {
-        first_name: data.first_name,
-        last_name: data.last_name,
-        role: data.role,
-        department: data.department,
-        email: data.email,
-        phone: data.phone,
-        address: data.address,
+      // Remove empty password to avoid overwriting with empty string
+      if (!data.password) {
+        delete data.password;
+      }
+      
+      // Format numeric data
+      const formattedData = {
+        ...data,
         hourly_rate: data.hourly_rate ? parseFloat(data.hourly_rate) : null,
-        bio: data.bio,
-        gender: data.gender,
-        username: data.username,
-        updated_at: new Date().toISOString()
       };
       
-      if (data.password && data.password.trim().length > 0) {
-        updateData.password = data.password;
+      const result = await updateStaffProfile(formattedData, profileImage);
+      
+      if (result) {
+        toast({
+          title: "Success",
+          description: "Staff profile updated successfully",
+        });
+        navigate(`/admin/staff/profile/${id}`);
       }
-      
-      const { error } = await supabase
-        .from('profiles')
-        .update(updateData)
-        .eq('id', id);
-      
-      if (error) {
-        throw error;
-      }
-      
-      toast({
-        title: "Success",
-        description: "Staff member updated successfully",
-      });
-      
-      navigate("/admin/staff/directory");
     } catch (err: any) {
-      console.error('Error updating staff member:', err);
-      setError(err.message || 'Failed to update staff member');
+      console.error('Error updating staff:', err);
       toast({
         title: "Error",
-        description: `Failed to update staff member: ${err.message}`,
+        description: `Failed to update staff profile: ${err.message}`,
         variant: "destructive"
       });
     } finally {
-      setIsSaving(false);
+      setIsSubmitting(false);
     }
-  };
-
-  const getInitials = () => {
-    const firstName = form.watch("first_name") || "";
-    const lastName = form.watch("last_name") || "";
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-  };
-
-  const handleSelectImageClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    document.getElementById("profile-picture")?.click();
   };
 
   if (isLoading) {
     return (
-      <Layout interface="admin">
-        <div className="flex items-center justify-center p-12">
-          <div className="flex flex-col items-center gap-2">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-muted-foreground"><T text="Loading staff member..." /></p>
-          </div>
-        </div>
-      </Layout>
+      <div className="flex justify-center items-center min-h-[200px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error || !staffMember) {
+    return (
+      <div className="p-4 bg-destructive/10 text-destructive rounded-md">
+        {error || "Staff member not found"}
+      </div>
     );
   }
 
   return (
-    <Layout interface="admin">
+    <>
       <PageHeader 
-        heading={<T text="Edit Staff Member" />}
-        description={<T text="Update staff member information" />}
+        heading={<T text="Edit Staff Profile" />}
+        description={<T text="Update the staff member's information" />}
         actions={
-          <Button 
+          <Button
             variant="outline"
-            onClick={() => navigate("/admin/staff/directory")}
+            onClick={() => navigate(`/admin/staff/profile/${id}`)}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            <T text="Back to Directory" />
+            <T text="Back to Profile" />
           </Button>
         }
       />
-
-      {error && (
-        <Card className="mb-6 border-red-300 bg-red-50 dark:bg-red-950/20">
-          <CardContent className="p-4 flex items-center gap-3">
-            <AlertCircle className="h-5 w-5 text-red-500" />
-            <p className="text-red-500">{error}</p>
-          </CardContent>
-        </Card>
-      )}
-
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle><T text="Personal Information" /></CardTitle>
-                <CardDescription><T text="Basic information about the staff member" /></CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="first_name"><T text="First Name" /></Label>
-                    <Input 
-                      id="first_name" 
-                      {...form.register("first_name", { required: true })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="last_name"><T text="Last Name" /></Label>
-                    <Input 
-                      id="last_name" 
-                      {...form.register("last_name", { required: true })}
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email"><T text="Email" /></Label>
-                    <Input 
-                      id="email" 
-                      type="email" 
-                      {...form.register("email")}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone"><T text="Phone Number" /></Label>
-                    <Input 
-                      id="phone" 
-                      {...form.register("phone")}
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="username"><T text="Username" /></Label>
-                    <Input 
-                      id="username" 
-                      {...form.register("username")}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password"><T text="Password" /></Label>
-                    <Input 
-                      id="password" 
-                      type="password" 
-                      placeholder="Leave blank to keep current password"
-                      {...form.register("password")}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      <T text="Leave blank to keep the current password" />
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="address"><T text="Address" /></Label>
-                  <Input 
-                    id="address" 
-                    {...form.register("address")}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="gender"><T text="Gender" /></Label>
-                  <Select 
-                    value={form.watch("gender")}
-                    onValueChange={(value) => form.setValue("gender", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={t("Select gender")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male"><T text="Male" /></SelectItem>
-                      <SelectItem value="female"><T text="Female" /></SelectItem>
-                      <SelectItem value="other"><T text="Other" /></SelectItem>
-                      <SelectItem value="prefer_not_to_say"><T text="Prefer not to say" /></SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="bio"><T text="Bio" /></Label>
-                  <Textarea 
-                    id="bio" 
-                    placeholder={t("Brief description of the staff member...")}
-                    className="min-h-[100px]"
-                    {...form.register("bio")}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle><T text="Employment Details" /></CardTitle>
-                <CardDescription><T text="Job-related information" /></CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="role"><T text="Role" /></Label>
-                    <Select 
-                      value={form.watch("role")}
-                      onValueChange={(value) => form.setValue("role", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("Select a role")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="chef"><T text="Chef" /></SelectItem>
-                        <SelectItem value="waiter"><T text="Waiter" /></SelectItem>
-                        <SelectItem value="manager"><T text="Manager" /></SelectItem>
-                        <SelectItem value="hostess"><T text="Host/Hostess" /></SelectItem>
-                        <SelectItem value="bartender"><T text="Bartender" /></SelectItem>
-                        <SelectItem value="dishwasher"><T text="Dishwasher" /></SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="department"><T text="Department" /></Label>
-                    <Select 
-                      value={form.watch("department")}
-                      onValueChange={(value) => form.setValue("department", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("Select a department")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Kitchen"><T text="Kitchen" /></SelectItem>
-                        <SelectItem value="Front of House"><T text="Front of House" /></SelectItem>
-                        <SelectItem value="Management"><T text="Management" /></SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="hourly_rate"><T text="Hourly Rate (£)" /></Label>
-                  <Input 
-                    id="hourly_rate" 
-                    type="number" 
-                    min="0" 
-                    step="0.01"
-                    placeholder="6.00"
-                    {...form.register("hourly_rate")}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="lg:col-span-1 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle><T text="Profile Picture" /></CardTitle>
-                <CardDescription><T text="Upload a staff photo" /></CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {imageUrl ? (
-                  <div className="flex flex-col items-center justify-center space-y-4">
-                    <Avatar className="h-32 w-32">
-                      <AvatarImage src={imageUrl} alt="Profile" />
-                      <AvatarFallback>{getInitials()}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex space-x-2">
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => document.getElementById("profile-picture")?.click()}
-                        disabled={uploadingImage}
-                      >
-                        {uploadingImage ? (
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        ) : (
-                          <Upload className="h-4 w-4 mr-2" />
-                        )}
-                        <T text="Change" />
-                      </Button>
-                      <Button 
-                        type="button"
-                        variant="outline" 
-                        size="sm"
-                        onClick={removeProfileImage}
-                        disabled={uploadingImage}
-                      >
-                        <X className="h-4 w-4 mr-2" />
-                        <T text="Remove" />
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 flex flex-col items-center justify-center text-center">
-                    <div className="mb-4 bg-primary/10 p-3 rounded-full">
-                      <Upload className="h-6 w-6 text-primary" />
-                    </div>
-                    <h3 className="font-medium"><T text="Upload an image" /></h3>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      <T text="Drag and drop or click to browse" />
-                    </p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="mt-4"
-                      onClick={handleSelectImageClick}
-                      disabled={uploadingImage}
-                    >
-                      {uploadingImage ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          <T text="Uploading..." />
-                        </>
-                      ) : (
-                        <T text="Select Image" />
-                      )}
-                    </Button>
-                  </div>
-                )}
-                <input
-                  type="file"
-                  className="hidden"
-                  id="profile-picture"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  disabled={uploadingImage}
+      
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle><T text="Personal Information" /></CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="first_name"
+                  rules={{ required: "First name is required" }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel><T text="First Name" /></FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </CardContent>
-            </Card>
+                
+                <FormField
+                  control={form.control}
+                  name="last_name"
+                  rules={{ required: "Last name is required" }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel><T text="Last Name" /></FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  rules={{
+                    required: "Email is required",
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: "Invalid email address",
+                    },
+                  }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel><T text="Email" /></FormLabel>
+                      <FormControl>
+                        <Input type="email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel><T text="Phone Number" /></FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="username"
+                  rules={{ required: "Username is required" }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel><T text="Username" /></FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel><T text="Password" /></FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          {...field} 
+                          placeholder={t("Leave blank to keep current password")} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="bio"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel><T text="Bio" /></FormLabel>
+                    <FormControl>
+                      <Textarea {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="space-y-2">
+                <FormLabel><T text="Profile Image" /></FormLabel>
+                <div className="border rounded-md p-4 space-y-4">
+                  {imagePreview && (
+                    <div className="flex justify-center mb-4">
+                      <img 
+                        src={imagePreview} 
+                        alt="Profile preview" 
+                        className="h-32 w-32 object-cover rounded-full border"
+                      />
+                    </div>
+                  )}
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                    id="profile-image"
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => document.getElementById('profile-image')?.click()}
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    <T text="Upload New Image" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle><T text="Employment Details" /></CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="role"
+                  rules={{ required: "Role is required" }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel><T text="Role" /></FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t("Select role")} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {rolesLoading ? (
+                            <SelectItem value="loading" disabled>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin inline" />
+                              Loading roles...
+                            </SelectItem>
+                          ) : roles && roles.length > 0 ? (
+                            roles.map((role) => (
+                              <SelectItem key={role.id} value={role.name}>
+                                {role.name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="default" disabled>
+                              No roles available
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="department"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel><T text="Department" /></FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t("Select department")} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {departments.map((dept) => (
+                            <SelectItem key={dept.value} value={dept.value}>
+                              {dept.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="start_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel><T text="Start Date" /></FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="hourly_rate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel><T text="Hourly Rate (£)" /></FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <div className="flex justify-end space-x-2">
+            <Button 
+              type="button" 
+              variant="outline"
+              onClick={() => navigate(`/admin/staff/profile/${id}`)}
+            >
+              <T text="Cancel" />
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <T text="Saving..." />
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  <T text="Save Changes" />
+                </>
+              )}
+            </Button>
           </div>
-        </div>
-        
-        <div className="mt-6 flex justify-end space-x-2">
-          <Button 
-            type="button"
-            variant="outline" 
-            onClick={() => navigate("/admin/staff/directory")}
-            disabled={isSaving}
-          >
-            <T text="Cancel" />
-          </Button>
-          <Button 
-            type="submit" 
-            disabled={isSaving}
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                <T text="Saving..." />
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                <T text="Save Changes" />
-              </>
-            )}
-          </Button>
-        </div>
-      </form>
-    </Layout>
+        </form>
+      </Form>
+    </>
   );
 };
 

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
@@ -7,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge-extended";
+import Layout from "@/components/Layout";
 import { 
   User, Clock, DollarSign, Calendar, Mail, Phone, 
   MapPin, Award, ArrowLeft
@@ -51,7 +53,7 @@ const UserProfile = () => {
   ];
 
   return (
-    <div className="container mx-auto p-4 md:p-6">
+    <div className="p-4 md:p-6">
       <Button 
         variant="ghost" 
         className="mb-4" 
@@ -62,7 +64,7 @@ const UserProfile = () => {
       </Button>
 
       <PageHeader 
-        title={t("My Profile")} 
+        heading={t("My Profile")} 
         description={t("View and manage your personal information")}
       />
 
