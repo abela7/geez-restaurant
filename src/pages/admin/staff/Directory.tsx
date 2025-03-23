@@ -45,6 +45,10 @@ const Directory = () => {
 
   console.log("Staff members in directory:", staffMembers);
 
+  useEffect(() => {
+    fetchStaffData();
+  }, []);
+
   const filteredStaff = staffMembers.filter(staff => {
     const fullName = `${staff.first_name || ""} ${staff.last_name || ""}`.toLowerCase();
     const matchesSearch = 
@@ -82,6 +86,11 @@ const Directory = () => {
     }
   };
 
+  const handleAddNewStaff = () => {
+    console.log("Navigating to add new staff page");
+    navigate("/admin/staff/new");
+  };
+
   const getFullName = (staff: any) => {
     return `${staff.first_name || ""} ${staff.last_name || ""}`.trim() || "No Name";
   };
@@ -111,10 +120,7 @@ const Directory = () => {
         heading={<T text="Staff Directory" />}
         description={<T text="View and manage all restaurant staff members" />}
         actions={
-          <Button onClick={() => {
-            console.log("Navigating to add new staff page");
-            navigate("/admin/staff/new");
-          }}>
+          <Button onClick={handleAddNewStaff}>
             <T text="Add New Staff" />
           </Button>
         }

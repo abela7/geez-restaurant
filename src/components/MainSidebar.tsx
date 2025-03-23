@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useLanguage, T } from '@/contexts/LanguageContext';
 import SidebarLink from './sidebar/SidebarLink';
@@ -15,8 +15,26 @@ export const MainSidebar: React.FC<{
   interface: "admin" | "waiter" | "kitchen" | "customer" | "system";
 }> = ({ collapsed, toggleCollapse, interface: interfaceType }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const { t } = useLanguage();
+
+  // When location changes, expand the relevant section
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const adminPrefix = interfaceType === 'admin' ? '/admin' : '';
+    
+    // Find the section that should be expanded based on the current path
+    const navSections = getNavSections(interfaceType);
+    const sectionToExpand = navSections.find(section => 
+      section.path !== '/' && // Don't auto-expand Dashboard
+      currentPath.startsWith(`${adminPrefix}${section.path}`)
+    );
+    
+    if (sectionToExpand && !expandedSections.includes(sectionToExpand.path)) {
+      setExpandedSections(prev => [...prev, sectionToExpand.path]);
+    }
+  }, [location.pathname, interfaceType]);
 
   const toggleSection = (e: React.MouseEvent, section: string) => {
     e.preventDefault();
@@ -25,6 +43,23 @@ export const MainSidebar: React.FC<{
         ? prev.filter(item => item !== section) 
         : [...prev, section]
     );
+  };
+  
+  const handleLinkClick = (e: React.MouseEvent, path: string, hasDropdown: boolean) => {
+    if (hasDropdown) {
+      toggleSection(e, path);
+    } else {
+      const fullPath = interfaceType === 'admin' ? `/admin${path}` : path;
+      
+      // Add logging to debug
+      console.log("Navigating to:", fullPath);
+      
+      // Use navigate instead of direct manipulation if not a dropdown
+      if (!hasDropdown) {
+        e.preventDefault();
+        navigate(fullPath);
+      }
+    }
   };
 
   const navSections = getNavSections(interfaceType);
@@ -56,20 +91,20 @@ export const MainSidebar: React.FC<{
                     label={section.label}
                     isActive={
                       section.submenu 
-                        ? location.pathname.startsWith(section.path) 
-                        : location.pathname === section.path
+                        ? location.pathname.startsWith(`/admin${section.path}`) 
+                        : location.pathname === `/admin${section.path}`
                     }
                     isOpen={!collapsed}
                     hasDropdown={!!section.submenu}
                     isExpanded={expandedSections.includes(section.path)}
-                    onClick={(e) => section.submenu ? toggleSection(e, section.path) : undefined}
+                    onClick={(e) => handleLinkClick(e, section.path, !!section.submenu)}
                   />
                   {section.submenu && !collapsed && (
                     <DropdownMenu 
                       items={section.submenu} 
                       isOpen={!collapsed} 
                       isExpanded={expandedSections.includes(section.path)}
-                      parentPath={section.path}
+                      parentPath={`/admin${section.path}`}
                     />
                   )}
                 </div>
@@ -83,6 +118,7 @@ export const MainSidebar: React.FC<{
                   label={link.label}
                   isActive={location.pathname === link.path}
                   isOpen={!collapsed}
+                  onClick={(e) => handleLinkClick(e, link.path, false)}
                 />
               ))
             )}

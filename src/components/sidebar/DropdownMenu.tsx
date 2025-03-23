@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -37,10 +38,15 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({
     return `${parentPath}/${to}`;
   };
   
+  // For debugging - check paths being generated
+  console.log("Parent path:", parentPath);
+  console.log("Menu items:", items);
+  
   return (
     <div className="ml-8 pl-2 border-l border-border/50">
       {items.map((item) => {
         const fullPath = constructPath(item.to);
+        console.log("Constructed path:", fullPath); // Log the constructed path
         
         return (
           <Link

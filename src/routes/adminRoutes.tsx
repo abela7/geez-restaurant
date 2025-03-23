@@ -1,3 +1,4 @@
+
 import { Route, Routes, Navigate, Outlet } from "react-router-dom";
 import Layout from "@/components/Layout";
 import NotFound from "@/pages/NotFound";
@@ -189,6 +190,9 @@ const AdminRoutes = () => {
         {/* Language Management Routes */}
         <Route path="language" element={<LanguageManagement />} />
       </Route>
+      
+      {/* Redirect root admin path to Dashboard */}
+      <Route path="" element={<Navigate to="/" replace />} />
       
       {/* Important: Add a catch-all route for admin paths that don't match */}
       <Route path="*" element={<NotFound />} />
