@@ -1,4 +1,3 @@
-
 import { Route, Routes, Navigate, Outlet } from "react-router-dom";
 import Layout from "@/components/Layout";
 import NotFound from "@/pages/NotFound";
@@ -81,7 +80,6 @@ import NewChecklist from "@/pages/admin/food-safety/NewChecklist";
 import TableManagement from "@/pages/admin/general/TableManagement";
 
 // Use a mock authentication check for now
-// Later this will be replaced with a proper authentication system
 const isAuthenticated = () => {
   const storedUser = localStorage.getItem('user');
   return storedUser ? true : false;
@@ -104,7 +102,7 @@ const AdminRoutes = () => {
 
   return (
     <Routes>
-      <Route element={<Layout interface="admin"><Outlet /></Layout>}>
+      <Route path="/" element={<Layout interface="admin"><Outlet /></Layout>}>
         <Route index element={<Dashboard />} />
         
         {/* Staff Management Routes */}
@@ -190,6 +188,7 @@ const AdminRoutes = () => {
         <Route path="language" element={<LanguageManagement />} />
       </Route>
       
+      {/* Important: Add a catch-all route for admin paths that don't match */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

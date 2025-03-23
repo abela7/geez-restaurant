@@ -15,6 +15,13 @@ import CustomerRoutes from "./routes/customerRoutes";
 import SystemRoutes from "./routes/systemRoutes";
 import AuthRoutes from "./routes/authRoutes";
 
+// Import pages used directly in App.tsx
+import Login from "./pages/Login";
+import NotFound from "./pages/NotFound";
+
+// Import the storage setup
+import "@/integrations/supabase/setup-storage";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -27,8 +34,11 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <Routes>
-                {/* Main route path */}
-                <Route path="/*" element={<AdminRoutes />} />
+                {/* Main route - Admin paths */}
+                <Route path="/admin/*" element={<AdminRoutes />} />
+                
+                {/* Redirect / to /admin for now */}
+                <Route path="/" element={<Navigate to="/admin" replace />} />
                 
                 {/* Other interface routes */}
                 <Route path="/waiter/*" element={<WaiterRoutes />} />
@@ -51,12 +61,5 @@ const App = () => (
     </LanguageProvider>
   </QueryClientProvider>
 );
-
-// Import the storage setup
-import "@/integrations/supabase/setup-storage";
-
-// Import these here since they're used directly in the App component
-import Login from "./pages/Login";
-import NotFound from "./pages/NotFound";
 
 export default App;

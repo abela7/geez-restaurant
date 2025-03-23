@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,7 +23,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// Removed the Layout import as it should only be in adminRoutes.tsx
+console.log("Directory component loaded");
 
 const Directory = () => {
   const { t } = useLanguage();
@@ -44,6 +43,8 @@ const Directory = () => {
     fetchStaffData
   } = useStaffMembers();
 
+  console.log("Staff members in directory:", staffMembers);
+
   const filteredStaff = staffMembers.filter(staff => {
     const fullName = `${staff.first_name || ""} ${staff.last_name || ""}`.toLowerCase();
     const matchesSearch = 
@@ -57,10 +58,12 @@ const Directory = () => {
   });
 
   const handleViewStaff = (id: string) => {
+    console.log("Navigating to staff profile with ID:", id);
     navigate(`/admin/staff/profile/${id}`);
   };
 
   const handleEditStaff = (id: string) => {
+    console.log("Navigating to edit staff with ID:", id);
     navigate(`/admin/staff/edit/${id}`);
   };
 
@@ -108,7 +111,10 @@ const Directory = () => {
         heading={<T text="Staff Directory" />}
         description={<T text="View and manage all restaurant staff members" />}
         actions={
-          <Button onClick={() => navigate("/admin/staff/new")}>
+          <Button onClick={() => {
+            console.log("Navigating to add new staff page");
+            navigate("/admin/staff/new");
+          }}>
             <T text="Add New Staff" />
           </Button>
         }
@@ -211,14 +217,14 @@ const Directory = () => {
                       {staff.image_url ? (
                         <AvatarImage 
                           src={staff.image_url} 
-                          alt={getFullName(staff)} 
+                          alt={`${staff.first_name || ""} ${staff.last_name || ""}`.trim()} 
                           className="aspect-square h-full w-full object-cover"
                         />
                       ) : null}
-                      <AvatarFallback>{getInitials(staff)}</AvatarFallback>
+                      <AvatarFallback>{`${staff.first_name?.charAt(0) || ""}${staff.last_name?.charAt(0) || ""}`.toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <h3 className="font-semibold text-base sm:text-lg">{getFullName(staff)}</h3>
+                      <h3 className="font-semibold text-base sm:text-lg">{`${staff.first_name || ""} ${staff.last_name || ""}`.trim()}</h3>
                       <p className="text-muted-foreground text-sm">{staff.role}</p>
                       {staff.department && (
                         <Badge 
@@ -250,7 +256,7 @@ const Directory = () => {
                 <div className="flex items-center justify-between mt-4">
                   <div>
                     {staff.attendance && (
-                      <Badge variant={getAttendanceVariant(staff.attendance)}>
+                      <Badge variant={staff.attendance === "Present" ? "default" : staff.attendance === "Late" ? "secondary" : "destructive"}>
                         {staff.attendance}
                       </Badge>
                     )}
