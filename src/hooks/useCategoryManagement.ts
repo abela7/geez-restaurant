@@ -54,12 +54,50 @@ export const useCategoryManagement = () => {
         itemCount: categoryItemCount[category.id] || 0
       }));
       
+      // If there are no categories in the database, add the initial categories
+      if (categoriesData.length === 0) {
+        await seedInitialCategories();
+        return loadCategories(); // Reload after seeding
+      }
+      
       setCategories(categoriesWithCount);
     } catch (error) {
       console.error('Error loading categories:', error);
       toast.error('Failed to load categories');
     } finally {
       setIsLoading(false);
+    }
+  };
+  
+  // Function to seed the initial categories if none exist
+  const seedInitialCategories = async () => {
+    const initialCategories = [
+      { name: "Breakfast Dishes", description: "Traditional Ethiopian breakfast options", active: true },
+      { name: "Vegan & Vegetarian Dishes", description: "Plant-based Ethiopian specialties", active: true },
+      { name: "Beef Dishes", description: "Authentic beef preparations with Ethiopian spices", active: true },
+      { name: "Lamb Dishes", description: "Traditional lamb dishes with rich flavors", active: true },
+      { name: "Combination Platters", description: "Mixed selections of Ethiopian favorites", active: true },
+      { name: "Injera-Based Dishes", description: "Specialties served with traditional injera bread", active: true },
+      { name: "Traditional Coffee Service", description: "Ethiopian coffee ceremony and traditional coffee", active: true },
+      { name: "Hot Drinks", description: "Warming beverages including teas and spiced drinks", active: true },
+      { name: "Cold Drinks", description: "Refreshing cold beverages and traditional coolers", active: true },
+      { name: "Specialty Dishes", description: "Chef's special preparations and house favorites", active: true },
+      { name: "Side Dishes", description: "Accompaniments and smaller portions", active: true },
+      { name: "Spicy Selections", description: "Dishes with an extra kick of heat", active: true },
+      { name: "House Specials", description: "Signature dishes of our restaurant", active: true }
+    ];
+    
+    try {
+      console.log('Adding initial categories...');
+      const { error } = await supabase
+        .from('menu_categories')
+        .insert(initialCategories);
+      
+      if (error) throw error;
+      toast.success('Initial menu categories have been created');
+    } catch (error) {
+      console.error('Error seeding initial categories:', error);
+      toast.error('Failed to create initial categories');
     }
   };
 
