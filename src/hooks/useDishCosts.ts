@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -22,9 +23,10 @@ export const useDishCosts = () => {
   const { 
     ingredients, 
     isLoading: ingredientsLoading, 
-    createIngredient, 
-    updateIngredient, 
-    deleteIngredient 
+    createIngredient: createDishIngredient, 
+    updateIngredient: updateDishIngredient, 
+    deleteIngredient: deleteDishIngredient,
+    loadIngredients
   } = useDishCostIngredients();
 
   // Improved load function with automatic retry
@@ -443,55 +445,20 @@ export const useDishCosts = () => {
     }
   };
 
-  const updateIngredient = async (id: string, updates: Partial<Ingredient>) => {
+  const createUnit = async (unit: { name: string; abbreviation: string; type: string; description?: string }) => {
     try {
       setIsLoading(true);
       
       const { error } = await supabase
-        .from('ingredients')
-        .update(updates)
-        .eq('id', id);
+        .from('measurement_units')
+        .insert(unit);
       
       if (error) throw error;
       
-      await loadIngredients();
+      await loadUnits();
       
     } catch (err) {
-      console.error("Error updating ingredient:", err);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const deleteIngredient = async (id: string) => {
-    try {
-      setIsLoading(true);
-      
-      // Check if ingredient is used in any dish
-      const { data: usedIngredients, error: checkError } = await supabase
-        .from('dish_ingredients')
-        .select('id')
-        .eq('ingredient_id', id)
-        .limit(1);
-      
-      if (checkError) throw checkError;
-      
-      if (usedIngredients && usedIngredients.length > 0) {
-        throw new Error("Cannot delete ingredient that is used in dishes");
-      }
-      
-      const { error } = await supabase
-        .from('ingredients')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      await loadIngredients();
-      
-    } catch (err) {
-      console.error("Error deleting ingredient:", err);
+      console.error("Error creating unit:", err);
       throw err;
     } finally {
       setIsLoading(false);
@@ -553,43 +520,52 @@ export const useDishCosts = () => {
     }
   };
 
-  const createUnit = async (unit: { name: string; abbreviation: string; type: string; description?: string }) => {
-    try {
-      setIsLoading(true);
-      
-      const { error } = await supabase
-        .from('measurement_units')
-        .insert(unit);
-      
-      if (error) throw error;
-      
-      await loadUnits();
-      
-    } catch (err) {
-      console.error("Error creating unit:", err);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const createIngredient = async (ingredient: { name: string; unit: string; cost: number; category?: string }) => {
     try {
       setIsLoading(true);
-      
-      const { error } = await supabase
-        .from('ingredients')
-        .insert(ingredient);
-      
-      if (error) throw error;
-      
-      await loadIngredients();
-      
-    } catch (err) {
-      console.error("Error creating ingredient:", err);
-      throw err;
-    } finally {
+      const result = await createDishIngredient(ingredient);
       setIsLoading(false);
+      return result;
+    } catch (err) {
+      setIsLoading(false);
+      throw err;
+    }
+  };
+
+  const updateIngredient = async (id: string, updates: Partial<Ingredient>) => {
+    try {
+      setIsLoading(true);
+      const result = await updateDishIngredient(id, updates);
+      setIsLoading(false);
+      return result;
+    } catch (err) {
+      setIsLoading(false);
+      throw err;
+    }
+  };
+
+  const deleteIngredient = async (id: string) => {
+    try {
+      setIsLoading(true);
+      
+      // Check if ingredient is used in any dish
+      const { data: usedIngredients, error: checkError } = await supabase
+        .from('dish_ingredients')
+        .select('id')
+        .eq('ingredient_id', id)
+        .limit(1);
+      
+      if (checkError) throw checkError;
+      
+      if (usedIngredients && usedIngredients.length > 0) {
+        throw new Error("Cannot delete ingredient that is used in dishes");
+      }
+      
+      await deleteDishIngredient(id);
+      setIsLoading(false);
+    } catch (err) {
+      setIsLoading(false);
+      throw err;
     }
   };
 
@@ -611,4 +587,3 @@ export const useDishCosts = () => {
     loadInitialData
   };
 };
-

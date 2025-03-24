@@ -33,7 +33,9 @@ export const useDishCostIngredients = () => {
         unit: item.unit,
         cost: item.cost || 0,
         quantity: item.stock_quantity || 0,
-        category: item.category
+        category: item.category,
+        created_at: item.created_at,
+        updated_at: item.updated_at
       }));
 
       setIngredients(mappedIngredients);
@@ -70,7 +72,9 @@ export const useDishCostIngredients = () => {
         unit: data.unit,
         cost: data.cost || 0,
         quantity: data.stock_quantity || 0,
-        category: data.category
+        category: data.category,
+        created_at: data.created_at,
+        updated_at: data.updated_at
       }]);
 
       return data;
@@ -106,7 +110,9 @@ export const useDishCostIngredients = () => {
           unit: data.unit,
           cost: data.cost || 0,
           quantity: data.stock_quantity || 0,
-          category: data.category
+          category: data.category,
+          created_at: data.created_at,
+          updated_at: data.updated_at
         } : ing)
       );
 
