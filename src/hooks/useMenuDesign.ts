@@ -64,9 +64,10 @@ export const useMenuDesign = () => {
 
         if (data) {
           // If we have design data, use it
+          const designData = data.design_data as MenuDesignType;
           setMenuDesign({
             ...defaultMenuDesign, // Include defaults for any missing fields
-            ...data.design_data // Override with stored values
+            ...designData // Override with stored values
           });
         }
         
@@ -111,7 +112,7 @@ export const useMenuDesign = () => {
         result = await supabase
           .from('menu_design')
           .update({
-            design_data: menuDesign,
+            design_data: menuDesign as any,
             updated_at: new Date().toISOString()
           })
           .eq('id', existingData[0].id);
@@ -120,7 +121,7 @@ export const useMenuDesign = () => {
         result = await supabase
           .from('menu_design')
           .insert({
-            design_data: menuDesign,
+            design_data: menuDesign as any,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           });
