@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FoodItemRecipeButton } from "@/components/admin/menu/FoodItemRecipeButton";
+import FoodItemRecipeButton from "@/components/admin/menu/FoodItemRecipeButton";
 
 interface FoodItem {
   id: string;

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -281,7 +280,7 @@ export const RecipeManagementDialog: React.FC<RecipeManagementDialogProps> = ({
                 </div>
                 
                 {availableIngredients.length === 0 && (
-                  <Alert variant="warning">
+                  <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
                       {t("No ingredients available. Please add ingredients in the inventory management section first.")}
