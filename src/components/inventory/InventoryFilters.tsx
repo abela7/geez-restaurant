@@ -1,95 +1,149 @@
 
 import React from "react";
 import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetFooter 
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { 
   Select, 
   SelectContent, 
   SelectItem, 
-  SelectTrigger, 
+  SelectTrigger,
   SelectValue 
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { useLanguage, T } from "@/contexts/LanguageContext";
-import { Search, X, SlidersHorizontal, Filter } from "lucide-react";
 
 interface InventoryFiltersProps {
-  searchTerm: string;
-  onSearchChange: (value: string) => void;
-  categoryFilter: string;
-  onCategoryChange: (value: string) => void;
-  statusFilter?: string;
-  onStatusChange?: (value: string) => void;
-  onClearFilters: () => void;
-  onOpenAdvancedFilters?: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onApplyFilters: (filters: {
+    category: string;
+    status: string;
+    sortBy: string;
+    view: string;
+  }) => void;
   categories: string[];
-  showStatus?: boolean;
+  initialFilters: {
+    category: string;
+    status: string;
+    sortBy: string;
+    view: string;
+  };
 }
 
 export const InventoryFilters: React.FC<InventoryFiltersProps> = ({
-  searchTerm,
-  onSearchChange,
-  categoryFilter,
-  onCategoryChange,
-  statusFilter = "all",
-  onStatusChange,
-  onClearFilters,
-  onOpenAdvancedFilters,
+  open,
+  onOpenChange,
+  onApplyFilters,
   categories,
-  showStatus = true
+  initialFilters
 }) => {
   const { t } = useLanguage();
+  const [category, setCategory] = React.useState(initialFilters.category);
+  const [status, setStatus] = React.useState(initialFilters.status);
+  const [sortBy, setSortBy] = React.useState(initialFilters.sortBy);
+  const [view, setView] = React.useState(initialFilters.view);
+
+  const handleApply = () => {
+    onApplyFilters({
+      category,
+      status,
+      sortBy,
+      view
+    });
+    onOpenChange(false);
+  };
+
+  const handleReset = () => {
+    setCategory("all");
+    setStatus("all");
+    setSortBy("name");
+    setView("grid");
+  };
 
   return (
-    <div className="mb-6 flex flex-col md:flex-row gap-4">
-      <div className="relative flex-1">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder={t("Search inventory...")}
-          className="w-full pl-9"
-          value={searchTerm}
-          onChange={(e) => onSearchChange(e.target.value)}
-        />
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <Select value={categoryFilter} onValueChange={onCategoryChange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder={t("All Categories")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all"><T text="All Categories" /></SelectItem>
-            {categories.map(category => (
-              <SelectItem key={category} value={category}>{category}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="sm:max-w-md">
+        <SheetHeader>
+          <SheetTitle><T text="Filter Inventory" /></SheetTitle>
+        </SheetHeader>
         
-        {showStatus && onStatusChange && (
-          <Select value={statusFilter} onValueChange={onStatusChange}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder={t("Status")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all"><T text="All Status" /></SelectItem>
-              <SelectItem value="normal"><T text="Normal" /></SelectItem>
-              <SelectItem value="low"><T text="Low" /></SelectItem>
-              <SelectItem value="critical"><T text="Critical" /></SelectItem>
-            </SelectContent>
-          </Select>
-        )}
+        <div className="py-4 space-y-6">
+          <div className="space-y-2">
+            <Label><T text="Category" /></Label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder={t("Select category")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all"><T text="All Categories" /></SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label><T text="Stock Status" /></Label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger>
+                <SelectValue placeholder={t("Select status")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all"><T text="All Statuses" /></SelectItem>
+                <SelectItem value="normal"><T text="Normal" /></SelectItem>
+                <SelectItem value="low"><T text="Low" /></SelectItem>
+                <SelectItem value="critical"><T text="Critical" /></SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label><T text="Sort By" /></Label>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger>
+                <SelectValue placeholder={t("Sort order")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name"><T text="Name (A-Z)" /></SelectItem>
+                <SelectItem value="name-desc"><T text="Name (Z-A)" /></SelectItem>
+                <SelectItem value="stock-low"><T text="Stock (Low-High)" /></SelectItem>
+                <SelectItem value="stock-high"><T text="Stock (High-Low)" /></SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label><T text="View" /></Label>
+            <RadioGroup value={view} onValueChange={setView} className="flex space-x-2">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="grid" id="grid" />
+                <Label htmlFor="grid"><T text="Grid" /></Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="list" id="list" />
+                <Label htmlFor="list"><T text="List" /></Label>
+              </div>
+            </RadioGroup>
+          </div>
+        </div>
         
-        <Button variant="outline" size="sm" onClick={onClearFilters}>
-          <X className="mr-2 h-4 w-4" />
-          <T text="Clear" />
-        </Button>
-        
-        {onOpenAdvancedFilters && (
-          <Button variant="outline" size="sm" onClick={onOpenAdvancedFilters}>
-            <Filter className="mr-2 h-4 w-4" />
-            <span className="hidden sm:inline"><T text="More Filters" /></span>
+        <SheetFooter className="flex justify-between sm:justify-between">
+          <Button variant="outline" onClick={handleReset}>
+            <T text="Reset" />
           </Button>
-        )}
-      </div>
-    </div>
+          <Button onClick={handleApply}>
+            <T text="Apply Filters" />
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 };

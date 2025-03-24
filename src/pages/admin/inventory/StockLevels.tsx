@@ -78,7 +78,6 @@ import {
   Legend
 } from "recharts";
 
-// Colors for chart
 const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 const StockLevels = () => {
@@ -358,6 +357,18 @@ const StockLevels = () => {
 
       <InventoryNav />
 
+      <div className="mb-6 bg-muted/50 border rounded-md p-4 flex items-center justify-between">
+        <div className="flex items-center">
+          <Truck className="h-5 w-5 mr-2 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">
+            <T text="Suppliers and Purchase Orders features are coming soon" />
+          </span>
+        </div>
+        <Badge variant="outline" className="text-xs">
+          <T text="Coming Soon" />
+        </Badge>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <StatCard 
           title="Total Items"
@@ -539,7 +550,6 @@ const StockLevels = () => {
         </>
       )}
 
-      {/* Add Ingredient Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
@@ -556,7 +566,6 @@ const StockLevels = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Ingredient Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
@@ -576,7 +585,6 @@ const StockLevels = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Adjust Stock Dialog */}
       <Dialog open={isAdjustDialogOpen} onOpenChange={setIsAdjustDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
@@ -598,7 +606,6 @@ const StockLevels = () => {
         </DialogContent>
       </Dialog>
 
-      {/* History Dialog */}
       <Dialog open={isHistoryDialogOpen} onOpenChange={setIsHistoryDialogOpen}>
         <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
@@ -616,7 +623,6 @@ const StockLevels = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Analytics Dialog */}
       <Dialog open={isAnalyticsDialogOpen} onOpenChange={setIsAnalyticsDialogOpen}>
         <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
@@ -729,7 +735,6 @@ const StockLevels = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Filter Dialog */}
       <Dialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

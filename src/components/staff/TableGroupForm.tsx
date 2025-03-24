@@ -41,7 +41,7 @@ const TableGroupForm = ({
     defaultValues: {
       name: initialData?.name || "",
       description: initialData?.description || "",
-      room_id: initialData?.room_id || "",
+      room_id: initialData?.room_id || "none", // Changed from empty string to "none"
     },
   });
   
