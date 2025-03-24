@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +10,7 @@ import { CartProvider } from "@/contexts/CartContext";
 
 // Import routes
 import { adminRoutes } from "./routes/adminRoutes";
+import AdminRoutes from "./routes/adminRoutes"; // Import default export correctly
 import WaiterRoutes from "./routes/waiterRoutes";
 import KitchenRoutes from "./routes/kitchenRoutes";
 import CustomerRoutes from "./routes/customerRoutes";

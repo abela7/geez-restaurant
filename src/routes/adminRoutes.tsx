@@ -4,7 +4,6 @@ import { Navigate } from "react-router-dom";
 
 // Lazy load admin pages
 const Dashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
-const Users = lazy(() => import("@/pages/admin/Users"));
 const Settings = lazy(() => import("@/pages/admin/Settings"));
 const MenuCategories = lazy(() => import("@/pages/admin/menu/Categories"));
 const FoodManagement = lazy(() => import("@/pages/admin/menu/FoodManagement"));
@@ -17,16 +16,20 @@ const DishCostList = lazy(() => import("@/pages/admin/menu/DishCost"));
 const DishCostForm = lazy(() => import("@/pages/admin/menu/DishCost"));
 import DishProfile from "@/pages/admin/menu/DishProfile";
 
+// Remove the Users component import since it doesn't exist
+// We can either create the component or remove its route
+
 // Define admin routes
 export const adminRoutes = [
   {
     path: "/admin",
     element: <Dashboard />,
   },
-  {
-    path: "/admin/users",
-    element: <Users />,
-  },
+  // Removing the users route since the component doesn't exist
+  // {
+  //   path: "/admin/users",
+  //   element: <Users />,
+  // },
   {
     path: "/admin/settings",
     element: <Settings />,
