@@ -32,6 +32,25 @@ export interface FoodItem {
   profit_margin?: number;
 }
 
+export interface ModifierOption {
+  id: string;
+  name: string;
+  price: number;
+  modifier_group_id: string;
+}
+
+export interface ModifierGroup {
+  id: string;
+  name: string;
+  required: boolean;
+  options?: ModifierOption[];
+}
+
+export interface FoodItemModifier {
+  food_item_id: string;
+  modifier_group_id: string;
+}
+
 export interface MenuDesignType {
   layout: 'grid' | 'list' | 'compact';
   columns: number;
