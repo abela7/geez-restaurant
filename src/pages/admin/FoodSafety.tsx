@@ -1,4 +1,6 @@
+
 import React, { useState } from "react";
+import Layout from "@/components/Layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -86,7 +88,7 @@ const FoodSafety = () => {
   };
   
   return (
-    <div>
+    <Layout interface="admin">
       <PageHeader
         heading={<T text="Food Safety & Hygiene" />}
         description={<T text="Manage food safety checklists and compliance records" />}
@@ -209,7 +211,7 @@ const FoodSafety = () => {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </Layout>
   );
 };
 

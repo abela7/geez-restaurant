@@ -6,75 +6,115 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Search, ChevronLeft, Loader2, Filter, Clock, Tag, Circle } from "lucide-react";
+import { Search, ChevronLeft, Loader2, Filter } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { useMenuItems } from "@/hooks/useMenuItems";
-import { FoodItem } from "@/types/menu";
 
-interface FilterOptions {
-  vegetarian: boolean;
-  vegan: boolean;
-  glutenFree: boolean;
-  spicy: boolean;
-  priceRange: [number, number] | null;
-  prepTimeRange: [number, number] | null;
+interface FoodItem {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  image_url: string | null;
+  category_id: string | null;
+  available: boolean;
+  is_vegetarian: boolean;
+  is_vegan: boolean;
+  is_gluten_free: boolean;
+  is_spicy: boolean;
+  categoryName?: string;
+  preparation_time?: number | null;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  description: string | null;
 }
 
 const Dishes = () => {
   const { t } = useLanguage();
-  const navigate = useNavigate();
-  const { menuItems, categories, isLoading, error } = useMenuItems();
+  const [isLoading, setIsLoading] = useState(true);
+  const [dishes, setDishes] = useState<FoodItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [filters, setFilters] = useState<FilterOptions>({
+  const [filters, setFilters] = useState({
     vegetarian: false,
     vegan: false,
     glutenFree: false,
-    spicy: false,
-    priceRange: null,
-    prepTimeRange: null,
+    spicy: false
   });
   const [sortBy, setSortBy] = useState<string>("name-asc");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  // Get the min/max price and prep time for range filters
-  const getMinMaxValues = () => {
-    let minPrice = Infinity;
-    let maxPrice = 0;
-    let minPrepTime = Infinity;
-    let maxPrepTime = 0;
-
-    menuItems.forEach((item) => {
-      if (item.price < minPrice) minPrice = item.price;
-      if (item.price > maxPrice) maxPrice = item.price;
-      
-      if (item.preparation_time) {
-        if (item.preparation_time < minPrepTime) minPrepTime = item.preparation_time;
-        if (item.preparation_time > maxPrepTime) maxPrepTime = item.preparation_time;
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        await Promise.all([
+          loadDishes(),
+          loadCategories()
+        ]);
+      } catch (error) {
+        console.error("Error loading data:", error);
+        toast.error("Failed to load data from the database");
+      } finally {
+        setIsLoading(false);
       }
-    });
-
-    return {
-      priceRange: minPrice !== Infinity ? [minPrice, maxPrice] : [0, 100],
-      prepTimeRange: minPrepTime !== Infinity ? [minPrepTime, maxPrepTime] : [0, 60],
     };
+    
+    loadData();
+  }, []);
+
+  const loadDishes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('food_items')
+        .select(`
+          *,
+          menu_categories(id, name)
+        `)
+        .eq('available', true);
+      
+      if (error) throw error;
+      
+      const formattedItems = data.map(item => ({
+        ...item,
+        categoryName: item.menu_categories ? item.menu_categories.name : "Uncategorized"
+      }));
+      
+      setDishes(formattedItems);
+    } catch (error) {
+      console.error("Error fetching dishes:", error);
+      throw error;
+    }
   };
 
-  const { priceRange, prepTimeRange } = getMinMaxValues();
-
-  const viewDishDetails = (id: string) => {
-    navigate(`/admin/menu/dishes/${id}`);
+  const loadCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('menu_categories')
+        .select('*')
+        .eq('active', true);
+      
+      if (error) throw error;
+      
+      setCategories(data);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      throw error;
+    }
   };
 
   const getFilteredDishes = () => {
-    let filtered = [...menuItems];
+    let filtered = dishes;
 
     if (searchQuery) {
       filtered = filtered.filter(dish => 
@@ -99,20 +139,6 @@ const Dishes = () => {
     if (filters.spicy) {
       filtered = filtered.filter(dish => dish.is_spicy);
     }
-    
-    if (filters.priceRange) {
-      filtered = filtered.filter(dish => 
-        dish.price >= filters.priceRange![0] && dish.price <= filters.priceRange![1]
-      );
-    }
-
-    if (filters.prepTimeRange) {
-      filtered = filtered.filter(dish => 
-        dish.preparation_time !== null && 
-        dish.preparation_time >= filters.prepTimeRange![0] && 
-        dish.preparation_time <= filters.prepTimeRange![1]
-      );
-    }
 
     filtered = [...filtered].sort((a, b) => {
       switch (sortBy) {
@@ -124,10 +150,6 @@ const Dishes = () => {
           return a.price - b.price;
         case "price-desc":
           return b.price - a.price;
-        case "prep-asc":
-          return (a.preparation_time || 0) - (b.preparation_time || 0);
-        case "prep-desc":
-          return (b.preparation_time || 0) - (a.preparation_time || 0);
         default:
           return 0;
       }
@@ -137,13 +159,13 @@ const Dishes = () => {
   };
 
   const filteredDishes = getFilteredDishes();
-  const categories_list = ["all", ...Array.from(new Set(menuItems.map(item => item.categoryName))).filter(Boolean)] as string[];
+  const categories_list = ["all", ...Array.from(new Set(dishes.map(item => item.categoryName))).filter(Boolean)] as string[];
 
   return (
     <div className="container mx-auto p-4 md:p-6 max-w-7xl">
       <PageHeader 
         title={<T text="Dishes" />}
-        description={<T text="Browse and manage all dishes for your restaurant" />}
+        description={<T text="Browse all available dishes for customers and waiters" />}
         actions={
           <>
             <Button variant="outline" asChild>
@@ -176,8 +198,8 @@ const Dishes = () => {
                   <T text="Filters" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-80">
-                <div className="space-y-4">
+              <PopoverContent className="w-64">
+                <div className="space-y-3">
                   <h4 className="font-medium text-sm"><T text="Dietary Preferences" /></h4>
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
@@ -197,89 +219,6 @@ const Dishes = () => {
                       <Label htmlFor="spicy"><T text="Spicy" /></Label>
                     </div>
                   </div>
-                  
-                  <div className="space-y-2">
-                    <h4 className="font-medium text-sm"><T text="Price Range" /></h4>
-                    <div className="flex items-center space-x-3">
-                      <Input 
-                        type="number" 
-                        placeholder={t("Min")}
-                        className="w-24"
-                        value={filters.priceRange ? filters.priceRange[0] : priceRange[0]}
-                        onChange={(e) => {
-                          const min = Number(e.target.value);
-                          const max = filters.priceRange ? filters.priceRange[1] : priceRange[1];
-                          setFilters({...filters, priceRange: [min, max]});
-                        }}
-                      />
-                      <span>-</span>
-                      <Input 
-                        type="number" 
-                        placeholder={t("Max")}
-                        className="w-24"
-                        value={filters.priceRange ? filters.priceRange[1] : priceRange[1]}
-                        onChange={(e) => {
-                          const max = Number(e.target.value);
-                          const min = filters.priceRange ? filters.priceRange[0] : priceRange[0];
-                          setFilters({...filters, priceRange: [min, max]});
-                        }}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <h4 className="font-medium text-sm"><T text="Preparation Time (min)" /></h4>
-                    <div className="flex items-center space-x-3">
-                      <Input 
-                        type="number" 
-                        placeholder={t("Min")}
-                        className="w-24"
-                        value={filters.prepTimeRange ? filters.prepTimeRange[0] : prepTimeRange[0]}
-                        onChange={(e) => {
-                          const min = Number(e.target.value);
-                          const max = filters.prepTimeRange ? filters.prepTimeRange[1] : prepTimeRange[1];
-                          setFilters({...filters, prepTimeRange: [min, max]});
-                        }}
-                      />
-                      <span>-</span>
-                      <Input 
-                        type="number" 
-                        placeholder={t("Max")}
-                        className="w-24"
-                        value={filters.prepTimeRange ? filters.prepTimeRange[1] : prepTimeRange[1]}
-                        onChange={(e) => {
-                          const max = Number(e.target.value);
-                          const min = filters.prepTimeRange ? filters.prepTimeRange[0] : prepTimeRange[0];
-                          setFilters({...filters, prepTimeRange: [min, max]});
-                        }}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-between pt-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setFilters({
-                        vegetarian: false,
-                        vegan: false,
-                        glutenFree: false,
-                        spicy: false,
-                        priceRange: null,
-                        prepTimeRange: null
-                      })}
-                    >
-                      <T text="Reset" />
-                    </Button>
-                    <Button 
-                      size="sm"
-                      onClick={() => {
-                        document.body.click(); // Close popover
-                      }}
-                    >
-                      <T text="Apply" />
-                    </Button>
-                  </div>
                 </div>
               </PopoverContent>
             </Popover>
@@ -293,8 +232,6 @@ const Dishes = () => {
                 <SelectItem value="name-desc"><T text="Name (Z-A)" /></SelectItem>
                 <SelectItem value="price-asc"><T text="Price (Low-High)" /></SelectItem>
                 <SelectItem value="price-desc"><T text="Price (High-Low)" /></SelectItem>
-                <SelectItem value="prep-asc"><T text="Prep Time (Fastest)" /></SelectItem>
-                <SelectItem value="prep-desc"><T text="Prep Time (Longest)" /></SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -330,18 +267,14 @@ const Dishes = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredDishes.map(dish => (
-                <Card 
-                  key={dish.id} 
-                  className="overflow-hidden hover:shadow-lg transition-all transform hover:-translate-y-1 group cursor-pointer"
-                  onClick={() => viewDishDetails(dish.id)}
-                >
+                <Card key={dish.id} className="overflow-hidden hover:shadow-lg transition-all transform hover:-translate-y-1 group">
                   <AspectRatio ratio={4 / 3} className="relative">
                     <img 
                       src={dish.image_url || "/placeholder.svg"} 
                       alt={dish.name} 
                       className="object-cover w-full h-full"
                     />
-                    <div className="absolute top-2 right-2 flex gap-1 flex-wrap justify-end max-w-[80%]">
+                    <div className="absolute top-2 right-2 flex gap-1">
                       {dish.is_vegetarian && <Badge className="bg-green-500 text-white"><T text="Vegetarian" /></Badge>}
                       {dish.is_vegan && <Badge className="bg-green-600 text-white"><T text="Vegan" /></Badge>}
                       {dish.is_gluten_free && <Badge className="bg-blue-500 text-white"><T text="GF" /></Badge>}
@@ -357,10 +290,9 @@ const Dishes = () => {
                     <div className="flex justify-between items-center mt-4">
                       <span className="text-2xl font-bold text-amber-600">£{dish.price.toFixed(2)}</span>
                       {dish.preparation_time && (
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Clock className="h-4 w-4 mr-1" />
-                          {dish.preparation_time} <T text="min" />
-                        </div>
+                        <span className="text-sm text-gray-500">
+                          <T text="Prep time" />: {dish.preparation_time} <T text="min" />
+                        </span>
                       )}
                     </div>
                   </CardContent>

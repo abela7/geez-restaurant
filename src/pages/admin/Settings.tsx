@@ -1,5 +1,6 @@
 
 import React from 'react';
+import Layout from '@/components/Layout';
 import { useLanguage, T } from '@/contexts/LanguageContext';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +10,7 @@ const AdminSettings: React.FC = () => {
   const { t } = useLanguage();
 
   return (
-    <div>
+    <Layout interface="admin">
       <PageHeader
         heading={<T text="System Settings" />}
         description={<T text="Configure your restaurant profile, user access, and system settings" />}
@@ -72,7 +73,7 @@ const AdminSettings: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </Layout>
   );
 };
 

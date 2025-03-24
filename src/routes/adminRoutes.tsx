@@ -1,247 +1,177 @@
 
-import { lazy } from "react";
-import { Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 
-// Lazy load admin pages
-const Dashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
-const Settings = lazy(() => import("@/pages/admin/Settings"));
-const Reports = lazy(() => import("@/pages/admin/Reports"));
-const StaffManagement = lazy(() => import("@/pages/admin/StaffManagement"));
-const Customers = lazy(() => import("@/pages/admin/Customers"));
-const InventoryControl = lazy(() => import("@/pages/admin/InventoryControl"));
-const FinancialManagement = lazy(() => import("@/pages/admin/FinancialManagement"));
-const FoodSafety = lazy(() => import("@/pages/admin/FoodSafety"));
-const TaskManagement = lazy(() => import("@/pages/admin/TaskManagement"));
-const ActivityLog = lazy(() => import("@/pages/admin/ActivityLog"));
-const LanguageManagement = lazy(() => import("@/pages/admin/LanguageManagement"));
-const MenuManagement = lazy(() => import("@/pages/admin/MenuManagement"));
+// Import admin pages
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import FinancialManagement from "@/pages/admin/FinancialManagement";
+import MenuManagement from "@/pages/admin/MenuManagement";
+import StaffManagement from "@/pages/admin/StaffManagement";
+import InventoryControl from "@/pages/admin/InventoryControl";
+import FoodSafety from "@/pages/admin/FoodSafety";
+import Reports from "@/pages/admin/Reports";
+import Settings from "@/pages/admin/Settings";
+import Customers from "@/pages/admin/Customers";
+import ActivityLog from "@/pages/admin/ActivityLog";
+import TaskManagement from "@/pages/admin/TaskManagement";
+import Communication from "@/pages/admin/Communication";
+import LanguageManagement from "@/pages/admin/LanguageManagement";
+import NotFound from "@/pages/NotFound";
+import TableManagement from "@/pages/admin/general/TableManagement";
 
-// Menu Management Pages
-const MenuCategories = lazy(() => import("@/pages/admin/menu/Categories"));
-const FoodManagement = lazy(() => import("@/pages/admin/menu/FoodManagement"));
-const Dishes = lazy(() => import("@/pages/admin/menu/Dishes"));
-const DishProfile = lazy(() => import("@/pages/admin/menu/DishProfile"));
-const CustomReports = lazy(() => import("@/pages/admin/reports/CustomReports"));
-const CustomerInsights = lazy(() => import("@/pages/admin/reports/CustomerInsights"));
-const InventoryReports = lazy(() => import("@/pages/admin/reports/InventoryReports"));
-const DishCost = lazy(() => import("@/pages/admin/menu/DishCost"));
-const Pricing = lazy(() => import("@/pages/admin/menu/Pricing"));
-const Modifiers = lazy(() => import("@/pages/admin/menu/Modifiers"));
-const MenuDesign = lazy(() => import("@/pages/admin/menu/MenuDesign"));
+// Import finance pages
+import DailySales from "@/pages/admin/finance/DailySales";
+import FinancialReports from "@/pages/admin/finance/FinancialReports";
+import PaymentManagement from "@/pages/admin/finance/PaymentManagement";
+import Budgeting from "@/pages/admin/finance/Budgeting";
+import Expenses from "@/pages/admin/finance/Expenses";
 
-// Finance Pages
-const DailySales = lazy(() => import("@/pages/admin/finance/DailySales"));
-const FinancialReports = lazy(() => import("@/pages/admin/finance/FinancialReports"));
-const PaymentManagement = lazy(() => import("@/pages/admin/finance/PaymentManagement"));
-const Expenses = lazy(() => import("@/pages/admin/finance/Expenses"));
-const Budgeting = lazy(() => import("@/pages/admin/finance/Budgeting"));
+// Import menu pages
+import FoodManagement from "@/pages/admin/menu/FoodManagement";
+import Categories from "@/pages/admin/menu/Categories";
+import Modifiers from "@/pages/admin/menu/Modifiers";
+import Pricing from "@/pages/admin/menu/Pricing";
+import MenuDesign from "@/pages/admin/menu/MenuDesign";
+import RecipeManagement from "@/pages/admin/menu/RecipeManagement";
+import Dishes from "@/pages/admin/menu/Dishes";
+import DishCost from "@/pages/admin/menu/DishCost";
 
-// Staff Management Pages
-const Directory = lazy(() => import("@/pages/admin/staff/Directory"));
-const Performance = lazy(() => import("@/pages/admin/staff/Performance"));
-const Attendance = lazy(() => import("@/pages/admin/staff/Attendance"));
-const Tasks = lazy(() => import("@/pages/admin/staff/Tasks"));
-const Payroll = lazy(() => import("@/pages/admin/staff/Payroll"));
+// Import staff pages
+import Directory from "@/pages/admin/staff/Directory";
+import Performance from "@/pages/admin/staff/Performance";
+import Attendance from "@/pages/admin/staff/Attendance";
+import Tasks from "@/pages/admin/staff/Tasks";
+import Payroll from "@/pages/admin/staff/Payroll";
+import NewStaff from "@/pages/admin/staff/NewStaff";
+import EditStaff from "@/pages/admin/staff/EditStaff";
+import StaffProfile from "@/pages/admin/staff/StaffProfile";
 
-// Inventory Pages
-const StockLevels = lazy(() => import("@/pages/admin/inventory/StockLevels"));
-const Ingredients = lazy(() => import("@/pages/admin/inventory/Ingredients"));
+// Import customer pages
+import Feedback from "@/pages/admin/customers/Feedback";
+import CustomerDatabase from "@/pages/admin/customers/CustomerDatabase";
+import Promotions from "@/pages/admin/customers/Promotions";
+import LoyaltyProgram from "@/pages/admin/customers/LoyaltyProgram";
 
-// Food Safety Pages
-const Checklists = lazy(() => import("@/pages/admin/food-safety/Checklists"));
+// Import inventory pages
+import StockLevels from "@/pages/admin/inventory/StockLevels";
+import Ingredients from "@/pages/admin/inventory/Ingredients";
+import Recipes from "@/pages/admin/inventory/Recipes";
+import Suppliers from "@/pages/admin/inventory/Suppliers";
+import PurchaseOrders from "@/pages/admin/inventory/PurchaseOrders";
+import InventoryReports from "@/pages/admin/inventory/InventoryReports";
 
-// General Pages
-const TableManagement = lazy(() => import("@/pages/admin/general/TableManagement"));
+// Import reports pages
+import SalesAnalytics from "@/pages/admin/reports/SalesAnalytics";
+import StaffReports from "@/pages/admin/reports/StaffReports";
+import { default as ReportsInventory } from "@/pages/admin/reports/InventoryReports";
+import CustomerInsights from "@/pages/admin/reports/CustomerInsights";
+import CustomReports from "@/pages/admin/reports/CustomReports";
 
-// Wrap components with Layout
-const withLayout = (Component: React.ComponentType) => (
-  <Layout interface="admin">
-    <Component />
-  </Layout>
-);
+// Import settings pages
+import RestaurantProfile from "@/pages/admin/settings/RestaurantProfile";
+import UserAccess from "@/pages/admin/settings/UserAccess";
+import PrintersDevices from "@/pages/admin/settings/PrintersDevices";
+import SystemLogs from "@/pages/admin/settings/SystemLogs";
+import Integrations from "@/pages/admin/settings/Integrations";
+import ThemeSettings from "@/pages/admin/settings/ThemeSettings";
 
-// Define admin routes
-export const adminRoutes = [
-  // Dashboard
-  {
-    path: "/admin",
-    element: withLayout(Dashboard),
-  },
-  
-  // Main sections
-  {
-    path: "/admin/settings",
-    element: withLayout(Settings),
-  },
-  {
-    path: "/admin/reports",
-    element: withLayout(Reports),
-  },
-  {
-    path: "/admin/staff",
-    element: withLayout(StaffManagement),
-  },
-  {
-    path: "/admin/customers",
-    element: withLayout(Customers),
-  },
-  {
-    path: "/admin/inventory",
-    element: withLayout(InventoryControl),
-  },
-  {
-    path: "/admin/finance",
-    element: withLayout(FinancialManagement),
-  },
-  {
-    path: "/admin/food-safety",
-    element: withLayout(FoodSafety),
-  },
-  {
-    path: "/admin/tasks",
-    element: withLayout(TaskManagement),
-  },
-  {
-    path: "/admin/activity",
-    element: withLayout(ActivityLog),
-  },
-  {
-    path: "/admin/language",
-    element: withLayout(LanguageManagement),
-  },
-  {
-    path: "/admin/menu",
-    element: withLayout(MenuManagement),
-  },
-  
-  // Menu routes
-  {
-    path: "/admin/menu/categories",
-    element: withLayout(MenuCategories),
-  },
-  {
-    path: "/admin/menu/food",
-    element: withLayout(FoodManagement),
-  },
-  {
-    path: "/admin/menu/dishes",
-    element: withLayout(Dishes),
-  },
-  {
-    path: "/admin/menu/dishes/:id",
-    element: withLayout(DishProfile),
-  },
-  {
-    path: "/admin/dish-cost",
-    element: withLayout(DishCost),
-  },
-  {
-    path: "/admin/dish-cost/new",
-    element: withLayout(DishCost),
-  },
-  {
-    path: "/admin/dish-cost/:id",
-    element: withLayout(DishCost),
-  },
-  {
-    path: "/admin/menu/pricing",
-    element: withLayout(Pricing),
-  },
-  {
-    path: "/admin/menu/modifiers",
-    element: withLayout(Modifiers),
-  },
-  {
-    path: "/admin/menu/design",
-    element: withLayout(MenuDesign),
-  },
-  
-  // Report routes
-  {
-    path: "/admin/reports/custom",
-    element: withLayout(CustomReports),
-  },
-  {
-    path: "/admin/reports/customer-insights",
-    element: withLayout(CustomerInsights),
-  },
-  {
-    path: "/admin/reports/inventory",
-    element: withLayout(InventoryReports),
-  },
-  
-  // Finance routes
-  {
-    path: "/admin/finance/daily-sales",
-    element: withLayout(DailySales),
-  },
-  {
-    path: "/admin/finance/financial-reports",
-    element: withLayout(FinancialReports),
-  },
-  {
-    path: "/admin/finance/payment-management",
-    element: withLayout(PaymentManagement),
-  },
-  {
-    path: "/admin/finance/expenses",
-    element: withLayout(Expenses),
-  },
-  {
-    path: "/admin/finance/budgeting",
-    element: withLayout(Budgeting),
-  },
-  
-  // Staff routes
-  {
-    path: "/admin/staff/directory",
-    element: withLayout(Directory),
-  },
-  {
-    path: "/admin/staff/performance",
-    element: withLayout(Performance),
-  },
-  {
-    path: "/admin/staff/attendance",
-    element: withLayout(Attendance),
-  },
-  {
-    path: "/admin/staff/tasks",
-    element: withLayout(Tasks),
-  },
-  {
-    path: "/admin/staff/payroll",
-    element: withLayout(Payroll),
-  },
-  
-  // Inventory routes
-  {
-    path: "/admin/inventory/stock",
-    element: withLayout(StockLevels),
-  },
-  {
-    path: "/admin/inventory/ingredients",
-    element: withLayout(Ingredients),
-  },
-  
-  // Food Safety routes
-  {
-    path: "/admin/food-safety/checklists",
-    element: withLayout(Checklists),
-  },
-  
-  // General routes
-  {
-    path: "/admin/general/table-management",
-    element: withLayout(TableManagement),
-  },
-];
+// Import food safety pages
+import Checklists from "@/pages/admin/food-safety/Checklists";
+import NewChecklist from "@/pages/admin/food-safety/NewChecklist";
 
-// Default export for the AdminRoutes component
 const AdminRoutes = () => {
+  // Check if user exists and has admin role
+  const storedUser = localStorage.getItem('user');
+  const user = storedUser ? JSON.parse(storedUser) : null;
+  
+  if (!user || user.role !== 'admin') {
+    return <Navigate to="/login" replace />;
+  }
+
   return (
-    <Navigate to="/admin" />
+    <Routes>
+      <Route element={<Layout interface="admin" />}>
+        <Route index element={<AdminDashboard />} />
+
+        {/* Finance Routes */}
+        <Route path="finance" element={<FinancialManagement />} />
+        <Route path="finance/daily-sales" element={<DailySales />} />
+        <Route path="finance/financial-reports" element={<FinancialReports />} />
+        <Route path="finance/payment-management" element={<PaymentManagement />} />
+        <Route path="finance/budgeting" element={<Budgeting />} />
+        <Route path="finance/expenses" element={<Expenses />} />
+
+        {/* Menu Routes */}
+        <Route path="menu" element={<MenuManagement />} />
+        <Route path="menu/food" element={<FoodManagement />} />
+        <Route path="menu/dishes" element={<Dishes />} />
+        <Route path="menu/categories" element={<Categories />} />
+        <Route path="menu/recipes" element={<RecipeManagement />} />
+        <Route path="menu/dish-cost" element={<DishCost />} />
+        <Route path="menu/modifiers" element={<Modifiers />} />
+        <Route path="menu/pricing" element={<Pricing />} />
+        <Route path="menu/design" element={<MenuDesign />} />
+
+        {/* Staff Routes */}
+        <Route path="staff" element={<StaffManagement />} />
+        <Route path="staff/directory" element={<Directory />} />
+        <Route path="staff/performance" element={<Performance />} />
+        <Route path="staff/attendance" element={<Attendance />} />
+        <Route path="staff/tasks" element={<Tasks />} />
+        <Route path="staff/payroll" element={<Payroll />} />
+        <Route path="staff/new" element={<NewStaff />} />
+        <Route path="staff/edit/:id" element={<EditStaff />} />
+        <Route path="staff/profile/:id" element={<StaffProfile />} />
+
+        {/* Inventory Routes */}
+        <Route path="inventory" element={<InventoryControl />} />
+        <Route path="inventory/stock" element={<StockLevels />} />
+        <Route path="inventory/ingredients" element={<Ingredients />} />
+        <Route path="inventory/recipes" element={<Recipes />} />
+        <Route path="inventory/suppliers" element={<Suppliers />} />
+        <Route path="inventory/purchase-orders" element={<PurchaseOrders />} />
+        <Route path="inventory/reports" element={<InventoryReports />} />
+
+        {/* Reports Routes */}
+        <Route path="reports" element={<Reports />} />
+        <Route path="reports/sales" element={<SalesAnalytics />} />
+        <Route path="reports/staff" element={<StaffReports />} />
+        <Route path="reports/inventory" element={<ReportsInventory />} />
+        <Route path="reports/customers" element={<CustomerInsights />} />
+        <Route path="reports/custom" element={<CustomReports />} />
+
+        {/* Customer Routes */}
+        <Route path="customers" element={<Customers />} />
+        <Route path="customers/feedback" element={<Feedback />} />
+        <Route path="customers/database" element={<CustomerDatabase />} />
+        <Route path="customers/promotions" element={<Promotions />} />
+        <Route path="customers/loyalty" element={<LoyaltyProgram />} />
+
+        {/* Settings Routes */}
+        <Route path="settings" element={<Settings />} />
+        <Route path="settings/profile" element={<RestaurantProfile />} />
+        <Route path="settings/users" element={<UserAccess />} />
+        <Route path="settings/devices" element={<PrintersDevices />} />
+        <Route path="settings/logs" element={<SystemLogs />} />
+        <Route path="settings/integrations" element={<Integrations />} />
+        <Route path="settings/theme" element={<ThemeSettings />} />
+
+        {/* General Routes */}
+        <Route path="tables" element={<TableManagement />} />
+        <Route path="activity" element={<ActivityLog />} />
+        <Route path="tasks" element={<TaskManagement />} />
+        <Route path="communication" element={<Communication />} />
+        <Route path="language" element={<LanguageManagement />} />
+        
+        {/* Food Safety Routes */}
+        <Route path="food-safety" element={<FoodSafety />} />
+        <Route path="food-safety/checklists" element={<Checklists />} />
+        <Route path="food-safety/new-checklist" element={<NewChecklist />} />
+
+        {/* 404 Catch-All */}
+        <Route path="*" element={<NotFound />} />
+      </Route>
+    </Routes>
   );
 };
 
