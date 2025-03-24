@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +8,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { Suspense } from "react";
+import Layout from "@/components/Layout";
 
 // Import routes
 import { adminRoutes } from "./routes/adminRoutes";
@@ -52,9 +54,17 @@ const App = () => (
             <BrowserRouter>
               <Suspense fallback={<LoadingFallback />}>
                 <Routes>
-                  {/* Map all admin routes */}
+                  {/* Map all admin routes with proper Layout */}
                   {adminRoutes.map((route) => (
-                    <Route key={route.path} path={route.path} element={route.element} />
+                    <Route 
+                      key={route.path} 
+                      path={route.path} 
+                      element={
+                        <Layout interface="admin">
+                          {route.element}
+                        </Layout>
+                      } 
+                    />
                   ))}
                   
                   {/* Redirect / to /admin for now */}
