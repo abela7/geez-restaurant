@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table";
-import { Plus, Pencil, Trash2, AlertCircle } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 
 import { Table as TableType, Room, TableGroup } from "@/services/table/types";
 import { getTables, createTable, updateTable, deleteTable } from "@/services/table/tableService";
@@ -19,7 +19,6 @@ import TableForm from "./TableForm";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const TablesView = () => {
   const { toast } = useToast();
@@ -175,15 +174,7 @@ const TablesView = () => {
           <T text="Add Table" />
         </Button>
       </CardHeader>
-      <CardContent>
-        {errorMessage && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle><T text="Error" /></AlertTitle>
-            <AlertDescription>{errorMessage}</AlertDescription>
-          </Alert>
-        )}
-        
+      <CardContent>        
         {isLoading ? (
           <p><T text="Loading tables..." /></p>
         ) : tables.length === 0 ? (
