@@ -7,6 +7,7 @@ import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MeasurementUnit } from "@/types/dishCost";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
 
 interface AddUnitModalProps {
   open: boolean;
@@ -23,6 +24,8 @@ const AddUnitModal: React.FC<AddUnitModalProps> = ({ open, onOpenChange, onSubmi
     type: "weight",
     description: ""
   });
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Unit types with descriptions
   const unitTypes = [
@@ -48,14 +51,42 @@ const AddUnitModal: React.FC<AddUnitModalProps> = ({ open, onOpenChange, onSubmi
         description: ""
       });
     }
+    setErrors({});
   }, [unit, open]);
+
+  const validateForm = () => {
+    const newErrors: {[key: string]: string} = {};
+    
+    if (!formData.name.trim()) {
+      newErrors.name = t("Unit name is required");
+    }
+    
+    if (!formData.abbreviation.trim()) {
+      newErrors.abbreviation = t("Abbreviation is required");
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Clear error for the field being changed
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
   const handleSubmit = async () => {
+    if (!validateForm()) return;
+    
     try {
+      setIsSubmitting(true);
       await onSubmit(formData);
       setFormData({
         name: "",
@@ -63,8 +94,13 @@ const AddUnitModal: React.FC<AddUnitModalProps> = ({ open, onOpenChange, onSubmi
         type: "weight",
         description: ""
       });
+      toast.success(unit ? t("Unit updated successfully") : t("Unit added successfully"));
+      onOpenChange(false);
     } catch (error) {
       console.error("Error submitting unit:", error);
+      toast.error(t("Error saving unit"));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -84,8 +120,9 @@ const AddUnitModal: React.FC<AddUnitModalProps> = ({ open, onOpenChange, onSubmi
               placeholder={t("e.g., Kilogram, Liter")} 
               value={formData.name}
               onChange={(e) => handleChange("name", e.target.value)}
-              className="h-11"
+              className={`h-11 ${errors.name ? "border-red-500" : ""}`}
             />
+            {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
           </div>
           
           <div className="space-y-2">
@@ -94,8 +131,9 @@ const AddUnitModal: React.FC<AddUnitModalProps> = ({ open, onOpenChange, onSubmi
               placeholder={t("e.g., kg, L")} 
               value={formData.abbreviation}
               onChange={(e) => handleChange("abbreviation", e.target.value)}
-              className="h-11"
+              className={`h-11 ${errors.abbreviation ? "border-red-500" : ""}`}
             />
+            {errors.abbreviation && <p className="text-sm text-red-500">{errors.abbreviation}</p>}
           </div>
           
           <div className="space-y-2">
@@ -131,11 +169,15 @@ const AddUnitModal: React.FC<AddUnitModalProps> = ({ open, onOpenChange, onSubmi
           </div>
           
           <div className="pt-4 flex justify-end space-x-3 mt-4">
-            <Button variant="outline" onClick={() => onOpenChange(false)} className="h-11">
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="h-11" disabled={isSubmitting}>
               <T text="Cancel" />
             </Button>
-            <Button onClick={handleSubmit} className="h-11">
-              <T text={unit ? "Update Unit" : "Save Unit"} />
+            <Button 
+              onClick={handleSubmit} 
+              className="h-11" 
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? <T text="Saving..." /> : <T text={unit ? "Update Unit" : "Save Unit"} />}
             </Button>
           </div>
         </div>

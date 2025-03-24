@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -156,6 +155,7 @@ export const useDishCosts = () => {
       
       // Calculate suggested price based on profit margin
       const suggestedPrice = totalCost > 0 ? totalCost / (1 - (profit_margin / 100)) : 0;
+      const finalPrice = use_manual_price && manual_price ? manual_price : suggestedPrice;
       
       // Insert the main dish cost record
       const { data: dishCostData, error: dishCostError } = await supabase
@@ -174,7 +174,10 @@ export const useDishCosts = () => {
         .select()
         .single();
       
-      if (dishCostError) throw dishCostError;
+      if (dishCostError) {
+        console.error("Error creating dish cost:", dishCostError);
+        throw dishCostError;
+      }
       
       // Insert ingredients
       if (ingredients.length > 0) {
@@ -192,7 +195,10 @@ export const useDishCosts = () => {
           .from('dish_ingredients')
           .insert(ingredientsToInsert);
         
-        if (ingredientsError) throw ingredientsError;
+        if (ingredientsError) {
+          console.error("Error inserting ingredients:", ingredientsError);
+          throw ingredientsError;
+        }
       }
       
       // Insert overhead costs
@@ -208,23 +214,31 @@ export const useDishCosts = () => {
           .from('dish_overhead_costs')
           .insert(costsToInsert);
         
-        if (costsError) throw costsError;
+        if (costsError) {
+          console.error("Error inserting overhead costs:", costsError);
+          throw costsError;
+        }
       }
       
       // Update the food item with the calculated cost if a food_item_id was provided
       if (food_item_id) {
-        const finalPrice = use_manual_price && manual_price ? manual_price : suggestedPrice;
-        const profitMargin = totalCost > 0 ? Math.round(((finalPrice - totalCost) / finalPrice) * 100) : profit_margin;
+        console.log("Updating food_item with id:", food_item_id);
+        console.log("Setting cost to:", totalCost);
+        console.log("Setting price to:", finalPrice);
         
         const { error: foodItemError } = await supabase
           .from('food_items')
           .update({ 
             cost: totalCost,
-            profit_margin: profitMargin
+            profit_margin: profit_margin,
+            price: finalPrice
           })
           .eq('id', food_item_id);
         
-        if (foodItemError) throw foodItemError;
+        if (foodItemError) {
+          console.error("Error updating food item:", foodItemError);
+          throw foodItemError;
+        }
       }
       
       // Reload data
@@ -233,6 +247,7 @@ export const useDishCosts = () => {
       return dishCostData;
     } catch (err) {
       console.error("Error creating dish cost:", err);
+      toast.error("Failed to create dish cost. Please try again.");
       throw err;
     } finally {
       setIsLoading(false);
@@ -250,7 +265,10 @@ export const useDishCosts = () => {
         .eq('id', id)
         .single();
       
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error("Error fetching current dish cost:", fetchError);
+        throw fetchError;
+      }
       
       // Calculate new totals if ingredients or overhead costs are updated
       let totalIngredientCost = currentDishCost.total_ingredient_cost;
@@ -266,7 +284,10 @@ export const useDishCosts = () => {
           .delete()
           .eq('dish_cost_id', id);
         
-        if (deleteIngredientsError) throw deleteIngredientsError;
+        if (deleteIngredientsError) {
+          console.error("Error deleting existing ingredients:", deleteIngredientsError);
+          throw deleteIngredientsError;
+        }
         
         // Insert new ingredients
         const ingredientsToInsert = updates.ingredients.map(ing => ({
@@ -283,7 +304,10 @@ export const useDishCosts = () => {
           .from('dish_ingredients')
           .insert(ingredientsToInsert);
         
-        if (ingredientsError) throw ingredientsError;
+        if (ingredientsError) {
+          console.error("Error inserting updated ingredients:", ingredientsError);
+          throw ingredientsError;
+        }
         
         needsHistoryEntry = true;
       }
@@ -297,7 +321,10 @@ export const useDishCosts = () => {
           .delete()
           .eq('dish_cost_id', id);
         
-        if (deleteCostsError) throw deleteCostsError;
+        if (deleteCostsError) {
+          console.error("Error deleting existing overhead costs:", deleteCostsError);
+          throw deleteCostsError;
+        }
         
         // Insert new overhead costs
         const costsToInsert = updates.overhead_costs.map(cost => ({
@@ -311,7 +338,10 @@ export const useDishCosts = () => {
           .from('dish_overhead_costs')
           .insert(costsToInsert);
         
-        if (costsError) throw costsError;
+        if (costsError) {
+          console.error("Error inserting updated overhead costs:", costsError);
+          throw costsError;
+        }
         
         needsHistoryEntry = true;
       }
@@ -339,7 +369,10 @@ export const useDishCosts = () => {
         .update(updateData)
         .eq('id', id);
       
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Error updating dish cost:", updateError);
+        throw updateError;
+      }
       
       // Add a history entry if the cost changed
       if (needsHistoryEntry && currentDishCost.total_cost !== totalCost) {
@@ -352,32 +385,47 @@ export const useDishCosts = () => {
             reason: 'Cost update'
           });
         
-        if (historyError) throw historyError;
+        if (historyError) {
+          console.error("Error creating dish cost history entry:", historyError);
+          throw historyError;
+        }
       }
       
       // Update the food item with the calculated cost if a food_item_id exists
       if (currentDishCost.food_item_id) {
+        console.log("Updating food item with id:", currentDishCost.food_item_id);
+        
         const useManualPrice = updates.use_manual_price ?? currentDishCost.use_manual_price;
         const manualPrice = updates.manual_price ?? currentDishCost.manual_price;
         const finalPrice = useManualPrice && manualPrice ? manualPrice : suggestedPrice;
-        const profitMargin = totalCost > 0 ? Math.round(((finalPrice - totalCost) / finalPrice) * 100) : profit_margin;
+        
+        console.log("Setting food item price to:", finalPrice);
+        console.log("Setting food item cost to:", totalCost);
+        console.log("Setting food item profit margin to:", profit_margin);
         
         const { error: foodItemError } = await supabase
           .from('food_items')
           .update({ 
             cost: totalCost,
-            profit_margin: profitMargin
+            profit_margin: profit_margin,
+            price: finalPrice
           })
           .eq('id', currentDishCost.food_item_id);
         
-        if (foodItemError) throw foodItemError;
+        if (foodItemError) {
+          console.error("Error updating food item:", foodItemError);
+          throw foodItemError;
+        }
       }
       
       // Reload data
       await loadInitialData();
       
+      toast.success("Dish cost updated successfully");
+      
     } catch (err) {
       console.error("Error updating dish cost:", err);
+      toast.error("Failed to update dish cost. Please try again.");
       throw err;
     } finally {
       setIsLoading(false);
