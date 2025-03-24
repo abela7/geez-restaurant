@@ -21,6 +21,7 @@ const FoodManagement = () => {
     searchQuery,
     setSearchQuery,
     openDialog,
+    setOpenDialog,
     editMode,
     formData,
     handleOpenDialog,

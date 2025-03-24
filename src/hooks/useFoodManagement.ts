@@ -235,6 +235,7 @@ export const useFoodManagement = () => {
     searchQuery,
     setSearchQuery,
     openDialog,
+    setOpenDialog, // Make sure this is exposed in the return value
     editMode,
     formData,
     handleOpenDialog,
