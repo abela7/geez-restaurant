@@ -61,7 +61,7 @@ export function SideModal({
             </Button>
           </SheetClose>
         </div>
-        <div className="h-full">
+        <div className="pb-4">
           {children}
         </div>
       </SheetContent>

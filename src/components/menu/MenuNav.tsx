@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { 
   Utensils, 
-  FileText, 
   LayoutGrid, 
   Palette,
   Settings,
@@ -23,7 +22,6 @@ export const MenuNav: React.FC = () => {
     { path: "/admin/menu/food", label: "Food Items", icon: <Utensils className="h-4 w-4 mr-2" /> },
     { path: "/admin/menu/dishes", label: "Dishes", icon: <MenuSquare className="h-4 w-4 mr-2" /> },
     { path: "/admin/menu/categories", label: "Categories", icon: <LayoutGrid className="h-4 w-4 mr-2" /> },
-    { path: "/admin/menu/recipes", label: "Recipes", icon: <FileText className="h-4 w-4 mr-2" /> },
     { path: "/admin/menu/dish-cost", label: "Dish Cost", icon: <Calculator className="h-4 w-4 mr-2" /> },
     { path: "/admin/menu/modifiers", label: "Modifiers", icon: <Settings className="h-4 w-4 mr-2" /> },
     { path: "/admin/menu/pricing", label: "Pricing", icon: <BadgePoundSterling className="h-4 w-4 mr-2" /> },

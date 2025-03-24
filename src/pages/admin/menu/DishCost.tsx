@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { useLanguage, T } from "@/contexts/LanguageContext";
@@ -35,7 +35,8 @@ const DishCostPage: React.FC = () => {
     updateIngredient,
     deleteIngredient,
     updateUnit,
-    deleteUnit
+    deleteUnit,
+    loadInitialData
   } = useDishCosts();
 
   const [activeTab, setActiveTab] = useState("dishCosts");
@@ -46,6 +47,11 @@ const DishCostPage: React.FC = () => {
   const [editDishCost, setEditDishCost] = useState<DishCost | undefined>(undefined);
   const [editIngredient, setEditIngredient] = useState<Ingredient | undefined>(undefined);
   const [editUnit, setEditUnit] = useState<MeasurementUnit | undefined>(undefined);
+
+  // Reload data when component mounts
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
 
   // Handle opening the dish cost modal for editing or creating
   const handleOpenDishCostModal = (dish?: DishCost) => {
@@ -154,6 +160,63 @@ const DishCostPage: React.FC = () => {
     }
   };
 
+  // Reset search query when tab changes
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setSearchQuery("");
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-3 md:p-6">
+        <PageHeader 
+          title={<T text="Dish Cost Management" />}
+          description={<T text="Track and manage ingredient costs and pricing for dishes" />}
+          actions={
+            <>
+              <Button variant="outline" asChild>
+                <Link to="/admin/menu">
+                  <T text="Back to Menu" />
+                </Link>
+              </Button>
+            </>
+          }
+        />
+        <MenuNav />
+        <div className="flex justify-center items-center p-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto p-3 md:p-6">
+        <PageHeader 
+          title={<T text="Dish Cost Management" />}
+          description={<T text="Track and manage ingredient costs and pricing for dishes" />}
+          actions={
+            <>
+              <Button variant="outline" asChild>
+                <Link to="/admin/menu">
+                  <T text="Back to Menu" />
+                </Link>
+              </Button>
+            </>
+          }
+        />
+        <MenuNav />
+        <div className="p-6 bg-red-50 text-red-600 rounded-lg">
+          <T text="Error loading data. Please try again later." />
+          <Button variant="outline" className="mt-4" onClick={loadInitialData}>
+            <T text="Retry" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-3 md:p-6">
       <PageHeader 
@@ -173,7 +236,7 @@ const DishCostPage: React.FC = () => {
       <MenuNav />
       
       <div className="mb-6">
-        <Tabs defaultValue="dishCosts" className="w-full" onValueChange={setActiveTab}>
+        <Tabs defaultValue="dishCosts" className="w-full" onValueChange={handleTabChange}>
           <TabsList className="grid grid-cols-3 mb-4">
             <TabsTrigger value="dishCosts">
               <Calculator className="h-4 w-4 mr-2" />

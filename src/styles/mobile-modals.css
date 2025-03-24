@@ -17,7 +17,7 @@
     max-height: 100vh;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 64px !important; /* Provide space for buttons at bottom */
+    padding-bottom: 20px !important;
   }
   
   /* Make sure the header stays at the top */
@@ -108,7 +108,20 @@
   max-height: calc(100vh - 180px);
 }
 
-/* Bottom actions bar in modals - better integrated */
-.flex-grow.pr-4.pb-16 {
-  padding-bottom: 4rem !important;
+/* Dropdown component fix */
+.radix-select-content {
+  max-height: 300px !important;
+  overflow-y: auto !important;
+}
+
+/* Fix for Select Content overflow */
+.select-content-viewport {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+/* Make all dropdown content scrollable */
+[data-state="open"] [role="listbox"] {
+  max-height: 250px;
+  overflow-y: auto;
 }

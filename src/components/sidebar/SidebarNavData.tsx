@@ -52,8 +52,8 @@ export const getNavSections = (interfaceType: 'admin' | 'waiter' | 'kitchen' | '
       submenu: [
         { to: "food", label: "Food Items" },
         { to: "categories", label: "Categories" },
-        { to: "recipes", label: "Recipes" },
         { to: "modifiers", label: "Modifiers" },
+        { to: "dish-cost", label: "Dish Cost" },
         { to: "pricing", label: "Pricing" },
         { to: "design", label: "Menu Design" }
       ]
@@ -64,10 +64,7 @@ export const getNavSections = (interfaceType: 'admin' | 'waiter' | 'kitchen' | '
       path: "/inventory",
       submenu: [
         { to: "stock", label: "Stock Levels" },
-        { to: "ingredients", label: "Ingredients" },
-        { to: "recipes", label: "Recipes" },
-        { to: "suppliers", label: "Suppliers" },
-        { to: "purchase-orders", label: "Purchase Orders" }
+        { to: "ingredients", label: "Ingredients" }
       ]
     },
     { 
