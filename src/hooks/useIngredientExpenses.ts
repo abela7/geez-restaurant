@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -56,17 +57,32 @@ export const useIngredientExpenses = () => {
 
   const loadIngredients = async () => {
     try {
+      // Check if the table exists and has the expected columns
+      console.log("Loading recipe ingredients...");
+      
       const { data, error } = await supabase
         .from("recipe_ingredients")
-        .select("id, name, category, unit_id, cost_per_unit, stock_quantity, reorder_level, is_allergen, created_at, updated_at");
+        .select("*");
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error in recipe_ingredients query:", error);
+        throw error;
+      }
       
-      // Ensure the data matches our RecipeIngredient interface
-      const formattedIngredients = data?.map(item => ({
+      if (!data || data.length === 0) {
+        console.log("No recipe ingredients found");
+        setIngredients([]);
+        return;
+      }
+      
+      // Log the first item to understand its structure
+      console.log("Sample recipe ingredient:", data[0]);
+      
+      // Map the data to our RecipeIngredient interface
+      const mappedIngredients: RecipeIngredient[] = data.map(item => ({
         id: item.id,
-        name: item.name,
-        category: item.category || '',
+        name: item.name || "Unknown Ingredient",
+        category: item.category || "Other",
         unit_id: item.unit_id,
         cost_per_unit: item.cost_per_unit || 0,
         stock_quantity: item.stock_quantity,
@@ -74,12 +90,14 @@ export const useIngredientExpenses = () => {
         is_allergen: item.is_allergen,
         created_at: item.created_at,
         updated_at: item.updated_at
-      })) || [];
+      }));
       
-      setIngredients(formattedIngredients);
+      setIngredients(mappedIngredients);
     } catch (error) {
       console.error("Error loading ingredients:", error);
       toast.error("Failed to load ingredients");
+      // Set empty array to prevent further errors
+      setIngredients([]);
     }
   };
 
@@ -207,15 +225,21 @@ export const useIngredientExpenses = () => {
 
         if (error) throw error;
         
-        // Also update the ingredient cost_per_unit to keep it up to date
-        const { error: updateError } = await supabase
-          .from("recipe_ingredients")
-          .update({
-            cost_per_unit: formData.price_per_unit
-          })
-          .eq("id", formData.ingredient_id);
-          
-        if (updateError) console.error("Error updating ingredient cost:", updateError);
+        // Also update the ingredient's cost_per_unit
+        try {
+          const { error: updateError } = await supabase
+            .from("recipe_ingredients")
+            .update({
+              cost_per_unit: formData.price_per_unit
+            })
+            .eq("id", formData.ingredient_id);
+            
+          if (updateError) {
+            console.error("Error updating ingredient cost:", updateError);
+          }
+        } catch (updateErr) {
+          console.error("Exception updating ingredient cost:", updateErr);
+        }
         
         toast.success("Expense updated successfully");
       } else {
@@ -235,15 +259,21 @@ export const useIngredientExpenses = () => {
 
         if (error) throw error;
         
-        // Also update the ingredient cost_per_unit to keep it up to date
-        const { error: updateError } = await supabase
-          .from("recipe_ingredients")
-          .update({
-            cost_per_unit: formData.price_per_unit
-          })
-          .eq("id", formData.ingredient_id);
-          
-        if (updateError) console.error("Error updating ingredient cost:", updateError);
+        // Also update the ingredient's cost_per_unit
+        try {
+          const { error: updateError } = await supabase
+            .from("recipe_ingredients")
+            .update({
+              cost_per_unit: formData.price_per_unit
+            })
+            .eq("id", formData.ingredient_id);
+            
+          if (updateError) {
+            console.error("Error updating ingredient cost:", updateError);
+          }
+        } catch (updateErr) {
+          console.error("Exception updating ingredient cost:", updateErr);
+        }
         
         toast.success("Expense added successfully");
       }
