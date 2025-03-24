@@ -27,6 +27,7 @@ interface IngredientFormProps {
   onSubmit: (data: Omit<Ingredient, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
+  categories?: string[];
 }
 
 // Predefined options
@@ -37,7 +38,8 @@ export const IngredientForm: React.FC<IngredientFormProps> = ({
   initialData,
   onSubmit,
   onCancel,
-  isLoading = false
+  isLoading = false,
+  categories = CATEGORIES
 }) => {
   const { t } = useLanguage();
   const [isSaving, setIsSaving] = useState(false);
@@ -115,7 +117,7 @@ export const IngredientForm: React.FC<IngredientFormProps> = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {CATEGORIES.map(category => (
+                    {categories.map(category => (
                       <SelectItem key={category} value={category}>{category}</SelectItem>
                     ))}
                   </SelectContent>
@@ -199,7 +201,7 @@ export const IngredientForm: React.FC<IngredientFormProps> = ({
             name="cost"
             render={({ field }) => (
               <FormItem>
-                <FormLabel><T text="Cost per Unit ($)" /></FormLabel>
+                <FormLabel><T text="Cost per Unit (£)" /></FormLabel>
                 <FormControl>
                   <Input 
                     type="number" 

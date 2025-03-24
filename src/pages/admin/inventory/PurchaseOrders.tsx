@@ -134,13 +134,13 @@ const PurchaseOrders = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "Delivered":
-        return { variant: "success", icon: <CheckCircle className="h-3 w-3 mr-1" /> };
+        return { variant: "success" };
       case "In Transit":
-        return { variant: "warning", icon: <TruckIcon className="h-3 w-3 mr-1" /> };
+        return { variant: "warning" };
       case "Ordered":
-        return { variant: "default", icon: <Clock className="h-3 w-3 mr-1" /> };
+        return { variant: "default" };
       default:
-        return { variant: "outline", icon: null };
+        return { variant: "outline" };
     }
   };
 
@@ -261,10 +261,7 @@ const PurchaseOrders = () => {
                     <TableCell className="hidden md:table-cell">{order.items}</TableCell>
                     <TableCell>£{order.total.toFixed(2)}</TableCell>
                     <TableCell>
-                      <Badge
-                        variant={getStatusBadge(order.status).variant as any}
-                        icon={getStatusBadge(order.status).icon}
-                      >
+                      <Badge variant={getStatusBadge(order.status).variant as any}>
                         {order.status}
                       </Badge>
                     </TableCell>

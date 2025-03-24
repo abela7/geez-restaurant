@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -499,28 +498,37 @@ const StockLevels = () => {
                   <Pagination>
                     <PaginationContent>
                       <PaginationItem>
-                        <PaginationPrevious 
+                        <Button
+                          variant="outline"
+                          size="icon"
                           onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                           disabled={currentPage === 1}
-                        />
+                        >
+                          <PaginationPrevious />
+                        </Button>
                       </PaginationItem>
                       
                       {Array.from({ length: totalPages }).map((_, index) => (
                         <PaginationItem key={index}>
-                          <PaginationLink
+                          <Button
+                            variant={currentPage === index + 1 ? "default" : "outline"}
+                            size="icon"
                             onClick={() => setCurrentPage(index + 1)}
-                            isActive={currentPage === index + 1}
                           >
                             {index + 1}
-                          </PaginationLink>
+                          </Button>
                         </PaginationItem>
                       ))}
                       
                       <PaginationItem>
-                        <PaginationNext
+                        <Button
+                          variant="outline"
+                          size="icon"
                           onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                           disabled={currentPage === totalPages}
-                        />
+                        >
+                          <PaginationNext />
+                        </Button>
                       </PaginationItem>
                     </PaginationContent>
                   </Pagination>
@@ -542,8 +550,8 @@ const StockLevels = () => {
           </DialogHeader>
           <IngredientForm 
             onSubmit={handleAddIngredient}
-            isSubmitting={isSubmitting}
-            categories={categories}
+            onCancel={() => setIsAddDialogOpen(false)}
+            isLoading={isSubmitting}
           />
         </DialogContent>
       </Dialog>
@@ -559,10 +567,10 @@ const StockLevels = () => {
           </DialogHeader>
           {selectedIngredient && (
             <IngredientForm 
-              ingredient={selectedIngredient}
+              initialData={selectedIngredient}
               onSubmit={handleEditIngredient}
-              isSubmitting={isSubmitting}
-              categories={categories}
+              onCancel={() => setIsEditDialogOpen(false)}
+              isLoading={isSubmitting}
             />
           )}
         </DialogContent>
@@ -583,7 +591,8 @@ const StockLevels = () => {
             <StockAdjustmentForm
               ingredient={selectedIngredient}
               onSubmit={handleAdjustStock}
-              isSubmitting={isSubmitting}
+              onCancel={() => setIsAdjustDialogOpen(false)}
+              isLoading={isSubmitting}
             />
           )}
         </DialogContent>
