@@ -3,7 +3,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Utensils, Wallet, Flame, Percent, Clock, BadgePoundSterling, Home, Wrench } from "lucide-react";
+import { Edit, Trash2, Utensils, Wallet, Flame, Percent, Clock, BadgePoundSterling, Home, Wrench, Zap, Droplets, Package, Shield } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { DishCost, DishIngredient, DishOverheadCost } from "@/types/dishCost";
 
@@ -53,6 +53,16 @@ const DishCostCard: React.FC<DishCostCardProps> = ({ dish, onEdit, onDelete }) =
         return <Home className="h-3 w-3 mr-1 text-amber-500 flex-shrink-0" />;
       case "Maintenance":
         return <Wrench className="h-3 w-3 mr-1 text-amber-500 flex-shrink-0" />;
+      case "Electricity":
+        return <Zap className="h-3 w-3 mr-1 text-amber-500 flex-shrink-0" />;
+      case "Gas":
+        return <Flame className="h-3 w-3 mr-1 text-amber-500 flex-shrink-0" />;
+      case "Water":
+        return <Droplets className="h-3 w-3 mr-1 text-amber-500 flex-shrink-0" />;
+      case "Packaging":
+        return <Package className="h-3 w-3 mr-1 text-amber-500 flex-shrink-0" />;
+      case "Insurance":
+        return <Shield className="h-3 w-3 mr-1 text-amber-500 flex-shrink-0" />;
       default:
         return <Percent className="h-3 w-3 mr-1 text-amber-500 flex-shrink-0" />;
     }

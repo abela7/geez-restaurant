@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { FoodItem } from "./useMenuItems";
+import { FoodItem } from "@/types/menu"; // Fixed import
 import { toast } from "sonner";
 import { OrderItem, OrderStep, OrderType } from "@/types/order";
 

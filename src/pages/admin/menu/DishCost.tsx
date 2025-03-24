@@ -48,13 +48,17 @@ const DishCostPage: React.FC = () => {
 
   // Handle dish cost submission (create or update)
   const handleDishCostSubmit = async (formData: any) => {
-    if (editDishCost) {
-      await updateDishCost(editDishCost.id, formData);
-    } else {
-      await createDishCost(formData);
+    try {
+      if (editDishCost) {
+        await updateDishCost(editDishCost.id, formData);
+      } else {
+        await createDishCost(formData);
+      }
+      setShowDishCostModal(false);
+      setEditDishCost(undefined);
+    } catch (error) {
+      console.error("Error submitting dish cost:", error);
     }
-    setShowDishCostModal(false);
-    setEditDishCost(undefined);
   };
 
   // Handle deletion of a dish cost

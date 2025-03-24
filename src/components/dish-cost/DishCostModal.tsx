@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { SideModal } from "@/components/ui/side-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus } from "lucide-react";
+import { Plus, Flame, Clock, Zap, Droplets, Home, Wrench, Shield, Package, Info } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,6 +11,7 @@ import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DishCost, Ingredient, NewDishCost, NewDishIngredient, NewDishOverheadCost } from "@/types/dishCost";
 import { FoodItem } from "@/types/menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface DishCostModalProps {
   open: boolean;
@@ -136,10 +137,11 @@ const DishCostModal: React.FC<DishCostModalProps> = ({
   };
 
   const addOverheadCost = () => {
+    // Use a different default to show variety
     const newCost: NewDishOverheadCost = {
-      category: "Utilities",
-      description: "Gas consumption",
-      cost: 0.45
+      category: "Gas",
+      description: "Cooking gas consumption",
+      cost: 0.65
     };
     
     setFormData(prev => ({
@@ -188,19 +190,45 @@ const DishCostModal: React.FC<DishCostModalProps> = ({
 
   const totals = calculateTotals();
 
-  // Predefined overhead cost categories
+  // Get overhead cost icon
+  const getOverheadIcon = (category: string) => {
+    switch (category) {
+      case "Labor":
+        return <Clock className="h-4 w-4 text-amber-500" />;
+      case "Utilities":
+        return <Flame className="h-4 w-4 text-amber-500" />;
+      case "Rent":
+        return <Home className="h-4 w-4 text-amber-500" />;
+      case "Electricity":
+        return <Zap className="h-4 w-4 text-amber-500" />;
+      case "Gas":
+        return <Flame className="h-4 w-4 text-amber-500" />;
+      case "Water":
+        return <Droplets className="h-4 w-4 text-amber-500" />;
+      case "Maintenance":
+        return <Wrench className="h-4 w-4 text-amber-500" />;
+      case "Insurance":
+        return <Shield className="h-4 w-4 text-amber-500" />;
+      case "Packaging":
+        return <Package className="h-4 w-4 text-amber-500" />;
+      default:
+        return <Info className="h-4 w-4 text-amber-500" />;
+    }
+  };
+
+  // Predefined overhead cost categories with descriptions
   const overheadCategories = [
-    { value: "Labor", label: t("Labor") },
-    { value: "Utilities", label: t("Utilities") },
-    { value: "Rent", label: t("Rent") },
-    { value: "Electricity", label: t("Electricity") },
-    { value: "Gas", label: t("Gas") },
-    { value: "Water", label: t("Water") },
-    { value: "Maintenance", label: t("Maintenance") },
-    { value: "Insurance", label: t("Insurance") },
-    { value: "Taxes", label: t("Taxes") },
-    { value: "Packaging", label: t("Packaging") },
-    { value: "Overhead", label: t("Other Overhead") }
+    { value: "Labor", label: t("Labor"), description: t("Staff wages, chef time, etc.") },
+    { value: "Gas", label: t("Gas"), description: t("Cooking gas usage") },
+    { value: "Electricity", label: t("Electricity"), description: t("Power consumption") },
+    { value: "Water", label: t("Water"), description: t("Water usage") },
+    { value: "Utilities", label: t("Utilities"), description: t("Combined utility costs") },
+    { value: "Rent", label: t("Rent"), description: t("Kitchen space rent") },
+    { value: "Maintenance", label: t("Maintenance"), description: t("Equipment maintenance") },
+    { value: "Insurance", label: t("Insurance"), description: t("Insurance costs") },
+    { value: "Taxes", label: t("Taxes"), description: t("Business taxes") },
+    { value: "Packaging", label: t("Packaging"), description: t("Food containers, packaging") },
+    { value: "Overhead", label: t("Other Overhead"), description: t("Other overhead expenses") }
   ];
 
   return (
@@ -208,7 +236,7 @@ const DishCostModal: React.FC<DishCostModalProps> = ({
       open={open}
       onOpenChange={onOpenChange}
       title={dishCost ? <T text="Edit Dish Cost" /> : <T text="Add Dish Cost" />}
-      description={<T text="Calculate the cost of a dish including ingredients and overhead" />}
+      description={<T text="Calculate the cost of a dish including ingredients and operational overheads" />}
       width="lg"
     >
       <div className="space-y-6">
@@ -232,7 +260,7 @@ const DishCostModal: React.FC<DishCostModalProps> = ({
                 <SelectValue placeholder={t("Select a menu item")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value=""><T text="None" /></SelectItem>
+                <SelectItem value="none"><T text="None" /></SelectItem>
                 {foodItems.map(item => (
                   <SelectItem key={item.id} value={item.id}>
                     {item.name}
@@ -312,7 +340,21 @@ const DishCostModal: React.FC<DishCostModalProps> = ({
           </div>
           
           <div>
-            <h3 className="text-sm font-medium mb-2"><T text="Overhead Costs" /></h3>
+            <h3 className="text-sm font-medium mb-2">
+              <span className="flex items-center">
+                <T text="Overhead Costs" />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 ml-1 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <T text="Include costs such as staff wages, utilities, gas, electricity, and other operational expenses specific to this dish." />
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </span>
+            </h3>
             <div className="space-y-3 mb-2">
               {formData.overhead_costs.map((cost, index) => (
                 <div key={index} className="p-3 border rounded-md">
@@ -329,7 +371,10 @@ const DishCostModal: React.FC<DishCostModalProps> = ({
                         <SelectContent>
                           {overheadCategories.map(category => (
                             <SelectItem key={category.value} value={category.value}>
-                              {category.label}
+                              <div className="flex items-center">
+                                {getOverheadIcon(category.value)}
+                                <span className="ml-2">{category.label}</span>
+                              </div>
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -341,6 +386,7 @@ const DishCostModal: React.FC<DishCostModalProps> = ({
                         className="text-sm" 
                         value={cost.description}
                         onChange={(e) => updateOverheadCost(index, 'description', e.target.value)}
+                        placeholder={overheadCategories.find(cat => cat.value === cost.category)?.description || ""}
                       />
                     </div>
                     <div className={isMobile ? "col-span-12" : "col-span-2"}>
