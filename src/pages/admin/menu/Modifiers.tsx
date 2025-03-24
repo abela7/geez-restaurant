@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -42,7 +41,6 @@ import {
   Loader2 
 } from "lucide-react";
 import { useModifierManagement, ModifierGroup, ModifierOption } from "@/hooks/useModifierManagement";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { 
   Collapsible, 
   CollapsibleContent, 
@@ -52,7 +50,6 @@ import {
 const Modifiers = () => {
   const { t } = useLanguage();
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
-  const [activeTab, setActiveTab] = useState("groups");
   
   const {
     modifierGroups,
@@ -74,7 +71,7 @@ const Modifiers = () => {
     selectedOption,
     setSelectedOption,
     groupFormData,
-    setGroupFormData, // This is missing in original code
+    setGroupFormData,
     optionFormData,
     handleGroupInputChange,
     handleOptionInputChange,
@@ -256,67 +253,7 @@ const Modifiers = () => {
       <MenuNav />
 
       <div className="mt-6 bg-white rounded-lg p-4 shadow">
-        <Tabs defaultValue="groups" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="groups">
-              <T text="Modifier Groups" />
-            </TabsTrigger>
-            <TabsTrigger value="usage">
-              <T text="Usage Instructions" />
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="groups" className="space-y-4">
-            {renderModifierGroups()}
-          </TabsContent>
-          
-          <TabsContent value="usage">
-            <Card>
-              <CardHeader>
-                <CardTitle><T text="How to Use Modifiers" /></CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h3 className="font-medium text-lg mb-2"><T text="What are Modifier Groups?" /></h3>
-                  <p className="text-muted-foreground">
-                    <T text="Modifier groups are categories of options that can be applied to food items. For example, 'Type of Beef Tibs' or 'Size of Tej'." />
-                  </p>
-                </div>
-                
-                <div>
-                  <h3 className="font-medium text-lg mb-2"><T text="How to Create a Modifier Group" /></h3>
-                  <ol className="list-decimal ml-5 space-y-2">
-                    <li><T text="Click the 'Add Modifier Group' button" /></li>
-                    <li><T text="Enter a name for the group (e.g., 'Type of Beef Tibs')" /></li>
-                    <li><T text="Set whether the group is required or optional" /></li>
-                    <li><T text="Click 'Add Modifier Group' to save" /></li>
-                  </ol>
-                </div>
-                
-                <div>
-                  <h3 className="font-medium text-lg mb-2"><T text="How to Add Options to a Group" /></h3>
-                  <ol className="list-decimal ml-5 space-y-2">
-                    <li><T text="Find the modifier group you want to add options to" /></li>
-                    <li><T text="Click 'Add Option'" /></li>
-                    <li><T text="Enter a name for the option (e.g., 'Spicy')" /></li>
-                    <li><T text="Set a price if the option costs extra" /></li>
-                    <li><T text="Click 'Add Option' to save" /></li>
-                  </ol>
-                </div>
-                
-                <div>
-                  <h3 className="font-medium text-lg mb-2"><T text="Assigning Modifiers to Food Items" /></h3>
-                  <p className="text-muted-foreground mb-2">
-                    <T text="After creating modifier groups, you can assign them to food items when creating or editing a food item." />
-                  </p>
-                  <p className="text-muted-foreground">
-                    <T text="For example, assign the 'Type of Beef Tibs' modifier group to the 'Beef Tibs' food item. This will allow customers to choose between Spicy, Mild, or Normal options when ordering Beef Tibs." />
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        {renderModifierGroups()}
       </div>
       
       {/* Add Group Dialog */}
@@ -345,7 +282,6 @@ const Modifiers = () => {
                 name="required"
                 checked={groupFormData.required}
                 onCheckedChange={(checked) => {
-                  // Using setGroupFormData directly from useModifierManagement hook
                   setGroupFormData(prev => ({ ...prev, required: checked }));
                 }}
               />
@@ -387,7 +323,6 @@ const Modifiers = () => {
                 name="required"
                 checked={groupFormData.required}
                 onCheckedChange={(checked) => {
-                  // Using setGroupFormData directly from useModifierManagement hook
                   setGroupFormData(prev => ({ ...prev, required: checked }));
                 }}
               />
@@ -438,11 +373,9 @@ const Modifiers = () => {
             <DialogTitle><T text="Add Option" /></DialogTitle>
             <DialogDescription>
               {selectedGroup && (
-                <>
-                  <span>
-                    {t("Add a new option to the '{groupName}' group", { groupName: selectedGroup.name })}
-                  </span>
-                </>
+                <span>
+                  {t("Add a new option to the '{groupName}' group", { groupName: selectedGroup.name })}
+                </span>
               )}
             </DialogDescription>
           </DialogHeader>

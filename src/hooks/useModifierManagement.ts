@@ -439,6 +439,7 @@ export const useModifierManagement = () => {
     selectedOption,
     setSelectedOption,
     groupFormData,
+    setGroupFormData,
     optionFormData,
     resetGroupForm,
     resetOptionForm,
