@@ -86,14 +86,14 @@ const PayrollFilter: React.FC<PayrollFilterProps> = ({ onFilter, onReset }) => {
           <div>
             <Label htmlFor="status"><T text="Payment Status" /></Label>
             <Select 
-              value={filters.status || ""} 
+              value={filters.status || "all"}  // Changed default value to "all" instead of ""
               onValueChange={(value) => updateFilter("status", value)}
             >
               <SelectTrigger id="status" className="h-8 mt-1">
                 <SelectValue placeholder={t("All statuses")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value=""><T text="All statuses" /></SelectItem>
+                <SelectItem value="all"><T text="All statuses" /></SelectItem>
                 <SelectItem value="Paid"><T text="Paid" /></SelectItem>
                 <SelectItem value="Pending"><T text="Pending" /></SelectItem>
               </SelectContent>
@@ -124,20 +124,15 @@ const PayrollFilter: React.FC<PayrollFilterProps> = ({ onFilter, onReset }) => {
                     )}
                   >
                     <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                    {dateFrom ? (
-                      format(dateFrom, "MMM dd, yyyy")
-                    ) : (
-                      <T text="Pick date" />
-                    )}
+                    {dateFrom ? format(dateFrom, "PPP") : <span>{t("Pick a date")}</span>}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0">
                   <Calendar
                     mode="single"
                     selected={dateFrom}
                     onSelect={setDateFrom}
                     initialFocus
-                    className="pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
@@ -155,42 +150,35 @@ const PayrollFilter: React.FC<PayrollFilterProps> = ({ onFilter, onReset }) => {
                     )}
                   >
                     <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                    {dateTo ? (
-                      format(dateTo, "MMM dd, yyyy")
-                    ) : (
-                      <T text="Pick date" />
-                    )}
+                    {dateTo ? format(dateTo, "PPP") : <span>{t("Pick a date")}</span>}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0">
                   <Calendar
                     mode="single"
                     selected={dateTo}
                     onSelect={setDateTo}
                     initialFocus
-                    className="pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
             </div>
           </div>
           
-          <div className="flex justify-between pt-2 mt-2 space-x-2">
+          <div className="flex justify-between pt-4">
             <Button 
               variant="outline" 
-              size="sm" 
-              className="text-xs"
+              size="sm"
               onClick={handleResetFilters}
             >
-              <X className="mr-1 h-3.5 w-3.5" />
+              <X className="mr-2 h-3.5 w-3.5" />
               <T text="Reset" />
             </Button>
             <Button 
-              size="sm" 
-              className="text-xs"
+              size="sm"
               onClick={handleApplyFilters}
             >
-              <Check className="mr-1 h-3.5 w-3.5" />
+              <Check className="mr-2 h-3.5 w-3.5" />
               <T text="Apply Filters" />
             </Button>
           </div>
