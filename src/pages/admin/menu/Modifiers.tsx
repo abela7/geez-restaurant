@@ -14,7 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useModifierManagement } from "@/hooks/useModifierManagement";
-import { Toggle, ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Toggle } from "@/components/ui/toggle";
 
 const Modifiers = () => {
   const { t } = useLanguage();
@@ -39,6 +40,7 @@ const Modifiers = () => {
     selectedOption,
     setSelectedOption,
     groupFormData,
+    setGroupFormData,
     optionFormData,
     resetGroupForm,
     resetOptionForm,
