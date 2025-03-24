@@ -571,63 +571,6 @@ export type Database = {
           },
         ]
       }
-      ingredient_expenses: {
-        Row: {
-          created_at: string | null
-          id: string
-          ingredient_id: string
-          notes: string | null
-          price_per_unit: number
-          purchase_date: string
-          quantity: number
-          supplier: string
-          total_cost: number
-          unit_id: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          ingredient_id: string
-          notes?: string | null
-          price_per_unit: number
-          purchase_date?: string
-          quantity: number
-          supplier: string
-          total_cost: number
-          unit_id: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          ingredient_id?: string
-          notes?: string | null
-          price_per_unit?: number
-          purchase_date?: string
-          quantity?: number
-          supplier?: string
-          total_cost?: number
-          unit_id?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ingredient_expenses_ingredient_id_fkey"
-            columns: ["ingredient_id"]
-            isOneToOne: false
-            referencedRelation: "recipe_ingredients"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ingredient_expenses_unit_id_fkey"
-            columns: ["unit_id"]
-            isOneToOne: false
-            referencedRelation: "measurement_units"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       ingredients: {
         Row: {
           allergens: string[] | null
@@ -734,50 +677,6 @@ export type Database = {
             columns: ["ingredient_id"]
             isOneToOne: false
             referencedRelation: "ingredients"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      measurement_units: {
-        Row: {
-          abbreviation: string
-          base_unit_id: string | null
-          conversion_factor: number | null
-          created_at: string | null
-          description: string | null
-          id: string
-          name: string
-          type: string
-          updated_at: string | null
-        }
-        Insert: {
-          abbreviation: string
-          base_unit_id?: string | null
-          conversion_factor?: number | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          name: string
-          type: string
-          updated_at?: string | null
-        }
-        Update: {
-          abbreviation?: string
-          base_unit_id?: string | null
-          conversion_factor?: number | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          name?: string
-          type?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "measurement_units_base_unit_id_fkey"
-            columns: ["base_unit_id"]
-            isOneToOne: false
-            referencedRelation: "measurement_units"
             referencedColumns: ["id"]
           },
         ]
@@ -1450,54 +1349,6 @@ export type Database = {
           },
         ]
       }
-      recipe_ingredient_items: {
-        Row: {
-          cost: number
-          created_at: string | null
-          id: string
-          ingredient_id: string
-          quantity: number
-          recipe_id: string
-          unit: string
-          updated_at: string | null
-        }
-        Insert: {
-          cost: number
-          created_at?: string | null
-          id?: string
-          ingredient_id: string
-          quantity: number
-          recipe_id: string
-          unit: string
-          updated_at?: string | null
-        }
-        Update: {
-          cost?: number
-          created_at?: string | null
-          id?: string
-          ingredient_id?: string
-          quantity?: number
-          recipe_id?: string
-          unit?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "recipe_ingredient_items_ingredient_id_fkey"
-            columns: ["ingredient_id"]
-            isOneToOne: false
-            referencedRelation: "recipe_ingredients"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "recipe_ingredient_items_recipe_id_fkey"
-            columns: ["recipe_id"]
-            isOneToOne: false
-            referencedRelation: "recipes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       recipe_ingredients: {
         Row: {
           cost: number | null
@@ -1545,30 +1396,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      recipe_operating_costs: {
-        Row: {
-          created_at: string | null
-          id: string
-          labor_cost_factor: number
-          overhead_percentage: number
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          labor_cost_factor?: number
-          overhead_percentage?: number
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          labor_cost_factor?: number
-          overhead_percentage?: number
-          updated_at?: string | null
-        }
-        Relationships: []
       }
       recipes: {
         Row: {
