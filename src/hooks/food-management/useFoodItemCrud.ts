@@ -1,133 +1,16 @@
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { FoodItem, MenuCategory } from "@/types/menu";
+import { FoodItem } from "@/types/menu";
 import { toast } from "sonner";
-import { useFoodItemModifiers } from "@/hooks/useFoodItemModifiers";
 
-export const useFoodManagement = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
-  const [categories, setCategories] = useState<MenuCategory[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [openDialog, setOpenDialog] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [formData, setFormData] = useState<Partial<FoodItem>>({});
-  const [selectedModifiers, setSelectedModifiers] = useState<string[]>([]);
+export const useFoodItemCrud = (onSuccess: () => Promise<void>) => {
+  const [isLoading, setIsLoading] = useState(false);
 
-  const loadData = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      
-      // Fetch food items with their categories
-      const { data: items, error: itemsError } = await supabase
-        .from("food_items")
-        .select(`
-          *,
-          menu_categories (
-            id,
-            name
-          )
-        `)
-        .order("name");
-
-      if (itemsError) throw itemsError;
-
-      // Process the food items to include the category name
-      const processedItems = items.map(item => ({
-        ...item,
-        categoryName: item.menu_categories?.name || "Uncategorized"
-      }));
-
-      setFoodItems(processedItems);
-
-      // Fetch categories
-      const { data: cats, error: catsError } = await supabase
-        .from("menu_categories")
-        .select("*")
-        .eq("active", true)
-        .order("name");
-
-      if (catsError) throw catsError;
-
-      setCategories(cats);
-    } catch (error) {
-      console.error("Error loading food items:", error);
-      toast.error("Failed to load food items");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  const handleOpenDialog = () => {
-    setFormData({
-      name: "",
-      description: "",
-      price: 0,
-      image_url: "",
-      category_id: "",
-      available: true,
-      is_vegetarian: false,
-      is_vegan: false,
-      is_gluten_free: false,
-      is_spicy: false,
-      preparation_time: undefined
-    });
-    setSelectedModifiers([]);
-    setEditMode(false);
-    setOpenDialog(true);
-  };
-
-  const handleEditFoodItem = (item: FoodItem) => {
-    setFormData(item);
-    setEditMode(true);
-    setOpenDialog(true);
-  };
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    
-    // Handle number inputs
-    if (type === 'number') {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value === "" ? undefined : Number(value)
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value
-      }));
-    }
-  };
-
-  const handleSwitchChange = (name: string, checked: boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: checked
-    }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleModifiersChange = (modifiers: string[]) => {
-    setSelectedModifiers(modifiers);
-  };
-
-  const addFoodItem = async () => {
+  const addFoodItem = async (
+    formData: Partial<FoodItem>, 
+    selectedModifiers: string[]
+  ) => {
     if (!formData.name || !formData.price) {
       toast.error("Name and price are required");
       return;
@@ -174,17 +57,21 @@ export const useFoodManagement = () => {
       }
 
       toast.success("Food item added successfully");
-      handleCloseDialog();
-      await loadData();
+      await onSuccess();
+      return true;
     } catch (error) {
       console.error("Error adding food item:", error);
       toast.error("Failed to add food item");
+      return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const updateFoodItem = async () => {
+  const updateFoodItem = async (
+    formData: Partial<FoodItem>,
+    selectedModifiers: string[]
+  ) => {
     if (!formData.id || !formData.name || !formData.price) {
       toast.error("Name and price are required");
       return;
@@ -237,11 +124,12 @@ export const useFoodManagement = () => {
       }
 
       toast.success("Food item updated successfully");
-      handleCloseDialog();
-      await loadData();
+      await onSuccess();
+      return true;
     } catch (error) {
       console.error("Error updating food item:", error);
       toast.error("Failed to update food item");
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -270,10 +158,12 @@ export const useFoodManagement = () => {
       if (error) throw error;
 
       toast.success("Food item deleted successfully");
-      await loadData();
+      await onSuccess();
+      return true;
     } catch (error) {
       console.error("Error deleting food item:", error);
       toast.error("Failed to delete food item");
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -291,39 +181,19 @@ export const useFoodManagement = () => {
       if (error) throw error;
 
       toast.success(`Food item ${!available ? "enabled" : "disabled"}`);
-      await loadData();
+      await onSuccess();
+      return true;
     } catch (error) {
       console.error("Error toggling availability:", error);
       toast.error("Failed to update food item");
+      return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const filteredFoodItems = foodItems.filter(item =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.categoryName?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return {
     isLoading,
-    foodItems: filteredFoodItems,
-    categories,
-    searchQuery,
-    setSearchQuery,
-    openDialog,
-    setOpenDialog,
-    editMode,
-    formData,
-    selectedModifiers,
-    handleOpenDialog,
-    handleEditFoodItem,
-    handleCloseDialog,
-    handleInputChange,
-    handleSwitchChange,
-    handleSelectChange,
-    handleModifiersChange,
     addFoodItem,
     updateFoodItem,
     deleteFoodItem,

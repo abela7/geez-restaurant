@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -202,7 +201,6 @@ const FoodItemForm: React.FC<FoodItemFormProps> = ({
         </div>
       </div>
 
-      {/* Add Modifiers section for both add and edit modes */}
       <div className="mt-6">
         <FoodItemModifiersForm 
           foodItemId={formData.id} 

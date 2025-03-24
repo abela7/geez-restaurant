@@ -7,7 +7,7 @@ import { Plus, ChevronLeft, Loader2 } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Link } from "react-router-dom";
 import { MenuNav } from "@/components/menu/MenuNav";
-import { useFoodManagement } from "@/hooks/useFoodManagement";
+import { useFoodManagement } from "@/hooks/food-management";
 import FoodItemCard from "@/components/admin/menu/FoodItemCard";
 import FoodItemForm from "@/components/admin/menu/FoodItemForm";
 import { SideModal } from "@/components/ui/side-modal";
