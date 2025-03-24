@@ -8,15 +8,24 @@ import {
   NewDishCost, 
   DishCostHistory 
 } from "@/types/dishCost";
+import { useDishCostIngredients } from "./useDishCostIngredients";
 
 export const useDishCosts = () => {
   const [dishCosts, setDishCosts] = useState<DishCost[]>([]);
   const [costHistory, setCostHistory] = useState<DishCostHistory[]>([]);
-  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [units, setUnits] = useState<MeasurementUnit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  
+  // Use our synchronized ingredients hook
+  const { 
+    ingredients, 
+    isLoading: ingredientsLoading, 
+    createIngredient, 
+    updateIngredient, 
+    deleteIngredient 
+  } = useDishCostIngredients();
 
   // Improved load function with automatic retry
   const loadInitialData = useCallback(async () => {
@@ -27,7 +36,6 @@ export const useDishCosts = () => {
       
       await Promise.all([
         loadDishCosts(),
-        loadIngredients(),
         loadUnits(),
         loadCostHistory()
       ]);
@@ -100,25 +108,6 @@ export const useDishCosts = () => {
       setCostHistory(data || []);
     } catch (err) {
       console.error("Error loading cost history:", err);
-      throw err;
-    }
-  };
-
-  const loadIngredients = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('ingredients')
-        .select('*')
-        .order('name');
-      
-      if (error) {
-        console.error("Supabase error loading ingredients:", error);
-        throw error;
-      }
-      
-      setIngredients(data || []);
-    } catch (err) {
-      console.error("Error loading ingredients:", err);
       throw err;
     }
   };
@@ -606,12 +595,10 @@ export const useDishCosts = () => {
 
   return {
     dishCosts,
-    costHistory,
     ingredients,
     units,
-    isLoading,
+    isLoading: isLoading || ingredientsLoading,
     error,
-    loadInitialData,
     createDishCost,
     updateDishCost,
     deleteDishCost,
@@ -620,6 +607,8 @@ export const useDishCosts = () => {
     deleteUnit,
     createIngredient,
     updateIngredient,
-    deleteIngredient
+    deleteIngredient,
+    loadInitialData
   };
 };
+

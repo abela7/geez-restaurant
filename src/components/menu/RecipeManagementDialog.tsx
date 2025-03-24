@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -26,6 +25,8 @@ import { Recipe, RecipeIngredient, createRecipe, fetchRecipeByFoodItem, updateRe
 import { fetchStock } from "@/services/inventory/stockService";
 import { Ingredient } from "@/services/inventory/types";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RecipeManagementDialogProps {
   open: boolean;
@@ -55,13 +56,21 @@ export const RecipeManagementDialog: React.FC<RecipeManagementDialogProps> = ({
   const loadData = async () => {
     setIsLoading(true);
     try {
-      // Load ingredients
       const stockIngredients = await fetchStock();
       setIngredients(stockIngredients);
 
-      // Load recipe if it exists
+      const { data: dishCost, error: dishCostError } = await supabase
+        .from("dish_costs")
+        .select(`
+          id, 
+          dish_ingredients(*)
+        `)
+        .eq("food_item_id", foodItem?.id)
+        .maybeSingle();
+
       if (foodItem) {
         const existingRecipe = await fetchRecipeByFoodItem(foodItem.id);
+        
         if (existingRecipe) {
           setRecipe(existingRecipe);
           setServes(existingRecipe.serves);
@@ -74,6 +83,21 @@ export const RecipeManagementDialog: React.FC<RecipeManagementDialogProps> = ({
               unit: ri.unit
             })) || []
           );
+        } else if (dishCost && dishCost.dish_ingredients && dishCost.dish_ingredients.length > 0) {
+          toast.info("Importing recipe from dish cost calculation");
+          
+          setRecipe(null);
+          setServes(1);
+          
+          const mappedIngredients = dishCost.dish_ingredients
+            .filter(di => di.ingredient_id)
+            .map(di => ({
+              ingredient_id: di.ingredient_id,
+              quantity: di.quantity,
+              unit: di.unit_type
+            }));
+            
+          setRecipeIngredients(mappedIngredients);
         } else {
           setRecipe(null);
           setServes(1);
@@ -110,7 +134,6 @@ export const RecipeManagementDialog: React.FC<RecipeManagementDialogProps> = ({
     const updatedIngredients = [...recipeIngredients];
     
     if (field === 'ingredient_id') {
-      // When ingredient changes, also update the unit to match the ingredient's unit
       const selectedIngredient = ingredients.find(ing => ing.id === value);
       if (selectedIngredient) {
         updatedIngredients[index] = {
@@ -140,20 +163,24 @@ export const RecipeManagementDialog: React.FC<RecipeManagementDialogProps> = ({
     setIsSaving(true);
     try {
       if (recipe) {
-        // Update existing recipe
         await updateRecipeIngredients(recipe.id!, recipeIngredients);
+        toast.success(t("Recipe updated successfully"));
       } else {
-        // Create new recipe
-        await createRecipe({
+        const newRecipe = await createRecipe({
           food_item_id: foodItem.id,
           name: foodItem.name,
           serves: serves,
           ingredients: recipeIngredients
         });
+        
+        if (newRecipe) {
+          toast.success(t("Recipe created successfully"));
+        }
       }
       onClose();
     } catch (error) {
       console.error("Error saving recipe:", error);
+      toast.error(t("Failed to save recipe"));
     } finally {
       setIsSaving(false);
     }
@@ -196,7 +223,7 @@ export const RecipeManagementDialog: React.FC<RecipeManagementDialogProps> = ({
                     onClick={onClose}
                     asChild
                   >
-                    <a href="/admin/inventory/stock">
+                    <a href="/admin/inventory/ingredients">
                       <T text="Go to Inventory" />
                     </a>
                   </Button>
@@ -267,7 +294,7 @@ export const RecipeManagementDialog: React.FC<RecipeManagementDialogProps> = ({
                                 <SelectContent>
                                   {ingredients.map((ing) => (
                                     <SelectItem key={ing.id} value={ing.id}>
-                                      {ing.name}
+                                      {ing.name} ({ing.unit}) - Stock: {ing.stock_quantity}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>

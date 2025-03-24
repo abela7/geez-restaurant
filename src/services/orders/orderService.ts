@@ -85,7 +85,13 @@ export const createOrder = async (order: Order): Promise<Order | null> => {
       } else {
         // Now deduct ingredients from stock for each food item
         for (const item of order.items) {
-          await deductIngredientsFromStock(item.food_item_id, item.quantity);
+          // First try to deduct based on dish cost recipe
+          const deducted = await deductIngredientsByDishCost(item.food_item_id, item.quantity);
+          
+          // If no dish cost recipe found, fall back to standard recipe
+          if (!deducted) {
+            await deductIngredientsFromStock(item.food_item_id, item.quantity);
+          }
         }
       }
     }
@@ -96,6 +102,84 @@ export const createOrder = async (order: Order): Promise<Order | null> => {
     console.error("Unexpected error creating order:", error);
     toast.error("An unexpected error occurred");
     return null;
+  }
+};
+
+// Function to deduct ingredients based on dish cost entries
+export const deductIngredientsByDishCost = async (foodItemId: string, quantity: number): Promise<boolean> => {
+  try {
+    // First, find the dish cost entry for this food item
+    const { data: dishCost, error: dishCostError } = await supabase
+      .from("dish_costs")
+      .select(`
+        id, 
+        dish_ingredients(*)
+      `)
+      .eq("food_item_id", foodItemId)
+      .single();
+    
+    if (dishCostError || !dishCost || !dishCost.dish_ingredients || dishCost.dish_ingredients.length === 0) {
+      console.log(`No dish cost recipe found for food item ${foodItemId}`);
+      return false;
+    }
+    
+    // Process each ingredient from the dish cost recipe
+    for (const ingredient of dishCost.dish_ingredients) {
+      if (!ingredient.ingredient_id) {
+        console.log(`Missing ingredient_id for ingredient in dish ${dishCost.id}`);
+        continue;
+      }
+      
+      // Calculate total quantity to deduct
+      const deductQuantity = ingredient.quantity * quantity;
+      
+      // Get current stock level
+      const { data: currentStock, error: stockError } = await supabase
+        .from("ingredients")
+        .select("stock_quantity, unit")
+        .eq("id", ingredient.ingredient_id)
+        .single();
+      
+      if (stockError) {
+        console.error(`Error fetching stock for ingredient ${ingredient.ingredient_id}:`, stockError);
+        continue;
+      }
+      
+      // Calculate new stock level (never go below 0)
+      const newStockLevel = Math.max(0, (currentStock.stock_quantity || 0) - deductQuantity);
+      
+      // Update the stock
+      const { error: updateError } = await supabase
+        .from("ingredients")
+        .update({ stock_quantity: newStockLevel })
+        .eq("id", ingredient.ingredient_id);
+      
+      if (updateError) {
+        console.error(`Error updating stock for ingredient ${ingredient.ingredient_id}:`, updateError);
+        continue;
+      }
+      
+      // Log transaction
+      await supabase.from("inventory_transactions").insert({
+        ingredient_id: ingredient.ingredient_id,
+        transaction_type: "consumption",
+        quantity: -deductQuantity,
+        previous_quantity: currentStock.stock_quantity || 0,
+        new_quantity: newStockLevel,
+        unit: currentStock.unit || ingredient.unit_type,
+        notes: `Used in order for dish: ${foodItemId}`,
+        reference_id: foodItemId,
+        reference_type: "food_item",
+        created_by: "order-system"
+      });
+      
+      console.log(`Deducted ${deductQuantity} ${currentStock.unit} of ingredient ${ingredient.ingredient_id} for food item ${foodItemId}`);
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error deducting ingredients from dish cost:", error);
+    return false;
   }
 };
 

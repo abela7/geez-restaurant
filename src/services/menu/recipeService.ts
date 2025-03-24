@@ -137,10 +137,12 @@ export const deductIngredientsFromStock = async (foodItemId: string, quantity: n
     const recipe = await fetchRecipeByFoodItem(foodItemId);
     
     if (!recipe || !recipe.recipe_ingredients || recipe.recipe_ingredients.length === 0) {
-      console.warn(`No recipe found for food item ${foodItemId} or no ingredients defined`);
+      console.log(`No recipe found for food item ${foodItemId} or no ingredients defined`);
       return false;
     }
 
+    console.log(`Deducting ingredients for ${quantity} orders of food item ${foodItemId}`);
+    
     // For each ingredient in the recipe, deduct from stock
     for (const recipeIngredient of recipe.recipe_ingredients) {
       const totalQuantityNeeded = (recipeIngredient.quantity * quantity) / recipe.serves;
@@ -160,6 +162,8 @@ export const deductIngredientsFromStock = async (foodItemId: string, quantity: n
       const currentStock = ingredient.stock_quantity || 0;
       const newStock = Math.max(0, currentStock - totalQuantityNeeded);
 
+      console.log(`Ingredient ${recipeIngredient.ingredient_id}: Current stock ${currentStock}, Needed: ${totalQuantityNeeded}, New stock: ${newStock}`);
+      
       // Update the stock
       const { error: updateError } = await supabase
         .from("ingredients")
@@ -181,7 +185,8 @@ export const deductIngredientsFromStock = async (foodItemId: string, quantity: n
         unit: recipeIngredient.unit,
         notes: `Used in order for food item: ${foodItemId}`,
         reference_id: foodItemId,
-        reference_type: "food_item"
+        reference_type: "food_item",
+        created_by: "order-system"
       });
     }
     
