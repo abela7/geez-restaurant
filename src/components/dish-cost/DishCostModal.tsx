@@ -74,11 +74,13 @@ const DishCostModal: React.FC<DishCostModalProps> = ({
         use_manual_price: false,
         manual_price: null,
         ingredients: [],
-        overhead_costs: [{
-          category: "Labor",
-          description: "Chef time",
-          cost: 1.50
-        }]
+        overhead_costs: [
+          {
+            category: "Labor",
+            description: "Chef time",
+            cost: 1.50
+          }
+        ]
       });
     }
   }, [dishCost, open]);
@@ -185,6 +187,21 @@ const DishCostModal: React.FC<DishCostModalProps> = ({
   };
 
   const totals = calculateTotals();
+
+  // Predefined overhead cost categories
+  const overheadCategories = [
+    { value: "Labor", label: t("Labor") },
+    { value: "Utilities", label: t("Utilities") },
+    { value: "Rent", label: t("Rent") },
+    { value: "Electricity", label: t("Electricity") },
+    { value: "Gas", label: t("Gas") },
+    { value: "Water", label: t("Water") },
+    { value: "Maintenance", label: t("Maintenance") },
+    { value: "Insurance", label: t("Insurance") },
+    { value: "Taxes", label: t("Taxes") },
+    { value: "Packaging", label: t("Packaging") },
+    { value: "Overhead", label: t("Other Overhead") }
+  ];
 
   return (
     <SideModal
@@ -295,7 +312,7 @@ const DishCostModal: React.FC<DishCostModalProps> = ({
           </div>
           
           <div>
-            <h3 className="text-sm font-medium mb-2"><T text="Other Costs" /></h3>
+            <h3 className="text-sm font-medium mb-2"><T text="Overhead Costs" /></h3>
             <div className="space-y-3 mb-2">
               {formData.overhead_costs.map((cost, index) => (
                 <div key={index} className="p-3 border rounded-md">
@@ -310,9 +327,11 @@ const DishCostModal: React.FC<DishCostModalProps> = ({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Labor"><T text="Labor" /></SelectItem>
-                          <SelectItem value="Utilities"><T text="Utilities" /></SelectItem>
-                          <SelectItem value="Overhead"><T text="Overhead" /></SelectItem>
+                          {overheadCategories.map(category => (
+                            <SelectItem key={category.value} value={category.value}>
+                              {category.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -351,7 +370,7 @@ const DishCostModal: React.FC<DishCostModalProps> = ({
             
             <Button variant="outline" size="sm" className="w-full mt-2" onClick={addOverheadCost}>
               <Plus className="h-3 w-3 mr-1" />
-              <T text="Add Other Cost" />
+              <T text="Add Overhead Cost" />
             </Button>
           </div>
         </div>
@@ -366,7 +385,7 @@ const DishCostModal: React.FC<DishCostModalProps> = ({
                   <span className="font-medium">£{totals.totalIngredientCost.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span><T text="Other Costs" /></span>
+                  <span><T text="Overhead Costs" /></span>
                   <span className="font-medium">£{totals.totalOverheadCost.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between border-t pt-1 font-medium">

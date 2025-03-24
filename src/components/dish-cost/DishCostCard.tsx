@@ -3,7 +3,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Utensils, Wallet, Flame, Percent, Clock, BadgePoundSterling } from "lucide-react";
+import { Edit, Trash2, Utensils, Wallet, Flame, Percent, Clock, BadgePoundSterling, Home, Wrench } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { DishCost, DishIngredient, DishOverheadCost } from "@/types/dishCost";
 
@@ -33,6 +33,32 @@ const DishCostCard: React.FC<DishCostCardProps> = ({ dish, onEdit, onDelete }) =
           .toFixed(2)
       : "0.00";
   };
+
+  // Get a list of all unique overhead categories used in this dish
+  const getOverheadCategories = () => {
+    if (!dish.dish_overhead_costs || dish.dish_overhead_costs.length === 0) {
+      return [];
+    }
+    return [...new Set(dish.dish_overhead_costs.map(cost => cost.category))];
+  };
+
+  // Helper function to get icon for a category
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case "Labor":
+        return <Clock className="h-3 w-3 mr-1 text-amber-500 flex-shrink-0" />;
+      case "Utilities":
+        return <Flame className="h-3 w-3 mr-1 text-amber-500 flex-shrink-0" />;
+      case "Rent":
+        return <Home className="h-3 w-3 mr-1 text-amber-500 flex-shrink-0" />;
+      case "Maintenance":
+        return <Wrench className="h-3 w-3 mr-1 text-amber-500 flex-shrink-0" />;
+      default:
+        return <Percent className="h-3 w-3 mr-1 text-amber-500 flex-shrink-0" />;
+    }
+  };
+
+  const overheadCategories = getOverheadCategories();
 
   return (
     <Card className="shadow-sm hover:shadow transition-shadow">
@@ -94,33 +120,27 @@ const DishCostCard: React.FC<DishCostCardProps> = ({ dish, onEdit, onDelete }) =
                 £{dish.total_ingredient_cost.toFixed(2)}
               </div>
             </div>
-            <div className="flex items-center text-xs">
-              <Flame className="h-3 w-3 mr-1 text-amber-500 flex-shrink-0" />
-              <div className="flex-1">
-                <T text="Utilities" />
+            
+            {overheadCategories.map(category => (
+              <div key={category} className="flex items-center text-xs">
+                {getCategoryIcon(category)}
+                <div className="flex-1">
+                  <T text={category} />
+                </div>
+                <div className="text-right">
+                  £{getOverheadCostsByCategory(category)}
+                </div>
               </div>
-              <div className="text-right">
-                £{getOverheadCostsByCategory("Utilities")}
+            ))}
+            
+            {overheadCategories.length === 0 && (
+              <div className="flex items-center text-xs text-muted-foreground">
+                <Percent className="h-3 w-3 mr-1 text-amber-500 flex-shrink-0" />
+                <div className="flex-1">
+                  <T text="No overhead costs added" />
+                </div>
               </div>
-            </div>
-            <div className="flex items-center text-xs">
-              <Clock className="h-3 w-3 mr-1 text-amber-500 flex-shrink-0" />
-              <div className="flex-1">
-                <T text="Labor" />
-              </div>
-              <div className="text-right">
-                £{getOverheadCostsByCategory("Labor")}
-              </div>
-            </div>
-            <div className="flex items-center text-xs">
-              <Percent className="h-3 w-3 mr-1 text-amber-500 flex-shrink-0" />
-              <div className="flex-1">
-                <T text="Other Overhead" />
-              </div>
-              <div className="text-right">
-                £{getOverheadCostsByCategory("Overhead")}
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </CardContent>
