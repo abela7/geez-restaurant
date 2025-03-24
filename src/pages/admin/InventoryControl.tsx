@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -5,7 +6,7 @@ import { StatCard } from "@/components/ui/card-stat";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, AlertTriangle, Package, Truck, BarChart2, Filter, ArrowDownUp, RefreshCw } from "lucide-react";
+import { Search, Plus, AlertTriangle, Package, Truck, BarChart2, Filter, ArrowDownUp, RefreshCw, FileDown } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { InventoryNav } from "@/components/inventory/InventoryNav";
 import { InventoryTable } from "@/components/inventory/InventoryTable";
@@ -23,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { fetchStock, getStockHistory, getStockAnalytics } from "@/services/inventory/stockService";
+import { exportInventoryToCSV, exportAnalyticsToCSV } from "@/services/inventory/exportService";
 import { Ingredient } from "@/services/inventory/types";
 
 const InventoryControl = () => {
@@ -31,6 +33,7 @@ const InventoryControl = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [inventory, setInventory] = useState<Ingredient[]>([]);
   const [filteredInventory, setFilteredInventory] = useState<Ingredient[]>([]);
+  const [paginatedInventory, setPaginatedInventory] = useState<Ingredient[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [showFilters, setShowFilters] = useState(false);
@@ -44,6 +47,11 @@ const InventoryControl = () => {
     direction: 'asc'
   });
   const [analytics, setAnalytics] = useState<any>(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
 
   // Track statistics
   const [statistics, setStatistics] = useState({
@@ -62,6 +70,10 @@ const InventoryControl = () => {
   useEffect(() => {
     filterInventory();
   }, [inventory, searchTerm, selectedCategory, activeTab, sortOrder]);
+  
+  useEffect(() => {
+    paginateInventory();
+  }, [filteredInventory, currentPage, itemsPerPage]);
 
   const loadInventory = async () => {
     setIsLoading(true);
@@ -78,7 +90,7 @@ const InventoryControl = () => {
       setStatistics({
         totalItems: data.length,
         lowStockItems: lowStock,
-        pendingOrders: 3 // This would be from purchase orders in a real implementation
+        pendingOrders: 0 // Removed pending orders feature
       });
       
       // Load analytics
@@ -149,6 +161,15 @@ const InventoryControl = () => {
     });
     
     setFilteredInventory(filtered);
+    setTotalPages(Math.ceil(filtered.length / itemsPerPage));
+    // Reset to first page when filters change
+    setCurrentPage(1);
+  };
+  
+  const paginateInventory = () => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    setPaginatedInventory(filteredInventory.slice(startIndex, endIndex));
   };
 
   const handleSort = (field: string) => {
@@ -190,7 +211,55 @@ const InventoryControl = () => {
       field: filters.sortBy.split('-')[0],
       direction: filters.sortBy.includes('-desc') ? 'desc' : 'asc'
     });
+    setItemsPerPage(filters.pageSize || 10);
     setShowFilters(false);
+  };
+  
+  const handleExportInventory = () => {
+    try {
+      exportInventoryToCSV(filteredInventory, `inventory-export-${new Date().toISOString().split('T')[0]}.csv`);
+      toast({
+        title: t("Export Successful"),
+        description: t("Inventory data has been exported to CSV"),
+      });
+    } catch (error) {
+      console.error("Export error:", error);
+      toast({
+        title: t("Export Failed"),
+        description: t("Failed to export inventory data"),
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const handleExportAnalytics = () => {
+    if (!analytics) {
+      toast({
+        title: t("Export Failed"),
+        description: t("No analytics data available to export"),
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      exportAnalyticsToCSV(analytics, `inventory-analytics-${new Date().toISOString().split('T')[0]}.csv`);
+      toast({
+        title: t("Export Successful"),
+        description: t("Analytics data has been exported to CSV"),
+      });
+    } catch (error) {
+      console.error("Export error:", error);
+      toast({
+        title: t("Export Failed"),
+        description: t("Failed to export analytics data"),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   return (
@@ -207,6 +276,10 @@ const InventoryControl = () => {
             <Button variant="outline" size="sm" className="md:flex hidden" onClick={() => setShowAnalytics(true)}>
               <BarChart2 className="mr-2 h-4 w-4" />
               <T text="Analytics" />
+            </Button>
+            <Button variant="outline" size="sm" className="md:flex hidden" onClick={handleExportInventory}>
+              <FileDown className="mr-2 h-4 w-4" />
+              <T text="Export" />
             </Button>
             <Button onClick={() => {
               setEditItem(null);
@@ -234,11 +307,33 @@ const InventoryControl = () => {
           isPositive={false}
           icon={<AlertTriangle size={18} />}
         />
-        <StatCard 
-          title={t("Pending Orders")}
-          value={statistics.pendingOrders.toString()}
-          icon={<Truck size={18} />}
-        />
+        <Card className="rounded-lg shadow-sm bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/20 p-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="text-lg font-medium text-amber-900 dark:text-amber-400">
+                <T text="Stock Alerts" />
+              </h3>
+              <p className="text-sm text-amber-700 dark:text-amber-500">
+                <T text="Items needing attention" />
+              </p>
+            </div>
+            <div className="rounded-full bg-amber-200 dark:bg-amber-800 p-2">
+              <AlertTriangle size={18} className="text-amber-700 dark:text-amber-300" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <div className="text-2xl font-bold text-amber-900 dark:text-amber-300">
+              {statistics.lowStockItems}
+            </div>
+            <Button 
+              variant="link" 
+              className="p-0 h-auto text-amber-700 dark:text-amber-400"
+              onClick={() => setActiveTab('low')}
+            >
+              <T text="View all low stock items" />
+            </Button>
+          </div>
+        </Card>
       </div>
 
       <div className="mb-6 flex flex-col md:flex-row gap-4">
@@ -268,7 +363,7 @@ const InventoryControl = () => {
             <T text="More Filters" />
           </Button>
           <Button variant="outline" size="sm" onClick={() => handleSort('name')}>
-            <ArrowDownUp className="mr-2 h-4 w-4" />
+            <ArrowUpDown className="mr-2 h-4 w-4" />
             <T text="Sort" />
           </Button>
         </div>
@@ -285,12 +380,17 @@ const InventoryControl = () => {
         <TabsContent value="all" className="mt-0">
           <Card>
             <InventoryTable 
-              inventory={filteredInventory} 
+              inventory={paginatedInventory} 
               isLoading={isLoading} 
               onEdit={handleEditItem}
               onViewHistory={handleViewHistory}
               sortOrder={sortOrder}
               onSort={handleSort}
+              pagination={{
+                currentPage,
+                totalPages,
+                onPageChange: handlePageChange
+              }}
             />
           </Card>
         </TabsContent>
@@ -298,12 +398,17 @@ const InventoryControl = () => {
         <TabsContent value="normal" className="mt-0">
           <Card>
             <InventoryTable 
-              inventory={filteredInventory} 
+              inventory={paginatedInventory} 
               isLoading={isLoading} 
               onEdit={handleEditItem}
               onViewHistory={handleViewHistory}
               sortOrder={sortOrder}
               onSort={handleSort}
+              pagination={{
+                currentPage,
+                totalPages,
+                onPageChange: handlePageChange
+              }}
             />
           </Card>
         </TabsContent>
@@ -311,12 +416,17 @@ const InventoryControl = () => {
         <TabsContent value="low" className="mt-0">
           <Card>
             <InventoryTable 
-              inventory={filteredInventory} 
+              inventory={paginatedInventory} 
               isLoading={isLoading} 
               onEdit={handleEditItem}
               onViewHistory={handleViewHistory}
               sortOrder={sortOrder}
               onSort={handleSort}
+              pagination={{
+                currentPage,
+                totalPages,
+                onPageChange: handlePageChange
+              }}
             />
           </Card>
         </TabsContent>
@@ -324,12 +434,17 @@ const InventoryControl = () => {
         <TabsContent value="out" className="mt-0">
           <Card>
             <InventoryTable 
-              inventory={filteredInventory} 
+              inventory={paginatedInventory} 
               isLoading={isLoading} 
               onEdit={handleEditItem}
               onViewHistory={handleViewHistory}
               sortOrder={sortOrder}
               onSort={handleSort}
+              pagination={{
+                currentPage,
+                totalPages,
+                onPageChange: handlePageChange
+              }}
             />
           </Card>
         </TabsContent>
@@ -363,7 +478,8 @@ const InventoryControl = () => {
                  activeTab === 'low' ? 'low' : 
                  activeTab === 'out' ? 'critical' : 'normal',
           sortBy: `${sortOrder.field}${sortOrder.direction === 'desc' ? '-desc' : ''}`,
-          view: 'list'
+          view: 'list',
+          pageSize: itemsPerPage
         }}
         onApplyFilters={handleApplyFilters}
       />
@@ -374,6 +490,12 @@ const InventoryControl = () => {
         title={<T text="Inventory Analytics" />}
         width="lg"
       >
+        <div className="mb-4 flex justify-end">
+          <Button variant="outline" size="sm" onClick={handleExportAnalytics}>
+            <FileDown className="mr-2 h-4 w-4" />
+            <T text="Export Analytics" />
+          </Button>
+        </div>
         <InventoryAnalytics 
           analytics={analytics} 
           isLoading={isLoading} 
