@@ -143,11 +143,25 @@ const IngredientExpenses = () => {
     try {
       const { data, error } = await supabase
         .from("recipe_ingredients")
-        .select("*")
-        .order("name");
+        .select("id, name, category, unit_id, cost_per_unit, stock_quantity, reorder_level, is_allergen, created_at, updated_at");
 
       if (error) throw error;
-      setIngredients(data || []);
+      
+      // Ensure the data matches our RecipeIngredient interface
+      const formattedIngredients = data?.map(item => ({
+        id: item.id,
+        name: item.name,
+        category: item.category || '',
+        unit_id: item.unit_id,
+        cost_per_unit: item.cost_per_unit || 0,
+        stock_quantity: item.stock_quantity,
+        reorder_level: item.reorder_level,
+        is_allergen: item.is_allergen,
+        created_at: item.created_at,
+        updated_at: item.updated_at
+      })) || [];
+      
+      setIngredients(formattedIngredients);
     } catch (error) {
       console.error("Error loading ingredients:", error);
       toast.error("Failed to load ingredients");
