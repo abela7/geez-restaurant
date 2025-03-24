@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Input } from "@/components/ui/input";
 import { 
   Select, 
   SelectContent, 
@@ -17,7 +18,14 @@ import {
   SelectTrigger,
   SelectValue 
 } from "@/components/ui/select";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
+import { PlusCircle } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
+import { toast } from "sonner";
 
 interface InventoryFiltersProps {
   open: boolean;
@@ -37,6 +45,7 @@ interface InventoryFiltersProps {
     view: string;
     pageSize: number;
   };
+  onAddCategory?: (category: string) => Promise<void>;
 }
 
 export const InventoryFilters: React.FC<InventoryFiltersProps> = ({
@@ -44,7 +53,8 @@ export const InventoryFilters: React.FC<InventoryFiltersProps> = ({
   onOpenChange,
   onApplyFilters,
   categories,
-  initialFilters
+  initialFilters,
+  onAddCategory
 }) => {
   const { t } = useLanguage();
   const [category, setCategory] = React.useState(initialFilters.category);
@@ -52,6 +62,9 @@ export const InventoryFilters: React.FC<InventoryFiltersProps> = ({
   const [sortBy, setSortBy] = React.useState(initialFilters.sortBy);
   const [view, setView] = React.useState(initialFilters.view);
   const [pageSize, setPageSize] = React.useState(initialFilters.pageSize);
+  const [newCategory, setNewCategory] = React.useState("");
+  const [isAddingCategory, setIsAddingCategory] = React.useState(false);
+  const [popoverOpen, setPopoverOpen] = React.useState(false);
 
   const handleApply = () => {
     onApplyFilters({
@@ -72,6 +85,33 @@ export const InventoryFilters: React.FC<InventoryFiltersProps> = ({
     setPageSize(10);
   };
 
+  const handleAddCategory = async () => {
+    if (!newCategory.trim()) {
+      toast.error(t("Category name cannot be empty"));
+      return;
+    }
+
+    if (categories.some(c => c.toLowerCase() === newCategory.trim().toLowerCase())) {
+      toast.error(t("Category already exists"));
+      return;
+    }
+
+    setIsAddingCategory(true);
+    try {
+      if (onAddCategory) {
+        await onAddCategory(newCategory.trim());
+        setNewCategory("");
+        setPopoverOpen(false);
+        toast.success(t("Category added successfully"));
+      }
+    } catch (error) {
+      console.error("Error adding category:", error);
+      toast.error(t("Failed to add category"));
+    } finally {
+      setIsAddingCategory(false);
+    }
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-md">
@@ -81,7 +121,44 @@ export const InventoryFilters: React.FC<InventoryFiltersProps> = ({
         
         <div className="py-4 space-y-6">
           <div className="space-y-2">
-            <Label><T text="Category" /></Label>
+            <div className="flex items-center justify-between">
+              <Label><T text="Category" /></Label>
+              {onAddCategory && (
+                <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 px-2">
+                      <PlusCircle className="h-4 w-4 mr-1" />
+                      <T text="Add" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-4" side="bottom" align="end">
+                    <div className="space-y-4">
+                      <h4 className="font-medium"><T text="Add New Category" /></h4>
+                      <div className="space-y-2">
+                        <Label htmlFor="new-category"><T text="Category Name" /></Label>
+                        <div className="flex gap-2">
+                          <Input 
+                            id="new-category"
+                            value={newCategory} 
+                            onChange={(e) => setNewCategory(e.target.value)}
+                            placeholder={t("Enter category name")}
+                          />
+                          <Button 
+                            onClick={handleAddCategory}
+                            disabled={isAddingCategory || !newCategory.trim()}
+                          >
+                            {isAddingCategory ? 
+                              <T text="Adding..." /> : 
+                              <T text="Add" />
+                            }
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger>
                 <SelectValue placeholder={t("Select category")} />

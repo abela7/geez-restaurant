@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { 
   Select,
   SelectContent,
@@ -22,16 +24,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
+import { PlusCircle } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useToast } from "@/components/ui/use-toast";
 import { addStockItem, updateStockItem } from "@/services/inventory/stockService";
 import { Ingredient } from "@/services/inventory/types";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 interface InventoryStockFormProps {
   item?: Ingredient | null;
   onSave: () => void;
   onCancel: () => void;
+  onAddCategory?: (category: string) => Promise<void>;
 }
 
 const categories = [
@@ -72,7 +82,8 @@ type StockFormValues = z.infer<typeof stockFormSchema>;
 export const InventoryStockForm: React.FC<InventoryStockFormProps> = ({
   item,
   onSave,
-  onCancel
+  onCancel,
+  onAddCategory
 }) => {
   const { t } = useLanguage();
   const { toast } = useToast();
@@ -83,6 +94,9 @@ export const InventoryStockForm: React.FC<InventoryStockFormProps> = ({
   const [hasDietary, setHasDietary] = useState(false);
   const [dietaryInput, setDietaryInput] = useState("");
   const [dietaryList, setDietaryList] = useState<string[]>([]);
+  const [newCategory, setNewCategory] = useState("");
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   const form = useForm<StockFormValues>({
     resolver: zodResolver(stockFormSchema),
@@ -180,6 +194,50 @@ export const InventoryStockForm: React.FC<InventoryStockFormProps> = ({
     }
   };
 
+  const handleAddCategory = async () => {
+    if (!newCategory.trim()) {
+      toast({
+        title: t("Error"),
+        description: t("Category name cannot be empty"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (categories.some(c => c.toLowerCase() === newCategory.trim().toLowerCase())) {
+      toast({
+        title: t("Error"),
+        description: t("Category already exists"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAddingCategory(true);
+    try {
+      if (onAddCategory) {
+        await onAddCategory(newCategory.trim());
+        // Update form with the new category
+        form.setValue('category', newCategory.trim());
+        setNewCategory("");
+        setPopoverOpen(false);
+        toast({
+          title: t("Success"),
+          description: t("Category added successfully"),
+        });
+      }
+    } catch (error) {
+      console.error("Error adding category:", error);
+      toast({
+        title: t("Error"),
+        description: t("Failed to add category"),
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingCategory(false);
+    }
+  };
+
   const addAllergen = () => {
     if (allergenInput.trim()) {
       setAllergensList([...allergensList, allergenInput.trim()]);
@@ -225,7 +283,44 @@ export const InventoryStockForm: React.FC<InventoryStockFormProps> = ({
             name="category"
             render={({ field }) => (
               <FormItem>
-                <FormLabel><T text="Category" /></FormLabel>
+                <div className="flex items-center justify-between mb-2">
+                  <FormLabel className="mb-0"><T text="Category" /></FormLabel>
+                  {onAddCategory && (
+                    <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                      <PopoverTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 px-2">
+                          <PlusCircle className="h-4 w-4 mr-1" />
+                          <T text="Add New" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 p-4" side="bottom" align="end">
+                        <div className="space-y-4">
+                          <h4 className="font-medium"><T text="Add New Category" /></h4>
+                          <div className="space-y-2">
+                            <Label htmlFor="new-category"><T text="Category Name" /></Label>
+                            <div className="flex gap-2">
+                              <Input 
+                                id="new-category"
+                                value={newCategory} 
+                                onChange={(e) => setNewCategory(e.target.value)}
+                                placeholder={t("Enter category name")}
+                              />
+                              <Button 
+                                onClick={handleAddCategory}
+                                disabled={isAddingCategory || !newCategory.trim()}
+                              >
+                                {isAddingCategory ? 
+                                  <T text="Adding..." /> : 
+                                  <T text="Add" />
+                                }
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                </div>
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger>

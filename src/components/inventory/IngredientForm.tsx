@@ -19,9 +19,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
+import { PlusCircle } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Ingredient } from "@/services/inventory/types";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface IngredientFormProps {
   initialData?: Ingredient;
@@ -29,9 +36,10 @@ interface IngredientFormProps {
   onCancel: () => void;
   isLoading?: boolean;
   categories?: string[];
+  onAddCategory?: (category: string) => Promise<void>;
 }
 
-// Predefined category options
+// Predefined category options (as fallback)
 const CATEGORIES = ["Meat", "Vegetables", "Fruits", "Dairy", "Spices", "Dry Goods", "Bread", "Beverages"];
 
 export const IngredientForm: React.FC<IngredientFormProps> = ({
@@ -39,11 +47,15 @@ export const IngredientForm: React.FC<IngredientFormProps> = ({
   onSubmit,
   onCancel,
   isLoading = false,
-  categories = CATEGORIES
+  categories = CATEGORIES,
+  onAddCategory
 }) => {
   const { t } = useLanguage();
   const [isSaving, setIsSaving] = useState(false);
   const [unitOptions, setUnitOptions] = useState<{name: string, abbreviation: string}[]>([]);
+  const [newCategory, setNewCategory] = useState("");
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
   
   useEffect(() => {
     // Fetch unit types from measurement_units table
@@ -130,9 +142,38 @@ export const IngredientForm: React.FC<IngredientFormProps> = ({
     }
   };
 
+  const handleAddCategory = async () => {
+    if (!newCategory.trim()) {
+      toast.error(t("Category name cannot be empty"));
+      return;
+    }
+
+    if (categories.some(c => c.toLowerCase() === newCategory.trim().toLowerCase())) {
+      toast.error(t("Category already exists"));
+      return;
+    }
+
+    setIsAddingCategory(true);
+    try {
+      if (onAddCategory) {
+        await onAddCategory(newCategory.trim());
+        // Update form with the new category
+        form.setValue('category', newCategory.trim());
+        setNewCategory("");
+        setPopoverOpen(false);
+        toast.success(t("Category added successfully"));
+      }
+    } catch (error) {
+      console.error("Error adding category:", error);
+      toast.error(t("Failed to add category"));
+    } finally {
+      setIsAddingCategory(false);
+    }
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -153,7 +194,44 @@ export const IngredientForm: React.FC<IngredientFormProps> = ({
             name="category"
             render={({ field }) => (
               <FormItem>
-                <FormLabel><T text="Category" /></FormLabel>
+                <div className="flex items-center justify-between mb-2">
+                  <FormLabel className="mb-0"><T text="Category" /></FormLabel>
+                  {onAddCategory && (
+                    <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                      <PopoverTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 px-2">
+                          <PlusCircle className="h-4 w-4 mr-1" />
+                          <T text="Add New" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 p-4" side="bottom" align="end">
+                        <div className="space-y-4">
+                          <h4 className="font-medium"><T text="Add New Category" /></h4>
+                          <div className="space-y-2">
+                            <Label htmlFor="new-category"><T text="Category Name" /></Label>
+                            <div className="flex gap-2">
+                              <Input 
+                                id="new-category"
+                                value={newCategory} 
+                                onChange={(e) => setNewCategory(e.target.value)}
+                                placeholder={t("Enter category name")}
+                              />
+                              <Button 
+                                onClick={handleAddCategory}
+                                disabled={isAddingCategory || !newCategory.trim()}
+                              >
+                                {isAddingCategory ? 
+                                  <T text="Adding..." /> : 
+                                  <T text="Add" />
+                                }
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                </div>
                 <Select 
                   value={field.value}
                   onValueChange={field.onChange}

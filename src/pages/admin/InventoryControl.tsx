@@ -22,9 +22,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { fetchStock, getStockHistory, getStockAnalytics } from "@/services/inventory/stockService";
+import { fetchStock, getStockHistory, getStockAnalytics, addCategory } from "@/services/inventory/stockService";
 import { exportInventoryToCSV, exportAnalyticsToCSV } from "@/services/inventory/exportService";
 import { Ingredient } from "@/services/inventory/types";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const InventoryControl = () => {
   const { t } = useLanguage();
@@ -252,6 +254,46 @@ const InventoryControl = () => {
     setCurrentPage(page);
   };
 
+  const handleAddCategory = async (newCategory: string) => {
+    try {
+      const exists = categories.some(
+        cat => cat.toLowerCase() === newCategory.toLowerCase() && cat !== 'All'
+      );
+      
+      if (exists) {
+        toast({
+          title: t("Error"),
+          description: t("Category already exists"),
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      await supabase.from('ingredients').insert({
+        name: `${newCategory} Template`,
+        category: newCategory,
+        unit: 'pcs',
+        stock_quantity: 0,
+        reorder_level: 0,
+      });
+      
+      await loadInventory();
+      
+      toast({
+        title: t("Success"),
+        description: t("New category added successfully"),
+      });
+    } catch (error) {
+      console.error("Error adding category:", error);
+      toast({
+        title: t("Error"),
+        description: t("Failed to add category"),
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   return (
     <div className="container mx-auto p-4 md:p-6">
       <PageHeader 
@@ -450,6 +492,7 @@ const InventoryControl = () => {
           item={editItem}
           onSave={handleItemUpdate}
           onCancel={() => setAddItemOpen(false)}
+          onAddCategory={handleAddCategory}
         />
       </SideModal>
       
@@ -461,7 +504,7 @@ const InventoryControl = () => {
       <InventoryFilters
         open={showFilters}
         onOpenChange={setShowFilters}
-        categories={categories}
+        categories={categories.filter(c => c !== 'All')}
         initialFilters={{
           category: selectedCategory,
           status: activeTab === 'all' ? 'all' : 
@@ -472,6 +515,7 @@ const InventoryControl = () => {
           pageSize: itemsPerPage
         }}
         onApplyFilters={handleApplyFilters}
+        onAddCategory={handleAddCategory}
       />
       
       <SideModal
