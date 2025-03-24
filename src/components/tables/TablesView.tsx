@@ -18,7 +18,6 @@ import NoData from "@/components/ui/no-data";
 import TableForm from "./TableForm";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 
 const TablesView = () => {
   const { toast } = useToast();
@@ -92,18 +91,12 @@ const TablesView = () => {
       } catch (error: any) {
         console.error("Error deleting table:", error);
         
-        // Check if it's our custom error about orders
-        const errorMessage = error.message?.includes("associated orders") 
-          ? error.message 
-          : t("Failed to delete table. It may be referenced by orders or reservations.");
-        
+        // Use toast instead of showing an error in the UI
         toast({
           title: t("Error"),
-          description: errorMessage,
+          description: error.message || t("Failed to delete table. It may be referenced by orders or reservations."),
           variant: "destructive",
         });
-        
-        setErrorMessage(errorMessage);
       } finally {
         setIsDeleteConfirmationOpen(false);
         setSelectedTable(null);
@@ -185,7 +178,6 @@ const TablesView = () => {
               <TableRow>
                 <TableHead><T text="Number" /></TableHead>
                 <TableHead><T text="Capacity" /></TableHead>
-                <TableHead><T text="Status" /></TableHead>
                 <TableHead><T text="Room" /></TableHead>
                 <TableHead><T text="Group" /></TableHead>
                 <TableHead className="text-right"><T text="Actions" /></TableHead>
@@ -200,16 +192,6 @@ const TablesView = () => {
                   <TableRow key={table.id}>
                     <TableCell>{table.table_number}</TableCell>
                     <TableCell>{table.capacity}</TableCell>
-                    <TableCell>
-                      <Badge variant={
-                        table.status === 'available' ? 'default' :
-                        table.status === 'occupied' ? 'destructive' :
-                        table.status === 'reserved' ? 'secondary' :
-                        'outline'
-                      }>
-                        {table.status}
-                      </Badge>
-                    </TableCell>
                     <TableCell>{room ? room.name : '-'}</TableCell>
                     <TableCell>{group ? group.name : '-'}</TableCell>
                     <TableCell className="text-right">
