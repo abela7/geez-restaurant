@@ -31,7 +31,7 @@ export const MenuNav: React.FC = () => {
   ];
 
   return (
-    <div className="w-full overflow-x-auto mb-6 bg-white rounded-lg shadow">
+    <div className="w-full overflow-x-auto mb-6 bg-white rounded-lg shadow dark:bg-gray-800">
       <div className="flex" style={{ minWidth: 'max-content' }}>
         {navItems.map((item) => (
           <Link 
@@ -40,7 +40,7 @@ export const MenuNav: React.FC = () => {
             className={`px-6 py-4 flex items-center text-base font-medium transition-all ${
               location.pathname === item.path 
                 ? "bg-amber-500 text-white border-b-2 border-amber-600" 
-                : "hover:bg-amber-100/50 text-gray-800 border-b-2 border-transparent hover:border-amber-300"
+                : "hover:bg-amber-100/50 text-gray-800 dark:text-gray-200 border-b-2 border-transparent hover:border-amber-300 dark:hover:bg-gray-700"
             }`}
           >
             {item.icon}

@@ -21,6 +21,7 @@ import {
   DollarSign
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { InputWithIcon } from "@/components/ui/input-with-icon";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -187,12 +188,12 @@ const DishCost = () => {
                 </div>
                 <CardDescription><T text="Track the costs of ingredients and overhead for each dish" /></CardDescription>
                 <div className="mt-2">
-                  <Input
+                  <InputWithIcon
                     placeholder={t("Search dishes...")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="max-w-sm"
-                    prefixIcon={<Search className="h-4 w-4 text-muted-foreground" />}
+                    icon={<Search className="h-4 w-4" />}
                   />
                 </div>
               </CardHeader>
@@ -310,12 +311,12 @@ const DishCost = () => {
                 </div>
                 <CardDescription><T text="Manage ingredients and their costs for dish calculations" /></CardDescription>
                 <div className="mt-2">
-                  <Input
+                  <InputWithIcon
                     placeholder={t("Search ingredients...")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="max-w-sm"
-                    prefixIcon={<Search className="h-4 w-4 text-muted-foreground" />}
+                    icon={<Search className="h-4 w-4" />}
                   />
                 </div>
               </CardHeader>
@@ -368,12 +369,12 @@ const DishCost = () => {
                 </div>
                 <CardDescription><T text="Manage measurement units for ingredients" /></CardDescription>
                 <div className="mt-2">
-                  <Input
+                  <InputWithIcon
                     placeholder={t("Search unit types...")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="max-w-sm"
-                    prefixIcon={<Search className="h-4 w-4 text-muted-foreground" />}
+                    icon={<Search className="h-4 w-4" />}
                   />
                 </div>
               </CardHeader>
