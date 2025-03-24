@@ -1,6 +1,7 @@
 
 import { lazy } from "react";
 import { Navigate } from "react-router-dom";
+import Layout from "@/components/Layout";
 
 // Lazy load admin pages
 const Dashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
@@ -12,75 +13,88 @@ const Reports = lazy(() => import("@/pages/admin/Reports"));
 const CustomReports = lazy(() => import("@/pages/admin/reports/CustomReports"));
 const CustomerInsights = lazy(() => import("@/pages/admin/reports/CustomerInsights"));
 const InventoryReports = lazy(() => import("@/pages/admin/reports/InventoryReports"));
-const DishCostList = lazy(() => import("@/pages/admin/menu/DishCost"));
-const DishCostForm = lazy(() => import("@/pages/admin/menu/DishCost"));
+const DishCost = lazy(() => import("@/pages/admin/menu/DishCost"));
+const Pricing = lazy(() => import("@/pages/admin/menu/Pricing"));
+const Modifiers = lazy(() => import("@/pages/admin/menu/Modifiers"));
+const MenuDesign = lazy(() => import("@/pages/admin/menu/MenuDesign"));
 import DishProfile from "@/pages/admin/menu/DishProfile";
 
-// Remove the Users component import since it doesn't exist
-// We can either create the component or remove its route
+// Wrap components with Layout
+const withLayout = (Component: React.ComponentType) => (
+  <Layout interface="admin">
+    <Component />
+  </Layout>
+);
 
 // Define admin routes
 export const adminRoutes = [
   {
     path: "/admin",
-    element: <Dashboard />,
+    element: withLayout(Dashboard),
   },
-  // Removing the users route since the component doesn't exist
-  // {
-  //   path: "/admin/users",
-  //   element: <Users />,
-  // },
   {
     path: "/admin/settings",
-    element: <Settings />,
+    element: withLayout(Settings),
   },
   {
     path: "/admin/menu",
-    element: <MenuCategories />,
+    element: withLayout(MenuCategories),
   },
   {
     path: "/admin/menu/categories",
-    element: <MenuCategories />,
+    element: withLayout(MenuCategories),
   },
   {
     path: "/admin/menu/food",
-    element: <FoodManagement />,
+    element: withLayout(FoodManagement),
   },
   {
     path: "/admin/menu/dishes",
-    element: <Dishes />,
+    element: withLayout(Dishes),
   },
   {
     path: "/admin/menu/dishes/:id",
-    element: <DishProfile />,
+    element: withLayout(DishProfile),
   },
   {
     path: "/admin/reports",
-    element: <Reports />,
+    element: withLayout(Reports),
   },
   {
     path: "/admin/reports/custom",
-    element: <CustomReports />,
+    element: withLayout(CustomReports),
   },
   {
     path: "/admin/reports/customer-insights",
-    element: <CustomerInsights />,
+    element: withLayout(CustomerInsights),
   },
   {
     path: "/admin/reports/inventory",
-    element: <InventoryReports />,
+    element: withLayout(InventoryReports),
   },
   {
     path: "/admin/dish-cost",
-    element: <DishCostList />,
+    element: withLayout(DishCost),
   },
   {
     path: "/admin/dish-cost/new",
-    element: <DishCostForm />,
+    element: withLayout(DishCost),
   },
   {
     path: "/admin/dish-cost/:id",
-    element: <DishCostForm />,
+    element: withLayout(DishCost),
+  },
+  {
+    path: "/admin/menu/pricing",
+    element: withLayout(Pricing),
+  },
+  {
+    path: "/admin/menu/modifiers",
+    element: withLayout(Modifiers),
+  },
+  {
+    path: "/admin/menu/design",
+    element: withLayout(MenuDesign),
   },
 ];
 
