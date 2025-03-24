@@ -6,11 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Plus, ChevronLeft, Loader2 } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Link } from "react-router-dom";
-import { DialogContent, DialogHeader, DialogTitle, Dialog } from "@/components/ui/dialog";
 import { MenuNav } from "@/components/menu/MenuNav";
 import { useFoodManagement } from "@/hooks/useFoodManagement";
 import FoodItemCard from "@/components/admin/menu/FoodItemCard";
 import FoodItemForm from "@/components/admin/menu/FoodItemForm";
+import { SideModal } from "@/components/ui/side-modal";
 
 const FoodManagement = () => {
   const { t } = useLanguage();
@@ -86,26 +86,24 @@ const FoodManagement = () => {
         </div>
       )}
 
-      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {editMode ? <T text="Edit Food Item" /> : <T text="Add Food Item" />}
-            </DialogTitle>
-          </DialogHeader>
-          <FoodItemForm
-            formData={formData}
-            categories={categories}
-            isLoading={isLoading}
-            editMode={editMode}
-            onInputChange={handleInputChange}
-            onSwitchChange={handleSwitchChange}
-            onSelectChange={handleSelectChange}
-            onCancel={handleCloseDialog}
-            onSubmit={editMode ? updateFoodItem : addFoodItem}
-          />
-        </DialogContent>
-      </Dialog>
+      <SideModal 
+        open={openDialog} 
+        onOpenChange={setOpenDialog}
+        title={editMode ? t("Edit Food Item") : t("Add Food Item")}
+        width="md"
+      >
+        <FoodItemForm
+          formData={formData}
+          categories={categories}
+          isLoading={isLoading}
+          editMode={editMode}
+          onInputChange={handleInputChange}
+          onSwitchChange={handleSwitchChange}
+          onSelectChange={handleSelectChange}
+          onCancel={handleCloseDialog}
+          onSubmit={editMode ? updateFoodItem : addFoodItem}
+        />
+      </SideModal>
     </div>
   );
 };
