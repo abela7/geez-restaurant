@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,6 +26,7 @@ import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useToast } from "@/components/ui/use-toast";
 import { addStockItem, updateStockItem } from "@/services/inventory/stockService";
 import { Ingredient } from "@/services/inventory/types";
+import { Badge } from "@/components/ui/badge";
 
 interface InventoryStockFormProps {
   item?: Ingredient | null;
@@ -139,8 +139,16 @@ export const InventoryStockForm: React.FC<InventoryStockFormProps> = ({
     
     try {
       // Add allergens and dietary info
-      const dataToSubmit = {
-        ...values,
+      const dataToSubmit: Omit<Ingredient, 'id' | 'created_at' | 'updated_at'> = {
+        name: values.name,
+        category: values.category,
+        stock_quantity: values.stock_quantity,
+        reorder_level: values.reorder_level,
+        unit: values.unit,
+        cost: values.cost || 0,
+        supplier: values.supplier || "",
+        origin: values.origin || "",
+        type: values.type,
         allergens: hasAllergens ? allergensList : [],
         dietary: hasDietary ? dietaryList : [],
       };
@@ -394,7 +402,12 @@ export const InventoryStockForm: React.FC<InventoryStockFormProps> = ({
                   placeholder={t("Add allergen...")}
                   className="flex-1"
                 />
-                <Button type="button" onClick={addAllergen}>
+                <Button type="button" onClick={() => {
+                  if (allergenInput.trim()) {
+                    setAllergensList([...allergensList, allergenInput.trim()]);
+                    setAllergenInput("");
+                  }
+                }}>
                   <T text="Add" />
                 </Button>
               </div>
@@ -408,7 +421,9 @@ export const InventoryStockForm: React.FC<InventoryStockFormProps> = ({
                         variant="ghost"
                         size="sm"
                         className="h-4 w-4 p-0 ml-1"
-                        onClick={() => removeAllergen(index)}
+                        onClick={() => {
+                          setAllergensList(allergensList.filter((_, i) => i !== index));
+                        }}
                       >
                         ×
                       </Button>
@@ -444,7 +459,12 @@ export const InventoryStockForm: React.FC<InventoryStockFormProps> = ({
                   placeholder={t("Add dietary info...")}
                   className="flex-1"
                 />
-                <Button type="button" onClick={addDietary}>
+                <Button type="button" onClick={() => {
+                  if (dietaryInput.trim()) {
+                    setDietaryList([...dietaryList, dietaryInput.trim()]);
+                    setDietaryInput("");
+                  }
+                }}>
                   <T text="Add" />
                 </Button>
               </div>
@@ -458,7 +478,9 @@ export const InventoryStockForm: React.FC<InventoryStockFormProps> = ({
                         variant="ghost"
                         size="sm"
                         className="h-4 w-4 p-0 ml-1"
-                        onClick={() => removeDietary(index)}
+                        onClick={() => {
+                          setDietaryList(dietaryList.filter((_, i) => i !== index));
+                        }}
                       >
                         ×
                       </Button>

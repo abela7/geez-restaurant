@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -197,8 +196,8 @@ const InventoryControl = () => {
   return (
     <div className="container mx-auto p-4 md:p-6">
       <PageHeader 
-        title={<T text="Inventory Control" />}
-        description={<T text="Track and manage your restaurant inventory" />}
+        title={t("Inventory Control")}
+        description={t("Track and manage your restaurant inventory")}
         actions={
           <>
             <Button variant="outline" size="sm" className="md:flex hidden" onClick={loadInventory}>
@@ -209,7 +208,10 @@ const InventoryControl = () => {
               <BarChart2 className="mr-2 h-4 w-4" />
               <T text="Analytics" />
             </Button>
-            <Button onClick={handleAddItem}>
+            <Button onClick={() => {
+              setEditItem(null);
+              setAddItemOpen(true);
+            }}>
               <Plus className="mr-2 h-4 w-4" />
               <T text="Add Item" />
             </Button>
@@ -221,19 +223,19 @@ const InventoryControl = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <StatCard 
-          title={<T text="Total Items" />}
+          title={t("Total Items")}
           value={statistics.totalItems.toString()}
           icon={<Package size={18} />}
         />
         <StatCard 
-          title={<T text="Low Stock Items" />}
+          title={t("Low Stock Items")}
           value={statistics.lowStockItems.toString()}
           change={statistics.lowStockItems > 0 ? `+${statistics.lowStockItems}` : "0"}
           isPositive={false}
           icon={<AlertTriangle size={18} />}
         />
         <StatCard 
-          title={<T text="Pending Orders" />}
+          title={t("Pending Orders")}
           value={statistics.pendingOrders.toString()}
           icon={<Truck size={18} />}
         />
@@ -333,7 +335,6 @@ const InventoryControl = () => {
         </TabsContent>
       </Tabs>
       
-      {/* Add/Edit Item Modal */}
       <SideModal
         open={addItemOpen}
         onOpenChange={setAddItemOpen}
@@ -347,13 +348,11 @@ const InventoryControl = () => {
         />
       </SideModal>
       
-      {/* Item History Dialog */}
       <InventoryHistoryDialog 
         item={historyItem} 
         onClose={closeHistoryDialog} 
       />
       
-      {/* Inventory Filters */}
       <InventoryFilters
         open={showFilters}
         onOpenChange={setShowFilters}
@@ -369,7 +368,6 @@ const InventoryControl = () => {
         onApplyFilters={handleApplyFilters}
       />
       
-      {/* Analytics Modal */}
       <SideModal
         open={showAnalytics}
         onOpenChange={setShowAnalytics}
