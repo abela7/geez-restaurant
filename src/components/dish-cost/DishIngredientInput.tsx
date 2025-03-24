@@ -84,7 +84,7 @@ const DishIngredientInput: React.FC<DishIngredientInputProps> = ({
     <div className="grid grid-cols-12 gap-2 mb-2 items-center">
       <div className="col-span-4">
         <Select
-          value={ingredient.ingredient_id || ""}
+          value={ingredient.ingredient_id || "placeholder"}
           onValueChange={handleIngredientSelect}
         >
           <SelectTrigger>

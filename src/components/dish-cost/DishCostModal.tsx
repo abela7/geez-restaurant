@@ -48,7 +48,6 @@ const DishCostModal: React.FC<DishCostModalProps> = ({
   const [activeTab, setActiveTab] = useState("ingredients");
   const [stockIngredients, setStockIngredients] = useState<Ingredient[]>([]);
   
-  // Form state
   const [formData, setFormData] = useState({
     dish_name: "",
     food_item_id: null as string | null,
@@ -59,7 +58,6 @@ const DishCostModal: React.FC<DishCostModalProps> = ({
     use_manual_price: false,
   });
 
-  // Load stock ingredients from the ingredients table
   useEffect(() => {
     const fetchStockIngredients = async () => {
       try {
@@ -81,7 +79,6 @@ const DishCostModal: React.FC<DishCostModalProps> = ({
 
   useEffect(() => {
     if (dishCost) {
-      // Initialize with existing dish cost data
       setFormData({
         dish_name: dishCost.dish_name || "",
         food_item_id: dishCost.food_item_id,
@@ -103,7 +100,6 @@ const DishCostModal: React.FC<DishCostModalProps> = ({
         use_manual_price: dishCost.use_manual_price,
       });
     } else {
-      // Initialize with defaults for new dish cost
       setFormData({
         dish_name: "",
         food_item_id: null,
@@ -124,7 +120,6 @@ const DishCostModal: React.FC<DishCostModalProps> = ({
   };
 
   const handleAddIngredient = () => {
-    // Find the first available ingredient from stock
     const firstIngredient = stockIngredients.length > 0 ? stockIngredients[0] : null;
     
     const newIngredient = {
@@ -213,7 +208,6 @@ const DishCostModal: React.FC<DishCostModalProps> = ({
     }
   };
 
-  // Calculate totals
   const totalIngredientCost = formData.ingredients.reduce(
     (sum, ing) => sum + ing.total_cost,
     0
@@ -252,7 +246,7 @@ const DishCostModal: React.FC<DishCostModalProps> = ({
                     <SelectValue placeholder={t("Select menu item")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">
+                    <SelectItem value="none">
                       <T text="No linked menu item" />
                     </SelectItem>
                     {foodItems.map((item) => (

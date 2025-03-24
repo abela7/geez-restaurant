@@ -96,7 +96,7 @@ const TableGroupForm = ({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value=""><T text="None" /></SelectItem>
+                  <SelectItem value="none"><T text="None" /></SelectItem>
                   {roomOptions.map((room) => (
                     <SelectItem key={room.value} value={room.value}>
                       {room.label}

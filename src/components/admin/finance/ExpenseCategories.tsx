@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -73,7 +72,6 @@ const ExpenseCategories: React.FC<ExpenseCategoriesProps> = ({ editMode = false 
       filtered = filtered.filter(cat => cat.type === typeFilter);
     }
     
-    // Apply date range filter if set
     if (dateRange?.from && dateRange?.to) {
       filtered = filtered.filter(cat => {
         const createdAt = cat.created_at ? new Date(cat.created_at) : null;
@@ -122,10 +120,8 @@ const ExpenseCategories: React.FC<ExpenseCategoriesProps> = ({ editMode = false 
         description: "Category added successfully."
       });
       
-      // Reload categories
       await loadCategories();
       
-      // Reset form
       setNewCategory({ name: "", type: "operational", description: "" });
       setIsAddDialogOpen(false);
     } catch (error) {
@@ -159,7 +155,6 @@ const ExpenseCategories: React.FC<ExpenseCategoriesProps> = ({ editMode = false 
           description: "Category updated successfully."
         });
         
-        // Reload categories
         await loadCategories();
         setEditingCategory(null);
       }
@@ -182,7 +177,6 @@ const ExpenseCategories: React.FC<ExpenseCategoriesProps> = ({ editMode = false 
         description: "Category deleted successfully."
       });
       
-      // Update local state
       setCategories(categories.filter(cat => cat.id !== id));
     } catch (error) {
       console.error("Error deleting category:", error);
