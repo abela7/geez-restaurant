@@ -19,7 +19,7 @@ export interface Ingredient {
 export interface InventoryTransaction {
   id: string;
   ingredient_id: string;
-  transaction_type: 'purchase' | 'adjustment' | 'waste' | 'consumption';
+  transaction_type: 'purchase' | 'adjustment' | 'waste' | 'consumption' | string;
   quantity: number;
   previous_quantity: number;
   new_quantity: number;
