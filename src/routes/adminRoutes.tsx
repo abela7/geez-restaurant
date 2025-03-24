@@ -1,6 +1,6 @@
 
 import React from "react";
-import { RouteObject } from "react-router-dom";
+import { RouteObject, useRoutes } from "react-router-dom";
 import Dashboard from "@/pages/admin/Dashboard";
 import Orders from "@/pages/admin/Orders";
 import Tables from "@/pages/admin/Tables";
@@ -24,7 +24,7 @@ import IngredientManagement from "@/pages/admin/menu/IngredientManagement";
 import RecipeCostCalculator from "@/pages/admin/menu/RecipeCostCalculator";
 import IngredientExpenses from "@/pages/admin/menu/IngredientExpenses";
 
-const adminRoutes: RouteObject[] = [
+export const adminRoutes: RouteObject[] = [
   {
     path: "/admin",
     element: <Dashboard />,
@@ -116,8 +116,12 @@ const adminRoutes: RouteObject[] = [
     path: "/admin/menu/ingredient-expenses",
     element: <IngredientExpenses />,
   },
-  
-  // Add more routes here
 ];
 
-export default adminRoutes;
+// Create a component that renders the routes
+const AdminRoutes = () => {
+  const routes = useRoutes(adminRoutes);
+  return routes;
+};
+
+export default AdminRoutes;
