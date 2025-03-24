@@ -62,7 +62,7 @@ import InventoryReports from "@/pages/admin/inventory/InventoryReports";
 // Import reports pages
 import SalesAnalytics from "@/pages/admin/reports/SalesAnalytics";
 import StaffReports from "@/pages/admin/reports/StaffReports";
-import InventoryReports as ReportsInventory from "@/pages/admin/reports/InventoryReports";
+import { default as ReportsInventory } from "@/pages/admin/reports/InventoryReports";
 import CustomerInsights from "@/pages/admin/reports/CustomerInsights";
 import CustomReports from "@/pages/admin/reports/CustomReports";
 
