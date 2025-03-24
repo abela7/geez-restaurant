@@ -18,7 +18,9 @@ import {
   Flame,
   Percent,
   Clock,
-  DollarSign
+  DollarSign,
+  BadgePoundSterling,
+  PencilLine
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { InputWithIcon } from "@/components/ui/input-with-icon";
@@ -26,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { SideModal } from "@/components/ui/side-modal";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Define unit types for ingredients
 interface UnitType {
@@ -65,15 +68,20 @@ interface DishCost {
   }[];
   profitMargin: number;
   suggestedPrice: number;
+  manualPrice: number | null;
+  useManualPrice: boolean;
 }
 
 const DishCost = () => {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState("units");
+  const isMobile = useIsMobile();
+  const [activeTab, setActiveTab] = useState("dishCosts");
   const [searchQuery, setSearchQuery] = useState("");
   const [showUnitModal, setShowUnitModal] = useState(false);
   const [showIngredientModal, setShowIngredientModal] = useState(false);
   const [showDishCostModal, setShowDishCostModal] = useState(false);
+  const [useManualPrice, setUseManualPrice] = useState(false);
+  const [manualPrice, setManualPrice] = useState("");
   
   // Sample data for unit types
   const unitTypes: UnitType[] = [
@@ -118,7 +126,9 @@ const DishCost = () => {
         { id: "3", category: "Overhead", description: "General overhead", cost: 0.71 },
       ],
       profitMargin: 70,
-      suggestedPrice: 15.22
+      suggestedPrice: 15.22,
+      manualPrice: 15.99,
+      useManualPrice: true
     },
     {
       id: "2",
@@ -136,12 +146,14 @@ const DishCost = () => {
         { id: "3", category: "Overhead", description: "General overhead", cost: 0.29 },
       ],
       profitMargin: 80,
-      suggestedPrice: 13.77
+      suggestedPrice: 13.77,
+      manualPrice: null,
+      useManualPrice: false
     },
   ];
 
   return (
-    <div className="container mx-auto p-4 md:p-6">
+    <div className="container mx-auto p-3 md:p-6">
       <PageHeader 
         title={<T text="Dish Cost Management" />}
         description={<T text="Track and manage ingredient costs and pricing for dishes" />}
@@ -179,7 +191,7 @@ const DishCost = () => {
           <TabsContent value="dishCosts">
             <Card>
               <CardHeader className="pb-3">
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center flex-wrap gap-2">
                   <CardTitle><T text="Dish Cost Analysis" /></CardTitle>
                   <Button onClick={() => setShowDishCostModal(true)}>
                     <Plus className="mr-1 h-4 w-4" />
@@ -207,15 +219,19 @@ const DishCost = () => {
                     {dishCosts.map(dish => (
                       <Card key={dish.id} className="shadow-sm hover:shadow transition-shadow">
                         <CardHeader className="pb-2 pt-4">
-                          <div className="flex justify-between items-start">
+                          <div className="flex justify-between items-start flex-wrap gap-2">
                             <div>
                               <CardTitle className="text-lg">{dish.dishName}</CardTitle>
-                              <div className="flex mt-1 space-x-3">
+                              <div className="flex mt-1 flex-wrap gap-2">
                                 <Badge variant="outline" className="bg-amber-50 text-amber-700 hover:bg-amber-100">
                                   <T text="Cost" />: £{dish.totalCost.toFixed(2)}
                                 </Badge>
                                 <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-100">
-                                  <T text="Price" />: £{dish.suggestedPrice.toFixed(2)}
+                                  {dish.useManualPrice && dish.manualPrice ? (
+                                    <span><T text="Manual Price" />: £{dish.manualPrice.toFixed(2)}</span>
+                                  ) : (
+                                    <span><T text="Suggested Price" />: £{dish.suggestedPrice.toFixed(2)}</span>
+                                  )}
                                 </Badge>
                                 <Badge variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-100">
                                   <T text="Margin" />: {dish.profitMargin}%
@@ -233,7 +249,7 @@ const DishCost = () => {
                           </div>
                         </CardHeader>
                         <CardContent className="pt-0">
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-3">
                             <div className="flex items-center text-sm">
                               <Utensils className="h-4 w-4 mr-2 text-amber-500" />
                               <span><T text="Ingredients" />: {dish.ingredients.length}</span>
@@ -243,8 +259,8 @@ const DishCost = () => {
                               <span><T text="Overhead Costs" />: {dish.otherCosts.length}</span>
                             </div>
                             <div className="flex items-center text-sm">
-                              <DollarSign className="h-4 w-4 mr-2 text-green-600" />
-                              <span><T text="Profit" />: £{(dish.suggestedPrice - dish.totalCost).toFixed(2)}</span>
+                              <BadgePoundSterling className="h-4 w-4 mr-2 text-green-600" />
+                              <span><T text="Profit" />: £{((dish.useManualPrice && dish.manualPrice ? dish.manualPrice : dish.suggestedPrice) - dish.totalCost).toFixed(2)}</span>
                             </div>
                           </div>
                           
@@ -252,7 +268,7 @@ const DishCost = () => {
                             <div className="text-sm font-medium mb-1"><T text="Cost Breakdown" /></div>
                             <div className="space-y-1">
                               <div className="flex items-center text-xs">
-                                <Utensils className="h-3 w-3 mr-1 text-amber-500" />
+                                <Utensils className="h-3 w-3 mr-1 text-amber-500 flex-shrink-0" />
                                 <div className="flex-1">
                                   <T text="Ingredients" />
                                 </div>
@@ -261,7 +277,7 @@ const DishCost = () => {
                                 </div>
                               </div>
                               <div className="flex items-center text-xs">
-                                <Flame className="h-3 w-3 mr-1 text-amber-500" />
+                                <Flame className="h-3 w-3 mr-1 text-amber-500 flex-shrink-0" />
                                 <div className="flex-1">
                                   <T text="Utilities" />
                                 </div>
@@ -270,7 +286,7 @@ const DishCost = () => {
                                 </div>
                               </div>
                               <div className="flex items-center text-xs">
-                                <Clock className="h-3 w-3 mr-1 text-amber-500" />
+                                <Clock className="h-3 w-3 mr-1 text-amber-500 flex-shrink-0" />
                                 <div className="flex-1">
                                   <T text="Labor" />
                                 </div>
@@ -279,7 +295,7 @@ const DishCost = () => {
                                 </div>
                               </div>
                               <div className="flex items-center text-xs">
-                                <Percent className="h-3 w-3 mr-1 text-amber-500" />
+                                <Percent className="h-3 w-3 mr-1 text-amber-500 flex-shrink-0" />
                                 <div className="flex-1">
                                   <T text="Other Overhead" />
                                 </div>
@@ -302,7 +318,7 @@ const DishCost = () => {
           <TabsContent value="ingredients">
             <Card>
               <CardHeader className="pb-3">
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center flex-wrap gap-2">
                   <CardTitle><T text="Ingredients with Costs" /></CardTitle>
                   <Button onClick={() => setShowIngredientModal(true)}>
                     <Plus className="mr-1 h-4 w-4" />
@@ -320,7 +336,7 @@ const DishCost = () => {
                   />
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -360,7 +376,7 @@ const DishCost = () => {
           <TabsContent value="units">
             <Card>
               <CardHeader className="pb-3">
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center flex-wrap gap-2">
                   <CardTitle><T text="Unit Types" /></CardTitle>
                   <Button onClick={() => setShowUnitModal(true)}>
                     <Plus className="mr-1 h-4 w-4" />
@@ -378,7 +394,7 @@ const DishCost = () => {
                   />
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -505,7 +521,7 @@ const DishCost = () => {
               <div className="space-y-3 mb-2">
                 <div className="p-3 border rounded-md">
                   <div className="grid grid-cols-12 gap-2">
-                    <div className="col-span-4">
+                    <div className={isMobile ? "col-span-12" : "col-span-4"}>
                       <label className="text-xs text-muted-foreground"><T text="Ingredient" /></label>
                       <select className="w-full p-1.5 border rounded text-sm">
                         {ingredients.map(ing => (
@@ -515,15 +531,15 @@ const DishCost = () => {
                         ))}
                       </select>
                     </div>
-                    <div className="col-span-3">
+                    <div className={isMobile ? "col-span-6" : "col-span-3"}>
                       <label className="text-xs text-muted-foreground"><T text="Quantity" /></label>
                       <Input type="number" step="0.01" className="text-sm" defaultValue="0.5" />
                     </div>
-                    <div className="col-span-2">
+                    <div className={isMobile ? "col-span-6" : "col-span-2"}>
                       <label className="text-xs text-muted-foreground"><T text="Unit" /></label>
                       <div className="p-1.5 border rounded text-sm bg-muted">kg</div>
                     </div>
-                    <div className="col-span-3">
+                    <div className={isMobile ? "col-span-12" : "col-span-3"}>
                       <label className="text-xs text-muted-foreground"><T text="Cost" /></label>
                       <div className="p-1.5 border rounded text-sm text-right bg-muted">£5.00</div>
                     </div>
@@ -532,7 +548,7 @@ const DishCost = () => {
                 
                 <div className="p-3 border rounded-md">
                   <div className="grid grid-cols-12 gap-2">
-                    <div className="col-span-4">
+                    <div className={isMobile ? "col-span-12" : "col-span-4"}>
                       <label className="text-xs text-muted-foreground"><T text="Ingredient" /></label>
                       <select className="w-full p-1.5 border rounded text-sm">
                         {ingredients.map(ing => (
@@ -542,15 +558,15 @@ const DishCost = () => {
                         ))}
                       </select>
                     </div>
-                    <div className="col-span-3">
+                    <div className={isMobile ? "col-span-6" : "col-span-3"}>
                       <label className="text-xs text-muted-foreground"><T text="Quantity" /></label>
                       <Input type="number" step="0.01" className="text-sm" defaultValue="0.2" />
                     </div>
-                    <div className="col-span-2">
+                    <div className={isMobile ? "col-span-6" : "col-span-2"}>
                       <label className="text-xs text-muted-foreground"><T text="Unit" /></label>
                       <div className="p-1.5 border rounded text-sm bg-muted">kg</div>
                     </div>
-                    <div className="col-span-3">
+                    <div className={isMobile ? "col-span-12" : "col-span-3"}>
                       <label className="text-xs text-muted-foreground"><T text="Cost" /></label>
                       <div className="p-1.5 border rounded text-sm text-right bg-muted">£0.24</div>
                     </div>
@@ -569,7 +585,7 @@ const DishCost = () => {
               <div className="space-y-3 mb-2">
                 <div className="p-3 border rounded-md">
                   <div className="grid grid-cols-12 gap-2">
-                    <div className="col-span-4">
+                    <div className={isMobile ? "col-span-12" : "col-span-4"}>
                       <label className="text-xs text-muted-foreground"><T text="Category" /></label>
                       <select className="w-full p-1.5 border rounded text-sm">
                         <option value="Labor">Labor</option>
@@ -577,11 +593,11 @@ const DishCost = () => {
                         <option value="Overhead">Overhead</option>
                       </select>
                     </div>
-                    <div className="col-span-5">
+                    <div className={isMobile ? "col-span-12" : "col-span-5"}>
                       <label className="text-xs text-muted-foreground"><T text="Description" /></label>
                       <Input className="text-sm" defaultValue="Chef time" />
                     </div>
-                    <div className="col-span-3">
+                    <div className={isMobile ? "col-span-12" : "col-span-3"}>
                       <label className="text-xs text-muted-foreground"><T text="Cost (£)" /></label>
                       <Input type="number" step="0.01" className="text-sm" defaultValue="1.50" />
                     </div>
@@ -590,7 +606,7 @@ const DishCost = () => {
                 
                 <div className="p-3 border rounded-md">
                   <div className="grid grid-cols-12 gap-2">
-                    <div className="col-span-4">
+                    <div className={isMobile ? "col-span-12" : "col-span-4"}>
                       <label className="text-xs text-muted-foreground"><T text="Category" /></label>
                       <select className="w-full p-1.5 border rounded text-sm">
                         <option value="Labor">Labor</option>
@@ -598,11 +614,11 @@ const DishCost = () => {
                         <option value="Overhead">Overhead</option>
                       </select>
                     </div>
-                    <div className="col-span-5">
+                    <div className={isMobile ? "col-span-12" : "col-span-5"}>
                       <label className="text-xs text-muted-foreground"><T text="Description" /></label>
                       <Input className="text-sm" defaultValue="Gas consumption" />
                     </div>
-                    <div className="col-span-3">
+                    <div className={isMobile ? "col-span-12" : "col-span-3"}>
                       <label className="text-xs text-muted-foreground"><T text="Cost (£)" /></label>
                       <Input type="number" step="0.01" className="text-sm" defaultValue="0.45" />
                     </div>
@@ -618,7 +634,7 @@ const DishCost = () => {
           </div>
           
           <div className="border-t pt-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <h3 className="text-sm font-medium mb-3"><T text="Cost Summary" /></h3>
                 <div className="space-y-2 text-sm">
@@ -647,6 +663,41 @@ const DishCost = () => {
                   <div className="pt-1 flex justify-between text-sm">
                     <span><T text="Suggested Price" /></span>
                     <span className="font-medium text-green-600">£15.22</span>
+                  </div>
+                  
+                  <div className="border-t pt-3 mt-3">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <input 
+                        type="checkbox" 
+                        id="useManualPrice" 
+                        checked={useManualPrice}
+                        onChange={(e) => setUseManualPrice(e.target.checked)}
+                        className="h-4 w-4 rounded text-primary border-gray-300 focus:ring-primary"
+                      />
+                      <label htmlFor="useManualPrice" className="text-sm font-medium cursor-pointer">
+                        <T text="Use Manual Price" />
+                      </label>
+                    </div>
+                    
+                    {useManualPrice && (
+                      <div className="space-y-2">
+                        <label className="text-sm"><T text="Manual Price (£)" /></label>
+                        <div className="relative">
+                          <Input 
+                            type="number" 
+                            step="0.01" 
+                            min="0" 
+                            value={manualPrice}
+                            onChange={(e) => setManualPrice(e.target.value)}
+                            placeholder="0.00"
+                            className="pl-8"
+                          />
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                            £
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

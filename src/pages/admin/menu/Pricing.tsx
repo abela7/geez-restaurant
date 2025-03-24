@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Search, ChevronLeft, Edit, Calculator, Loader2, Calendar, PercentIcon } from "lucide-react";
+import { Search, ChevronLeft, Edit, Calculator, Loader2, Calendar, PercentIcon, BadgePoundSterling } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Link } from "react-router-dom";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MenuNav } from "@/components/menu/MenuNav";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { InputWithIcon } from "@/components/ui/input-with-icon";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface FoodItem {
   id: string;
@@ -37,6 +39,7 @@ interface PriceChange {
 
 const Pricing = () => {
   const { t } = useLanguage();
+  const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = useState(true);
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
   const [priceChanges, setPriceChanges] = useState<PriceChange[]>([]);
@@ -216,7 +219,7 @@ const Pricing = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 md:p-6">
+    <div className="container mx-auto p-3 md:p-6">
       <PageHeader 
         title={<T text="Menu Pricing" />}
         description={<T text="Manage prices, profit margins, and price history" />}
@@ -242,18 +245,18 @@ const Pricing = () => {
 
       <div className="mb-6 flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
+          <InputWithIcon
             type="search"
             placeholder={t("Search food items...")}
-            className="w-full pl-9"
+            className="w-full"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            icon={<Search className="h-4 w-4" />}
           />
         </div>
         
         <Select value={filterCategory} onValueChange={(value) => setFilterCategory(value)}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className={isMobile ? "w-full" : "w-[200px]"}>
             <SelectValue placeholder={t("Filter by category")} />
           </SelectTrigger>
           <SelectContent>
@@ -270,12 +273,14 @@ const Pricing = () => {
           <Button 
             variant={activeTab === "current" ? "default" : "outline"}
             onClick={() => setActiveTab("current")}
+            className="flex-1 md:flex-auto"
           >
             <T text="Current Prices" />
           </Button>
           <Button 
             variant={activeTab === "history" ? "default" : "outline"}
             onClick={() => setActiveTab("history")}
+            className="flex-1 md:flex-auto"
           >
             <Calendar className="mr-2 h-4 w-4" />
             <T text="Price History" />
@@ -289,100 +294,104 @@ const Pricing = () => {
         </div>
       ) : activeTab === "current" ? (
         <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead><T text="Food Item" /></TableHead>
-                <TableHead><T text="Category" /></TableHead>
-                <TableHead><T text="Current Price" /></TableHead>
-                <TableHead><T text="Cost" /></TableHead>
-                <TableHead><T text="Profit Margin" /></TableHead>
-                <TableHead className="text-right"><T text="Actions" /></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredFoodItems.length === 0 ? (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
-                    {searchQuery ? (
-                      <T text="No food items found matching your search" />
-                    ) : (
-                      <T text="No food items found" />
-                    )}
-                  </TableCell>
+                  <TableHead><T text="Food Item" /></TableHead>
+                  <TableHead><T text="Category" /></TableHead>
+                  <TableHead><T text="Current Price" /></TableHead>
+                  <TableHead><T text="Cost" /></TableHead>
+                  <TableHead><T text="Profit Margin" /></TableHead>
+                  <TableHead className="text-right"><T text="Actions" /></TableHead>
                 </TableRow>
-              ) : (
-                filteredFoodItems.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.name}</TableCell>
-                    <TableCell><Badge variant="outline">{item.categoryName}</Badge></TableCell>
-                    <TableCell className="font-bold">£{item.price.toFixed(2)}</TableCell>
-                    <TableCell>£{item.cost ? item.cost.toFixed(2) : '-'}</TableCell>
-                    <TableCell>
-                      <span className={calculateProfitClass(item.profit_margin)}>
-                        {item.profit_margin !== null ? `${item.profit_margin}%` : '-'}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => openEditDialog(item)}
-                      >
-                        <Edit className="h-4 w-4 mr-2" />
-                        <T text="Update Price" />
-                      </Button>
+              </TableHeader>
+              <TableBody>
+                {filteredFoodItems.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      {searchQuery ? (
+                        <T text="No food items found matching your search" />
+                      ) : (
+                        <T text="No food items found" />
+                      )}
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  filteredFoodItems.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium">{item.name}</TableCell>
+                      <TableCell><Badge variant="outline">{item.categoryName}</Badge></TableCell>
+                      <TableCell className="font-bold">£{item.price.toFixed(2)}</TableCell>
+                      <TableCell>£{item.cost ? item.cost.toFixed(2) : '-'}</TableCell>
+                      <TableCell>
+                        <span className={calculateProfitClass(item.profit_margin)}>
+                          {item.profit_margin !== null ? `${item.profit_margin}%` : '-'}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => openEditDialog(item)}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          <T text="Update Price" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </Card>
       ) : (
         <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead><T text="Food Item" /></TableHead>
-                <TableHead><T text="Old Price" /></TableHead>
-                <TableHead><T text="New Price" /></TableHead>
-                <TableHead><T text="Change" /></TableHead>
-                <TableHead><T text="Date" /></TableHead>
-                <TableHead><T text="Reason" /></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {priceChanges.length === 0 ? (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
-                    <T text="No price change history found" />
-                  </TableCell>
+                  <TableHead><T text="Food Item" /></TableHead>
+                  <TableHead><T text="Old Price" /></TableHead>
+                  <TableHead><T text="New Price" /></TableHead>
+                  <TableHead><T text="Change" /></TableHead>
+                  <TableHead><T text="Date" /></TableHead>
+                  <TableHead><T text="Reason" /></TableHead>
                 </TableRow>
-              ) : (
-                priceChanges.map((change) => {
-                  const priceChange = change.new_price - change.old_price;
-                  const percentChange = ((priceChange / change.old_price) * 100).toFixed(1);
-                  const isIncrease = priceChange > 0;
-                  
-                  return (
-                    <TableRow key={change.id}>
-                      <TableCell className="font-medium">{change.foodName}</TableCell>
-                      <TableCell>£{change.old_price.toFixed(2)}</TableCell>
-                      <TableCell>£{change.new_price.toFixed(2)}</TableCell>
-                      <TableCell>
-                        <span className={isIncrease ? "text-red-600" : "text-green-600"}>
-                          {isIncrease ? "+" : ""}{priceChange.toFixed(2)} ({isIncrease ? "+" : ""}{percentChange}%)
-                        </span>
-                      </TableCell>
-                      <TableCell>{new Date(change.change_date).toLocaleDateString()}</TableCell>
-                      <TableCell>{change.reason || "-"}</TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {priceChanges.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      <T text="No price change history found" />
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  priceChanges.map((change) => {
+                    const priceChange = change.new_price - change.old_price;
+                    const percentChange = ((priceChange / change.old_price) * 100).toFixed(1);
+                    const isIncrease = priceChange > 0;
+                    
+                    return (
+                      <TableRow key={change.id}>
+                        <TableCell className="font-medium">{change.foodName}</TableCell>
+                        <TableCell>£{change.old_price.toFixed(2)}</TableCell>
+                        <TableCell>£{change.new_price.toFixed(2)}</TableCell>
+                        <TableCell>
+                          <span className={isIncrease ? "text-red-600" : "text-green-600"}>
+                            {isIncrease ? "+" : ""}{priceChange.toFixed(2)} ({isIncrease ? "+" : ""}{percentChange}%)
+                          </span>
+                        </TableCell>
+                        <TableCell>{new Date(change.change_date).toLocaleDateString()}</TableCell>
+                        <TableCell>{change.reason || "-"}</TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </Card>
       )}
 
@@ -395,7 +404,7 @@ const Pricing = () => {
             {currentItem && (
               <>
                 <div className="space-y-2">
-                  <div className="flex justify-between">
+                  <div className="flex justify-between flex-wrap gap-2">
                     <div>
                       <h3 className="font-medium">{currentItem.name}</h3>
                       <p className="text-sm text-muted-foreground">{currentItem.categoryName}</p>
@@ -413,18 +422,24 @@ const Pricing = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="newPrice"><T text="New Price (£)" /></Label>
-                  <Input 
-                    id="newPrice" 
-                    type="number" 
-                    step="0.01"
-                    min="0"
-                    value={newPrice}
-                    onChange={(e) => setNewPrice(e.target.value)}
-                  />
+                  <div className="relative">
+                    <Input 
+                      id="newPrice" 
+                      type="number" 
+                      step="0.01"
+                      min="0"
+                      value={newPrice}
+                      onChange={(e) => setNewPrice(e.target.value)}
+                      className="pl-8"
+                    />
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                      £
+                    </span>
+                  </div>
                   
                   {currentItem.cost && parseFloat(newPrice) > 0 && (
-                    <div className="mt-2 p-3 bg-gray-50 rounded-md">
-                      <div className="flex items-center justify-between">
+                    <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
                         <span className="text-sm font-medium"><T text="New Profit Margin" /></span>
                         <span className={calculateProfitClass(
                           Math.round(((parseFloat(newPrice) - currentItem.cost) / parseFloat(newPrice)) * 100)
