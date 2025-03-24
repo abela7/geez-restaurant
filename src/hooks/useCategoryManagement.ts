@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MenuCategory } from "@/types/menu";
@@ -11,6 +10,8 @@ export const useCategoryManagement = () => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [currentCategory, setCurrentCategory] = useState<MenuCategory | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const [formData, setFormData] = useState<Partial<MenuCategory>>({
     name: "",
     description: "",
@@ -18,27 +19,32 @@ export const useCategoryManagement = () => {
     image_url: null
   });
 
-  useEffect(() => {
-    loadCategories();
-  }, []);
-
-  const loadCategories = async () => {
+  const loadCategories = useCallback(async () => {
     try {
       setIsLoading(true);
+      setError(null);
+      
+      console.log('Loading categories, attempt:', retryCount + 1);
       
       // First, fetch all categories
       const { data: categoriesData, error: categoriesError } = await supabase
         .from('menu_categories')
         .select('*');
       
-      if (categoriesError) throw categoriesError;
+      if (categoriesError) {
+        console.error('Supabase error loading categories:', categoriesError);
+        throw categoriesError;
+      }
       
       // Then, get count of food items for each category
       const { data: foodItemsData, error: foodItemsError } = await supabase
         .from('food_items')
         .select('category_id');
       
-      if (foodItemsError) throw foodItemsError;
+      if (foodItemsError) {
+        console.error('Supabase error loading food items:', foodItemsError);
+        throw foodItemsError;
+      }
       
       // Count items per category
       const categoryItemCount = foodItemsData.reduce((acc, item) => {
@@ -61,15 +67,29 @@ export const useCategoryManagement = () => {
       }
       
       setCategories(categoriesWithCount);
+      setRetryCount(0); // Reset retry count on success
     } catch (error) {
       console.error('Error loading categories:', error);
-      toast.error('Failed to load categories');
+      
+      // Only show toast on final retry attempt
+      if (retryCount >= 2) {
+        toast.error('Failed to load categories');
+        setError(error instanceof Error ? error : new Error('Unknown error loading categories'));
+      } else {
+        // Auto retry after a delay
+        setTimeout(() => {
+          setRetryCount(prev => prev + 1);
+        }, 2000); // 2 second delay before retry
+      }
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [retryCount]);
+
+  useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
   
-  // Function to seed the initial categories if none exist
   const seedInitialCategories = async () => {
     const initialCategories = [
       { name: "Breakfast Dishes", description: "Traditional Ethiopian breakfast options", active: true },
@@ -293,6 +313,7 @@ export const useCategoryManagement = () => {
   return {
     categories,
     isLoading,
+    error,
     showAddDialog,
     setShowAddDialog,
     showEditDialog,
@@ -309,6 +330,7 @@ export const useCategoryManagement = () => {
     handleDeleteCategory,
     confirmEditCategory,
     confirmDeleteCategory,
-    handleToggleStatus
+    handleToggleStatus,
+    loadCategories
   };
 };

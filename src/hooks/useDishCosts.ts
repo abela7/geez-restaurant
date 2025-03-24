@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { 
@@ -16,30 +17,48 @@ export const useDishCosts = () => {
   const [units, setUnits] = useState<MeasurementUnit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
-  useEffect(() => {
-    loadInitialData();
-  }, []);
-
-  const loadInitialData = async () => {
+  // Improved load function with automatic retry
+  const loadInitialData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
+      console.log("Loading dish cost data, attempt:", retryCount + 1);
+      
       await Promise.all([
         loadDishCosts(),
         loadIngredients(),
         loadUnits(),
         loadCostHistory()
       ]);
+      
+      // Reset retry count on success
+      setRetryCount(0);
     } catch (err) {
       console.error("Error loading dish cost data:", err);
-      setError(err instanceof Error ? err : new Error('Unknown error loading dish cost data'));
-      toast.error("Failed to load dish cost data");
+      
+      // Only show toast on final retry attempt
+      if (retryCount >= 2) {
+        toast.error("Failed to load dish cost data. Please try again later.");
+        setError(err instanceof Error ? err : new Error('Unknown error loading dish cost data'));
+      } else {
+        // Auto retry after a delay
+        setTimeout(() => {
+          setRetryCount(prev => prev + 1);
+        }, 2000); // 2 second delay before retry
+      }
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [retryCount]);
 
+  // Trigger initial load and automatic retries
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
+
+  // Improved data loading functions with better error handling
   const loadDishCosts = async () => {
     try {
       const { data, error } = await supabase
@@ -52,7 +71,10 @@ export const useDishCosts = () => {
         `)
         .order('dish_name');
       
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error loading dish costs:", error);
+        throw error;
+      }
       
       setDishCosts(data || []);
     } catch (err) {
@@ -71,7 +93,10 @@ export const useDishCosts = () => {
         `)
         .order('change_date', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error loading cost history:", error);
+        throw error;
+      }
       
       setCostHistory(data || []);
     } catch (err) {
@@ -87,7 +112,10 @@ export const useDishCosts = () => {
         .select('*')
         .order('name');
       
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error loading ingredients:", error);
+        throw error;
+      }
       
       setIngredients(data || []);
     } catch (err) {
@@ -103,7 +131,10 @@ export const useDishCosts = () => {
         .select('*')
         .order('name');
       
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error loading measurement units:", error);
+        throw error;
+      }
       
       setUnits(data || []);
     } catch (err) {

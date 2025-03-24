@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/page-header";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Link } from "react-router-dom";
 import { MenuNav } from "@/components/menu/MenuNav";
-import { Calculator, ChevronsUpDown, Utensils } from "lucide-react";
+import { Calculator, ChevronsUpDown, Utensils, RefreshCw, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDishCosts } from "@/hooks/useDishCosts";
 import { DishCost, Ingredient, MeasurementUnit } from "@/types/dishCost";
@@ -17,6 +18,7 @@ import AddUnitModal from "@/components/dish-cost/AddUnitModal";
 import AddIngredientModal from "@/components/dish-cost/AddIngredientModal";
 import DishCostModal from "@/components/dish-cost/DishCostModal";
 import { toast } from "sonner";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 const DishCostPage: React.FC = () => {
   const { t } = useLanguage();
@@ -47,11 +49,20 @@ const DishCostPage: React.FC = () => {
   const [editDishCost, setEditDishCost] = useState<DishCost | undefined>(undefined);
   const [editIngredient, setEditIngredient] = useState<Ingredient | undefined>(undefined);
   const [editUnit, setEditUnit] = useState<MeasurementUnit | undefined>(undefined);
+  const [isRetrying, setIsRetrying] = useState(false);
 
-  // Reload data when component mounts
-  useEffect(() => {
-    loadInitialData();
-  }, [loadInitialData]);
+  // Manual retry handler
+  const handleRetry = async () => {
+    setIsRetrying(true);
+    try {
+      await loadInitialData();
+      toast.success(t("Data refreshed successfully"));
+    } catch (error) {
+      console.error("Manual retry failed:", error);
+    } finally {
+      setIsRetrying(false);
+    }
+  };
 
   // Handle opening the dish cost modal for editing or creating
   const handleOpenDishCostModal = (dish?: DishCost) => {
@@ -166,57 +177,6 @@ const DishCostPage: React.FC = () => {
     setSearchQuery("");
   };
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto p-3 md:p-6">
-        <PageHeader 
-          title={<T text="Dish Cost Management" />}
-          description={<T text="Track and manage ingredient costs and pricing for dishes" />}
-          actions={
-            <>
-              <Button variant="outline" asChild>
-                <Link to="/admin/menu">
-                  <T text="Back to Menu" />
-                </Link>
-              </Button>
-            </>
-          }
-        />
-        <MenuNav />
-        <div className="flex justify-center items-center p-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto p-3 md:p-6">
-        <PageHeader 
-          title={<T text="Dish Cost Management" />}
-          description={<T text="Track and manage ingredient costs and pricing for dishes" />}
-          actions={
-            <>
-              <Button variant="outline" asChild>
-                <Link to="/admin/menu">
-                  <T text="Back to Menu" />
-                </Link>
-              </Button>
-            </>
-          }
-        />
-        <MenuNav />
-        <div className="p-6 bg-red-50 text-red-600 rounded-lg">
-          <T text="Error loading data. Please try again later." />
-          <Button variant="outline" className="mt-4" onClick={loadInitialData}>
-            <T text="Retry" />
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto p-3 md:p-6">
       <PageHeader 
@@ -229,63 +189,115 @@ const DishCostPage: React.FC = () => {
                 <T text="Back to Menu" />
               </Link>
             </Button>
+            {error && (
+              <Button 
+                variant="outline" 
+                onClick={handleRetry} 
+                disabled={isRetrying}
+                className="text-amber-600 border-amber-600 hover:bg-amber-50"
+              >
+                <RefreshCw className={`mr-2 h-4 w-4 ${isRetrying ? 'animate-spin' : ''}`} />
+                <T text={isRetrying ? "Refreshing..." : "Refresh Data"} />
+              </Button>
+            )}
           </>
         }
       />
 
       <MenuNav />
       
-      <div className="mb-6">
-        <Tabs defaultValue="dishCosts" className="w-full" onValueChange={handleTabChange}>
-          <TabsList className="grid grid-cols-3 mb-4">
-            <TabsTrigger value="dishCosts">
-              <Calculator className="h-4 w-4 mr-2" />
-              <T text="Dish Costs" />
-            </TabsTrigger>
-            <TabsTrigger value="ingredients">
-              <Utensils className="h-4 w-4 mr-2" />
-              <T text="Ingredients" />
-            </TabsTrigger>
-            <TabsTrigger value="units">
-              <ChevronsUpDown className="h-4 w-4 mr-2" />
-              <T text="Unit Types" />
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="dishCosts">
-            <DishCostList 
-              dishCosts={dishCosts}
-              searchQuery={searchQuery}
-              onSearchChange={(e) => setSearchQuery(e.target.value)}
-              onAddDishCost={() => handleOpenDishCostModal()}
-              onEditDishCost={handleOpenDishCostModal}
-              onDeleteDishCost={handleDeleteDishCost}
-            />
-          </TabsContent>
-          
-          <TabsContent value="ingredients">
-            <IngredientsTable 
-              ingredients={ingredients}
-              searchQuery={searchQuery}
-              onSearchChange={(e) => setSearchQuery(e.target.value)}
-              onAddIngredient={() => handleOpenIngredientModal()}
-              onEditIngredient={handleOpenIngredientModal}
-              onDeleteIngredient={handleDeleteIngredient}
-            />
-          </TabsContent>
-          
-          <TabsContent value="units">
-            <UnitsTable 
-              units={units}
-              searchQuery={searchQuery}
-              onSearchChange={(e) => setSearchQuery(e.target.value)}
-              onAddUnit={() => handleOpenUnitModal()}
-              onEditUnit={handleOpenUnitModal}
-              onDeleteUnit={handleDeleteUnit}
-            />
-          </TabsContent>
-        </Tabs>
-      </div>
+      {error ? (
+        <Alert variant="destructive" className="mt-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle><T text="Error Loading Data" /></AlertTitle>
+          <AlertDescription className="space-y-4">
+            <p><T text="There was a problem loading the dish cost data. This might be due to connection issues with the database." /></p>
+            <div className="flex gap-3">
+              <Button 
+                onClick={handleRetry} 
+                variant="outline" 
+                disabled={isRetrying}
+                className="bg-white hover:bg-gray-50"
+              >
+                <RefreshCw className={`mr-2 h-4 w-4 ${isRetrying ? 'animate-spin' : ''}`} />
+                <T text={isRetrying ? "Retrying..." : "Retry"} />
+              </Button>
+              <Button asChild variant="outline" className="bg-white hover:bg-gray-50">
+                <Link to="/admin/menu">
+                  <T text="Back to Menu" />
+                </Link>
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <div className="mb-6">
+          <Tabs defaultValue="dishCosts" className="w-full" onValueChange={handleTabChange}>
+            <TabsList className="grid grid-cols-3 mb-4">
+              <TabsTrigger value="dishCosts">
+                <Calculator className="h-4 w-4 mr-2" />
+                <T text="Dish Costs" />
+              </TabsTrigger>
+              <TabsTrigger value="ingredients">
+                <Utensils className="h-4 w-4 mr-2" />
+                <T text="Ingredients" />
+              </TabsTrigger>
+              <TabsTrigger value="units">
+                <ChevronsUpDown className="h-4 w-4 mr-2" />
+                <T text="Unit Types" />
+              </TabsTrigger>
+            </TabsList>
+            
+            {isLoading ? (
+              <Card>
+                <CardContent className="flex justify-center items-center p-12">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500"></div>
+                    <p className="text-muted-foreground">
+                      <T text="Loading data..." />
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                <TabsContent value="dishCosts">
+                  <DishCostList 
+                    dishCosts={dishCosts}
+                    searchQuery={searchQuery}
+                    onSearchChange={(e) => setSearchQuery(e.target.value)}
+                    onAddDishCost={() => handleOpenDishCostModal()}
+                    onEditDishCost={handleOpenDishCostModal}
+                    onDeleteDishCost={deleteDishCost}
+                  />
+                </TabsContent>
+                
+                <TabsContent value="ingredients">
+                  <IngredientsTable 
+                    ingredients={ingredients}
+                    searchQuery={searchQuery}
+                    onSearchChange={(e) => setSearchQuery(e.target.value)}
+                    onAddIngredient={() => handleOpenIngredientModal()}
+                    onEditIngredient={handleOpenIngredientModal}
+                    onDeleteIngredient={deleteIngredient}
+                  />
+                </TabsContent>
+                
+                <TabsContent value="units">
+                  <UnitsTable 
+                    units={units}
+                    searchQuery={searchQuery}
+                    onSearchChange={(e) => setSearchQuery(e.target.value)}
+                    onAddUnit={() => handleOpenUnitModal()}
+                    onEditUnit={handleOpenUnitModal}
+                    onDeleteUnit={deleteUnit}
+                  />
+                </TabsContent>
+              </>
+            )}
+          </Tabs>
+        </div>
+      )}
       
       {/* Modals */}
       <AddUnitModal 
