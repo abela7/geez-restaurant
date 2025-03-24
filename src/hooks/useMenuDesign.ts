@@ -64,7 +64,11 @@ export const useMenuDesign = () => {
 
         if (data) {
           // If we have design data, use it
-          const designData = data.design_data as MenuDesignType;
+          // First convert the JSON data to unknown, then assert it as MenuDesignType 
+          // to avoid TypeScript errors with the JSON type
+          const designData = (data.design_data as unknown) as MenuDesignType;
+          
+          // Merge with defaults to ensure all properties exist
           setMenuDesign({
             ...defaultMenuDesign, // Include defaults for any missing fields
             ...designData // Override with stored values
@@ -112,7 +116,8 @@ export const useMenuDesign = () => {
         result = await supabase
           .from('menu_design')
           .update({
-            design_data: menuDesign as any,
+            // Convert MenuDesignType to a plain object for Supabase's JSON column
+            design_data: menuDesign as unknown as Record<string, any>,
             updated_at: new Date().toISOString()
           })
           .eq('id', existingData[0].id);
@@ -121,7 +126,8 @@ export const useMenuDesign = () => {
         result = await supabase
           .from('menu_design')
           .insert({
-            design_data: menuDesign as any,
+            // Convert MenuDesignType to a plain object for Supabase's JSON column
+            design_data: menuDesign as unknown as Record<string, any>,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           });
