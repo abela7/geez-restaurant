@@ -57,16 +57,17 @@ const RecipeManagement = () => {
       // Load food items
       const { data: foodItemsData, error: foodItemsError } = await supabase
         .from('food_items')
-        .select('id, name, description, price, category_id, menu_categories:category_id(name), available, is_vegetarian, is_vegan, is_gluten_free, is_spicy, image_url, preparation_time')
+        .select('id, name, description, price, category_id, menu_categories:category_id(id, name), available, is_vegetarian, is_vegan, is_gluten_free, is_spicy, image_url, preparation_time')
         .order('name');
       
       if (foodItemsError) throw foodItemsError;
       
       // Format food items with category name
-      const formattedFoodItems = foodItemsData.map(item => ({
-        ...item,
-        category_name: item.menu_categories?.name || "Uncategorized",
-        // Ensure all required properties are present
+      const formattedFoodItems: FoodItem[] = foodItemsData.map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
         image_url: item.image_url || null,
         category_id: item.category_id || null,
         available: item.available !== undefined ? item.available : true,
@@ -74,8 +75,15 @@ const RecipeManagement = () => {
         is_vegan: item.is_vegan !== undefined ? item.is_vegan : false,
         is_gluten_free: item.is_gluten_free !== undefined ? item.is_gluten_free : false,
         is_spicy: item.is_spicy !== undefined ? item.is_spicy : false,
-        preparation_time: item.preparation_time || null
-      })) as FoodItem[];
+        preparation_time: item.preparation_time || null,
+        menu_categories: item.menu_categories ? {
+          id: item.menu_categories.id,
+          name: item.menu_categories.name
+        } : undefined,
+        categoryName: item.menu_categories?.name || "Uncategorized"
+      }));
+      
+      setFoodItems(formattedFoodItems);
       
       // Load recipes with ingredient counts
       const { data: recipesData, error: recipesError } = await supabase
@@ -113,7 +121,6 @@ const RecipeManagement = () => {
       }));
       
       setRecipes(recipesWithCounts);
-      setFoodItems(formattedFoodItems);
       
       // Find food items without recipes
       const foodItemsWithRecipes = new Set(recipesData.map(r => r.food_item_id));
@@ -335,7 +342,7 @@ const RecipeManagement = () => {
                     {filteredMissingRecipes.map((item) => (
                       <TableRow key={item.id}>
                         <TableCell className="font-medium">{item.name}</TableCell>
-                        <TableCell>{item.category_name}</TableCell>
+                        <TableCell>{item.categoryName}</TableCell>
                         <TableCell>£{item.price?.toFixed(2) || "0.00"}</TableCell>
                         <TableCell>
                           <FoodItemRecipeButton foodItem={item} />
