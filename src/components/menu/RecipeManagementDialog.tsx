@@ -1,183 +1,218 @@
-import React, { useState, useEffect } from "react";
-import { useLanguage, T } from "@/contexts/LanguageContext";
+
+import React, { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Plus, Trash2, AlertTriangle } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import { Trash2, Plus, Save, AlertCircle } from "lucide-react";
+import { useLanguage, T } from "@/contexts/LanguageContext";
 import { FoodItem } from "@/types/menu";
-import { Recipe, RecipeIngredient, createRecipe, fetchRecipeByFoodItem, updateRecipeIngredients } from "@/services/menu/recipeService";
-import { fetchStock } from "@/services/inventory/stockService";
-import { Ingredient } from "@/services/inventory/types";
-import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchRecipeByFoodItem, createRecipe, updateRecipeIngredients, RecipeIngredient } from "@/services/menu/recipeService";
+import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface RecipeManagementDialogProps {
   open: boolean;
   onClose: () => void;
-  foodItem: FoodItem | null;
+  foodItem: FoodItem;
 }
 
 export const RecipeManagementDialog: React.FC<RecipeManagementDialogProps> = ({
   open,
   onClose,
-  foodItem,
+  foodItem
 }) => {
   const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
-  const [recipe, setRecipe] = useState<Recipe | null>(null);
-  const [recipeIngredients, setRecipeIngredients] = useState<RecipeIngredient[]>([]);
-  const [serves, setServes] = useState<number>(1);
+  const [recipe, setRecipe] = useState<any | null>(null);
+  const [ingredients, setIngredients] = useState<any[]>([]);
+  const [availableIngredients, setAvailableIngredients] = useState<any[]>([]);
+  const [serves, setServes] = useState(1);
+  const [totalCost, setTotalCost] = useState(0);
+  const [costPerServing, setCostPerServing] = useState(0);
 
   useEffect(() => {
-    if (open && foodItem) {
-      loadData();
+    if (open) {
+      loadRecipe();
+      loadAvailableIngredients();
     }
-  }, [open, foodItem]);
+  }, [open, foodItem.id]);
 
-  const loadData = async () => {
+  const loadRecipe = async () => {
     setIsLoading(true);
     try {
-      const stockIngredients = await fetchStock();
-      setIngredients(stockIngredients);
-
-      const { data: dishCost, error: dishCostError } = await supabase
-        .from("dish_costs")
-        .select(`
-          id, 
-          dish_ingredients(*)
-        `)
-        .eq("food_item_id", foodItem?.id)
-        .maybeSingle();
-
-      if (foodItem) {
-        const existingRecipe = await fetchRecipeByFoodItem(foodItem.id);
+      const recipeData = await fetchRecipeByFoodItem(foodItem.id);
+      
+      if (recipeData) {
+        setRecipe(recipeData);
+        setServes(recipeData.serves || 1);
         
-        if (existingRecipe) {
-          setRecipe(existingRecipe);
-          setServes(existingRecipe.serves);
-          setRecipeIngredients(
-            existingRecipe.recipe_ingredients?.map((ri: any) => ({
-              id: ri.id,
-              recipe_id: ri.recipe_id,
-              ingredient_id: ri.ingredient_id,
-              quantity: ri.quantity,
-              unit: ri.unit
-            })) || []
-          );
-        } else if (dishCost && dishCost.dish_ingredients && dishCost.dish_ingredients.length > 0) {
-          toast.info("Importing recipe from dish cost calculation");
+        if (recipeData.recipe_ingredients && recipeData.recipe_ingredients.length > 0) {
+          const formattedIngredients = recipeData.recipe_ingredients.map((item: any) => ({
+            id: item.id,
+            ingredient_id: item.ingredient_id,
+            quantity: item.quantity,
+            unit: item.unit,
+            ingredient: item.ingredient
+          }));
           
-          setRecipe(null);
-          setServes(1);
-          
-          const mappedIngredients = dishCost.dish_ingredients
-            .filter(di => di.ingredient_id)
-            .map(di => ({
-              ingredient_id: di.ingredient_id,
-              quantity: di.quantity,
-              unit: di.unit_type
-            }));
-            
-          setRecipeIngredients(mappedIngredients);
-        } else {
-          setRecipe(null);
-          setServes(1);
-          setRecipeIngredients([]);
+          setIngredients(formattedIngredients);
+          calculateTotalCost(formattedIngredients, recipeData.serves || 1);
         }
+      } else {
+        setRecipe(null);
+        setIngredients([]);
+        setTotalCost(0);
+        setCostPerServing(0);
       }
     } catch (error) {
-      console.error("Error loading recipe data:", error);
+      console.error("Error loading recipe:", error);
+      toast.error(t("Failed to load recipe"));
     } finally {
       setIsLoading(false);
     }
   };
 
+  const loadAvailableIngredients = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('ingredients')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      
+      setAvailableIngredients(data || []);
+    } catch (error) {
+      console.error("Error loading ingredients:", error);
+      toast.error(t("Failed to load ingredients"));
+    }
+  };
+
   const handleAddIngredient = () => {
-    if (ingredients.length === 0) return;
+    if (availableIngredients.length === 0) {
+      toast.error(t("No ingredients available. Please add ingredients first."));
+      return;
+    }
     
-    setRecipeIngredients([
-      ...recipeIngredients, 
+    const firstIngredient = availableIngredients[0];
+    setIngredients([
+      ...ingredients,
       {
-        ingredient_id: ingredients[0].id,
+        ingredient_id: firstIngredient.id,
         quantity: 1,
-        unit: ingredients[0].unit
+        unit: firstIngredient.unit,
+        ingredient: firstIngredient
       }
     ]);
   };
 
   const handleRemoveIngredient = (index: number) => {
-    const updatedIngredients = [...recipeIngredients];
-    updatedIngredients.splice(index, 1);
-    setRecipeIngredients(updatedIngredients);
+    const newIngredients = [...ingredients];
+    newIngredients.splice(index, 1);
+    setIngredients(newIngredients);
+    calculateTotalCost(newIngredients, serves);
   };
 
   const handleIngredientChange = (index: number, field: string, value: any) => {
-    const updatedIngredients = [...recipeIngredients];
+    const newIngredients = [...ingredients];
     
     if (field === 'ingredient_id') {
-      const selectedIngredient = ingredients.find(ing => ing.id === value);
+      const selectedIngredient = availableIngredients.find(i => i.id === value);
       if (selectedIngredient) {
-        updatedIngredients[index] = {
-          ...updatedIngredients[index],
-          [field]: value,
-          unit: selectedIngredient.unit
-        };
-      } else {
-        updatedIngredients[index] = {
-          ...updatedIngredients[index],
-          [field]: value
+        newIngredients[index] = {
+          ...newIngredients[index],
+          ingredient_id: value,
+          unit: selectedIngredient.unit,
+          ingredient: selectedIngredient
         };
       }
     } else {
-      updatedIngredients[index] = {
-        ...updatedIngredients[index],
-        [field]: value
+      newIngredients[index] = {
+        ...newIngredients[index],
+        [field]: field === 'quantity' ? Number(value) : value
       };
     }
     
-    setRecipeIngredients(updatedIngredients);
+    setIngredients(newIngredients);
+    calculateTotalCost(newIngredients, serves);
+  };
+
+  const handleServesChange = (value: number) => {
+    const newServes = Math.max(1, value); // Ensure at least 1 serving
+    setServes(newServes);
+    calculateTotalCost(ingredients, newServes);
+  };
+
+  const calculateTotalCost = (ingredientsList: any[], servesCount: number) => {
+    let cost = 0;
+    
+    ingredientsList.forEach(ing => {
+      const ingredient = ing.ingredient || availableIngredients.find(i => i.id === ing.ingredient_id);
+      if (ingredient) {
+        cost += (ingredient.cost || 0) * ing.quantity;
+      }
+    });
+    
+    setTotalCost(cost);
+    setCostPerServing(servesCount > 0 ? cost / servesCount : cost);
   };
 
   const handleSaveRecipe = async () => {
-    if (!foodItem) return;
+    if (ingredients.length === 0) {
+      toast.error(t("Please add at least one ingredient"));
+      return;
+    }
     
     setIsSaving(true);
+    
     try {
+      const formattedIngredients: RecipeIngredient[] = ingredients.map(ing => ({
+        ingredient_id: ing.ingredient_id,
+        quantity: ing.quantity,
+        unit: ing.unit
+      }));
+      
       if (recipe) {
-        await updateRecipeIngredients(recipe.id!, recipeIngredients);
-        toast.success(t("Recipe updated successfully"));
+        // Update existing recipe
+        const success = await updateRecipeIngredients(recipe.id, formattedIngredients);
+        
+        if (success) {
+          // Update the serves count if changed
+          if (recipe.serves !== serves) {
+            await supabase
+              .from('recipes')
+              .update({ serves: serves })
+              .eq('id', recipe.id);
+          }
+          
+          toast.success(t("Recipe updated successfully"));
+          onClose();
+        }
       } else {
+        // Create new recipe
         const newRecipe = await createRecipe({
           food_item_id: foodItem.id,
           name: foodItem.name,
           serves: serves,
-          ingredients: recipeIngredients
+          ingredients: formattedIngredients
         });
         
         if (newRecipe) {
           toast.success(t("Recipe created successfully"));
+          onClose();
         }
       }
-      onClose();
     } catch (error) {
       console.error("Error saving recipe:", error);
       toast.error(t("Failed to save recipe"));
@@ -186,176 +221,159 @@ export const RecipeManagementDialog: React.FC<RecipeManagementDialogProps> = ({
     }
   };
 
-  if (!foodItem) return null;
-
   return (
-    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-3xl">
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {recipe ? <T text="Edit Recipe for" /> : <T text="Create Recipe for" />} {foodItem.name}
-          </DialogTitle>
+          <DialogTitle>{t("Recipe for")} {foodItem.name}</DialogTitle>
           <DialogDescription>
-            <T text="Define the ingredients and quantities needed to prepare this dish" />
+            {t("Define ingredients and quantities for this dish")}
           </DialogDescription>
         </DialogHeader>
 
         {isLoading ? (
-          <div className="flex justify-center items-center p-8">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="flex justify-center py-8">
+            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
           </div>
         ) : (
           <>
-            {ingredients.length === 0 ? (
-              <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-md flex items-start">
-                <AlertTriangle className="text-yellow-500 h-5 w-5 mt-0.5 mr-3 flex-shrink-0" />
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <h4 className="font-medium text-yellow-800">
-                    <T text="No ingredients available" />
-                  </h4>
-                  <p className="text-sm text-yellow-700 mt-1">
-                    <T text="Please add ingredients to your inventory first before creating recipes." />
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="mt-2"
-                    onClick={onClose}
-                    asChild
-                  >
-                    <a href="/admin/inventory/ingredients">
-                      <T text="Go to Inventory" />
-                    </a>
-                  </Button>
+                  <Label htmlFor="serves">{t("Serves (Number of Portions)")}</Label>
+                  <Input
+                    id="serves"
+                    type="number"
+                    min="1"
+                    value={serves}
+                    onChange={(e) => handleServesChange(parseInt(e.target.value) || 1)}
+                  />
+                </div>
+                
+                <div className="flex flex-col justify-end">
+                  <div className="text-sm text-muted-foreground mb-1">{t("Cost Information")}</div>
+                  <div className="border rounded-md p-3 space-y-1">
+                    <div className="flex justify-between">
+                      <span>{t("Total Cost")}:</span>
+                      <span className="font-medium">£{totalCost.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>{t("Cost Per Serving")}:</span>
+                      <span className="font-medium">£{costPerServing.toFixed(2)}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            ) : (
-              <>
-                <div className="grid gap-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="recipe-name">
-                        <T text="Recipe Name" />
-                      </Label>
-                      <Input
-                        id="recipe-name"
-                        value={foodItem.name}
-                        disabled
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="serves">
-                        <T text="Serves (Portions)" />
-                      </Label>
-                      <Input
-                        id="serves"
-                        type="number"
-                        min="1"
-                        value={serves}
-                        onChange={(e) => setServes(parseInt(e.target.value) || 1)}
-                      />
-                    </div>
-                  </div>
-                  
-                  <Separator className="my-2" />
-                  
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <Label>
-                        <T text="Ingredients" />
-                      </Label>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={handleAddIngredient}
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        <T text="Add Ingredient" />
-                      </Button>
-                    </div>
-                    
-                    {recipeIngredients.length === 0 ? (
-                      <div className="text-center py-4 text-muted-foreground">
-                        <T text="No ingredients added yet. Click 'Add Ingredient' to start building your recipe." />
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {recipeIngredients.map((ingredient, index) => (
-                          <div key={index} className="grid grid-cols-12 gap-3 items-center">
-                            <div className="col-span-5">
-                              <Select
-                                value={ingredient.ingredient_id}
-                                onValueChange={(value) => handleIngredientChange(index, 'ingredient_id', value)}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder={t("Select ingredient")} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {ingredients.map((ing) => (
-                                    <SelectItem key={ing.id} value={ing.id}>
-                                      {ing.name} ({ing.unit}) - Stock: {ing.stock_quantity}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="col-span-3">
-                              <Input
-                                type="number"
-                                min="0.01"
-                                step="0.01"
-                                value={ingredient.quantity}
-                                onChange={(e) => 
-                                  handleIngredientChange(
-                                    index, 
-                                    'quantity', 
-                                    parseFloat(e.target.value) || 0
-                                  )
-                                }
-                                placeholder={t("Quantity")}
-                              />
-                            </div>
-                            <div className="col-span-3">
-                              <Input
-                                value={ingredient.unit}
-                                onChange={(e) => 
-                                  handleIngredientChange(index, 'unit', e.target.value)
-                                }
-                                disabled
-                                placeholder={t("Unit")}
-                              />
-                            </div>
-                            <div className="col-span-1 flex justify-center">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleRemoveIngredient(index)}
-                              >
-                                <Trash2 className="h-4 w-4 text-red-500" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+
+              <div className="space-y-2 pt-4">
+                <div className="flex justify-between items-center">
+                  <Label>{t("Ingredients")}</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddIngredient}
+                    disabled={availableIngredients.length === 0}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    {t("Add Ingredient")}
+                  </Button>
                 </div>
-              </>
-            )}
+                
+                {availableIngredients.length === 0 && (
+                  <Alert variant="warning">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      {t("No ingredients available. Please add ingredients in the inventory management section first.")}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {ingredients.length === 0 ? (
+                  <div className="border rounded-md p-8 text-center text-muted-foreground">
+                    {t("No ingredients added yet. Click 'Add Ingredient' to start building your recipe.")}
+                  </div>
+                ) : (
+                  <div className="border rounded-md p-4 space-y-4">
+                    {ingredients.map((ingredient, index) => (
+                      <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                        <div className="col-span-5">
+                          <Select
+                            value={ingredient.ingredient_id}
+                            onValueChange={(value) => handleIngredientChange(index, 'ingredient_id', value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder={t("Select ingredient")} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableIngredients.map(ing => (
+                                <SelectItem key={ing.id} value={ing.id}>
+                                  {ing.name} - £{ing.cost?.toFixed(2) || "0.00"}/{ing.unit}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div className="col-span-3">
+                          <Input
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            value={ingredient.quantity}
+                            onChange={(e) => handleIngredientChange(index, 'quantity', e.target.value)}
+                            placeholder={t("Quantity")}
+                          />
+                        </div>
+                        
+                        <div className="col-span-2">
+                          <Input
+                            value={ingredient.unit}
+                            disabled
+                            placeholder={t("Unit")}
+                          />
+                        </div>
+                        
+                        <div className="col-span-2 text-right">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRemoveIngredient(index)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <DialogFooter className="pt-4">
+              <Button variant="outline" onClick={onClose} disabled={isSaving}>
+                {t("Cancel")}
+              </Button>
+              <Button 
+                onClick={handleSaveRecipe} 
+                disabled={ingredients.length === 0 || isSaving}
+              >
+                {isSaving ? (
+                  <>
+                    <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
+                    {t("Saving...")}
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    {recipe ? t("Update Recipe") : t("Save Recipe")}
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
           </>
         )}
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isSaving}>
-            <T text="Cancel" />
-          </Button>
-          <Button onClick={handleSaveRecipe} disabled={isLoading || isSaving || ingredients.length === 0 || recipeIngredients.length === 0}>
-            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            <T text="Save Recipe" />
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

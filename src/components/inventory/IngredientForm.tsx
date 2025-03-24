@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { 
   Form,
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Ingredient } from "@/services/inventory/types";
+import { supabase } from "@/integrations/supabase/client";
 
 interface IngredientFormProps {
   initialData?: Ingredient;
@@ -30,8 +31,7 @@ interface IngredientFormProps {
   categories?: string[];
 }
 
-// Predefined options
-const UNITS = ["kg", "g", "l", "ml", "pcs", "box", "bag", "bottle", "can", "jar"];
+// Predefined category options
 const CATEGORIES = ["Meat", "Vegetables", "Fruits", "Dairy", "Spices", "Dry Goods", "Bread", "Beverages"];
 
 export const IngredientForm: React.FC<IngredientFormProps> = ({
@@ -43,6 +43,46 @@ export const IngredientForm: React.FC<IngredientFormProps> = ({
 }) => {
   const { t } = useLanguage();
   const [isSaving, setIsSaving] = useState(false);
+  const [unitOptions, setUnitOptions] = useState<{name: string, abbreviation: string}[]>([]);
+  
+  useEffect(() => {
+    // Fetch unit types from measurement_units table
+    const fetchUnitTypes = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('measurement_units')
+          .select('name, abbreviation')
+          .order('name');
+          
+        if (error) {
+          console.error("Error fetching unit types:", error);
+          return;
+        }
+        
+        if (data && data.length > 0) {
+          setUnitOptions(data);
+        } else {
+          // Fallback to predefined units if none exist in database
+          setUnitOptions([
+            { name: "Kilogram", abbreviation: "kg" },
+            { name: "Gram", abbreviation: "g" }, 
+            { name: "Liter", abbreviation: "l" }, 
+            { name: "Milliliter", abbreviation: "ml" }, 
+            { name: "Piece", abbreviation: "pcs" },
+            { name: "Box", abbreviation: "box" },
+            { name: "Bag", abbreviation: "bag" },
+            { name: "Bottle", abbreviation: "bottle" },
+            { name: "Can", abbreviation: "can" },
+            { name: "Jar", abbreviation: "jar" }
+          ]);
+        }
+      } catch (err) {
+        console.error("Error fetching unit types:", err);
+      }
+    };
+    
+    fetchUnitTypes();
+  }, []);
   
   const form = useForm<Omit<Ingredient, 'id' | 'created_at' | 'updated_at'>>({
     defaultValues: initialData ? {
@@ -62,7 +102,7 @@ export const IngredientForm: React.FC<IngredientFormProps> = ({
       category: '',
       stock_quantity: 0,
       reorder_level: 0,
-      unit: 'kg',
+      unit: '',
       cost: 0,
       supplier: '',
       origin: '',
@@ -71,6 +111,14 @@ export const IngredientForm: React.FC<IngredientFormProps> = ({
       type: ''
     }
   });
+  
+  useEffect(() => {
+    // Set default unit if none is selected and options are loaded
+    const currentUnit = form.getValues('unit');
+    if ((!currentUnit || currentUnit === '') && unitOptions.length > 0) {
+      form.setValue('unit', unitOptions[0].abbreviation);
+    }
+  }, [unitOptions]);
   
   const handleSubmit = async (values: Omit<Ingredient, 'id' | 'created_at' | 'updated_at'>) => {
     setIsSaving(true);
@@ -165,8 +213,10 @@ export const IngredientForm: React.FC<IngredientFormProps> = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {UNITS.map(unit => (
-                      <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                    {unitOptions.map(unit => (
+                      <SelectItem key={unit.abbreviation} value={unit.abbreviation}>
+                        {unit.name} ({unit.abbreviation})
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
