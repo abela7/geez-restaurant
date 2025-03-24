@@ -33,6 +33,13 @@ const defaultMenuDesign: MenuDesignType = {
   logoPosition: 'top',
 };
 
+interface MenuDesignData {
+  id: string;
+  design_data: MenuDesignType;
+  created_at: string;
+  updated_at: string;
+}
+
 export const useMenuDesign = () => {
   const [menuDesign, setMenuDesign] = useState<MenuDesignType>(defaultMenuDesign);
   const [isLoading, setIsLoading] = useState(true);

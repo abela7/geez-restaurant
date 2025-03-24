@@ -1022,6 +1022,27 @@ export type Database = {
         }
         Relationships: []
       }
+      menu_design: {
+        Row: {
+          created_at: string
+          design_data: Json
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          design_data?: Json
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          design_data?: Json
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       menu_notifications: {
         Row: {
           created_at: string | null
