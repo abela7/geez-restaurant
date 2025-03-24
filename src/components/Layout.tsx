@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, Outlet } from 'react-router-dom';
 import { MainSidebar } from './MainSidebar';
 import { cn } from '@/lib/utils';
 import { useLanguage, T } from '@/contexts/LanguageContext';
@@ -10,7 +10,7 @@ import { Button } from './ui/button';
 import { PanelLeft } from 'lucide-react';
 
 interface LayoutProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   interface?: 'admin' | 'waiter' | 'kitchen' | 'customer' | 'system';
   contentOnly?: boolean;
 }
@@ -34,6 +34,8 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
   const toggleSidebar = () => {
     setSidebarCollapsed(prev => !prev);
   };
+
+  const content = children || <Outlet />;
 
   // Mobile layout
   if (isMobile) {
@@ -73,7 +75,7 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
           <Header toggleSidebar={toggleSidebar} interface={userInterface} />
           
           <main className="flex-1 overflow-auto p-2">
-            {children}
+            {content}
           </main>
           
           <footer className="p-2 border-t border-border text-center text-xs text-muted-foreground bg-card/50">
@@ -121,7 +123,7 @@ const Layout: React.FC<LayoutProps> = ({ children, interface: userInterface = 'a
         <Header toggleSidebar={toggleSidebar} interface={userInterface} />
         
         <main className="flex-1 overflow-auto p-3">  
-          {children}
+          {content}
         </main>
         
         <footer className="p-2 border-t border-border text-center text-xs text-muted-foreground bg-card/50">

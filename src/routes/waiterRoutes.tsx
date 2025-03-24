@@ -2,8 +2,8 @@
 import { Route, Routes, Navigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import WaiterDashboard from "../pages/waiter/WaiterDashboard";
-import OrderManagement from "../pages/waiter/OrderManagement";
 import TableManagement from "../pages/waiter/TableManagement";
+import OrderManagement from "../pages/waiter/OrderManagement";
 import PaymentProcessing from "../pages/waiter/PaymentProcessing";
 import WaiterTasks from "../pages/waiter/WaiterTasks";
 import WaiterFoodSafety from "../pages/waiter/WaiterFoodSafety";
@@ -21,19 +21,17 @@ const WaiterRoutes = () => {
 
   return (
     <CartProvider>
-      <Layout interface="waiter">
-        <Routes>
+      <Routes>
+        <Route element={<Layout interface="waiter" />}>
           <Route index element={<WaiterDashboard />} />
-          <Route path="/orders" element={<OrderManagement />} />
-          <Route path="/orders/new" element={<OrderManagement newOrder={true} />} />
-          <Route path="/orders/search" element={<OrderManagement search={true} />} />
           <Route path="/tables" element={<TableManagement />} />
+          <Route path="/orders" element={<OrderManagement />} />
           <Route path="/payments" element={<PaymentProcessing />} />
           <Route path="/tasks" element={<WaiterTasks />} />
           <Route path="/food-safety" element={<WaiterFoodSafety />} />
           <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Layout>
+        </Route>
+      </Routes>
     </CartProvider>
   );
 };

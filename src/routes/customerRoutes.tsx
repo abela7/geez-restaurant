@@ -1,19 +1,25 @@
 
 import { Route, Routes } from "react-router-dom";
-
-// Customer Interface
+import Layout from "@/components/Layout";
 import CustomerMenu from "../pages/customer/CustomerMenu";
-import CustomerFeedbackPage from "../pages/customer/CustomerFeedback";
-import PromotionsPage from "../pages/customer/Promotions";
+import CustomerFeedback from "../pages/customer/CustomerFeedback";
+import Promotions from "../pages/customer/Promotions";
+import NotFound from "@/pages/NotFound";
+import { CartProvider } from "@/contexts/CartContext";
 
 const CustomerRoutes = () => {
   return (
-    <Routes>
-      {/* Customer Interface Routes */}
-      <Route path="/menu" element={<CustomerMenu />} />
-      <Route path="/feedback" element={<CustomerFeedbackPage />} />
-      <Route path="/promotions" element={<PromotionsPage />} />
-    </Routes>
+    <CartProvider>
+      <Routes>
+        <Route element={<Layout interface="customer" />}>
+          <Route index element={<CustomerMenu />} />
+          <Route path="/menu" element={<CustomerMenu />} />
+          <Route path="/feedback" element={<CustomerFeedback />} />
+          <Route path="/promotions" element={<Promotions />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
+    </CartProvider>
   );
 };
 

@@ -21,8 +21,8 @@ const KitchenRoutes = () => {
 
   return (
     <CartProvider>
-      <Layout interface="kitchen">
-        <Routes>
+      <Routes>
+        <Route element={<Layout interface="kitchen" />}>
           <Route index element={<KitchenDashboard />} />
           <Route path="/orders" element={<OrderProcessing />} />
           <Route path="/inventory" element={<InventoryCheck />} />
@@ -30,8 +30,8 @@ const KitchenRoutes = () => {
           <Route path="/tasks" element={<KitchenTasks />} />
           <Route path="/food-safety" element={<KitchenFoodSafety />} />
           <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Layout>
+        </Route>
+      </Routes>
     </CartProvider>
   );
 };

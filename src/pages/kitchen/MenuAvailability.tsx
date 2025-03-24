@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { FoodItem, MenuCategory } from "@/types/menu";
 import { toast } from "sonner";
 import { useLanguage, T } from "@/contexts/LanguageContext";
-import { Search, PlusCircle, Bell, CheckCircle2, AlertCircle } from "lucide-react";
+import { Search, CheckCircle2, AlertCircle } from "lucide-react";
 import { MenuNotification } from "@/types/menuNotifications";
 
 const MenuAvailability = () => {
@@ -22,7 +21,6 @@ const MenuAvailability = () => {
   const [activeTab, setActiveTab] = useState<string>("all");
   const queryClient = useQueryClient();
   
-  // Fetch menu items
   const { data: menuItems = [], isLoading: menuLoading } = useQuery({
     queryKey: ["kitchen-menu-items"],
     queryFn: async () => {
@@ -36,12 +34,11 @@ const MenuAvailability = () => {
       return data.map(item => ({
         ...item,
         categoryName: item.menu_categories ? item.menu_categories.name : null,
-        available: item.available !== false, // Default to true if not set
+        available: item.available !== false,
       })) as FoodItem[];
     },
   });
   
-  // Fetch categories
   const { data: categories = [] } = useQuery({
     queryKey: ["menu-categories"],
     queryFn: async () => {
@@ -56,7 +53,6 @@ const MenuAvailability = () => {
     },
   });
   
-  // Create notification mutation
   const createNotification = useMutation({
     mutationFn: async (notification: Omit<MenuNotification, "id" | "created_at" | "read">) => {
       try {
@@ -80,7 +76,6 @@ const MenuAvailability = () => {
     }
   });
   
-  // Update menu item availability mutation
   const updateItemAvailability = useMutation({
     mutationFn: async ({ id, available }: { id: string; available: boolean }) => {
       const { data, error } = await supabase
@@ -94,11 +89,9 @@ const MenuAvailability = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["kitchen-menu-items"] });
       
-      // Get the item name for the notification
       const item = menuItems.find(item => item.id === variables.id);
       if (!item) return;
       
-      // Create notification for waiters
       createNotification.mutate({
         title: variables.available ? t("Menu Item Available") : t("Menu Item Unavailable"),
         message: variables.available 
@@ -111,23 +104,19 @@ const MenuAvailability = () => {
     }
   });
   
-  // Handle toggle availability
   const toggleAvailability = (id: string, currentValue: boolean) => {
     updateItemAvailability.mutate({ id, available: !currentValue });
   };
   
-  // Filter menu items based on search and category
   const filteredItems = menuItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = activeTab === "all" || item.category_id === activeTab;
     return matchesSearch && matchesCategory;
   });
   
-  // Group items by their availability status
   const availableItems = filteredItems.filter(item => item.available);
   const unavailableItems = filteredItems.filter(item => !item.available);
   
-  // Get unique categories for tabs
   const menuCategories = [{ id: "all", name: t("All Items") }, ...categories];
 
   if (menuLoading) {
