@@ -40,6 +40,7 @@ const Modifiers = () => {
     selectedOption,
     setSelectedOption,
     groupFormData,
+    setGroupFormData,
     optionFormData,
     resetGroupForm,
     resetOptionForm,
