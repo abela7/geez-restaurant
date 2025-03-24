@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, AlertCircle } from "lucide-react";
 
 import { Table as TableType, Room, TableGroup } from "@/services/table/types";
 import { getTables, createTable, updateTable, deleteTable } from "@/services/table/tableService";
@@ -19,6 +19,7 @@ import TableForm from "./TableForm";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const TablesView = () => {
   const { toast } = useToast();
@@ -31,10 +32,12 @@ const TablesView = () => {
   const [selectedTable, setSelectedTable] = useState<TableType | null>(null);
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
+      setErrorMessage(null);
       try {
         const tablesData = await getTables();
         setTables(tablesData);
@@ -51,6 +54,7 @@ const TablesView = () => {
           description: t("Failed to load data. Please try again."),
           variant: "destructive",
         });
+        setErrorMessage(error.message || t("Failed to load data. Please try again."));
       } finally {
         setIsLoading(false);
       }
@@ -85,13 +89,22 @@ const TablesView = () => {
           title: t("Success"),
           description: t("Table deleted successfully."),
         });
+        setErrorMessage(null);
       } catch (error: any) {
         console.error("Error deleting table:", error);
+        
+        // Check if it's our custom error about orders
+        const errorMessage = error.message?.includes("associated orders") 
+          ? error.message 
+          : t("Failed to delete table. It may be referenced by orders or reservations.");
+        
         toast({
           title: t("Error"),
-          description: t("Failed to delete table. Please try again."),
+          description: errorMessage,
           variant: "destructive",
         });
+        
+        setErrorMessage(errorMessage);
       } finally {
         setIsDeleteConfirmationOpen(false);
         setSelectedTable(null);
@@ -102,6 +115,7 @@ const TablesView = () => {
   const handleTableFormSubmit = async (data: TableType) => {
     try {
       console.log("Form data received:", data);
+      setErrorMessage(null);
       
       // Process form values to ensure proper types
       const tableData = {
@@ -138,6 +152,7 @@ const TablesView = () => {
         description: t("Failed to save table. Please try again."),
         variant: "destructive",
       });
+      setErrorMessage(error.message || t("Failed to save table. Please try again."));
     }
   };
 
@@ -161,6 +176,14 @@ const TablesView = () => {
         </Button>
       </CardHeader>
       <CardContent>
+        {errorMessage && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle><T text="Error" /></AlertTitle>
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
+        )}
+        
         {isLoading ? (
           <p><T text="Loading tables..." /></p>
         ) : tables.length === 0 ? (

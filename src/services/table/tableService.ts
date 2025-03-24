@@ -171,12 +171,29 @@ export const changeTableShape = async (id: string, shape: Table['shape']): Promi
 };
 
 export const deleteTable = async (id: string): Promise<void> => {
-  const { error } = await supabase
-    .from('restaurant_tables')
-    .delete()
-    .eq('id', id);
-  
-  if (error) {
+  try {
+    // First check if the table is referenced in orders
+    const { data: ordersData, error: ordersError } = await supabase
+      .from('orders')
+      .select('id')
+      .eq('table_id', id)
+      .limit(1);
+    
+    if (ordersError) throw ordersError;
+    
+    // If orders exist with this table, throw a specific error
+    if (ordersData && ordersData.length > 0) {
+      throw new Error("Cannot delete this table because it has associated orders. You can update its status to 'inactive' instead.");
+    }
+    
+    // If no orders reference this table, proceed with deletion
+    const { error } = await supabase
+      .from('restaurant_tables')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+  } catch (error) {
     console.error('Error deleting table:', error);
     throw error;
   }
