@@ -1,51 +1,66 @@
 
 import React from "react";
-import { useLocation, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useLanguage, T } from "@/contexts/LanguageContext";
-import { 
-  Utensils, 
-  FileText, 
-  LayoutGrid, 
-  DollarSign, 
-  Palette,
-  Settings,
-  MenuSquare
-} from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { Beef, Calculator, LayoutGrid, Menu, Settings, Utensils } from "lucide-react";
 
-export const MenuNav: React.FC = () => {
+export const MenuNav = () => {
   const location = useLocation();
   const { t } = useLanguage();
   
-  // Define the menu navigation items
-  const navItems = [
-    { path: "/admin/menu/food", label: "Food Items", icon: <Utensils className="h-4 w-4 mr-2" /> },
-    { path: "/admin/menu/dishes", label: "Dishes", icon: <MenuSquare className="h-4 w-4 mr-2" /> },
-    { path: "/admin/menu/categories", label: "Categories", icon: <LayoutGrid className="h-4 w-4 mr-2" /> },
-    { path: "/admin/menu/recipes", label: "Recipes", icon: <FileText className="h-4 w-4 mr-2" /> },
-    { path: "/admin/menu/modifiers", label: "Modifiers", icon: <Settings className="h-4 w-4 mr-2" /> },
-    { path: "/admin/menu/pricing", label: "Pricing", icon: <DollarSign className="h-4 w-4 mr-2" /> },
-    { path: "/admin/menu/design", label: "Menu Design", icon: <Palette className="h-4 w-4 mr-2" /> },
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+  
+  const menuNavLinks = [
+    {
+      href: "/admin/menu",
+      label: "Overview",
+      icon: <Menu className="h-4 w-4 mr-2" />
+    },
+    {
+      href: "/admin/menu/food",
+      label: "Food Items",
+      icon: <Utensils className="h-4 w-4 mr-2" />
+    },
+    {
+      href: "/admin/menu/categories",
+      label: "Categories",
+      icon: <LayoutGrid className="h-4 w-4 mr-2" />
+    },
+    {
+      href: "/admin/menu/ingredients",
+      label: "Ingredients",
+      icon: <Beef className="h-4 w-4 mr-2" />
+    },
+    {
+      href: "/admin/menu/recipe-costs",
+      label: "Recipe Costs",
+      icon: <Calculator className="h-4 w-4 mr-2" />
+    },
+    {
+      href: "/admin/menu/units",
+      label: "Units",
+      icon: <Settings className="h-4 w-4 mr-2" />
+    }
   ];
 
   return (
-    <div className="w-full overflow-x-auto mb-6 bg-white rounded-lg shadow">
-      <div className="flex" style={{ minWidth: 'max-content' }}>
-        {navItems.map((item) => (
-          <Link 
-            key={item.path}
-            to={item.path}
-            className={`px-6 py-4 flex items-center text-base font-medium transition-all ${
-              location.pathname === item.path 
-                ? "bg-amber-500 text-white border-b-2 border-amber-600" 
-                : "hover:bg-amber-100/50 text-gray-800 border-b-2 border-transparent hover:border-amber-300"
-            }`}
-          >
-            {item.icon}
-            <span><T text={item.label} /></span>
+    <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
+      {menuNavLinks.map((link) => (
+        <Button
+          key={link.href}
+          variant={isActive(link.href) ? "default" : "outline"}
+          size="sm"
+          asChild
+        >
+          <Link to={link.href}>
+            {link.icon}
+            <T text={link.label} />
           </Link>
-        ))}
-      </div>
+        </Button>
+      ))}
     </div>
   );
 };
