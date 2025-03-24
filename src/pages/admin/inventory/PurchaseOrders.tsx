@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -224,6 +225,88 @@ const PurchaseOrders = () => {
               <span className="hidden sm:inline"><T text="Filter" /></span>
             </Button>
           </div>
-       
+        </div>
 
+        <TabsContent value="all" className="space-y-4">
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>PO #</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Supplier</TableHead>
+                  <TableHead className="hidden md:table-cell">Items</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="hidden md:table-cell">Payment</TableHead>
+                  <TableHead className="hidden lg:table-cell">Delivery Date</TableHead>
+                  <TableHead className="hidden lg:table-cell">Assigned To</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredOrders.map((order) => (
+                  <TableRow key={order.id} className="cursor-pointer hover:bg-muted/50">
+                    <TableCell className="font-medium">{order.id}</TableCell>
+                    <TableCell>{order.date}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-7 w-7">
+                          <AvatarFallback className="text-xs">
+                            {order.supplier.abbr}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="hidden md:inline">{order.supplier.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">{order.items}</TableCell>
+                    <TableCell>£{order.total.toFixed(2)}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={getStatusBadge(order.status).variant as any}
+                        icon={getStatusBadge(order.status).icon}
+                      >
+                        {order.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <Badge
+                        variant={getPaymentBadge(order.paymentStatus).variant as any}
+                        className={getPaymentBadge(order.paymentStatus).className}
+                      >
+                        {order.paymentStatus}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">{order.deliveryDate}</TableCell>
+                    <TableCell className="hidden lg:table-cell">{order.assignedTo}</TableCell>
+                  </TableRow>
+                ))}
+                
+                {filteredOrders.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={9} className="h-32 text-center">
+                      No purchase orders found matching your criteria.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="pending">
+          {/* Pending orders content would go here */}
+        </TabsContent>
+        
+        <TabsContent value="delivered">
+          {/* Delivered orders content would go here */}
+        </TabsContent>
+        
+        <TabsContent value="pastDue">
+          {/* Past due orders content would go here */}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
 
+export default PurchaseOrders;
