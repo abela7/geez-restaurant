@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -9,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, X, Search, Package, ShoppingCart, Calendar } from "lucide-react";
+import { Plus, X, Search, Package, ShoppingCart, Calendar, Download, Edit as EditIcon, List, Grid2X2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
@@ -19,18 +20,27 @@ import {
   Ingredient,
   fetchExpenses, 
   fetchExpenseCategories, 
-  addExpense, 
+  addExpense,
+  updateExpense,
   deleteExpense,
+} from "@/services/finance";
+import { 
   fetchIngredients,
   updateIngredientQuantity,
   getCategoryIngredientMapping,
-} from "@/services/finance";
+} from "@/services/finance/inventoryService";
+import { formatExpensesForExport, exportToCSV } from "@/services/finance/exportService";
+import { DateRangePicker } from "./DateRangePicker";
+import ExpenseGridView from "./ExpenseGridView";
+import ViewToggle from "./ViewToggle";
 
 const paymentMethods = ["Cash", "Credit Card", "Bank Transfer", "Cheque", "Direct Debit"];
 
 interface ExpenseTrackerProps {
   onExpenseAdded?: (expense: any) => void;
 }
+
+type ViewMode = "list" | "grid";
 
 const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
   const { t } = useLanguage();
@@ -40,11 +50,14 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [filteredIngredients, setFilteredIngredients] = useState<Ingredient[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [dateFilter, setDateFilter] = useState("All");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedIngredient, setSelectedIngredient] = useState<Ingredient | null>(null);
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to?: Date | undefined } | undefined>();
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const categoryIngredientMapping = getCategoryIngredientMapping();
   
   const [newExpense, setNewExpense] = useState({
@@ -60,9 +73,11 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
     unit: ""
   });
 
+  const [editingExpense, setEditingExpense] = useState<ExpenseWithCategory | null>(null);
+
   useEffect(() => {
     loadData();
-  }, [searchTerm, categoryFilter, dateFilter]);
+  }, [searchTerm, categoryFilter, dateFilter, dateRange]);
   
   useEffect(() => {
     if (newExpense.category_id) {
@@ -96,11 +111,35 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
     }
   }, [newExpense.ingredient_id, ingredients]);
 
+  // Similar effect for editing expense
+  useEffect(() => {
+    if (editingExpense?.category_id) {
+      const selectedCategory = categories.find(cat => cat.id === editingExpense.category_id);
+      if (selectedCategory) {
+        const ingredientCategory = categoryIngredientMapping[selectedCategory.name];
+        if (ingredientCategory) {
+          const filtered = ingredients.filter(ing => ing.category === ingredientCategory);
+          setFilteredIngredients(filtered);
+        } else {
+          setFilteredIngredients([]);
+        }
+      }
+    }
+  }, [editingExpense?.category_id, ingredients, categories]);
+
   const loadData = async () => {
     setIsLoading(true);
     try {
+      // Prepare date filters for the API
+      let dateRangeFilter = undefined;
+      if (dateRange?.from && dateRange?.to) {
+        const fromDate = format(dateRange.from, "yyyy-MM-dd");
+        const toDate = format(dateRange.to, "yyyy-MM-dd");
+        dateRangeFilter = { from: fromDate, to: toDate };
+      }
+
       const [fetchedExpenses, fetchedCategories, fetchedIngredients] = await Promise.all([
-        fetchExpenses(searchTerm, categoryFilter, dateFilter),
+        fetchExpenses(searchTerm, categoryFilter, dateFilter, dateRangeFilter),
         fetchExpenseCategories(),
         fetchIngredients()
       ]);
@@ -161,26 +200,48 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
         onExpenseAdded(addedExpense);
       }
       
-      setNewExpense({
-        date: new Date().toISOString().split('T')[0],
-        category_id: "",
-        amount: 0,
-        payee: "",
-        payment_method: "Bank Transfer",
-        reference: "",
-        description: "",
-        ingredient_id: "",
-        quantity: 0,
-        unit: ""
-      });
-      setSelectedIngredient(null);
-      
+      resetExpenseForm();
       setIsAddDialogOpen(false);
     } catch (error) {
       console.error("Error adding expense:", error);
       toast({
         title: "Error",
         description: "Failed to add expense. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleEditExpense = async () => {
+    try {
+      if (!editingExpense || !editingExpense.category_id || editingExpense.amount <= 0 || !editingExpense.payee) {
+        toast({
+          title: "Validation Error",
+          description: "Please fill in all required fields.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Create a copy without the 'category' field since it's not part of the DB table schema
+      const { category, ...expenseToUpdate } = editingExpense;
+      
+      const updatedExpense = await updateExpense(editingExpense.id, expenseToUpdate);
+      
+      toast({
+        title: "Success",
+        description: "Expense updated successfully."
+      });
+      
+      await loadData();
+      
+      setEditingExpense(null);
+      setIsEditDialogOpen(false);
+    } catch (error) {
+      console.error("Error updating expense:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update expense. Please try again.",
         variant: "destructive"
       });
     }
@@ -208,14 +269,48 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
     setSearchTerm("");
     setCategoryFilter("All");
     setDateFilter("All");
+    setDateRange(undefined);
+  };
+
+  const handleExportData = () => {
+    const csvData = formatExpensesForExport(expenses);
+    const filename = `expenses_export_${format(new Date(), "yyyy-MM-dd")}.csv`;
+    exportToCSV(csvData, filename);
+    
+    toast({
+      title: "Export Complete",
+      description: "Expense data has been exported to CSV."
+    });
+  };
+
+  const resetExpenseForm = () => {
+    setNewExpense({
+      date: new Date().toISOString().split('T')[0],
+      category_id: "",
+      amount: 0,
+      payee: "",
+      payment_method: "Bank Transfer",
+      reference: "",
+      description: "",
+      ingredient_id: "",
+      quantity: 0,
+      unit: ""
+    });
+    setSelectedIngredient(null);
+  };
+
+  const handleEditClick = (expense: ExpenseWithCategory) => {
+    setEditingExpense(expense);
+    setIsEditDialogOpen(true);
   };
 
   const totalExpenses = expenses.reduce((sum, expense) => sum + parseFloat(expense.amount.toString()), 0);
 
-  const showIngredientFields = (): boolean => {
-    if (!newExpense.category_id) return false;
+  const showIngredientFields = (categoryId?: string): boolean => {
+    const catId = categoryId || newExpense.category_id;
+    if (!catId) return false;
     
-    const selectedCategory = categories.find(cat => cat.id === newExpense.category_id);
+    const selectedCategory = categories.find(cat => cat.id === catId);
     if (!selectedCategory) return false;
     
     return categoryIngredientMapping[selectedCategory.name] !== undefined;
@@ -224,7 +319,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
   return (
     <>
       <div className="flex flex-col md:flex-row justify-between gap-4 mb-4">
-        <div className="relative flex-1">
+        <div className="relative flex-1 max-w-md">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
@@ -234,7 +329,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="w-[150px]">
               <SelectValue placeholder={t("All Categories")} />
@@ -259,9 +354,18 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
             </SelectContent>
           </Select>
           
+          <DateRangePicker onDateRangeChange={setDateRange} className="w-[200px]" />
+          
           <Button variant="outline" onClick={handleClearFilters}>
             <X className="h-4 w-4 mr-2" />
             <T text="Clear" />
+          </Button>
+          
+          <ViewToggle currentView={viewMode} onViewChange={setViewMode} />
+          
+          <Button variant="outline" onClick={handleExportData} disabled={expenses.length === 0}>
+            <Download className="h-4 w-4 mr-2" />
+            <T text="Export" />
           </Button>
           
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -445,6 +549,129 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
+          {/* Edit Expense Dialog */}
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent className="max-w-md h-[90vh] flex flex-col">
+              <DialogHeader>
+                <DialogTitle><T text="Edit Expense" /></DialogTitle>
+              </DialogHeader>
+              
+              {editingExpense && (
+                <ScrollArea className="flex-1 pr-4">
+                  <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="edit-date"><T text="Date" /></Label>
+                        <div className="relative">
+                          <Calendar className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            id="edit-date"
+                            type="date"
+                            className="pl-8"
+                            value={new Date(editingExpense.date).toISOString().split('T')[0]}
+                            onChange={(e) => {
+                              setEditingExpense({
+                                ...editingExpense, 
+                                date: new Date(e.target.value).toISOString()
+                              });
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="edit-amount"><T text="Amount (£)" /></Label>
+                        <Input
+                          id="edit-amount"
+                          type="number"
+                          placeholder="0.00"
+                          step="0.01"
+                          value={editingExpense.amount}
+                          onChange={(e) => setEditingExpense({
+                            ...editingExpense, 
+                            amount: parseFloat(e.target.value) || 0
+                          })}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-category"><T text="Category" /></Label>
+                      <Select 
+                        value={editingExpense.category_id} 
+                        onValueChange={(value) => setEditingExpense({...editingExpense, category_id: value})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t("Select a category")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-payee"><T text="Payee" /></Label>
+                      <Input
+                        id="edit-payee"
+                        placeholder={t("Who was paid")}
+                        value={editingExpense.payee}
+                        onChange={(e) => setEditingExpense({...editingExpense, payee: e.target.value})}
+                      />
+                    </div>
+                    
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-payment-method"><T text="Payment Method" /></Label>
+                      <Select 
+                        value={editingExpense.payment_method} 
+                        onValueChange={(value) => setEditingExpense({...editingExpense, payment_method: value})}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {paymentMethods.map((method) => (
+                            <SelectItem key={method} value={method}>{method}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-reference"><T text="Reference" /></Label>
+                      <Input
+                        id="edit-reference"
+                        placeholder={t("Invoice or reference number")}
+                        value={editingExpense.reference || ""}
+                        onChange={(e) => setEditingExpense({...editingExpense, reference: e.target.value})}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="edit-description"><T text="Description" /></Label>
+                      <Textarea
+                        id="edit-description"
+                        placeholder={t("Expense details")}
+                        value={editingExpense.description || ""}
+                        onChange={(e) => setEditingExpense({...editingExpense, description: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                </ScrollArea>
+              )}
+              
+              <DialogFooter className="mt-4">
+                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                  <T text="Cancel" />
+                </Button>
+                <Button 
+                  onClick={handleEditExpense} 
+                  disabled={!editingExpense?.category_id || (editingExpense?.amount || 0) <= 0 || !editingExpense?.payee}
+                >
+                  <T text="Save Changes" />
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
       
@@ -454,65 +681,87 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
             <p className="text-muted-foreground"><T text="Loading expenses..." /></p>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead><T text="Date" /></TableHead>
-                <TableHead><T text="Category" /></TableHead>
-                <TableHead><T text="Amount" /></TableHead>
-                <TableHead className="hidden md:table-cell"><T text="Payee" /></TableHead>
-                <TableHead className="hidden md:table-cell"><T text="Payment Method" /></TableHead>
-                <TableHead className="hidden lg:table-cell"><T text="Inventory Item" /></TableHead>
-                <TableHead className="hidden lg:table-cell"><T text="Description" /></TableHead>
-                <TableHead className="text-right"><T text="Actions" /></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {expenses.length > 0 ? (
-                expenses.map((expense) => (
-                  <TableRow key={expense.id}>
-                    <TableCell>{format(parseISO(expense.date), "dd MMM yyyy")}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{expense.category?.name || "Uncategorized"}</Badge>
-                    </TableCell>
-                    <TableCell className="font-medium">£{parseFloat(expense.amount.toString()).toFixed(2)}</TableCell>
-                    <TableCell className="hidden md:table-cell">{expense.payee}</TableCell>
-                    <TableCell className="hidden md:table-cell">{expense.payment_method}</TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      {expense.ingredient_id ? (
-                        <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
-                          <ShoppingCart className="h-3 w-3 mr-1" />
-                          {expense.quantity} {expense.unit}
-                        </Badge>
-                      ) : "-"}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell max-w-[200px] truncate">{expense.description || "-"}</TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" onClick={() => handleDeleteExpense(expense.id)}>
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
+          <>
+            {viewMode === "list" ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead><T text="Date" /></TableHead>
+                    <TableHead><T text="Category" /></TableHead>
+                    <TableHead><T text="Amount" /></TableHead>
+                    <TableHead className="hidden md:table-cell"><T text="Payee" /></TableHead>
+                    <TableHead className="hidden md:table-cell"><T text="Payment Method" /></TableHead>
+                    <TableHead className="hidden lg:table-cell"><T text="Inventory Item" /></TableHead>
+                    <TableHead className="hidden lg:table-cell"><T text="Description" /></TableHead>
+                    <TableHead className="text-right"><T text="Actions" /></TableHead>
                   </TableRow>
-                ))
+                </TableHeader>
+                <TableBody>
+                  {expenses.length > 0 ? (
+                    expenses.map((expense) => (
+                      <TableRow key={expense.id}>
+                        <TableCell>{format(parseISO(expense.date), "dd MMM yyyy")}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{expense.category?.name || "Uncategorized"}</Badge>
+                        </TableCell>
+                        <TableCell className="font-medium">£{parseFloat(expense.amount.toString()).toFixed(2)}</TableCell>
+                        <TableCell className="hidden md:table-cell">{expense.payee}</TableCell>
+                        <TableCell className="hidden md:table-cell">{expense.payment_method}</TableCell>
+                        <TableCell className="hidden lg:table-cell">
+                          {expense.ingredient_id ? (
+                            <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+                              <ShoppingCart className="h-3 w-3 mr-1" />
+                              {expense.quantity} {expense.unit}
+                            </Badge>
+                          ) : "-"}
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell max-w-[200px] truncate">{expense.description || "-"}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end">
+                            <Button variant="ghost" size="icon" onClick={() => handleEditClick(expense)}>
+                              <EditIcon className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDeleteExpense(expense.id)}>
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={8} className="h-32 text-center">
+                        <div className="flex flex-col items-center justify-center text-muted-foreground">
+                          <p><T text="No expenses found" /></p>
+                          <p className="text-sm"><T text="Try adjusting your filters or add a new expense" /></p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead colSpan={2} className="text-right font-bold"><T text="Total:" /></TableHead>
+                    <TableHead className="font-bold">£{totalExpenses.toFixed(2)}</TableHead>
+                    <TableHead colSpan={5}></TableHead>
+                  </TableRow>
+                </TableHeader>
+              </Table>
+            ) : (
+              expenses.length > 0 ? (
+                <ExpenseGridView 
+                  expenses={expenses} 
+                  onEdit={handleEditClick} 
+                  onDelete={handleDeleteExpense} 
+                />
               ) : (
-                <TableRow>
-                  <TableCell colSpan={8} className="h-32 text-center">
-                    <div className="flex flex-col items-center justify-center text-muted-foreground">
-                      <p><T text="No expenses found" /></p>
-                      <p className="text-sm"><T text="Try adjusting your filters or add a new expense" /></p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-            <TableHeader>
-              <TableRow>
-                <TableHead colSpan={2} className="text-right font-bold"><T text="Total:" /></TableHead>
-                <TableHead className="font-bold">£{totalExpenses.toFixed(2)}</TableHead>
-                <TableHead colSpan={5}></TableHead>
-              </TableRow>
-            </TableHeader>
-          </Table>
+                <div className="h-32 text-center flex flex-col items-center justify-center">
+                  <p className="text-muted-foreground"><T text="No expenses found" /></p>
+                  <p className="text-sm text-muted-foreground"><T text="Try adjusting your filters or add a new expense" /></p>
+                </div>
+              )
+            )}
+          </>
         )}
       </Card>
     </>

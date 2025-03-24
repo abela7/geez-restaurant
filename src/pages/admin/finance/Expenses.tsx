@@ -2,8 +2,6 @@
 import React, { useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Download, FileSpreadsheet, Calendar, Receipt } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 
 import ExpenseCategories from "@/components/admin/finance/ExpenseCategories";
@@ -21,32 +19,24 @@ const Expenses = () => {
         title="Expense Management" 
         description="Track, categorize, and analyze restaurant expenses"
         actions={
-          <>
-            <Button variant="outline" size="sm" className="hidden md:flex">
-              <Calendar className="mr-2 h-4 w-4" />
-              <T text="Date Range" />
-            </Button>
-            <Button variant="outline" size="sm" className="hidden md:flex">
-              <FileSpreadsheet className="mr-2 h-4 w-4" />
-              <T text="Export" />
-            </Button>
-            {activeTab === "categories" && (
-              <Button 
-                variant={editMode ? "default" : "outline"} 
-                size="sm"
-                onClick={() => setEditMode(!editMode)}
-              >
-                <T text={editMode ? "Done Editing" : "Edit Categories"} />
-              </Button>
-            )}
-          </>
+          activeTab === "categories" && (
+            <button 
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                editMode 
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              }`}
+              onClick={() => setEditMode(!editMode)}
+            >
+              <T text={editMode ? "Done Editing" : "Edit Categories"} />
+            </button>
+          )
         }
       />
 
       <Tabs defaultValue="tracker" value={activeTab} onValueChange={setActiveTab} className="mt-6">
         <TabsList className="mb-4">
           <TabsTrigger value="tracker">
-            <Receipt className="h-4 w-4 mr-2" />
             <T text="Expense Tracker" />
           </TabsTrigger>
           <TabsTrigger value="categories">

@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Edit, Trash2, Filter } from "lucide-react";
+import { Plus, Edit, Trash2, Filter, Download, Calendar } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -18,12 +18,18 @@ import {
   deleteExpenseCategory,
   ExpenseCategory
 } from "@/services/finance";
+import { formatCategoriesForExport, exportToCSV } from "@/services/finance/exportService";
+import { DateRangePicker } from "./DateRangePicker";
+import CategoryGridView from "./CategoryGridView";
+import ViewToggle from "./ViewToggle";
 
 const categoryTypes = ["fixed", "variable", "operational", "discretionary"];
 
 interface ExpenseCategoriesProps {
   editMode?: boolean;
 }
+
+type ViewMode = "list" | "grid";
 
 const ExpenseCategories: React.FC<ExpenseCategoriesProps> = ({ editMode = false }) => {
   const { t } = useLanguage();
@@ -40,6 +46,8 @@ const ExpenseCategories: React.FC<ExpenseCategoriesProps> = ({ editMode = false 
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to?: Date | undefined } | undefined>();
 
   useEffect(() => {
     loadCategories();
@@ -47,11 +55,11 @@ const ExpenseCategories: React.FC<ExpenseCategoriesProps> = ({ editMode = false 
 
   useEffect(() => {
     if (categories.length > 0) {
-      filterCategories();
+      applyFilters();
     }
-  }, [categories, searchTerm, typeFilter]);
+  }, [categories, searchTerm, typeFilter, dateRange]);
 
-  const filterCategories = () => {
+  const applyFilters = () => {
     let filtered = [...categories];
     
     if (searchTerm) {
@@ -63,6 +71,16 @@ const ExpenseCategories: React.FC<ExpenseCategoriesProps> = ({ editMode = false 
     
     if (typeFilter !== "all") {
       filtered = filtered.filter(cat => cat.type === typeFilter);
+    }
+    
+    // Apply date range filter if set
+    if (dateRange?.from && dateRange?.to) {
+      filtered = filtered.filter(cat => {
+        const createdAt = cat.created_at ? new Date(cat.created_at) : null;
+        if (!createdAt) return true;
+        
+        return createdAt >= dateRange.from && createdAt <= dateRange.to;
+      });
     }
     
     setFilteredCategories(filtered);
@@ -189,6 +207,18 @@ const ExpenseCategories: React.FC<ExpenseCategoriesProps> = ({ editMode = false 
   const handleClearFilters = () => {
     setSearchTerm("");
     setTypeFilter("all");
+    setDateRange(undefined);
+  };
+
+  const handleExportData = () => {
+    const csvData = formatCategoriesForExport(filteredCategories);
+    const filename = `expense_categories_${new Date().toISOString().slice(0, 10)}.csv`;
+    exportToCSV(csvData, filename);
+    
+    toast({
+      title: "Export Complete",
+      description: "Category data has been exported to CSV."
+    });
   };
 
   return (
@@ -270,7 +300,7 @@ const ExpenseCategories: React.FC<ExpenseCategoriesProps> = ({ editMode = false 
             className="max-w-xs"
           />
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
           <Select value={typeFilter} onValueChange={setTypeFilter}>
             <SelectTrigger className="w-[150px]">
               <SelectValue placeholder={t("All Types")} />
@@ -285,7 +315,21 @@ const ExpenseCategories: React.FC<ExpenseCategoriesProps> = ({ editMode = false 
             </SelectContent>
           </Select>
           
-          {(searchTerm || typeFilter !== "all") && (
+          <DateRangePicker onDateRangeChange={setDateRange} className="w-[200px]" />
+          
+          <ViewToggle currentView={viewMode} onViewChange={setViewMode} />
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleExportData}
+            disabled={filteredCategories.length === 0}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            <T text="Export" />
+          </Button>
+          
+          {(searchTerm || typeFilter !== "all" || dateRange) && (
             <Button variant="outline" size="sm" onClick={handleClearFilters}>
               <Filter className="mr-2 h-4 w-4" />
               <T text="Clear Filters" />
@@ -299,115 +343,126 @@ const ExpenseCategories: React.FC<ExpenseCategoriesProps> = ({ editMode = false 
           <p className="text-muted-foreground"><T text="Loading categories..." /></p>
         </div>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead><T text="Category Name" /></TableHead>
-              <TableHead><T text="Type" /></TableHead>
-              <TableHead className="hidden md:table-cell"><T text="Description" /></TableHead>
-              {editMode && <TableHead className="text-right"><T text="Actions" /></TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredCategories.length > 0 ? (
-              filteredCategories.map((category) => (
-                <TableRow key={category.id}>
-                  <TableCell className="font-medium">{category.name}</TableCell>
-                  <TableCell>
-                    <Badge variant={getCategoryTypeBadgeColor(category.type)}>
-                      {category.type.charAt(0).toUpperCase() + category.type.slice(1)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">{category.description || "-"}</TableCell>
-                  {editMode && (
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="ghost" size="icon" onClick={() => setEditingCategory(category)}>
-                              <Edit className="h-4 w-4" />
+        <>
+          {viewMode === "list" ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead><T text="Category Name" /></TableHead>
+                  <TableHead><T text="Type" /></TableHead>
+                  <TableHead className="hidden md:table-cell"><T text="Description" /></TableHead>
+                  {editMode && <TableHead className="text-right"><T text="Actions" /></TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredCategories.length > 0 ? (
+                  filteredCategories.map((category) => (
+                    <TableRow key={category.id}>
+                      <TableCell className="font-medium">{category.name}</TableCell>
+                      <TableCell>
+                        <Badge variant={getCategoryTypeBadgeColor(category.type)}>
+                          {category.type.charAt(0).toUpperCase() + category.type.slice(1)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">{category.description || "-"}</TableCell>
+                      {editMode && (
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="ghost" size="icon" onClick={() => setEditingCategory(category)}>
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle><T text="Edit Expense Category" /></DialogTitle>
+                                </DialogHeader>
+                                {editingCategory && (
+                                  <div className="grid gap-4 py-4">
+                                    <div className="grid gap-2">
+                                      <Label htmlFor="edit-name"><T text="Category Name" /></Label>
+                                      <Input
+                                        id="edit-name"
+                                        value={editingCategory.name}
+                                        onChange={(e) => setEditingCategory({...editingCategory, name: e.target.value})}
+                                      />
+                                    </div>
+                                    <div className="grid gap-2">
+                                      <Label htmlFor="edit-type"><T text="Category Type" /></Label>
+                                      <Select 
+                                        value={editingCategory.type} 
+                                        onValueChange={(value) => setEditingCategory({...editingCategory, type: value})}
+                                      >
+                                        <SelectTrigger>
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {categoryTypes.map(type => (
+                                            <SelectItem key={type} value={type}>
+                                              <T text={type.charAt(0).toUpperCase() + type.slice(1)} />
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    <div className="grid gap-2">
+                                      <Label htmlFor="edit-description"><T text="Description" /></Label>
+                                      <Input
+                                        id="edit-description"
+                                        value={editingCategory.description || ""}
+                                        onChange={(e) => setEditingCategory({
+                                          ...editingCategory, 
+                                          description: e.target.value
+                                        })}
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+                                <DialogFooter>
+                                  <Button variant="outline" onClick={() => setEditingCategory(null)}>
+                                    <T text="Cancel" />
+                                  </Button>
+                                  <Button onClick={handleEditCategory}>
+                                    <T text="Save Changes" />
+                                  </Button>
+                                </DialogFooter>
+                              </DialogContent>
+                            </Dialog>
+                            <Button variant="ghost" size="icon" onClick={() => handleDeleteCategory(category.id)}>
+                              <Trash2 className="h-4 w-4" />
                             </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle><T text="Edit Expense Category" /></DialogTitle>
-                            </DialogHeader>
-                            {editingCategory && (
-                              <div className="grid gap-4 py-4">
-                                <div className="grid gap-2">
-                                  <Label htmlFor="edit-name"><T text="Category Name" /></Label>
-                                  <Input
-                                    id="edit-name"
-                                    value={editingCategory.name}
-                                    onChange={(e) => setEditingCategory({...editingCategory, name: e.target.value})}
-                                  />
-                                </div>
-                                <div className="grid gap-2">
-                                  <Label htmlFor="edit-type"><T text="Category Type" /></Label>
-                                  <Select 
-                                    value={editingCategory.type} 
-                                    onValueChange={(value) => setEditingCategory({...editingCategory, type: value})}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {categoryTypes.map(type => (
-                                        <SelectItem key={type} value={type}>
-                                          <T text={type.charAt(0).toUpperCase() + type.slice(1)} />
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div className="grid gap-2">
-                                  <Label htmlFor="edit-description"><T text="Description" /></Label>
-                                  <Input
-                                    id="edit-description"
-                                    value={editingCategory.description || ""}
-                                    onChange={(e) => setEditingCategory({
-                                      ...editingCategory, 
-                                      description: e.target.value
-                                    })}
-                                  />
-                                </div>
-                              </div>
-                            )}
-                            <DialogFooter>
-                              <Button variant="outline" onClick={() => setEditingCategory(null)}>
-                                <T text="Cancel" />
-                              </Button>
-                              <Button onClick={handleEditCategory}>
-                                <T text="Save Changes" />
-                              </Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
-                        <Button variant="ghost" size="icon" onClick={() => handleDeleteCategory(category.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={editMode ? 4 : 3} className="h-32 text-center">
+                      <div className="flex flex-col items-center justify-center text-muted-foreground">
+                        <p><T text="No categories found" /></p>
+                        <p className="text-sm">
+                          {searchTerm || typeFilter !== "all" || dateRange
+                            ? <T text="Try adjusting your filters" />
+                            : <T text="Add a new category to get started" />
+                          }
+                        </p>
                       </div>
                     </TableCell>
-                  )}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={editMode ? 4 : 3} className="h-32 text-center">
-                  <div className="flex flex-col items-center justify-center text-muted-foreground">
-                    <p><T text="No categories found" /></p>
-                    <p className="text-sm">
-                      {searchTerm || typeFilter !== "all" 
-                        ? <T text="Try adjusting your filters" />
-                        : <T text="Add a new category to get started" />
-                      }
-                    </p>
-                  </div>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          ) : (
+            <CategoryGridView 
+              categories={filteredCategories} 
+              editMode={editMode} 
+              onEdit={setEditingCategory} 
+              onDelete={handleDeleteCategory} 
+            />
+          )}
+        </>
       )}
     </Card>
   );

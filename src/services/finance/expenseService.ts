@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Expense, ExpenseWithCategory } from "./types";
 
@@ -7,7 +8,8 @@ import { Expense, ExpenseWithCategory } from "./types";
 export const fetchExpenses = async (
   searchTerm?: string,
   categoryFilter?: string,
-  dateFilter?: string
+  dateFilter?: string,
+  dateRange?: { from: string; to: string }
 ): Promise<ExpenseWithCategory[]> => {
   let query = supabase
     .from("expenses")
@@ -27,8 +29,8 @@ export const fetchExpenses = async (
     query = query.eq("category_id", categoryFilter);
   }
 
-  // Apply date filter
-  if (dateFilter) {
+  // Apply predefined date filter
+  if (dateFilter && dateFilter !== "All") {
     const now = new Date();
     
     switch (dateFilter) {
@@ -47,6 +49,17 @@ export const fetchExpenses = async (
       default:
         break;
     }
+  }
+
+  // Apply custom date range filter if provided
+  if (dateRange?.from && dateRange?.to) {
+    // Make inclusive date range
+    const startDate = `${dateRange.from}T00:00:00`;
+    const endDate = `${dateRange.to}T23:59:59`;
+    
+    query = query
+      .gte("date", startDate)
+      .lte("date", endDate);
   }
 
   const { data, error } = await query;
