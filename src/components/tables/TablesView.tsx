@@ -7,10 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, EyeOff } from "lucide-react";
 
 import { Table as TableType, Room, TableGroup } from "@/services/table/types";
-import { getTables, createTable, updateTable, deleteTable } from "@/services/table/tableService";
+import { getTables, createTable, updateTable, deleteTable, updateTableStatus } from "@/services/table/tableService";
 import { getRooms } from "@/services/table/roomService";
 import { getTableGroups } from "@/services/table/tableGroupService";
 
@@ -18,6 +18,7 @@ import NoData from "@/components/ui/no-data";
 import TableForm from "./TableForm";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const TablesView = () => {
   const { toast } = useToast();
@@ -29,6 +30,7 @@ const TablesView = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedTable, setSelectedTable] = useState<TableType | null>(null);
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
+  const [isDeactivateConfirmationOpen, setIsDeactivateConfirmationOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -78,6 +80,11 @@ const TablesView = () => {
     setIsDeleteConfirmationOpen(true);
   };
 
+  const handleDeactivateTable = (table: TableType) => {
+    setSelectedTable(table);
+    setIsDeactivateConfirmationOpen(true);
+  };
+
   const confirmDeleteTable = async () => {
     if (selectedTable) {
       try {
@@ -91,14 +98,56 @@ const TablesView = () => {
       } catch (error: any) {
         console.error("Error deleting table:", error);
         
-        // Use toast instead of showing an error in the UI
+        // If it's an error related to associated orders, offer to deactivate instead
+        if (error.message?.includes("associated orders")) {
+          toast({
+            title: t("Error"),
+            description: error.message,
+            variant: "destructive",
+          });
+          
+          // Automatically open the deactivate confirmation
+          setIsDeleteConfirmationOpen(false);
+          handleDeactivateTable(selectedTable);
+        } else {
+          toast({
+            title: t("Error"),
+            description: error.message || t("Failed to delete table. Please try again."),
+            variant: "destructive",
+          });
+        }
+      } finally {
+        setIsDeleteConfirmationOpen(false);
+        setSelectedTable(null);
+      }
+    }
+  };
+
+  const confirmDeactivateTable = async () => {
+    if (selectedTable) {
+      try {
+        await updateTableStatus(selectedTable.id, 'inactive');
+        
+        // Update the local state with the updated table
+        setTables(tables.map(table => 
+          table.id === selectedTable.id 
+            ? { ...table, status: 'inactive' }
+            : table
+        ));
+        
+        toast({
+          title: t("Success"),
+          description: t("Table has been set to inactive."),
+        });
+      } catch (error: any) {
+        console.error("Error deactivating table:", error);
         toast({
           title: t("Error"),
-          description: error.message || t("Failed to delete table. It may be referenced by orders or reservations."),
+          description: error.message || t("Failed to deactivate table. Please try again."),
           variant: "destructive",
         });
       } finally {
-        setIsDeleteConfirmationOpen(false);
+        setIsDeactivateConfirmationOpen(false);
         setSelectedTable(null);
       }
     }
@@ -189,20 +238,40 @@ const TablesView = () => {
                 const group = tableGroups.find(g => g.id === table.group_id);
 
                 return (
-                  <TableRow key={table.id}>
+                  <TableRow 
+                    key={table.id}
+                    className={table.status === 'inactive' ? 'opacity-50' : ''}
+                  >
                     <TableCell>{table.table_number}</TableCell>
                     <TableCell>{table.capacity}</TableCell>
                     <TableCell>{room ? room.name : '-'}</TableCell>
                     <TableCell>{group ? group.name : '-'}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" onClick={() => handleEditTable(table)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        <T text="Edit" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDeleteTable(table)}>
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        <T text="Delete" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <T text="Actions" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEditTable(table)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            <T text="Edit" />
+                          </DropdownMenuItem>
+                          
+                          <DropdownMenuItem onClick={() => handleDeleteTable(table)}>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            <T text="Delete" />
+                          </DropdownMenuItem>
+                          
+                          {table.status !== 'inactive' && (
+                            <DropdownMenuItem onClick={() => handleDeactivateTable(table)}>
+                              <EyeOff className="mr-2 h-4 w-4" />
+                              <T text="Set Inactive" />
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 );
@@ -237,6 +306,16 @@ const TablesView = () => {
         onConfirm={confirmDeleteTable}
         title={t("Delete Table")}
         description={t("Are you sure you want to delete this table? This action cannot be undone.")}
+      />
+
+      {/* Deactivate Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isDeactivateConfirmationOpen}
+        onClose={() => setIsDeactivateConfirmationOpen(false)}
+        onConfirm={confirmDeactivateTable}
+        title={t("Set Table Inactive")}
+        description={t("This table has associated orders and cannot be deleted. Would you like to set it as inactive instead?")}
+        confirmLabel={t("Set Inactive")}
       />
     </Card>
   );
