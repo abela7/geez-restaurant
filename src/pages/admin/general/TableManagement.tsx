@@ -3,16 +3,17 @@ import React, { useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useLanguage, T } from "@/contexts/LanguageContext";
-import { LayoutGrid, MapPin, Grid } from "lucide-react";
+import { LayoutGrid, MapPin, Grid, Map } from "lucide-react";
 
 // Import table management components
 import TablesView from "@/components/tables/TablesView";
 import RoomsView from "@/components/tables/RoomsView";
 import TableGroupsView from "@/components/tables/TableGroupsView";
+import FloorPlanView from "@/components/tables/FloorPlanView";
 
 const TableManagement = () => {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState("tables");
+  const [activeTab, setActiveTab] = useState("floor-plan");
 
   return (
     <div>
@@ -23,7 +24,11 @@ const TableManagement = () => {
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="floor-plan" data-testid="floor-plan-tab">
+            <Map className="h-4 w-4 mr-2" />
+            <T text="Floor Plan" />
+          </TabsTrigger>
           <TabsTrigger value="tables" data-testid="tables-tab">
             <Grid className="h-4 w-4 mr-2" />
             <T text="Tables" />
@@ -37,6 +42,10 @@ const TableManagement = () => {
             <T text="Table Groups" />
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="floor-plan" className="h-[calc(100vh-250px)]">
+          <FloorPlanView />
+        </TabsContent>
 
         <TabsContent value="tables">
           <TablesView />
