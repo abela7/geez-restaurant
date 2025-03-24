@@ -1,6 +1,5 @@
 
 import React, { useState } from "react";
-import Layout from "@/components/Layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useLanguage, T } from "@/contexts/LanguageContext";
@@ -16,7 +15,7 @@ const TableManagement = () => {
   const [activeTab, setActiveTab] = useState("tables");
 
   return (
-    <Layout interface="admin">
+    <div>
       <PageHeader
         heading={<T text="Table Management" />}
         description={<T text="Manage restaurant tables, rooms and seating arrangements" />}
@@ -51,7 +50,7 @@ const TableManagement = () => {
           <TableGroupsView />
         </TabsContent>
       </Tabs>
-    </Layout>
+    </div>
   );
 };
 
