@@ -1,64 +1,37 @@
 
 import React from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { useLanguage, T } from "@/contexts/LanguageContext";
-import { useLocation, Link } from "react-router-dom";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, BarChart2, Truck, ShoppingCart, FileText } from "lucide-react";
-import { SampleIngredientsButton } from "./SampleIngredientsButton";
+import { Package, Carrot } from "lucide-react";
 
-export const InventoryNav = () => {
+export const InventoryNav: React.FC = () => {
   const { t } = useLanguage();
-  const location = useLocation();
-  const currentPath = location.pathname;
+  const router = useRouter();
+  const pathname = usePathname();
 
-  const getTabValue = () => {
-    if (currentPath.includes("/admin/inventory/stock")) return "stock";
-    if (currentPath.includes("/admin/inventory/ingredients")) return "ingredients";
-    if (currentPath.includes("/admin/inventory/recipes")) return "recipes";
-    return "stock";
-  };
+  const isActive = (path: string) => pathname === path;
 
   return (
-    <div className="mb-6">
-      <div className="flex justify-between items-center mb-4">
-        <Tabs value={getTabValue()} className="w-full">
-          <TabsList className="grid grid-cols-2 md:grid-cols-5 w-full">
-            <TabsTrigger value="stock" asChild>
-              <Link to="/admin/inventory/stock" className="flex items-center gap-1.5">
-                <Package className="h-4 w-4" />
-                <span><T text="Stock Levels" /></span>
-              </Link>
-            </TabsTrigger>
-            <TabsTrigger value="ingredients" asChild>
-              <Link to="/admin/inventory/ingredients" className="flex items-center gap-1.5">
-                <BarChart2 className="h-4 w-4" />
-                <span><T text="Ingredients" /></span>
-              </Link>
-            </TabsTrigger>
-            <TabsTrigger value="recipes" asChild>
-              <Link to="/admin/inventory/recipes" className="flex items-center gap-1.5">
-                <FileText className="h-4 w-4" />
-                <span><T text="Recipes" /></span>
-              </Link>
-            </TabsTrigger>
-            <TabsTrigger value="suppliers" disabled className="flex items-center gap-1.5">
-              <Truck className="h-4 w-4" />
-              <span><T text="Suppliers" /></span>
-              <span className="ml-1 text-xs bg-muted px-1.5 py-0.5 rounded-full">
-                <T text="Soon" />
-              </span>
-            </TabsTrigger>
-            <TabsTrigger value="purchase-orders" disabled className="flex items-center gap-1.5">
-              <ShoppingCart className="h-4 w-4" />
-              <span><T text="Purchase Orders" /></span>
-              <span className="ml-1 text-xs bg-muted px-1.5 py-0.5 rounded-full">
-                <T text="Soon" />
-              </span>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-        {getTabValue() === "stock" && <SampleIngredientsButton />}
-      </div>
+    <div className="flex flex-wrap gap-2 mb-6">
+      <Button
+        variant={isActive("/admin/inventory") ? "default" : "outline"}
+        size="sm"
+        onClick={() => router.push("/admin/inventory")}
+        className="flex gap-2"
+      >
+        <Package className="h-4 w-4" />
+        <T text="Stock Levels" />
+      </Button>
+      <Button
+        variant={isActive("/admin/inventory/ingredients") ? "default" : "outline"}
+        size="sm"
+        onClick={() => router.push("/admin/inventory/ingredients")}
+        className="flex gap-2"
+      >
+        <Carrot className="h-4 w-4" />
+        <T text="Ingredients" />
+      </Button>
     </div>
   );
 };
