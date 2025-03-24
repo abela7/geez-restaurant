@@ -377,6 +377,216 @@ export type Database = {
         }
         Relationships: []
       }
+      dish_cost_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      dish_cost_history: {
+        Row: {
+          change_date: string
+          created_at: string
+          dish_cost_id: string
+          id: string
+          new_cost: number
+          previous_cost: number
+          reason: string | null
+          updated_at: string
+        }
+        Insert: {
+          change_date?: string
+          created_at?: string
+          dish_cost_id: string
+          id?: string
+          new_cost: number
+          previous_cost: number
+          reason?: string | null
+          updated_at?: string
+        }
+        Update: {
+          change_date?: string
+          created_at?: string
+          dish_cost_id?: string
+          id?: string
+          new_cost?: number
+          previous_cost?: number
+          reason?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dish_cost_history_dish_cost_id_fkey"
+            columns: ["dish_cost_id"]
+            isOneToOne: false
+            referencedRelation: "dish_costs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dish_costs: {
+        Row: {
+          created_at: string
+          dish_name: string
+          food_item_id: string | null
+          id: string
+          manual_price: number | null
+          profit_margin: number
+          suggested_price: number
+          total_cost: number
+          total_ingredient_cost: number
+          total_overhead_cost: number
+          updated_at: string
+          use_manual_price: boolean
+        }
+        Insert: {
+          created_at?: string
+          dish_name: string
+          food_item_id?: string | null
+          id?: string
+          manual_price?: number | null
+          profit_margin?: number
+          suggested_price?: number
+          total_cost?: number
+          total_ingredient_cost?: number
+          total_overhead_cost?: number
+          updated_at?: string
+          use_manual_price?: boolean
+        }
+        Update: {
+          created_at?: string
+          dish_name?: string
+          food_item_id?: string | null
+          id?: string
+          manual_price?: number | null
+          profit_margin?: number
+          suggested_price?: number
+          total_cost?: number
+          total_ingredient_cost?: number
+          total_overhead_cost?: number
+          updated_at?: string
+          use_manual_price?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dish_costs_food_item_id_fkey"
+            columns: ["food_item_id"]
+            isOneToOne: false
+            referencedRelation: "food_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dish_ingredients: {
+        Row: {
+          created_at: string
+          dish_cost_id: string
+          id: string
+          ingredient_id: string | null
+          ingredient_name: string
+          quantity: number
+          total_cost: number
+          unit_cost: number
+          unit_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dish_cost_id: string
+          id?: string
+          ingredient_id?: string | null
+          ingredient_name: string
+          quantity: number
+          total_cost: number
+          unit_cost: number
+          unit_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dish_cost_id?: string
+          id?: string
+          ingredient_id?: string | null
+          ingredient_name?: string
+          quantity?: number
+          total_cost?: number
+          unit_cost?: number
+          unit_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dish_ingredients_dish_cost_id_fkey"
+            columns: ["dish_cost_id"]
+            isOneToOne: false
+            referencedRelation: "dish_costs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dish_ingredients_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dish_overhead_costs: {
+        Row: {
+          category: string
+          cost: number
+          created_at: string
+          description: string
+          dish_cost_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          cost: number
+          created_at?: string
+          description: string
+          dish_cost_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          cost?: number
+          created_at?: string
+          description?: string
+          dish_cost_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dish_overhead_costs_dish_cost_id_fkey"
+            columns: ["dish_cost_id"]
+            isOneToOne: false
+            referencedRelation: "dish_costs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expense_categories: {
         Row: {
           created_at: string

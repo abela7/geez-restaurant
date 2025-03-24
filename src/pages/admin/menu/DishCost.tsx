@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -20,7 +19,8 @@ import {
   Clock,
   DollarSign,
   BadgePoundSterling,
-  PencilLine
+  PencilLine,
+  AlertTriangle
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { InputWithIcon } from "@/components/ui/input-with-icon";
@@ -29,128 +29,271 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { SideModal } from "@/components/ui/side-modal";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useDishCosts } from "@/hooks/useDishCosts";
+import { 
+  DishCost as DishCostType, 
+  Ingredient, 
+  MeasurementUnit, 
+  NewDishIngredient, 
+  NewDishOverheadCost,
+  NewDishCost
+} from "@/types/dishCost";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { useMenuItems } from "@/hooks/useMenuItems";
 
-// Define unit types for ingredients
-interface UnitType {
-  id: string;
-  name: string;
-  abbreviation: string;
-}
-
-// Define ingredient with cost information
-interface Ingredient {
-  id: string;
-  name: string;
-  unitType: string;
-  unitCost: number;
-  category: string;
-}
-
-// Define a dish with its cost breakdown
-interface DishCost {
-  id: string;
-  dishName: string;
-  totalCost: number;
-  ingredients: {
-    id: string;
-    ingredientId: string;
-    ingredientName: string;
-    quantity: number;
-    unitType: string;
-    unitCost: number;
-    totalCost: number;
-  }[];
-  otherCosts: {
-    id: string;
-    category: string;
-    description: string;
-    cost: number;
-  }[];
-  profitMargin: number;
-  suggestedPrice: number;
-  manualPrice: number | null;
-  useManualPrice: boolean;
-}
-
-const DishCost = () => {
+const DishCostPage = () => {
   const { t } = useLanguage();
   const isMobile = useIsMobile();
+  const { foodItems } = useMenuItems();
+  const {
+    dishCosts,
+    costHistory,
+    ingredients,
+    units,
+    isLoading,
+    error,
+    createDishCost,
+    updateDishCost,
+    deleteDishCost,
+    createUnit,
+    createIngredient
+  } = useDishCosts();
+
   const [activeTab, setActiveTab] = useState("dishCosts");
   const [searchQuery, setSearchQuery] = useState("");
   const [showUnitModal, setShowUnitModal] = useState(false);
   const [showIngredientModal, setShowIngredientModal] = useState(false);
   const [showDishCostModal, setShowDishCostModal] = useState(false);
-  const [useManualPrice, setUseManualPrice] = useState(false);
-  const [manualPrice, setManualPrice] = useState("");
+  const [editDishCostId, setEditDishCostId] = useState<string | null>(null);
   
-  // Sample data for unit types
-  const unitTypes: UnitType[] = [
-    { id: "1", name: "Kilogram", abbreviation: "kg" },
-    { id: "2", name: "Gram", abbreviation: "g" },
-    { id: "3", name: "Liter", abbreviation: "L" },
-    { id: "4", name: "Milliliter", abbreviation: "mL" },
-    { id: "5", name: "Count", abbreviation: "pcs" },
-    { id: "6", name: "Package", abbreviation: "pkg" },
-    { id: "7", name: "Dozen", abbreviation: "doz" },
-    { id: "8", name: "Tablespoon", abbreviation: "tbsp" },
-    { id: "9", name: "Teaspoon", abbreviation: "tsp" },
-  ];
+  const [newUnit, setNewUnit] = useState({
+    name: "",
+    abbreviation: "",
+    description: "",
+    type: "weight"
+  });
   
-  // Sample data for ingredients
-  const ingredients: Ingredient[] = [
-    { id: "1", name: "Beef", unitType: "kg", unitCost: 10, category: "Meat" },
-    { id: "2", name: "Chicken", unitType: "kg", unitCost: 7, category: "Meat" },
-    { id: "3", name: "Onion", unitType: "kg", unitCost: 1.2, category: "Vegetable" },
-    { id: "4", name: "Garlic", unitType: "kg", unitCost: 3.5, category: "Vegetable" },
-    { id: "5", name: "Berbere Spice", unitType: "g", unitCost: 0.03, category: "Spice" },
-    { id: "6", name: "Niter Kibbeh", unitType: "g", unitCost: 0.02, category: "Fat" },
-    { id: "7", name: "Rice", unitType: "kg", unitCost: 1.8, category: "Grain" },
-    { id: "8", name: "Injera", unitType: "pcs", unitCost: 1.2, category: "Bread" },
-  ];
+  const [newIngredient, setNewIngredient] = useState({
+    name: "",
+    category: "",
+    unit: "kg",
+    cost: 0
+  });
   
-  // Sample data for dishes with costs
-  const dishCosts: DishCost[] = [
-    {
-      id: "1",
-      dishName: "Beef Tibs",
-      totalCost: 8.95,
-      ingredients: [
-        { id: "1", ingredientId: "1", ingredientName: "Beef", quantity: 0.5, unitType: "kg", unitCost: 10, totalCost: 5 },
-        { id: "2", ingredientId: "3", ingredientName: "Onion", quantity: 0.2, unitType: "kg", unitCost: 1.2, totalCost: 0.24 },
-        { id: "3", ingredientId: "5", ingredientName: "Berbere Spice", quantity: 15, unitType: "g", unitCost: 0.03, totalCost: 0.45 },
-        { id: "4", ingredientId: "6", ingredientName: "Niter Kibbeh", quantity: 30, unitType: "g", unitCost: 0.02, totalCost: 0.6 },
-      ],
-      otherCosts: [
-        { id: "1", category: "Labor", description: "Chef time", cost: 1.50 },
-        { id: "2", category: "Utilities", description: "Gas consumption", cost: 0.45 },
-        { id: "3", category: "Overhead", description: "General overhead", cost: 0.71 },
-      ],
-      profitMargin: 70,
-      suggestedPrice: 15.22,
-      manualPrice: 15.99,
-      useManualPrice: true
-    },
-    {
-      id: "2",
-      dishName: "Doro Wat",
-      totalCost: 7.65,
-      ingredients: [
-        { id: "1", ingredientId: "2", ingredientName: "Chicken", quantity: 0.6, unitType: "kg", unitCost: 7, totalCost: 4.2 },
-        { id: "2", ingredientId: "3", ingredientName: "Onion", quantity: 0.3, unitType: "kg", unitCost: 1.2, totalCost: 0.36 },
-        { id: "3", ingredientId: "5", ingredientName: "Berbere Spice", quantity: 25, unitType: "g", unitCost: 0.03, totalCost: 0.75 },
-        { id: "4", ingredientId: "6", ingredientName: "Niter Kibbeh", quantity: 40, unitType: "g", unitCost: 0.02, totalCost: 0.8 },
-      ],
-      otherCosts: [
-        { id: "1", category: "Labor", description: "Chef time", cost: 0.90 },
-        { id: "2", category: "Utilities", description: "Gas consumption", cost: 0.35 },
-        { id: "3", category: "Overhead", description: "General overhead", cost: 0.29 },
-      ],
-      profitMargin: 80,
-      suggestedPrice: 13.77,
-      manualPrice: null,
-      useManualPrice: false
-    },
-  ];
+  const [newDishCost, setNewDishCost] = useState<NewDishCost>({
+    dish_name: "",
+    food_item_id: null,
+    profit_margin: 70,
+    use_manual_price: false,
+    manual_price: null,
+    ingredients: [],
+    overhead_costs: []
+  });
+
+  const initNewDishCost = (dishCost?: DishCostType) => {
+    if (dishCost) {
+      setNewDishCost({
+        dish_name: dishCost.dish_name,
+        food_item_id: dishCost.food_item_id,
+        profit_margin: dishCost.profit_margin,
+        use_manual_price: dishCost.use_manual_price,
+        manual_price: dishCost.manual_price,
+        ingredients: dishCost.dish_ingredients?.map(ing => ({
+          ingredient_id: ing.ingredient_id,
+          ingredient_name: ing.ingredient_name,
+          quantity: ing.quantity,
+          unit_type: ing.unit_type,
+          unit_cost: ing.unit_cost,
+          total_cost: ing.total_cost
+        })) || [],
+        overhead_costs: dishCost.dish_overhead_costs?.map(cost => ({
+          category: cost.category,
+          description: cost.description,
+          cost: cost.cost
+        })) || []
+      });
+    } else {
+      setNewDishCost({
+        dish_name: "",
+        food_item_id: null,
+        profit_margin: 70,
+        use_manual_price: false,
+        manual_price: null,
+        ingredients: [],
+        overhead_costs: [{
+          category: "Labor",
+          description: "Chef time",
+          cost: 1.50
+        }]
+      });
+    }
+  };
+
+  const openDishCostModal = (dishCost?: DishCostType) => {
+    if (dishCost) {
+      setEditDishCostId(dishCost.id);
+      initNewDishCost(dishCost);
+    } else {
+      setEditDishCostId(null);
+      initNewDishCost();
+    }
+    setShowDishCostModal(true);
+  };
+
+  const addIngredientToDish = () => {
+    const defaultIngredient = ingredients[0];
+    if (!defaultIngredient) return;
+    
+    const newIngredientItem: NewDishIngredient = {
+      ingredient_id: defaultIngredient.id,
+      ingredient_name: defaultIngredient.name,
+      quantity: 0.5,
+      unit_type: defaultIngredient.unit,
+      unit_cost: defaultIngredient.cost,
+      total_cost: 0.5 * defaultIngredient.cost
+    };
+    
+    setNewDishCost(prev => ({
+      ...prev,
+      ingredients: [...prev.ingredients, newIngredientItem]
+    }));
+  };
+
+  const updateIngredientInDish = (index: number, field: keyof NewDishIngredient, value: any) => {
+    setNewDishCost(prev => {
+      const updatedIngredients = [...prev.ingredients];
+      const updatedIngredient = { ...updatedIngredients[index], [field]: value };
+      
+      if (field === 'ingredient_id') {
+        const selectedIngredient = ingredients.find(i => i.id === value);
+        if (selectedIngredient) {
+          updatedIngredient.ingredient_name = selectedIngredient.name;
+          updatedIngredient.unit_type = selectedIngredient.unit;
+          updatedIngredient.unit_cost = selectedIngredient.cost;
+          updatedIngredient.total_cost = updatedIngredient.quantity * selectedIngredient.cost;
+        }
+      }
+      
+      if (field === 'quantity') {
+        updatedIngredient.total_cost = Number(value) * updatedIngredient.unit_cost;
+      }
+      
+      if (field === 'unit_cost') {
+        updatedIngredient.total_cost = updatedIngredient.quantity * Number(value);
+      }
+      
+      updatedIngredients[index] = updatedIngredient;
+      return { ...prev, ingredients: updatedIngredients };
+    });
+  };
+
+  const removeIngredientFromDish = (index: number) => {
+    setNewDishCost(prev => ({
+      ...prev,
+      ingredients: prev.ingredients.filter((_, i) => i !== index)
+    }));
+  };
+
+  const addOverheadCostToDish = () => {
+    const newCost: NewDishOverheadCost = {
+      category: "Utilities",
+      description: "Gas consumption",
+      cost: 0.45
+    };
+    
+    setNewDishCost(prev => ({
+      ...prev,
+      overhead_costs: [...prev.overhead_costs, newCost]
+    }));
+  };
+
+  const updateOverheadCostInDish = (index: number, field: keyof NewDishOverheadCost, value: any) => {
+    setNewDishCost(prev => {
+      const updatedCosts = [...prev.overhead_costs];
+      updatedCosts[index] = { ...updatedCosts[index], [field]: value };
+      return { ...prev, overhead_costs: updatedCosts };
+    });
+  };
+
+  const removeOverheadCostFromDish = (index: number) => {
+    setNewDishCost(prev => ({
+      ...prev,
+      overhead_costs: prev.overhead_costs.filter((_, i) => i !== index)
+    }));
+  };
+
+  const calculateDishCostTotals = () => {
+    const totalIngredientCost = newDishCost.ingredients.reduce((sum, ing) => sum + ing.total_cost, 0);
+    const totalOverheadCost = newDishCost.overhead_costs.reduce((sum, cost) => sum + cost.cost, 0);
+    const totalCost = totalIngredientCost + totalOverheadCost;
+    const suggestedPrice = totalCost > 0 ? totalCost / (1 - (newDishCost.profit_margin / 100)) : 0;
+    return {
+      totalIngredientCost,
+      totalOverheadCost,
+      totalCost,
+      suggestedPrice
+    };
+  };
+
+  const handleDishCostSubmit = async () => {
+    try {
+      if (editDishCostId) {
+        await updateDishCost(editDishCostId, newDishCost);
+      } else {
+        await createDishCost(newDishCost);
+      }
+      setShowDishCostModal(false);
+    } catch (error) {
+      console.error("Error submitting dish cost:", error);
+    }
+  };
+
+  const handleUnitSubmit = async () => {
+    try {
+      await createUnit(newUnit);
+      setShowUnitModal(false);
+      setNewUnit({
+        name: "",
+        abbreviation: "",
+        description: "",
+        type: "weight"
+      });
+    } catch (error) {
+      console.error("Error submitting unit:", error);
+    }
+  };
+
+  const handleIngredientSubmit = async () => {
+    try {
+      await createIngredient(newIngredient);
+      setShowIngredientModal(false);
+      setNewIngredient({
+        name: "",
+        category: "",
+        unit: "kg",
+        cost: 0
+      });
+    } catch (error) {
+      console.error("Error submitting ingredient:", error);
+    }
+  };
+
+  const filteredDishCosts = dishCosts.filter(dish => 
+    dish.dish_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredIngredients = ingredients.filter(ingredient => 
+    ingredient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (ingredient.category && ingredient.category.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  const filteredUnits = units.filter(unit => 
+    unit.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    unit.abbreviation.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="container mx-auto p-3 md:p-6">
@@ -187,7 +330,6 @@ const DishCost = () => {
             </TabsTrigger>
           </TabsList>
           
-          {/* Dish Costs Tab */}
           <TabsContent value="dishCosts">
             <Card>
               <CardHeader className="pb-3">
@@ -314,7 +456,6 @@ const DishCost = () => {
             </Card>
           </TabsContent>
           
-          {/* Ingredients Tab */}
           <TabsContent value="ingredients">
             <Card>
               <CardHeader className="pb-3">
@@ -372,7 +513,6 @@ const DishCost = () => {
             </Card>
           </TabsContent>
           
-          {/* Units Tab */}
           <TabsContent value="units">
             <Card>
               <CardHeader className="pb-3">
@@ -428,7 +568,6 @@ const DishCost = () => {
         </Tabs>
       </div>
       
-      {/* Unit Type Modal */}
       <SideModal
         open={showUnitModal}
         onOpenChange={setShowUnitModal}
@@ -460,7 +599,6 @@ const DishCost = () => {
         </div>
       </SideModal>
       
-      {/* Ingredient Modal */}
       <SideModal
         open={showIngredientModal}
         onOpenChange={setShowIngredientModal}
@@ -501,7 +639,6 @@ const DishCost = () => {
         </div>
       </SideModal>
       
-      {/* Dish Cost Modal */}
       <SideModal
         open={showDishCostModal}
         onOpenChange={setShowDishCostModal}
@@ -718,4 +855,5 @@ const DishCost = () => {
   );
 };
 
-export default DishCost;
+export default DishCostPage;
+
