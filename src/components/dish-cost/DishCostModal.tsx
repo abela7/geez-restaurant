@@ -117,7 +117,7 @@ const DishCostModal: React.FC<DishCostModalProps> = ({
           updatedIngredient.ingredient_name = selectedIngredient.name;
           updatedIngredient.unit_type = selectedIngredient.unit;
           updatedIngredient.unit_cost = selectedIngredient.cost;
-          updatedIngredient.total_cost = updatedIngredient.quantity * selectedIngredient.unit_cost;
+          updatedIngredient.total_cost = updatedIngredient.quantity * selectedIngredient.cost;
         }
       }
       
@@ -255,14 +255,14 @@ const DishCostModal: React.FC<DishCostModalProps> = ({
             <div className="space-y-2">
               <label className="text-sm font-medium"><T text="Link to Menu Item (Optional)" /></label>
               <Select 
-                value={formData.food_item_id || ""} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, food_item_id: value || null }))}
+                value={formData.food_item_id || "none"} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, food_item_id: value === "none" ? null : value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={t("Select a menu item")} />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px]">
-                  <SelectItem value=""><T text="None" /></SelectItem>
+                  <SelectItem value="none"><T text="None" /></SelectItem>
                   {foodItems.map(item => (
                     <SelectItem key={item.id} value={item.id}>
                       {item.name}
@@ -281,7 +281,7 @@ const DishCostModal: React.FC<DishCostModalProps> = ({
                       <div className={isMobile ? "col-span-12" : "col-span-4"}>
                         <label className="text-xs text-muted-foreground"><T text="Ingredient" /></label>
                         <Select 
-                          value={ingredient.ingredient_id || ""} 
+                          value={ingredient.ingredient_id || "none"} 
                           onValueChange={(value) => updateIngredient(index, 'ingredient_id', value)}
                         >
                           <SelectTrigger>
