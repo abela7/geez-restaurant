@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -121,7 +122,14 @@ const Ingredients = () => {
     try {
       await addCategory(newCategory.trim());
       
-      setAvailableCategories(prev => [...prev, newCategory.trim()]);
+      // Update the available categories list
+      const updatedCategories = [...availableCategories];
+      if (!updatedCategories.includes(newCategory.trim())) {
+        updatedCategories.push(newCategory.trim());
+      }
+      setAvailableCategories(updatedCategories);
+      
+      // Set the filter to the new category
       setSelectedCategoryFilter(newCategory.trim());
       setNewCategory("");
       setCategoryPopoverOpen(false);
@@ -131,6 +139,7 @@ const Ingredients = () => {
         description: t("Category added successfully"),
       });
       
+      // Reload ingredients to ensure we have the latest data
       loadIngredients();
     } catch (error) {
       console.error("Error adding category:", error);
@@ -277,6 +286,12 @@ const Ingredients = () => {
                       value={newCategory} 
                       onChange={(e) => setNewCategory(e.target.value)}
                       placeholder={t("Enter category name")}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddCategory();
+                        }
+                      }}
                     />
                     <Button 
                       onClick={handleAddCategory}

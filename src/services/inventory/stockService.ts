@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Ingredient } from "./types";
 
@@ -232,6 +231,8 @@ export const adjustStockQuantity = async (
 };
 
 export const addCategory = async (categoryName: string): Promise<void> => {
+  console.log("Adding category:", categoryName);
+  
   // In this implementation, we're adding a placeholder ingredient with the new category
   // which will then make the category available in the dropdown
   // In a production app, you might have a separate categories table
@@ -250,3 +251,4 @@ export const addCategory = async (categoryName: string): Promise<void> => {
     throw new Error("Failed to add category");
   }
 };
+
