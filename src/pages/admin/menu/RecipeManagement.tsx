@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -20,14 +21,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import FoodItemRecipeButton from "@/components/admin/menu/FoodItemRecipeButton";
-
-interface FoodItem {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  category_name?: string;
-}
+import { FoodItem } from "@/types/menu";
 
 interface Recipe {
   id: string;
@@ -63,7 +57,7 @@ const RecipeManagement = () => {
       // Load food items
       const { data: foodItemsData, error: foodItemsError } = await supabase
         .from('food_items')
-        .select('id, name, description, price, category_id, menu_categories:category_id(name)')
+        .select('id, name, description, price, category_id, menu_categories:category_id(name), available, is_vegetarian, is_vegan, is_gluten_free, is_spicy, image_url, preparation_time')
         .order('name');
       
       if (foodItemsError) throw foodItemsError;
@@ -71,8 +65,17 @@ const RecipeManagement = () => {
       // Format food items with category name
       const formattedFoodItems = foodItemsData.map(item => ({
         ...item,
-        category_name: item.menu_categories?.name || "Uncategorized"
-      }));
+        category_name: item.menu_categories?.name || "Uncategorized",
+        // Ensure all required properties are present
+        image_url: item.image_url || null,
+        category_id: item.category_id || null,
+        available: item.available !== undefined ? item.available : true,
+        is_vegetarian: item.is_vegetarian !== undefined ? item.is_vegetarian : false,
+        is_vegan: item.is_vegan !== undefined ? item.is_vegan : false,
+        is_gluten_free: item.is_gluten_free !== undefined ? item.is_gluten_free : false,
+        is_spicy: item.is_spicy !== undefined ? item.is_spicy : false,
+        preparation_time: item.preparation_time || null
+      })) as FoodItem[];
       
       // Load recipes with ingredient counts
       const { data: recipesData, error: recipesError } = await supabase
@@ -274,7 +277,15 @@ const RecipeManagement = () => {
                                 id: recipe.food_item_id,
                                 name: recipe.name,
                                 description: '',
-                                price: 0
+                                price: 0,
+                                image_url: null,
+                                category_id: null,
+                                available: true,
+                                is_vegetarian: false,
+                                is_vegan: false,
+                                is_gluten_free: false,
+                                is_spicy: false,
+                                preparation_time: null
                               }} 
                             />
                             <Button variant="ghost" size="icon" title={t("View Dish Cost")} asChild>
