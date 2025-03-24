@@ -165,7 +165,8 @@ const RecipeManagement = () => {
             <CardContent>
               <div className="text-3xl font-bold text-amber-600">{recipes.length}</div>
               <p className="text-sm text-muted-foreground">
-                <T text="of {total} food items" params={{ total: foodItems.length }} />
+                {/* Fix: Use a span with t() directly instead of T component with params */}
+                <span>{t("of {total} food items", { total: foodItems.length })}</span>
               </p>
             </CardContent>
           </Card>

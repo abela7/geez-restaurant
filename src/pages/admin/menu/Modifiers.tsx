@@ -74,6 +74,7 @@ const Modifiers = () => {
     selectedOption,
     setSelectedOption,
     groupFormData,
+    setGroupFormData, // This is missing in original code
     optionFormData,
     handleGroupInputChange,
     handleOptionInputChange,
@@ -344,6 +345,7 @@ const Modifiers = () => {
                 name="required"
                 checked={groupFormData.required}
                 onCheckedChange={(checked) => {
+                  // Using setGroupFormData directly from useModifierManagement hook
                   setGroupFormData(prev => ({ ...prev, required: checked }));
                 }}
               />
@@ -385,6 +387,7 @@ const Modifiers = () => {
                 name="required"
                 checked={groupFormData.required}
                 onCheckedChange={(checked) => {
+                  // Using setGroupFormData directly from useModifierManagement hook
                   setGroupFormData(prev => ({ ...prev, required: checked }));
                 }}
               />
@@ -435,10 +438,11 @@ const Modifiers = () => {
             <DialogTitle><T text="Add Option" /></DialogTitle>
             <DialogDescription>
               {selectedGroup && (
-                <T 
-                  text="Add a new option to the '{groupName}' group" 
-                  params={{ groupName: selectedGroup.name }} 
-                />
+                <>
+                  <span>
+                    {t("Add a new option to the '{groupName}' group", { groupName: selectedGroup.name })}
+                  </span>
+                </>
               )}
             </DialogDescription>
           </DialogHeader>

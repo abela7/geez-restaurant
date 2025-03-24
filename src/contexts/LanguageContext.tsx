@@ -8,7 +8,7 @@ type LanguageContextType = {
   setTranslations: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   currentLanguage: 'en' | 'am';
   setCurrentLanguage: React.Dispatch<React.SetStateAction<'en' | 'am'>>;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, any>) => string;
   addTranslation: (key: string, value: string) => Promise<void>;
   saveAllTranslations: () => Promise<void>;
   isLoading: boolean;
@@ -85,11 +85,20 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [currentLanguage, initialized]);
 
-  // Translation function
-  const t = (key: string): string => {
+  // Translation function with parameter support
+  const t = (key: string, params?: Record<string, any>): string => {
     if (!key) return '';
-    if (currentLanguage === 'en') return key;
-    return translations[key] || key;
+    
+    let translatedText = currentLanguage === 'en' ? key : (translations[key] || key);
+    
+    // Replace parameters in the translation
+    if (params) {
+      Object.entries(params).forEach(([param, value]) => {
+        translatedText = translatedText.replace(`{${param}}`, String(value));
+      });
+    }
+    
+    return translatedText;
   };
 
   // Add new translation - saves to database and local state
@@ -156,7 +165,12 @@ export const useLanguage = () => {
 };
 
 // Translatable text component for easy usage
-export const T: React.FC<{ text: string }> = ({ text }) => {
+interface TProps {
+  text: string;
+  params?: Record<string, any>;
+}
+
+export const T: React.FC<TProps> = ({ text, params }) => {
   const { t } = useLanguage();
-  return <>{t(text)}</>;
+  return <>{t(text, params)}</>;
 };
