@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,9 +6,11 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { CartProvider } from "@/contexts/CartContext";
+import { Suspense } from "react";
 
 // Import routes
-import AdminRoutes from "./routes/adminRoutes";
+import { adminRoutes } from "./routes/adminRoutes";
+import AdminRoutes from "./routes/adminRoutes"; // Import default export correctly
 import WaiterRoutes from "./routes/waiterRoutes";
 import KitchenRoutes from "./routes/kitchenRoutes";
 import CustomerRoutes from "./routes/customerRoutes";
@@ -33,6 +34,13 @@ const queryClient = new QueryClient({
   },
 });
 
+// Loading fallback component
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center h-screen">
+    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
+  </div>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
@@ -42,27 +50,31 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <Routes>
-                {/* Main route - Admin paths */}
-                <Route path="/admin/*" element={<AdminRoutes />} />
-                
-                {/* Redirect / to /admin for now */}
-                <Route path="/" element={<Navigate to="/admin" replace />} />
-                
-                {/* Other interface routes */}
-                <Route path="/waiter/*" element={<WaiterRoutes />} />
-                <Route path="/kitchen/*" element={<KitchenRoutes />} />
-                <Route path="/menu/*" element={<CustomerRoutes />} />
-                <Route path="/feedback/*" element={<CustomerRoutes />} />
-                <Route path="/promotions/*" element={<CustomerRoutes />} />
-                <Route path="/system/*" element={<SystemRoutes />} />
-                
-                {/* Auth routes */}
-                <Route path="/login" element={<Login />} />
-                
-                {/* Catch All */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <Suspense fallback={<LoadingFallback />}>
+                <Routes>
+                  {/* Map all admin routes */}
+                  {adminRoutes.map((route) => (
+                    <Route key={route.path} path={route.path} element={route.element} />
+                  ))}
+                  
+                  {/* Redirect / to /admin for now */}
+                  <Route path="/" element={<Navigate to="/admin" replace />} />
+                  
+                  {/* Other interface routes */}
+                  <Route path="/waiter/*" element={<WaiterRoutes />} />
+                  <Route path="/kitchen/*" element={<KitchenRoutes />} />
+                  <Route path="/menu/*" element={<CustomerRoutes />} />
+                  <Route path="/feedback/*" element={<CustomerRoutes />} />
+                  <Route path="/promotions/*" element={<CustomerRoutes />} />
+                  <Route path="/system/*" element={<SystemRoutes />} />
+                  
+                  {/* Auth routes */}
+                  <Route path="/login" element={<Login />} />
+                  
+                  {/* Catch All */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
             </BrowserRouter>
           </TooltipProvider>
         </CartProvider>

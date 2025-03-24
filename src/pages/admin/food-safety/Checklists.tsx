@@ -1,6 +1,4 @@
-
 import React, { useState } from "react";
-import Layout from "@/components/Layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,7 +59,7 @@ const ChecklistsPage = () => {
   
   if (isLoadingTemplates) {
     return (
-      <Layout interface="admin">
+      <div>
         <PageHeader
           heading={<T text="Food Safety Checklists" />}
           description={<T text="View and complete food safety checklists" />}
@@ -69,13 +67,13 @@ const ChecklistsPage = () => {
         <div className="flex justify-center items-center py-20">
           <RotateCw className="h-12 w-12 animate-spin text-muted-foreground" />
         </div>
-      </Layout>
+      </div>
     );
   }
   
   if (activeTemplate) {
     return (
-      <Layout interface="admin">
+      <div>
         <PageHeader
           heading={activeTemplate.name}
           description={<T text="Complete the food safety checklist" />}
@@ -87,12 +85,12 @@ const ChecklistsPage = () => {
           staffId={currentStaffId}
           onComplete={handleCompleteChecklist}
         />
-      </Layout>
+      </div>
     );
   }
   
   return (
-    <Layout interface="admin">
+    <div>
       <PageHeader
         heading={<T text="Food Safety Checklists" />}
         description={<T text="View and complete food safety checklists" />}
@@ -181,7 +179,7 @@ const ChecklistsPage = () => {
           )}
         </TabsContent>
       </Tabs>
-    </Layout>
+    </div>
   );
 };
 

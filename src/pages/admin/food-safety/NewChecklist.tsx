@@ -1,6 +1,4 @@
-
 import React, { useState } from "react";
-import Layout from "@/components/Layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,7 +58,6 @@ const NewChecklistPage = () => {
     const newItems = [...items];
     newItems.splice(index, 1);
     
-    // Update display order
     const reorderedItems = newItems.map((item, idx) => ({
       ...item,
       display_order: idx + 1,
@@ -76,7 +73,6 @@ const NewChecklistPage = () => {
   };
   
   const handleSubmit = async () => {
-    // Validation
     if (!name.trim()) {
       toast({
         title: t("Validation Error"),
@@ -99,7 +95,6 @@ const NewChecklistPage = () => {
     setIsSubmitting(true);
     
     try {
-      // Insert template
       const { data: template, error: templateError } = await supabase
         .from("checklist_templates")
         .insert([{
@@ -113,7 +108,6 @@ const NewChecklistPage = () => {
         
       if (templateError) throw templateError;
       
-      // Insert items
       const itemsToInsert = validItems.map(item => ({
         template_id: template.id,
         description: item.description,
@@ -148,7 +142,7 @@ const NewChecklistPage = () => {
   };
   
   return (
-    <Layout interface="admin">
+    <div>
       <PageHeader
         heading={<T text="Create New Checklist" />}
         description={<T text="Define a new food safety checklist template" />}
@@ -323,7 +317,7 @@ const NewChecklistPage = () => {
           </Button>
         </CardFooter>
       </Card>
-    </Layout>
+    </div>
   );
 };
 

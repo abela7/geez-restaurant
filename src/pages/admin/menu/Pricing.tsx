@@ -1,478 +1,271 @@
-import React, { useState, useEffect } from "react";
+
+import React from "react";
 import { PageHeader } from "@/components/ui/page-header";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Search, ChevronLeft, Edit, Calculator, Loader2, Calendar, PercentIcon, BadgePoundSterling } from "lucide-react";
+import { ChevronLeft, Search, Loader2, TrendingUp, History } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Link } from "react-router-dom";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MenuNav } from "@/components/menu/MenuNav";
-import { supabase } from "@/integrations/supabase/client";
+import { usePriceManagement, PriceHistory } from "@/hooks/usePriceManagement";
 import { toast } from "sonner";
-import { InputWithIcon } from "@/components/ui/input-with-icon";
-import { useIsMobile } from "@/hooks/use-mobile";
-
-interface FoodItem {
-  id: string;
-  name: string;
-  price: number;
-  cost: number | null;
-  profit_margin: number | null;
-  category_id: string | null;
-  categoryName?: string;
-}
-
-interface PriceChange {
-  id: string;
-  food_item_id: string;
-  old_price: number;
-  new_price: number;
-  change_date: string;
-  reason: string;
-  foodName?: string;
-}
+import { format } from "date-fns";
 
 const Pricing = () => {
   const { t } = useLanguage();
-  const isMobile = useIsMobile();
-  const [isLoading, setIsLoading] = useState(true);
-  const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
-  const [priceChanges, setPriceChanges] = useState<PriceChange[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [currentItem, setCurrentItem] = useState<FoodItem | null>(null);
-  const [newPrice, setNewPrice] = useState("");
-  const [priceChangeReason, setPriceChangeReason] = useState("");
-  const [activeTab, setActiveTab] = useState("current");
-  const [filterCategory, setFilterCategory] = useState<string>("all");
-  const [categories, setCategories] = useState<{id: string, name: string}[]>([]);
+  const {
+    isLoading,
+    foodItems,
+    priceChanges,
+    categories,
+    searchQuery,
+    setSearchQuery,
+    showEditDialog,
+    setShowEditDialog,
+    currentItem,
+    newPrice,
+    setNewPrice,
+    priceChangeReason,
+    setPriceChangeReason,
+    activeTab,
+    setActiveTab,
+    filterCategory,
+    setFilterCategory,
+    openEditDialog,
+    handlePriceUpdate
+  } = usePriceManagement();
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  const formatPrice = (price: number) => {
+    return `£${price.toFixed(2)}`;
+  };
 
-  const loadData = async () => {
+  const formatDate = (dateString: string) => {
     try {
-      setIsLoading(true);
-      await Promise.all([
-        loadFoodItems(),
-        loadPriceHistory(),
-        loadCategories()
-      ]);
+      return format(new Date(dateString), "PPP");
     } catch (error) {
-      console.error("Error loading data:", error);
-      toast.error("Failed to load data");
-    } finally {
-      setIsLoading(false);
+      return dateString;
     }
-  };
-
-  const loadFoodItems = async () => {
-    const { data, error } = await supabase
-      .from('food_items')
-      .select(`
-        *,
-        menu_categories(id, name)
-      `);
-    
-    if (error) {
-      throw error;
-    }
-    
-    const formattedItems = data.map(item => ({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      cost: item.cost,
-      profit_margin: item.profit_margin,
-      category_id: item.category_id,
-      categoryName: item.menu_categories ? item.menu_categories.name : "Uncategorized"
-    }));
-    
-    setFoodItems(formattedItems);
-  };
-
-  const loadPriceHistory = async () => {
-    const { data, error } = await supabase
-      .from('price_history')
-      .select(`
-        *,
-        food_items(name)
-      `)
-      .order('change_date', { ascending: false });
-    
-    if (error) {
-      throw error;
-    }
-    
-    const formattedHistory = data.map(item => ({
-      id: item.id,
-      food_item_id: item.food_item_id,
-      old_price: item.old_price,
-      new_price: item.new_price,
-      change_date: item.change_date,
-      reason: item.reason,
-      foodName: item.food_items ? item.food_items.name : "Unknown Item"
-    }));
-    
-    setPriceChanges(formattedHistory);
-  };
-
-  const loadCategories = async () => {
-    const { data, error } = await supabase
-      .from('menu_categories')
-      .select('id, name')
-      .eq('active', true);
-    
-    if (error) {
-      throw error;
-    }
-    
-    setCategories(data);
-  };
-
-  const handlePriceUpdate = async () => {
-    if (!currentItem) return;
-    
-    const priceValue = parseFloat(newPrice);
-    if (isNaN(priceValue) || priceValue <= 0) {
-      toast.error("Please enter a valid price");
-      return;
-    }
-    
-    try {
-      setIsLoading(true);
-      
-      // First record the price change in history
-      const { error: historyError } = await supabase
-        .from('price_history')
-        .insert({
-          food_item_id: currentItem.id,
-          old_price: currentItem.price,
-          new_price: priceValue,
-          change_date: new Date().toISOString(),
-          reason: priceChangeReason
-        });
-      
-      if (historyError) throw historyError;
-      
-      // Calculate new profit margin
-      let newProfitMargin = null;
-      if (currentItem.cost && currentItem.cost > 0) {
-        newProfitMargin = Math.round(((priceValue - currentItem.cost) / priceValue) * 100);
-      }
-      
-      // Then update the food item price
-      const { error: updateError } = await supabase
-        .from('food_items')
-        .update({ 
-          price: priceValue,
-          profit_margin: newProfitMargin
-        })
-        .eq('id', currentItem.id);
-      
-      if (updateError) throw updateError;
-      
-      // Refresh data
-      await Promise.all([
-        loadFoodItems(),
-        loadPriceHistory()
-      ]);
-      
-      toast.success("Price updated successfully");
-      setShowEditDialog(false);
-      
-    } catch (error) {
-      console.error("Error updating price:", error);
-      toast.error("Failed to update price");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const openEditDialog = (item: FoodItem) => {
-    setCurrentItem(item);
-    setNewPrice(item.price.toString());
-    setPriceChangeReason("");
-    setShowEditDialog(true);
-  };
-
-  const filteredFoodItems = foodItems.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (item.categoryName && item.categoryName.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    const matchesCategory = filterCategory === "all" || item.category_id === filterCategory;
-    
-    return matchesSearch && matchesCategory;
-  });
-
-  const calculateProfitClass = (margin: number | null) => {
-    if (margin === null) return "";
-    if (margin < 30) return "text-red-600";
-    if (margin < 50) return "text-amber-600";
-    return "text-green-600";
   };
 
   return (
-    <div className="container mx-auto p-3 md:p-6">
-      <PageHeader 
-        title={<T text="Menu Pricing" />}
-        description={<T text="Manage prices, profit margins, and price history" />}
+    <div className="container mx-auto p-4 md:p-6">
+      <PageHeader
+        title={<T text="Pricing Management" />}
+        description={<T text="Manage food item prices and track price history" />}
         actions={
-          <>
-            <Button variant="outline" asChild>
-              <Link to="/admin/menu">
-                <ChevronLeft className="mr-2 h-4 w-4" />
-                <T text="Back to Menu" />
-              </Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link to="/admin/menu/food">
-                <Calculator className="mr-2 h-4 w-4" />
-                <T text="Food Management" />
-              </Link>
-            </Button>
-          </>
+          <Button variant="outline" asChild>
+            <Link to="/admin/menu">
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              <T text="Back to Menu" />
+            </Link>
+          </Button>
         }
       />
 
       <MenuNav />
 
-      <div className="mb-6 flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
-          <InputWithIcon
-            type="search"
-            placeholder={t("Search food items...")}
-            className="w-full"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            icon={<Search className="h-4 w-4" />}
-          />
-        </div>
-        
-        <Select value={filterCategory} onValueChange={(value) => setFilterCategory(value)}>
-          <SelectTrigger className={isMobile ? "w-full" : "w-[200px]"}>
-            <SelectValue placeholder={t("Filter by category")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("All Categories")}</SelectItem>
-            {categories.map(category => (
-              <SelectItem key={category.id} value={category.id}>
-                {category.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        
-        <div className="flex gap-2">
-          <Button 
-            variant={activeTab === "current" ? "default" : "outline"}
-            onClick={() => setActiveTab("current")}
-            className="flex-1 md:flex-auto"
-          >
+      <Tabs defaultValue="current" value={activeTab} onValueChange={setActiveTab} className="mt-4">
+        <TabsList className="mb-4">
+          <TabsTrigger value="current">
+            <TrendingUp className="mr-2 h-4 w-4" />
             <T text="Current Prices" />
-          </Button>
-          <Button 
-            variant={activeTab === "history" ? "default" : "outline"}
-            onClick={() => setActiveTab("history")}
-            className="flex-1 md:flex-auto"
-          >
-            <Calendar className="mr-2 h-4 w-4" />
+          </TabsTrigger>
+          <TabsTrigger value="history">
+            <History className="mr-2 h-4 w-4" />
             <T text="Price History" />
-          </Button>
-        </div>
-      </div>
+          </TabsTrigger>
+        </TabsList>
 
-      {isLoading ? (
-        <div className="flex justify-center items-center p-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      ) : activeTab === "current" ? (
-        <Card>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead><T text="Food Item" /></TableHead>
-                  <TableHead><T text="Category" /></TableHead>
-                  <TableHead><T text="Current Price" /></TableHead>
-                  <TableHead><T text="Cost" /></TableHead>
-                  <TableHead><T text="Profit Margin" /></TableHead>
-                  <TableHead className="text-right"><T text="Actions" /></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredFoodItems.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
-                      {searchQuery ? (
-                        <T text="No food items found matching your search" />
-                      ) : (
-                        <T text="No food items found" />
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredFoodItems.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">{item.name}</TableCell>
-                      <TableCell><Badge variant="outline">{item.categoryName}</Badge></TableCell>
-                      <TableCell className="font-bold">£{item.price.toFixed(2)}</TableCell>
-                      <TableCell>£{item.cost ? item.cost.toFixed(2) : '-'}</TableCell>
-                      <TableCell>
-                        <span className={calculateProfitClass(item.profit_margin)}>
-                          {item.profit_margin !== null ? `${item.profit_margin}%` : '-'}
+        <TabsContent value="current">
+          <div className="flex flex-col md:flex-row gap-4 mb-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder={t("Search food items...")}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10"
+              />
+            </div>
+            <div className="md:w-64">
+              <Select value={filterCategory} onValueChange={setFilterCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("Filter by category")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all"><T text="All Categories" /></SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {isLoading ? (
+            <div className="flex justify-center items-center p-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {foodItems.map((item) => (
+                <Card key={item.id} className="overflow-hidden">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-medium">{item.name}</h3>
+                        <p className="text-sm text-muted-foreground">{item.categoryName}</p>
+                      </div>
+                      <div>
+                        <span className="text-xl font-bold text-primary">{formatPrice(item.price)}</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center mt-4">
+                      <div>
+                        <p className="text-sm"><T text="Cost" />: {formatPrice(item.cost || 0)}</p>
+                        {item.profit_margin !== null && (
+                          <p className="text-sm">
+                            <T text="Profit Margin" />: {item.profit_margin}%
+                          </p>
+                        )}
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => openEditDialog(item)}
+                      >
+                        <T text="Update Price" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="history">
+          <div className="mb-4 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder={t("Search price history...")}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10"
+            />
+          </div>
+
+          {isLoading ? (
+            <div className="flex justify-center items-center p-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse table-auto">
+                <thead>
+                  <tr className="bg-muted">
+                    <th className="p-2 text-left"><T text="Item" /></th>
+                    <th className="p-2 text-right"><T text="Old Price" /></th>
+                    <th className="p-2 text-right"><T text="New Price" /></th>
+                    <th className="p-2 text-right"><T text="Change" /></th>
+                    <th className="p-2 text-left"><T text="Date" /></th>
+                    <th className="p-2 text-left"><T text="Reason" /></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {priceChanges.map((change: PriceHistory) => (
+                    <tr key={change.id} className="border-b border-border hover:bg-muted/50">
+                      <td className="p-2">{change.foodName}</td>
+                      <td className="p-2 text-right">{formatPrice(change.old_price)}</td>
+                      <td className="p-2 text-right">{formatPrice(change.new_price)}</td>
+                      <td className="p-2 text-right">
+                        <span className={change.new_price > change.old_price ? "text-green-600" : "text-red-600"}>
+                          {change.new_price > change.old_price ? "+" : ""}
+                          {((change.new_price - change.old_price) / change.old_price * 100).toFixed(1)}%
                         </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => openEditDialog(item)}
-                        >
-                          <Edit className="h-4 w-4 mr-2" />
-                          <T text="Update Price" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </Card>
-      ) : (
-        <Card>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead><T text="Food Item" /></TableHead>
-                  <TableHead><T text="Old Price" /></TableHead>
-                  <TableHead><T text="New Price" /></TableHead>
-                  <TableHead><T text="Change" /></TableHead>
-                  <TableHead><T text="Date" /></TableHead>
-                  <TableHead><T text="Reason" /></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {priceChanges.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
-                      <T text="No price change history found" />
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  priceChanges.map((change) => {
-                    const priceChange = change.new_price - change.old_price;
-                    const percentChange = ((priceChange / change.old_price) * 100).toFixed(1);
-                    const isIncrease = priceChange > 0;
-                    
-                    return (
-                      <TableRow key={change.id}>
-                        <TableCell className="font-medium">{change.foodName}</TableCell>
-                        <TableCell>£{change.old_price.toFixed(2)}</TableCell>
-                        <TableCell>£{change.new_price.toFixed(2)}</TableCell>
-                        <TableCell>
-                          <span className={isIncrease ? "text-red-600" : "text-green-600"}>
-                            {isIncrease ? "+" : ""}{priceChange.toFixed(2)} ({isIncrease ? "+" : ""}{percentChange}%)
-                          </span>
-                        </TableCell>
-                        <TableCell>{new Date(change.change_date).toLocaleDateString()}</TableCell>
-                        <TableCell>{change.reason || "-"}</TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </Card>
-      )}
+                      </td>
+                      <td className="p-2">{formatDate(change.change_date)}</td>
+                      <td className="p-2">{change.reason || "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle><T text="Update Price" /></DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            {currentItem && (
-              <>
-                <div className="space-y-2">
-                  <div className="flex justify-between flex-wrap gap-2">
-                    <div>
-                      <h3 className="font-medium">{currentItem.name}</h3>
-                      <p className="text-sm text-muted-foreground">{currentItem.categoryName}</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-medium"><T text="Current Price" />: £{currentItem.price.toFixed(2)}</div>
-                      {currentItem.cost && (
-                        <div className="text-sm text-muted-foreground">
-                          <T text="Cost" />: £{currentItem.cost.toFixed(2)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+          
+          {currentItem && (
+            <>
+              <div className="space-y-4 py-4">
+                <div className="flex justify-between">
+                  <span className="font-medium">{currentItem.name}</span>
+                  <span className="text-muted-foreground">{t("Current Price")}: {formatPrice(currentItem.price)}</span>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="newPrice"><T text="New Price (£)" /></Label>
-                  <div className="relative">
-                    <Input 
-                      id="newPrice" 
-                      type="number" 
-                      step="0.01"
-                      min="0"
-                      value={newPrice}
-                      onChange={(e) => setNewPrice(e.target.value)}
-                      className="pl-8"
-                    />
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                      £
-                    </span>
-                  </div>
-                  
-                  {currentItem.cost && parseFloat(newPrice) > 0 && (
-                    <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
-                      <div className="flex items-center justify-between flex-wrap gap-2">
-                        <span className="text-sm font-medium"><T text="New Profit Margin" /></span>
-                        <span className={calculateProfitClass(
-                          Math.round(((parseFloat(newPrice) - currentItem.cost) / parseFloat(newPrice)) * 100)
-                        )}>
-                          <PercentIcon className="h-4 w-4 inline mr-1" />
-                          {Math.round(((parseFloat(newPrice) - currentItem.cost) / parseFloat(newPrice)) * 100)}%
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="reason"><T text="Reason for Change" /></Label>
-                  <Input 
-                    id="reason" 
-                    value={priceChangeReason}
-                    onChange={(e) => setPriceChangeReason(e.target.value)}
-                    placeholder={t("e.g. Seasonal adjustment, Ingredient cost increase")}
+                  <label className="text-sm font-medium leading-none" htmlFor="new-price">
+                    <T text="New Price (£)" />
+                  </label>
+                  <Input
+                    id="new-price"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={newPrice}
+                    onChange={(e) => setNewPrice(e.target.value)}
+                    placeholder="0.00"
+                    className="col-span-2"
                   />
                 </div>
-              </>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-              <T text="Cancel" />
-            </Button>
-            <Button onClick={handlePriceUpdate} disabled={isLoading}>
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              <T text="Update Price" />
-            </Button>
-          </DialogFooter>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium leading-none" htmlFor="price-reason">
+                    <T text="Reason for Change (Optional)" />
+                  </label>
+                  <Input
+                    id="price-reason"
+                    value={priceChangeReason}
+                    onChange={(e) => setPriceChangeReason(e.target.value)}
+                    placeholder={t("e.g., Seasonal adjustment, Cost increase")}
+                  />
+                </div>
+                
+                {currentItem.cost > 0 && (
+                  <div className="p-3 bg-muted rounded-md">
+                    <p className="text-sm">
+                      <T text="New Profit Margin" />:
+                      {" "}
+                      {newPrice && !isNaN(parseFloat(newPrice)) && parseFloat(newPrice) > 0
+                        ? Math.round(((parseFloat(newPrice) - currentItem.cost) / parseFloat(newPrice)) * 100)
+                        : "0"}%
+                    </p>
+                  </div>
+                )}
+              </div>
+              
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+                  <T text="Cancel" />
+                </Button>
+                <Button onClick={handlePriceUpdate}>
+                  <T text="Update Price" />
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>
