@@ -61,7 +61,7 @@ export function SideModal({
             </Button>
           </SheetClose>
         </div>
-        <div className="overflow-y-auto side-modal-body h-[calc(100vh-150px)]">
+        <div className="h-full">
           {children}
         </div>
       </SheetContent>

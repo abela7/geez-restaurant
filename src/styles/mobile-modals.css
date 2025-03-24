@@ -71,6 +71,18 @@
   overflow-y: auto;
 }
 
+/* Select dropdowns enhancement for scrolling */
+[data-radix-select-content] {
+  max-height: 60vh !important;
+  overflow-y: auto !important;
+}
+
+/* Ensure the select content always has a background */
+[data-radix-select-viewport] {
+  background-color: hsl(var(--popover)) !important;
+  padding: 0.5rem !important;
+}
+
 /* Side modal enhancements */
 .side-modal-enter {
   transform: translateX(100%);
@@ -96,12 +108,7 @@
   max-height: calc(100vh - 180px);
 }
 
-/* Bottom sticky actions bar in modals */
-.side-modal-content .sticky.bottom-0 {
-  background-color: hsl(var(--background));
-  border-top: 1px solid hsl(var(--border));
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
-  margin-top: 1rem;
-  z-index: 20;
+/* Bottom actions bar in modals - better integrated */
+.flex-grow.pr-4.pb-16 {
+  padding-bottom: 4rem !important;
 }

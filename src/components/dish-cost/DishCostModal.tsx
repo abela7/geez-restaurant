@@ -240,279 +240,282 @@ const DishCostModal: React.FC<DishCostModalProps> = ({
       description={<T text="Calculate the cost of a dish including ingredients and operational overheads" />}
       width="2xl"
     >
-      <ScrollArea className="h-[calc(100vh-180px)] pr-4">
-        <div className="space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium"><T text="Dish Name" /></label>
-              <Input 
-                placeholder={t("e.g., Beef Tibs, Doro Wat")} 
-                value={formData.dish_name}
-                onChange={(e) => setFormData(prev => ({ ...prev, dish_name: e.target.value }))}
-              />
-            </div>
+      <div className="flex flex-col h-[calc(100vh-100px)]">
+        <ScrollArea className="flex-grow pr-4 pb-16">
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium"><T text="Dish Name" /></label>
+                <Input 
+                  placeholder={t("e.g., Beef Tibs, Doro Wat")} 
+                  value={formData.dish_name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, dish_name: e.target.value }))}
+                />
+              </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium"><T text="Link to Menu Item (Optional)" /></label>
-              <Select 
-                value={formData.food_item_id || "none"} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, food_item_id: value === "none" ? null : value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t("Select a menu item")} />
-                </SelectTrigger>
-                <SelectContent className="max-h-[300px]">
-                  <SelectItem value="none"><T text="None" /></SelectItem>
-                  {foodItems.map(item => (
-                    <SelectItem key={item.id} value={item.id}>
-                      {item.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <h3 className="text-sm font-medium mb-2"><T text="Ingredients" /></h3>
-              <div className="space-y-3 mb-2">
-                {formData.ingredients.map((ingredient, index) => (
-                  <div key={index} className="p-3 border rounded-md">
-                    <div className="grid grid-cols-12 gap-2">
-                      <div className={isMobile ? "col-span-12" : "col-span-4"}>
-                        <label className="text-xs text-muted-foreground"><T text="Ingredient" /></label>
-                        <Select 
-                          value={ingredient.ingredient_id || "none"} 
-                          onValueChange={(value) => updateIngredient(index, 'ingredient_id', value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder={t("Select an ingredient")} />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-[250px]">
-                            {ingredients.map(ing => (
-                              <SelectItem key={ing.id} value={ing.id}>
-                                {ing.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className={isMobile ? "col-span-6" : "col-span-2"}>
-                        <label className="text-xs text-muted-foreground"><T text="Quantity" /></label>
-                        <Input 
-                          type="number" 
-                          step="0.01" 
-                          className="text-sm" 
-                          value={ingredient.quantity}
-                          onChange={(e) => updateIngredient(index, 'quantity', parseFloat(e.target.value) || 0)}
-                        />
-                      </div>
-                      <div className={isMobile ? "col-span-6" : "col-span-2"}>
-                        <label className="text-xs text-muted-foreground"><T text="Unit" /></label>
-                        <div className="p-1.5 border rounded text-sm bg-muted">{ingredient.unit_type}</div>
-                      </div>
-                      <div className={isMobile ? "col-span-6" : "col-span-2"}>
-                        <label className="text-xs text-muted-foreground"><T text="Cost per Unit" /></label>
-                        <Input 
-                          type="number" 
-                          step="0.01" 
-                          className="text-sm" 
-                          value={ingredient.unit_cost}
-                          onChange={(e) => updateIngredient(index, 'unit_cost', parseFloat(e.target.value) || 0)}
-                        />
-                      </div>
-                      <div className={isMobile ? "col-span-6" : "col-span-1"}>
-                        <label className="text-xs text-muted-foreground"><T text="Total" /></label>
-                        <div className="p-1.5 border rounded text-sm">£{ingredient.total_cost.toFixed(2)}</div>
-                      </div>
-                      <div className={isMobile ? "col-span-12 mt-2 flex justify-between" : "col-span-1 flex items-end"}>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-red-500 hover:text-red-700"
-                          onClick={() => removeIngredient(index)}
-                        >
-                          <T text="Remove" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              <Button variant="outline" size="sm" className="w-full mt-2" onClick={addIngredient}>
-                <Plus className="h-3 w-3 mr-1" />
-                <T text="Add Ingredient" />
-              </Button>
-            </div>
-            
-            <div>
-              <h3 className="text-sm font-medium mb-2">
-                <span className="flex items-center">
-                  <T text="Overhead Costs" />
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="h-4 w-4 ml-1 text-muted-foreground cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs">
-                        <T text="Include costs such as staff wages, utilities, gas, electricity, and other operational expenses specific to this dish." />
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </span>
-              </h3>
-              <div className="space-y-3 mb-2">
-                {formData.overhead_costs.map((cost, index) => (
-                  <div key={index} className="p-3 border rounded-md">
-                    <div className="grid grid-cols-12 gap-2">
-                      <div className={isMobile ? "col-span-12" : "col-span-4"}>
-                        <label className="text-xs text-muted-foreground"><T text="Category" /></label>
-                        <Select 
-                          value={cost.category} 
-                          onValueChange={(value) => updateOverheadCost(index, 'category', value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-[250px]">
-                            {overheadCategories.map(category => (
-                              <SelectItem key={category.value} value={category.value}>
-                                <div className="flex items-center">
-                                  {getOverheadIcon(category.value)}
-                                  <span className="ml-2">{category.label}</span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className={isMobile ? "col-span-12" : "col-span-5"}>
-                        <label className="text-xs text-muted-foreground"><T text="Description" /></label>
-                        <Input 
-                          className="text-sm" 
-                          value={cost.description}
-                          onChange={(e) => updateOverheadCost(index, 'description', e.target.value)}
-                          placeholder={overheadCategories.find(cat => cat.value === cost.category)?.description || ""}
-                        />
-                      </div>
-                      <div className={isMobile ? "col-span-12" : "col-span-2"}>
-                        <label className="text-xs text-muted-foreground"><T text="Cost (£)" /></label>
-                        <Input 
-                          type="number" 
-                          step="0.01" 
-                          className="text-sm" 
-                          value={cost.cost}
-                          onChange={(e) => updateOverheadCost(index, 'cost', parseFloat(e.target.value) || 0)}
-                        />
-                      </div>
-                      <div className={isMobile ? "col-span-12 mt-2 flex justify-between" : "col-span-1 flex items-end"}>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-red-500 hover:text-red-700"
-                          onClick={() => removeOverheadCost(index)}
-                        >
-                          <T text="Remove" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              <Button variant="outline" size="sm" className="w-full mt-2" onClick={addOverheadCost}>
-                <Plus className="h-3 w-3 mr-1" />
-                <T text="Add Overhead Cost" />
-              </Button>
-            </div>
-          </div>
-          
-          <div className="border-t pt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h3 className="text-sm font-medium mb-3"><T text="Cost Summary" /></h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span><T text="Ingredient Costs" /></span>
-                    <span className="font-medium">£{totals.totalIngredientCost.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span><T text="Overhead Costs" /></span>
-                    <span className="font-medium">£{totals.totalOverheadCost.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between border-t pt-1 font-medium">
-                    <span><T text="Total Cost" /></span>
-                    <span className="text-amber-600">£{totals.totalCost.toFixed(2)}</span>
-                  </div>
-                </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium"><T text="Link to Menu Item (Optional)" /></label>
+                <Select 
+                  value={formData.food_item_id || "none"} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, food_item_id: value === "none" ? null : value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("Select a menu item")} />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60 overflow-y-auto">
+                    <SelectItem value="none"><T text="None" /></SelectItem>
+                    {foodItems.map(item => (
+                      <SelectItem key={item.id} value={item.id}>
+                        {item.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div>
-                <h3 className="text-sm font-medium mb-3"><T text="Pricing" /></h3>
-                <div className="space-y-3">
-                  <div className="space-y-2">
-                    <label className="text-sm"><T text="Profit Margin (%)" /></label>
-                    <Input 
-                      type="number" 
-                      value={formData.profit_margin}
-                      onChange={(e) => setFormData(prev => ({ ...prev, profit_margin: parseInt(e.target.value) || 0 }))}
-                    />
-                  </div>
-                  <div className="pt-1 flex justify-between text-sm">
-                    <span><T text="Suggested Price" /></span>
-                    <span className="font-medium text-green-600">£{totals.suggestedPrice.toFixed(2)}</span>
-                  </div>
-                  
-                  <div className="border-t pt-3 mt-3">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Switch 
-                        id="useManualPrice" 
-                        checked={formData.use_manual_price}
-                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, use_manual_price: checked }))}
-                      />
-                      <Label htmlFor="useManualPrice" className="text-sm font-medium cursor-pointer">
-                        <T text="Use Manual Price" />
-                      </Label>
-                    </div>
-                    
-                    {formData.use_manual_price && (
-                      <div className="space-y-2">
-                        <label className="text-sm"><T text="Manual Price (£)" /></label>
-                        <div className="relative">
+                <h3 className="text-sm font-medium mb-2"><T text="Ingredients" /></h3>
+                <div className="space-y-3 mb-2">
+                  {formData.ingredients.map((ingredient, index) => (
+                    <div key={index} className="p-3 border rounded-md">
+                      <div className="grid grid-cols-12 gap-2">
+                        <div className={isMobile ? "col-span-12" : "col-span-4"}>
+                          <label className="text-xs text-muted-foreground"><T text="Ingredient" /></label>
+                          <Select 
+                            value={ingredient.ingredient_id || "none"} 
+                            onValueChange={(value) => updateIngredient(index, 'ingredient_id', value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder={t("Select an ingredient")} />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-60 overflow-y-auto">
+                              {ingredients.map(ing => (
+                                <SelectItem key={ing.id} value={ing.id}>
+                                  {ing.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className={isMobile ? "col-span-6" : "col-span-2"}>
+                          <label className="text-xs text-muted-foreground"><T text="Quantity" /></label>
                           <Input 
                             type="number" 
                             step="0.01" 
-                            min="0" 
-                            value={formData.manual_price || ""}
-                            onChange={(e) => setFormData(prev => ({ 
-                              ...prev, 
-                              manual_price: e.target.value ? parseFloat(e.target.value) : null 
-                            }))}
-                            placeholder="0.00"
-                            className="pl-8"
+                            className="text-sm" 
+                            value={ingredient.quantity}
+                            onChange={(e) => updateIngredient(index, 'quantity', parseFloat(e.target.value) || 0)}
                           />
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                            £
-                          </span>
+                        </div>
+                        <div className={isMobile ? "col-span-6" : "col-span-2"}>
+                          <label className="text-xs text-muted-foreground"><T text="Unit" /></label>
+                          <div className="p-1.5 border rounded text-sm bg-muted">{ingredient.unit_type}</div>
+                        </div>
+                        <div className={isMobile ? "col-span-6" : "col-span-2"}>
+                          <label className="text-xs text-muted-foreground"><T text="Cost per Unit" /></label>
+                          <Input 
+                            type="number" 
+                            step="0.01" 
+                            className="text-sm" 
+                            value={ingredient.unit_cost}
+                            onChange={(e) => updateIngredient(index, 'unit_cost', parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                        <div className={isMobile ? "col-span-6" : "col-span-1"}>
+                          <label className="text-xs text-muted-foreground"><T text="Total" /></label>
+                          <div className="p-1.5 border rounded text-sm">£{ingredient.total_cost.toFixed(2)}</div>
+                        </div>
+                        <div className={isMobile ? "col-span-12 mt-2 flex justify-between" : "col-span-1 flex items-end"}>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-red-500 hover:text-red-700"
+                            onClick={() => removeIngredient(index)}
+                          >
+                            <T text="Remove" />
+                          </Button>
                         </div>
                       </div>
-                    )}
+                    </div>
+                  ))}
+                </div>
+                
+                <Button variant="outline" size="sm" className="w-full mt-2" onClick={addIngredient}>
+                  <Plus className="h-3 w-3 mr-1" />
+                  <T text="Add Ingredient" />
+                </Button>
+              </div>
+              
+              <div>
+                <h3 className="text-sm font-medium mb-2">
+                  <span className="flex items-center">
+                    <T text="Overhead Costs" />
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-4 w-4 ml-1 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <T text="Include costs such as staff wages, utilities, gas, electricity, and other operational expenses specific to this dish." />
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </span>
+                </h3>
+                <div className="space-y-3 mb-2">
+                  {formData.overhead_costs.map((cost, index) => (
+                    <div key={index} className="p-3 border rounded-md">
+                      <div className="grid grid-cols-12 gap-2">
+                        <div className={isMobile ? "col-span-12" : "col-span-4"}>
+                          <label className="text-xs text-muted-foreground"><T text="Category" /></label>
+                          <Select 
+                            value={cost.category} 
+                            onValueChange={(value) => updateOverheadCost(index, 'category', value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-60 overflow-y-auto">
+                              {overheadCategories.map(category => (
+                                <SelectItem key={category.value} value={category.value}>
+                                  <div className="flex items-center">
+                                    {getOverheadIcon(category.value)}
+                                    <span className="ml-2">{category.label}</span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className={isMobile ? "col-span-12" : "col-span-5"}>
+                          <label className="text-xs text-muted-foreground"><T text="Description" /></label>
+                          <Input 
+                            className="text-sm" 
+                            value={cost.description}
+                            onChange={(e) => updateOverheadCost(index, 'description', e.target.value)}
+                            placeholder={overheadCategories.find(cat => cat.value === cost.category)?.description || ""}
+                          />
+                        </div>
+                        <div className={isMobile ? "col-span-12" : "col-span-2"}>
+                          <label className="text-xs text-muted-foreground"><T text="Cost (£)" /></label>
+                          <Input 
+                            type="number" 
+                            step="0.01" 
+                            className="text-sm" 
+                            value={cost.cost}
+                            onChange={(e) => updateOverheadCost(index, 'cost', parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                        <div className={isMobile ? "col-span-12 mt-2 flex justify-between" : "col-span-1 flex items-end"}>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-red-500 hover:text-red-700"
+                            onClick={() => removeOverheadCost(index)}
+                          >
+                            <T text="Remove" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <Button variant="outline" size="sm" className="w-full mt-2" onClick={addOverheadCost}>
+                  <Plus className="h-3 w-3 mr-1" />
+                  <T text="Add Overhead Cost" />
+                </Button>
+              </div>
+            </div>
+            
+            <div className="border-t pt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-sm font-medium mb-3"><T text="Cost Summary" /></h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span><T text="Ingredient Costs" /></span>
+                      <span className="font-medium">£{totals.totalIngredientCost.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span><T text="Overhead Costs" /></span>
+                      <span className="font-medium">£{totals.totalOverheadCost.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between border-t pt-1 font-medium">
+                      <span><T text="Total Cost" /></span>
+                      <span className="text-amber-600">£{totals.totalCost.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-sm font-medium mb-3"><T text="Pricing" /></h3>
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <label className="text-sm"><T text="Profit Margin (%)" /></label>
+                      <Input 
+                        type="number" 
+                        value={formData.profit_margin}
+                        onChange={(e) => setFormData(prev => ({ ...prev, profit_margin: parseInt(e.target.value) || 0 }))}
+                      />
+                    </div>
+                    <div className="pt-1 flex justify-between text-sm">
+                      <span><T text="Suggested Price" /></span>
+                      <span className="font-medium text-green-600">£{totals.suggestedPrice.toFixed(2)}</span>
+                    </div>
+                    
+                    <div className="border-t pt-3 mt-3">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Switch 
+                          id="useManualPrice" 
+                          checked={formData.use_manual_price}
+                          onCheckedChange={(checked) => setFormData(prev => ({ ...prev, use_manual_price: checked }))}
+                        />
+                        <Label htmlFor="useManualPrice" className="text-sm font-medium cursor-pointer">
+                          <T text="Use Manual Price" />
+                        </Label>
+                      </div>
+                      
+                      {formData.use_manual_price && (
+                        <div className="space-y-2">
+                          <label className="text-sm"><T text="Manual Price (£)" /></label>
+                          <div className="relative">
+                            <Input 
+                              type="number" 
+                              step="0.01" 
+                              min="0" 
+                              value={formData.manual_price || ""}
+                              onChange={(e) => setFormData(prev => ({ 
+                                ...prev, 
+                                manual_price: e.target.value ? parseFloat(e.target.value) : null 
+                              }))}
+                              placeholder="0.00"
+                              className="pl-8"
+                            />
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                              £
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          
-          <div className="pt-4 flex justify-end space-x-2 sticky bottom-0 bg-background border-t mt-6 py-3">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              <T text="Cancel" />
-            </Button>
-            <Button onClick={handleSubmit}>
-              <T text="Save Dish Cost" />
-            </Button>
-          </div>
+        </ScrollArea>
+        
+        {/* Action buttons positioned at the bottom */}
+        <div className="flex justify-end space-x-2 py-4 bg-background border-t mt-auto">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <T text="Cancel" />
+          </Button>
+          <Button onClick={handleSubmit}>
+            <T text="Save Dish Cost" />
+          </Button>
         </div>
-      </ScrollArea>
+      </div>
     </SideModal>
   );
 };
