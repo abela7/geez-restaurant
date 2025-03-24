@@ -1,27 +1,16 @@
-
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Link } from "react-router-dom";
 import { MenuNav } from "@/components/menu/MenuNav";
-import { 
-  AlertCircle, 
-  Clipboard, 
-  Utensils, 
-  BarChart4, 
-  DollarSign,
-  FileText,
-  Loader2,
-  ChevronRight,
-  ExternalLink,
-  BookOpen
-} from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import FoodItemRecipeButton from "@/components/admin/menu/FoodItemRecipeButton";
 import { FoodItem } from "@/types/menu";
+import RecipeStatisticsCards from "@/components/admin/menu/RecipeStatisticsCards";
+import ExistingRecipesTable from "@/components/admin/menu/ExistingRecipesTable";
+import MissingRecipesTable from "@/components/admin/menu/MissingRecipesTable";
+import RecipeIntegrationBanner from "@/components/admin/menu/RecipeIntegrationBanner";
 
 interface Recipe {
   id: string;
@@ -134,15 +123,6 @@ const RecipeManagement = () => {
     }
   };
 
-  const filteredRecipes = recipes.filter(recipe => 
-    recipe.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    recipe.food_item?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const filteredMissingRecipes = foodItemsWithoutRecipes.filter(item =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   if (isLoading) {
     return (
       <div className="container mx-auto p-4 md:p-6">
@@ -194,45 +174,11 @@ const RecipeManagement = () => {
 
       <div className="mt-6 space-y-6">
         {/* Recipe Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg"><T text="Total Recipes" /></CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-amber-600">{recipes.length}</div>
-              <p className="text-sm text-muted-foreground">
-                <span>{t("of {total} food items", { total: foodItems.length })}</span>
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg"><T text="Missing Recipes" /></CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-amber-600">{foodItemsWithoutRecipes.length}</div>
-              <p className="text-sm text-muted-foreground">
-                <T text="food items without recipes" />
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg"><T text="Recipe Development Status" /></CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-amber-600">
-                {Math.round((recipes.length / Math.max(foodItems.length, 1)) * 100)}%
-              </div>
-              <p className="text-sm text-muted-foreground">
-                <T text="completion rate" />
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        <RecipeStatisticsCards 
+          recipesCount={recipes.length}
+          foodItemsCount={foodItems.length}
+          missingRecipesCount={foodItemsWithoutRecipes.length}
+        />
 
         {/* Search Input */}
         <div className="relative">
@@ -246,179 +192,19 @@ const RecipeManagement = () => {
         </div>
 
         {/* Existing Recipes */}
-        <Card>
-          <CardHeader>
-            <CardTitle><T text="Existing Recipes" /></CardTitle>
-            <CardDescription>
-              <T text="Recipes with defined ingredients and costs" />
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {filteredRecipes.length > 0 ? (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead><T text="Dish Name" /></TableHead>
-                      <TableHead><T text="Category" /></TableHead>
-                      <TableHead><T text="Ingredients" /></TableHead>
-                      <TableHead><T text="Serves" /></TableHead>
-                      <TableHead><T text="Total Cost" /></TableHead>
-                      <TableHead><T text="Cost per Serving" /></TableHead>
-                      <TableHead><T text="Actions" /></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredRecipes.map((recipe) => (
-                      <TableRow key={recipe.id}>
-                        <TableCell className="font-medium">{recipe.name}</TableCell>
-                        <TableCell>{recipe.food_item?.category?.name || "Uncategorized"}</TableCell>
-                        <TableCell>{recipe.ingredientCount}</TableCell>
-                        <TableCell>{recipe.serves}</TableCell>
-                        <TableCell>£{recipe.total_cost?.toFixed(2) || "0.00"}</TableCell>
-                        <TableCell>£{recipe.cost_per_serving?.toFixed(2) || "0.00"}</TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <FoodItemRecipeButton 
-                              foodItem={{
-                                id: recipe.food_item_id,
-                                name: recipe.name,
-                                description: '',
-                                price: 0,
-                                image_url: null,
-                                category_id: null,
-                                available: true,
-                                is_vegetarian: false,
-                                is_vegan: false,
-                                is_gluten_free: false,
-                                is_spicy: false,
-                                preparation_time: null
-                              }} 
-                            />
-                            <Button variant="ghost" size="icon" title={t("View Dish Cost")} asChild>
-                              <Link to={`/admin/menu/dish-cost`}>
-                                <DollarSign className="h-4 w-4" />
-                              </Link>
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            ) : (
-              <div className="text-center py-6 text-muted-foreground">
-                {searchQuery ? 
-                  <T text="No recipes found matching your search" /> : 
-                  <T text="No recipes have been created yet" />
-                }
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <ExistingRecipesTable 
+          recipes={recipes}
+          searchQuery={searchQuery}
+        />
 
         {/* Food Items Without Recipes */}
-        <Card>
-          <CardHeader>
-            <CardTitle><T text="Food Items Without Recipes" /></CardTitle>
-            <CardDescription>
-              <T text="Items that need recipes to be created" />
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {filteredMissingRecipes.length > 0 ? (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead><T text="Dish Name" /></TableHead>
-                      <TableHead><T text="Category" /></TableHead>
-                      <TableHead><T text="Current Price" /></TableHead>
-                      <TableHead><T text="Actions" /></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredMissingRecipes.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-medium">{item.name}</TableCell>
-                        <TableCell>{item.categoryName}</TableCell>
-                        <TableCell>£{item.price?.toFixed(2) || "0.00"}</TableCell>
-                        <TableCell>
-                          <FoodItemRecipeButton foodItem={item} />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            ) : (
-              <div className="text-center py-6 text-muted-foreground">
-                {searchQuery ? 
-                  <T text="No food items without recipes match your search" /> : 
-                  <T text="All food items have recipes" />
-                }
-              </div>
-            )}
-          </CardContent>
-          {filteredMissingRecipes.length > 0 && (
-            <CardFooter>
-              <Button variant="outline" asChild>
-                <Link to="/admin/menu/food">
-                  <T text="Manage Food Items" />
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Link>
-              </Button>
-            </CardFooter>
-          )}
-        </Card>
+        <MissingRecipesTable 
+          foodItems={foodItemsWithoutRecipes}
+          searchQuery={searchQuery}
+        />
 
         {/* Integration Banner */}
-        <Card className="bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <BookOpen className="h-5 w-5 mr-2 text-amber-600" />
-              <T text="Recipe & Cost Integration" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground mb-4">
-              <T text="Recipes are now fully integrated with the dish cost management system:" />
-            </p>
-            <ul className="space-y-2 ml-4">
-              <li className="flex items-start">
-                <Clipboard className="h-4 w-4 mr-2 mt-1 text-amber-600" />
-                <span><T text="Recipe ingredients are automatically reflected in dish costs" /></span>
-              </li>
-              <li className="flex items-start">
-                <Utensils className="h-4 w-4 mr-2 mt-1 text-amber-600" />
-                <span><T text="Stock levels are tracked when orders are processed" /></span>
-              </li>
-              <li className="flex items-start">
-                <BarChart4 className="h-4 w-4 mr-2 mt-1 text-amber-600" />
-                <span><T text="Cost calculations are synchronized across the system" /></span>
-              </li>
-              <li className="flex items-start">
-                <DollarSign className="h-4 w-4 mr-2 mt-1 text-amber-600" />
-                <span><T text="Food item prices are automatically suggested based on costs and profit margins" /></span>
-              </li>
-            </ul>
-          </CardContent>
-          <CardFooter className="flex flex-wrap gap-2">
-            <Button asChild>
-              <Link to="/admin/menu/dish-cost">
-                <T text="Manage Dish Costs" />
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link to="/admin/inventory/ingredients">
-                <T text="Manage Ingredients" />
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Link>
-            </Button>
-          </CardFooter>
-        </Card>
+        <RecipeIntegrationBanner />
       </div>
     </div>
   );
