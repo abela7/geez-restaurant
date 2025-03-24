@@ -24,6 +24,14 @@ const AddUnitModal: React.FC<AddUnitModalProps> = ({ open, onOpenChange, onSubmi
     description: ""
   });
 
+  // Unit types with descriptions
+  const unitTypes = [
+    { value: "weight", label: t("Weight"), description: t("For measuring mass (kg, g, lb, oz)") },
+    { value: "volume", label: t("Volume"), description: t("For measuring liquid volume (L, ml, cup)") },
+    { value: "quantity", label: t("Quantity"), description: t("For counting items (pcs, dozen)") },
+    { value: "length", label: t("Length"), description: t("For measuring size (cm, in)") }
+  ];
+
   useEffect(() => {
     if (unit) {
       setFormData({
@@ -68,55 +76,65 @@ const AddUnitModal: React.FC<AddUnitModalProps> = ({ open, onOpenChange, onSubmi
       description={<T text={unit ? "Modify measurement unit" : "Create a new measurement unit for ingredients"} />}
       width="md"
     >
-      <ScrollArea className="h-[calc(100vh-180px)] pr-4">
-        <div className="space-y-4">
+      <ScrollArea className="pr-4 overflow-y-auto">
+        <div className="space-y-5">
           <div className="space-y-2">
             <label className="text-sm font-medium"><T text="Unit Name" /></label>
             <Input 
               placeholder={t("e.g., Kilogram, Liter")} 
               value={formData.name}
               onChange={(e) => handleChange("name", e.target.value)}
+              className="h-11"
             />
           </div>
+          
           <div className="space-y-2">
             <label className="text-sm font-medium"><T text="Abbreviation" /></label>
             <Input 
               placeholder={t("e.g., kg, L")} 
               value={formData.abbreviation}
               onChange={(e) => handleChange("abbreviation", e.target.value)}
+              className="h-11"
             />
           </div>
+          
           <div className="space-y-2">
             <label className="text-sm font-medium"><T text="Unit Type" /></label>
             <Select 
               value={formData.type} 
               onValueChange={(value) => handleChange("type", value)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-11">
                 <SelectValue placeholder={t("Select unit type")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="weight"><T text="Weight" /></SelectItem>
-                <SelectItem value="volume"><T text="Volume" /></SelectItem>
-                <SelectItem value="quantity"><T text="Quantity" /></SelectItem>
-                <SelectItem value="length"><T text="Length" /></SelectItem>
+                {unitTypes.map(type => (
+                  <SelectItem key={type.value} value={type.value}>
+                    <div>
+                      <div className="font-medium">{type.label}</div>
+                      <div className="text-xs text-muted-foreground">{type.description}</div>
+                    </div>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
+          
           <div className="space-y-2">
             <label className="text-sm font-medium"><T text="Description (Optional)" /></label>
             <Input 
               placeholder={t("Brief description of the unit")} 
               value={formData.description}
               onChange={(e) => handleChange("description", e.target.value)}
+              className="h-11"
             />
           </div>
           
-          <div className="pt-4 flex justify-end space-x-2 sticky bottom-0 bg-background border-t mt-6 py-3">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <div className="pt-4 flex justify-end space-x-3 mt-4">
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="h-11">
               <T text="Cancel" />
             </Button>
-            <Button onClick={handleSubmit}>
+            <Button onClick={handleSubmit} className="h-11">
               <T text={unit ? "Update Unit" : "Save Unit"} />
             </Button>
           </div>

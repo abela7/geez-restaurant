@@ -45,7 +45,7 @@ export function SideModal({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className={`p-4 ${widthClass} overflow-y-auto side-modal-content`} side="right">
-        <div className="flex justify-between items-center sticky top-0 bg-background z-10 pb-2">
+        <div className="flex justify-between items-center sticky top-0 bg-background z-40 pb-2">
           <SheetHeader className="mb-4">
             {title && <SheetTitle>{title}</SheetTitle>}
             {description && <SheetDescription>{description}</SheetDescription>}
@@ -61,7 +61,7 @@ export function SideModal({
             </Button>
           </SheetClose>
         </div>
-        <div className="pb-4">
+        <div className="pb-4 relative">
           {children}
         </div>
       </SheetContent>
