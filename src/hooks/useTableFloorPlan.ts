@@ -14,6 +14,8 @@ export interface TableFloorPlanProps {
   updateTableSize: (tableId: string, width: number, height: number) => Promise<void>;
   updateTableRotation: (tableId: string, rotation: number) => Promise<void>;
   changeRoom: (roomId: string | null) => void;
+  saveChanges: () => Promise<void>;
+  hasUnsavedChanges: boolean;
 }
 
 export const useTableFloorPlan = (): TableFloorPlanProps => {
@@ -22,6 +24,8 @@ export const useTableFloorPlan = (): TableFloorPlanProps => {
   const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [modifiedTables, setModifiedTables] = useState<{[key: string]: Partial<Table>}>({});
 
   // Load tables and rooms
   useEffect(() => {
@@ -58,6 +62,8 @@ export const useTableFloorPlan = (): TableFloorPlanProps => {
         if (tablesError) throw tablesError;
         
         setTables(tablesData as Table[]);
+        setModifiedTables({});
+        setHasUnsavedChanges(false);
       } catch (err) {
         console.error("Error loading floor plan data:", err);
         setError(err instanceof Error ? err : new Error('Unknown error loading floor plan'));
@@ -70,23 +76,30 @@ export const useTableFloorPlan = (): TableFloorPlanProps => {
     loadData();
   }, [currentRoomId]);
 
-  // Update table position
+  // Track changes to a table
+  const trackTableChange = (tableId: string, changes: Partial<Table>) => {
+    setModifiedTables(prev => ({
+      ...prev,
+      [tableId]: {
+        ...(prev[tableId] || {}),
+        ...changes
+      }
+    }));
+    setHasUnsavedChanges(true);
+  };
+
+  // Update table position in state only (no DB update until save)
   const updateTablePosition = async (tableId: string, position_x: number, position_y: number) => {
     try {
-      const { data, error } = await supabase
-        .from('restaurant_tables')
-        .update({ position_x, position_y })
-        .eq('id', tableId)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
+      // Update local state
       setTables(prevTables => 
         prevTables.map(table => 
           table.id === tableId ? { ...table, position_x, position_y } : table
         )
       );
+      
+      // Track the change
+      trackTableChange(tableId, { position_x, position_y });
       
     } catch (err) {
       console.error("Error updating table position:", err);
@@ -95,23 +108,18 @@ export const useTableFloorPlan = (): TableFloorPlanProps => {
     }
   };
 
-  // Update table size
+  // Update table size in state only (no DB update until save)
   const updateTableSize = async (tableId: string, width: number, height: number) => {
     try {
-      const { data, error } = await supabase
-        .from('restaurant_tables')
-        .update({ width, height })
-        .eq('id', tableId)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
+      // Update local state
       setTables(prevTables => 
         prevTables.map(table => 
           table.id === tableId ? { ...table, width, height } : table
         )
       );
+      
+      // Track the change
+      trackTableChange(tableId, { width, height });
       
     } catch (err) {
       console.error("Error updating table size:", err);
@@ -120,23 +128,18 @@ export const useTableFloorPlan = (): TableFloorPlanProps => {
     }
   };
 
-  // Update table rotation
+  // Update table rotation in state only (no DB update until save)
   const updateTableRotation = async (tableId: string, rotation: number) => {
     try {
-      const { data, error } = await supabase
-        .from('restaurant_tables')
-        .update({ rotation })
-        .eq('id', tableId)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
+      // Update local state
       setTables(prevTables => 
         prevTables.map(table => 
           table.id === tableId ? { ...table, rotation } : table
         )
       );
+      
+      // Track the change
+      trackTableChange(tableId, { rotation });
       
     } catch (err) {
       console.error("Error updating table rotation:", err);
@@ -145,9 +148,49 @@ export const useTableFloorPlan = (): TableFloorPlanProps => {
     }
   };
 
+  // Save all changes to the database
+  const saveChanges = async () => {
+    try {
+      const promises = Object.entries(modifiedTables).map(([tableId, changes]) => {
+        return supabase
+          .from('restaurant_tables')
+          .update(changes)
+          .eq('id', tableId)
+          .select();
+      });
+      
+      const results = await Promise.all(promises);
+      
+      // Check for errors
+      const errors = results.filter(result => result.error);
+      if (errors.length > 0) {
+        console.error("Errors saving changes:", errors);
+        throw new Error("Some changes could not be saved");
+      }
+      
+      setModifiedTables({});
+      setHasUnsavedChanges(false);
+      toast.success("Floor plan changes saved successfully");
+      
+    } catch (err) {
+      console.error("Error saving floor plan changes:", err);
+      toast.error("Failed to save floor plan changes");
+      throw err;
+    }
+  };
+
   // Change current room
   const changeRoom = (roomId: string | null) => {
-    setCurrentRoomId(roomId);
+    // If there are unsaved changes, confirm before changing room
+    if (hasUnsavedChanges) {
+      if (confirm("You have unsaved changes. Changing rooms will discard these changes. Continue?")) {
+        setCurrentRoomId(roomId);
+        setModifiedTables({});
+        setHasUnsavedChanges(false);
+      }
+    } else {
+      setCurrentRoomId(roomId);
+    }
   };
 
   return {
@@ -159,6 +202,8 @@ export const useTableFloorPlan = (): TableFloorPlanProps => {
     updateTablePosition,
     updateTableSize,
     updateTableRotation,
-    changeRoom
+    changeRoom,
+    saveChanges,
+    hasUnsavedChanges
   };
 };

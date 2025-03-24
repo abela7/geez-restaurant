@@ -1,5 +1,4 @@
-
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +18,8 @@ import {
   Maximize, 
   Square, 
   Circle, 
-  MousePointer 
+  MousePointer,
+  AlertTriangle 
 } from "lucide-react";
 
 import { Table, Room, TableStatus } from "@/services/table/types";
@@ -31,6 +31,9 @@ interface TableElementProps {
   selected: boolean;
   onSelect: (table: Table) => void;
   mode: EditMode;
+  onPositionChange: (tableId: string, position_x: number, position_y: number) => void;
+  onSizeChange: (tableId: string, width: number, height: number) => void;
+  onRotationChange: (tableId: string, rotation: number) => void;
 }
 
 type EditMode = 'select' | 'move' | 'resize' | 'rotate';
@@ -39,7 +42,10 @@ const TableElement: React.FC<TableElementProps> = ({
   table, 
   selected, 
   onSelect,
-  mode
+  mode,
+  onPositionChange,
+  onSizeChange,
+  onRotationChange
 }) => {
   const { t } = useLanguage();
   const elementRef = useRef<HTMLDivElement>(null);
@@ -52,7 +58,12 @@ const TableElement: React.FC<TableElementProps> = ({
   const [startSize, setStartSize] = useState({ width: 0, height: 0 });
   const [startRotation, setStartRotation] = useState(0);
 
-  // Get status color
+  useEffect(() => {
+    setPosition({ x: table.position_x || 0, y: table.position_y || 0 });
+    setSize({ width: table.width || 100, height: table.height || 100 });
+    setRotation(table.rotation || 0);
+  }, [table]);
+
   const getStatusColor = (status: TableStatus): string => {
     switch (status) {
       case "available":
@@ -68,12 +79,10 @@ const TableElement: React.FC<TableElementProps> = ({
     }
   };
 
-  // Get shape class
   const getShapeClass = (): string => {
     return table.shape === 'circle' ? 'rounded-full' : 'rounded-md';
   };
 
-  // Handle mouse events
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -88,13 +97,61 @@ const TableElement: React.FC<TableElementProps> = ({
       setStartPos({ x: e.clientX, y: e.clientY });
       setStartSize({ width: size.width, height: size.height });
     } else if (mode === 'rotate') {
-      // For rotate, we would need more complex logic
-      // This is a simplified implementation
-      setRotation((prev) => (prev + 45) % 360);
+      const newRotation = (rotation + 45) % 360;
+      setRotation(newRotation);
+      onRotationChange(table.id, newRotation);
     }
   };
 
-  // Render the table element
+  const handleMouseMove = (e: MouseEvent) => {
+    if (dragging) {
+      const dx = e.clientX - startPos.x;
+      const dy = e.clientY - startPos.y;
+      const newPosition = {
+        x: position.x + dx,
+        y: position.y + dy
+      };
+      setPosition(newPosition);
+      setStartPos({ x: e.clientX, y: e.clientY });
+      onPositionChange(table.id, newPosition.x, newPosition.y);
+    }
+    
+    if (resizing) {
+      const dx = e.clientX - startPos.x;
+      const dy = e.clientY - startPos.y;
+      
+      const newSize = {
+        width: Math.max(50, startSize.width + dx),
+        height: Math.max(50, startSize.height + dy)
+      };
+      
+      setSize(newSize);
+      onSizeChange(table.id, newSize.width, newSize.height);
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (dragging) {
+      setDragging(false);
+    }
+    
+    if (resizing) {
+      setResizing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (dragging || resizing) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [dragging, resizing, startPos, startSize, position, size]);
+
   return (
     <div
       ref={elementRef}
@@ -106,7 +163,7 @@ const TableElement: React.FC<TableElementProps> = ({
         height: `${size.height}px`,
         transform: `rotate(${rotation}deg)`,
         zIndex: selected ? 10 : 1,
-        transition: 'box-shadow 0.2s ease'
+        transition: mode === 'move' || mode === 'resize' ? 'none' : 'box-shadow 0.2s ease'
       }}
       onClick={() => onSelect(table)}
       onMouseDown={handleMouseDown}
@@ -136,43 +193,50 @@ const FloorPlanView: React.FC = () => {
     updateTablePosition,
     updateTableSize,
     updateTableRotation,
-    changeRoom
+    changeRoom,
+    saveChanges,
+    hasUnsavedChanges
   } = useTableFloorPlan();
 
-  // Handle table selection
   const handleSelectTable = (table: Table) => {
-    setSelectedTable(table);
+    if (editMode === 'select') {
+      setSelectedTable(table);
+    }
   };
 
-  // Handle room change
   const handleRoomChange = (roomId: string) => {
     setSelectedTable(null);
     changeRoom(roomId === "all" ? null : roomId);
   };
 
-  // Toggle edit mode
   const toggleEditMode = () => {
+    if (isEditing && hasUnsavedChanges) {
+      const confirmExit = confirm("You have unsaved changes. Do you want to save them before exiting?");
+      if (confirmExit) {
+        saveChanges().then(() => {
+          setIsEditing(false);
+          setEditMode('select');
+          setSelectedTable(null);
+        });
+        return;
+      }
+    }
+    
     setIsEditing(!isEditing);
     setEditMode('select');
     setSelectedTable(null);
   };
 
-  // Change edit tool
   const changeEditTool = (mode: EditMode) => {
     setEditMode(mode);
   };
 
-  // Save changes
-  const saveChanges = () => {
-    toast({
-      title: "Changes Saved",
-      description: "Floor plan changes have been saved successfully.",
-    });
-    setIsEditing(false);
-    setEditMode('select');
+  const handleCanvasClick = (e: React.MouseEvent) => {
+    if (e.target === canvasRef.current) {
+      setSelectedTable(null);
+    }
   };
 
-  // Get the current room name
   const getCurrentRoomName = (): string => {
     if (!currentRoomId) return t("All Rooms");
     const room = rooms.find(r => r.id === currentRoomId);
@@ -254,7 +318,19 @@ const FloorPlanView: React.FC = () => {
           
           <div className="flex-1"></div>
           
-          <Button variant="default" size="sm" onClick={saveChanges}>
+          {hasUnsavedChanges && (
+            <div className="flex items-center text-amber-500 mr-2">
+              <AlertTriangle className="h-4 w-4 mr-1" />
+              <span className="text-sm"><T text="Unsaved changes" /></span>
+            </div>
+          )}
+          
+          <Button 
+            variant="default" 
+            size="sm" 
+            onClick={() => saveChanges()}
+            disabled={!hasUnsavedChanges}
+          >
             <Save className="h-4 w-4 mr-1" />
             <T text="Save Changes" />
           </Button>
@@ -278,11 +354,10 @@ const FloorPlanView: React.FC = () => {
           <div 
             ref={canvasRef}
             className="relative w-full h-full min-h-[500px] overflow-auto bg-gray-100 dark:bg-gray-800"
+            onClick={handleCanvasClick}
           >
-            {/* Floor background grid - could be enhanced */}
             <div className="absolute inset-0 bg-grid-pattern" />
             
-            {/* Render tables */}
             {tables.map((table) => (
               <TableElement
                 key={table.id}
@@ -290,11 +365,38 @@ const FloorPlanView: React.FC = () => {
                 selected={selectedTable?.id === table.id}
                 onSelect={handleSelectTable}
                 mode={editMode}
+                onPositionChange={updateTablePosition}
+                onSizeChange={updateTableSize}
+                onRotationChange={updateTableRotation}
               />
             ))}
           </div>
         )}
       </CardContent>
+
+      {selectedTable && (
+        <div className="border-t p-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="text-lg font-medium"><T text="Table" /> {selectedTable.table_number}</h3>
+              <p className="text-sm text-muted-foreground">
+                <T text="Status" />: <Badge variant={
+                  selectedTable.status === 'available' ? 'default' :
+                  selectedTable.status === 'occupied' ? 'destructive' :
+                  selectedTable.status === 'reserved' ? 'secondary' :
+                  'outline'
+                }>{selectedTable.status}</Badge>
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm"><T text="Capacity" />: {selectedTable.capacity} <T text="seats" /></p>
+              <p className="text-sm text-muted-foreground">
+                <T text="Position" />: ({selectedTable.position_x}, {selectedTable.position_y})
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </Card>
   );
 };
