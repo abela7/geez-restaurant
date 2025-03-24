@@ -382,7 +382,7 @@ export const useDishCosts = () => {
     }
   };
 
-  const createUnit = async (unit: Partial<MeasurementUnit>) => {
+  const createUnit = async (unit: { name: string; abbreviation: string; type: string; description?: string }) => {
     try {
       setIsLoading(true);
       
@@ -404,7 +404,7 @@ export const useDishCosts = () => {
     }
   };
 
-  const createIngredient = async (ingredient: Partial<Ingredient>) => {
+  const createIngredient = async (ingredient: { name: string; unit: string; cost: number; category?: string }) => {
     try {
       setIsLoading(true);
       
