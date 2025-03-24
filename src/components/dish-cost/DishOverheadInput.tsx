@@ -24,7 +24,7 @@ const DishOverheadInput: React.FC<DishOverheadInputProps> = ({
   onRemove
 }) => {
   const { t } = useLanguage();
-  
+
   const handleCategoryChange = (value: string) => {
     onChange(costIndex, {
       ...cost,
@@ -48,7 +48,7 @@ const DishOverheadInput: React.FC<DishOverheadInputProps> = ({
   };
 
   return (
-    <div className="grid grid-cols-12 gap-2 mb-2 items-center">
+    <div className="grid grid-cols-12 gap-2 items-center">
       <div className="col-span-3">
         <Select
           value={cost.category}
@@ -58,21 +58,16 @@ const DishOverheadInput: React.FC<DishOverheadInputProps> = ({
             <SelectValue placeholder={t("Select category")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="Labor">
-              <T text="Labor" />
-            </SelectItem>
-            <SelectItem value="Utilities">
-              <T text="Utilities" />
-            </SelectItem>
-            <SelectItem value="Rent">
-              <T text="Rent" />
-            </SelectItem>
-            <SelectItem value="Equipment">
-              <T text="Equipment" />
-            </SelectItem>
-            <SelectItem value="Other">
-              <T text="Other" />
-            </SelectItem>
+            <SelectItem value="Labor"><T text="Labor" /></SelectItem>
+            <SelectItem value="Utilities"><T text="Utilities" /></SelectItem>
+            <SelectItem value="Rent"><T text="Rent" /></SelectItem>
+            <SelectItem value="Maintenance"><T text="Maintenance" /></SelectItem>
+            <SelectItem value="Electricity"><T text="Electricity" /></SelectItem>
+            <SelectItem value="Gas"><T text="Gas" /></SelectItem>
+            <SelectItem value="Water"><T text="Water" /></SelectItem>
+            <SelectItem value="Packaging"><T text="Packaging" /></SelectItem>
+            <SelectItem value="Insurance"><T text="Insurance" /></SelectItem>
+            <SelectItem value="Other"><T text="Other" /></SelectItem>
           </SelectContent>
         </Select>
       </div>
