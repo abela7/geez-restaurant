@@ -202,15 +202,14 @@ const FoodItemForm: React.FC<FoodItemFormProps> = ({
         </div>
       </div>
 
-      {/* Add Modifiers section when in edit mode and we have an ID */}
-      {editMode && formData.id && (
-        <div className="mt-6">
-          <FoodItemModifiersForm 
-            foodItemId={formData.id} 
-            onModifiersChange={onModifiersChange}
-          />
-        </div>
-      )}
+      {/* Add Modifiers section for both add and edit modes */}
+      <div className="mt-6">
+        <FoodItemModifiersForm 
+          foodItemId={formData.id} 
+          onModifiersChange={onModifiersChange}
+          mode={editMode ? "edit" : "create"}
+        />
+      </div>
 
       <div className="flex justify-end space-x-2 pt-4">
         <Button variant="outline" onClick={onCancel}>

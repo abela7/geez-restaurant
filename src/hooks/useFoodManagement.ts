@@ -77,6 +77,7 @@ export const useFoodManagement = () => {
       is_spicy: false,
       preparation_time: undefined
     });
+    setSelectedModifiers([]);
     setEditMode(false);
     setOpenDialog(true);
   };
@@ -155,6 +156,23 @@ export const useFoodManagement = () => {
 
       if (error) throw error;
 
+      // Now save the selected modifiers if there are any
+      if (selectedModifiers.length > 0 && data) {
+        const createdFoodItemId = data.id;
+        
+        // Create array of records for insertion
+        const modifierRecords = selectedModifiers.map(modifierGroupId => ({
+          food_item_id: createdFoodItemId,
+          modifier_group_id: modifierGroupId
+        }));
+        
+        const { error: modifierError } = await supabase
+          .from('food_item_modifiers')
+          .insert(modifierRecords);
+        
+        if (modifierError) throw modifierError;
+      }
+
       toast.success("Food item added successfully");
       handleCloseDialog();
       await loadData();
@@ -196,8 +214,27 @@ export const useFoodManagement = () => {
       if (error) throw error;
 
       // Update modifiers for this food item
-      const { saveModifierGroups } = useFoodItemModifiers();
-      await saveModifierGroups(formData.id);
+      // First, delete existing associations
+      const { error: deleteError } = await supabase
+        .from('food_item_modifiers')
+        .delete()
+        .eq('food_item_id', formData.id);
+      
+      if (deleteError) throw deleteError;
+      
+      // Then insert new associations
+      if (selectedModifiers.length > 0) {
+        const modifierRecords = selectedModifiers.map(modifierGroupId => ({
+          food_item_id: formData.id,
+          modifier_group_id: modifierGroupId
+        }));
+        
+        const { error: insertError } = await supabase
+          .from('food_item_modifiers')
+          .insert(modifierRecords);
+        
+        if (insertError) throw insertError;
+      }
 
       toast.success("Food item updated successfully");
       handleCloseDialog();

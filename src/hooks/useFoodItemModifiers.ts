@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ModifierGroup } from "@/hooks/useModifierManagement";
@@ -9,15 +9,34 @@ export const useFoodItemModifiers = (foodItemId?: string) => {
   const [availableModifierGroups, setAvailableModifierGroups] = useState<ModifierGroup[]>([]);
   const [selectedModifierGroups, setSelectedModifierGroups] = useState<string[]>([]);
 
-  useEffect(() => {
-    if (foodItemId) {
-      loadModifierData();
-    } else {
-      loadAvailableModifierGroups();
+  // Use useCallback to make these functions stable for useEffect dependencies
+  const loadAvailableModifierGroups = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      
+      const { data: groups, error: groupsError } = await supabase
+        .from('modifier_groups')
+        .select(`
+          *,
+          options:modifier_options(*)
+        `)
+        .order('name');
+      
+      if (groupsError) throw groupsError;
+      
+      setAvailableModifierGroups(groups || []);
+      
+    } catch (error) {
+      console.error('Error loading modifier groups:', error);
+      toast.error('Failed to load modifier groups');
+    } finally {
+      setIsLoading(false);
     }
-  }, [foodItemId]);
+  }, []);
 
-  const loadModifierData = async () => {
+  const loadModifierData = useCallback(async () => {
+    if (!foodItemId) return;
+
     try {
       setIsLoading(true);
       
@@ -33,7 +52,7 @@ export const useFoodItemModifiers = (foodItemId?: string) => {
       if (modifiersError) throw modifiersError;
       
       // Extract just the modifier group IDs
-      const selectedIds = foodItemModifiers.map(item => item.modifier_group_id);
+      const selectedIds = foodItemModifiers?.map(item => item.modifier_group_id) || [];
       setSelectedModifierGroups(selectedIds);
       
     } catch (error) {
@@ -42,31 +61,15 @@ export const useFoodItemModifiers = (foodItemId?: string) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [foodItemId, loadAvailableModifierGroups]);
 
-  const loadAvailableModifierGroups = async () => {
-    try {
-      setIsLoading(true);
-      
-      const { data: groups, error: groupsError } = await supabase
-        .from('modifier_groups')
-        .select(`
-          *,
-          options:modifier_options(*)
-        `)
-        .order('name');
-      
-      if (groupsError) throw groupsError;
-      
-      setAvailableModifierGroups(groups);
-      
-    } catch (error) {
-      console.error('Error loading modifier groups:', error);
-      toast.error('Failed to load modifier groups');
-    } finally {
-      setIsLoading(false);
+  useEffect(() => {
+    if (foodItemId) {
+      loadModifierData();
+    } else {
+      loadAvailableModifierGroups();
     }
-  };
+  }, [foodItemId, loadModifierData, loadAvailableModifierGroups]);
 
   const saveModifierGroups = async (foodItemId: string) => {
     try {
@@ -121,6 +124,7 @@ export const useFoodItemModifiers = (foodItemId?: string) => {
     selectedModifierGroups,
     toggleModifierGroup,
     saveModifierGroups,
-    loadModifierData
+    loadModifierData,
+    loadAvailableModifierGroups
   };
 };

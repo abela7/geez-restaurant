@@ -10,11 +10,13 @@ import { Loader2 } from "lucide-react";
 interface FoodItemModifiersFormProps {
   foodItemId?: string;
   onModifiersChange?: (selectedModifiers: string[]) => void;
+  mode?: 'edit' | 'create'; // Add mode prop to differentiate between edit and create
 }
 
 const FoodItemModifiersForm: React.FC<FoodItemModifiersFormProps> = ({ 
   foodItemId,
-  onModifiersChange
+  onModifiersChange,
+  mode = 'edit'
 }) => {
   const { t } = useLanguage();
   const { 
@@ -22,21 +24,24 @@ const FoodItemModifiersForm: React.FC<FoodItemModifiersFormProps> = ({
     availableModifierGroups, 
     selectedModifierGroups, 
     toggleModifierGroup,
-    loadModifierData
+    loadModifierData,
+    loadAvailableModifierGroups
   } = useFoodItemModifiers(foodItemId);
+
+  useEffect(() => {
+    if (mode === 'edit' && foodItemId) {
+      loadModifierData();
+    } else if (mode === 'create') {
+      // Just load available modifier groups without any selection
+      loadAvailableModifierGroups();
+    }
+  }, [foodItemId, mode, loadModifierData, loadAvailableModifierGroups]);
 
   useEffect(() => {
     if (onModifiersChange) {
       onModifiersChange(selectedModifierGroups);
     }
   }, [selectedModifierGroups, onModifiersChange]);
-
-  // Reload data if food item ID changes
-  useEffect(() => {
-    if (foodItemId) {
-      loadModifierData();
-    }
-  }, [foodItemId, loadModifierData]);
 
   if (isLoading) {
     return (
