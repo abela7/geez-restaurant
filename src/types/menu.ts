@@ -31,3 +31,31 @@ export interface FoodItem {
   cost?: number;
   profit_margin?: number;
 }
+
+export interface MenuDesignType {
+  layout: 'grid' | 'list' | 'compact';
+  columns: number;
+  showImages: boolean;
+  showDescriptions: boolean;
+  showPrices: boolean;
+  pageSize: 'a4' | 'a5' | 'letter' | 'custom';
+  orientation: 'portrait' | 'landscape';
+  titleFont: string;
+  titleSize: number;
+  subtitleFont: string;
+  subtitleSize: number;
+  bodyFont: string;
+  bodySize: number;
+  primaryColor: string;
+  secondaryColor: string;
+  backgroundColor: string;
+  textColor: string;
+  accentColor: string;
+  borderRadius: number;
+  showBorders: boolean;
+  borderColor: string;
+  spacing: 'compact' | 'comfortable' | 'spacious';
+  headerStyle: 'centered' | 'left-aligned' | 'minimal';
+  footerText: string;
+  logoPosition: 'top' | 'header' | 'none';
+}
