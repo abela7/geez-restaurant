@@ -82,14 +82,14 @@ const Pricing = () => {
 
         <TabsContent value="current">
           <div className="flex flex-col md:flex-row gap-4 mb-4">
-            <div className="flex-1">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder={t("Search food items...")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full"
-                icon={<Search className="h-4 w-4" />}
+                className="w-full pl-10"
               />
             </div>
             <div className="md:w-64">
@@ -150,14 +150,14 @@ const Pricing = () => {
         </TabsContent>
 
         <TabsContent value="history">
-          <div className="mb-4">
+          <div className="mb-4 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
               placeholder={t("Search price history...")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full"
-              icon={<Search className="h-4 w-4" />}
+              className="w-full pl-10"
             />
           </div>
 
