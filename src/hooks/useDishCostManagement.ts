@@ -54,8 +54,8 @@ export const useDishCostManagement = () => {
           created_at,
           updated_at,
           food_item:food_item_id(id, name, category_id, menu_categories:category_id(name)),
-          dish_ingredients(id, ingredient_id, ingredient_name, quantity, unit_type, unit_cost, total_cost),
-          dish_overhead_costs(id, category, description, cost)
+          dish_ingredients(id, dish_cost_id, ingredient_id, ingredient_name, quantity, unit_type, unit_cost, total_cost, created_at, updated_at),
+          dish_overhead_costs(id, dish_cost_id, category, description, cost, created_at, updated_at)
         `)
         .order('dish_name');
       
@@ -65,7 +65,9 @@ export const useDishCostManagement = () => {
       }
       
       console.log(`Loaded ${data?.length || 0} dish costs successfully`);
-      setDishCosts(data || []);
+      
+      const typedData = data as unknown as DishCost[];
+      setDishCosts(typedData);
     } catch (err) {
       console.error("Error loading dish costs:", err);
       throw err;
