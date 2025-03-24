@@ -27,6 +27,7 @@ interface InventoryFiltersProps {
     status: string;
     sortBy: string;
     view: string;
+    pageSize: number;
   }) => void;
   categories: string[];
   initialFilters: {
@@ -34,6 +35,7 @@ interface InventoryFiltersProps {
     status: string;
     sortBy: string;
     view: string;
+    pageSize: number;
   };
 }
 
@@ -49,13 +51,15 @@ export const InventoryFilters: React.FC<InventoryFiltersProps> = ({
   const [status, setStatus] = React.useState(initialFilters.status);
   const [sortBy, setSortBy] = React.useState(initialFilters.sortBy);
   const [view, setView] = React.useState(initialFilters.view);
+  const [pageSize, setPageSize] = React.useState(initialFilters.pageSize);
 
   const handleApply = () => {
     onApplyFilters({
       category,
       status,
       sortBy,
-      view
+      view,
+      pageSize
     });
     onOpenChange(false);
   };
@@ -65,6 +69,7 @@ export const InventoryFilters: React.FC<InventoryFiltersProps> = ({
     setStatus("all");
     setSortBy("name");
     setView("grid");
+    setPageSize(10);
   };
 
   return (
@@ -116,6 +121,21 @@ export const InventoryFilters: React.FC<InventoryFiltersProps> = ({
                 <SelectItem value="name-desc"><T text="Name (Z-A)" /></SelectItem>
                 <SelectItem value="stock-low"><T text="Stock (Low-High)" /></SelectItem>
                 <SelectItem value="stock-high"><T text="Stock (High-Low)" /></SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label><T text="Items Per Page" /></Label>
+            <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number(value))}>
+              <SelectTrigger>
+                <SelectValue placeholder={t("Items per page")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
               </SelectContent>
             </Select>
           </div>

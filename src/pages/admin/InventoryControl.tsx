@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -48,19 +47,16 @@ const InventoryControl = () => {
   });
   const [analytics, setAnalytics] = useState<any>(null);
   
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Track statistics
   const [statistics, setStatistics] = useState({
     totalItems: 0,
     lowStockItems: 0,
     pendingOrders: 0
   });
 
-  // Extract unique categories from inventory
   const categories = ['All', ...new Set(inventory.map(item => item.category || 'Uncategorized'))];
 
   useEffect(() => {
@@ -80,7 +76,6 @@ const InventoryControl = () => {
     try {
       const data = await fetchStock();
       setInventory(data);
-      // Calculate statistics
       const lowStock = data.filter(item => 
         item.stock_quantity !== undefined && 
         item.reorder_level !== undefined && 
@@ -90,10 +85,9 @@ const InventoryControl = () => {
       setStatistics({
         totalItems: data.length,
         lowStockItems: lowStock,
-        pendingOrders: 0 // Removed pending orders feature
+        pendingOrders: 0
       });
       
-      // Load analytics
       const analyticsData = await getStockAnalytics();
       setAnalytics(analyticsData);
     } catch (error) {
@@ -111,19 +105,16 @@ const InventoryControl = () => {
   const filterInventory = () => {
     let filtered = [...inventory];
     
-    // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(item => 
         item.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
     
-    // Apply category filter
     if (selectedCategory !== 'All') {
       filtered = filtered.filter(item => item.category === selectedCategory);
     }
     
-    // Apply tab filter
     if (activeTab === 'low') {
       filtered = filtered.filter(item => 
         item.stock_quantity !== undefined && 
@@ -144,12 +135,10 @@ const InventoryControl = () => {
       );
     }
     
-    // Apply sorting
     filtered.sort((a, b) => {
       let aValue: any = a[sortOrder.field as keyof Ingredient];
       let bValue: any = b[sortOrder.field as keyof Ingredient];
       
-      // Handle undefined values
       if (aValue === undefined) aValue = sortOrder.field === 'name' ? '' : 0;
       if (bValue === undefined) bValue = sortOrder.field === 'name' ? '' : 0;
       
@@ -162,7 +151,6 @@ const InventoryControl = () => {
     
     setFilteredInventory(filtered);
     setTotalPages(Math.ceil(filtered.length / itemsPerPage));
-    // Reset to first page when filters change
     setCurrentPage(1);
   };
   
