@@ -34,6 +34,7 @@ import Pricing from "@/pages/admin/menu/Pricing";
 import MenuDesign from "@/pages/admin/menu/MenuDesign";
 import RecipeManagement from "@/pages/admin/menu/RecipeManagement";
 import Dishes from "@/pages/admin/menu/Dishes";
+import DishCost from "@/pages/admin/menu/DishCost";
 
 // Import staff pages
 import Directory from "@/pages/admin/staff/Directory";
@@ -106,6 +107,7 @@ const AdminRoutes = () => {
         <Route path="menu/dishes" element={<Dishes />} />
         <Route path="menu/categories" element={<Categories />} />
         <Route path="menu/recipes" element={<RecipeManagement />} />
+        <Route path="menu/dish-cost" element={<DishCost />} />
         <Route path="menu/modifiers" element={<Modifiers />} />
         <Route path="menu/pricing" element={<Pricing />} />
         <Route path="menu/design" element={<MenuDesign />} />

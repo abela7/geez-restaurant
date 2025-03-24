@@ -4,7 +4,16 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { FilePen, Utensils, LayoutGrid, Settings, DollarSign, Palette, MenuSquare } from "lucide-react";
+import { 
+  FilePen, 
+  Utensils, 
+  LayoutGrid, 
+  Settings, 
+  DollarSign, 
+  Palette, 
+  MenuSquare,
+  Calculator
+} from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Link } from "react-router-dom";
 import { MenuNav } from "@/components/menu/MenuNav";
@@ -63,6 +72,21 @@ const MenuManagement = () => {
           <Button className="mt-auto bg-amber-500 hover:bg-amber-600" asChild>
             <Link to="/admin/menu/recipes">
               <T text="Manage Recipes" />
+            </Link>
+          </Button>
+        </Card>
+        
+        <Card className="p-6 flex flex-col items-center text-center hover:shadow-md transition-shadow hover:border-amber-300">
+          <div className="w-12 h-12 bg-amber-500/10 rounded-full flex items-center justify-center mb-4">
+            <Calculator className="h-6 w-6 text-amber-500" />
+          </div>
+          <h3 className="font-medium text-lg mb-2"><T text="Dish Cost" /></h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            <T text="Track ingredient costs and calculate dish pricing" />
+          </p>
+          <Button className="mt-auto bg-amber-500 hover:bg-amber-600" asChild>
+            <Link to="/admin/menu/dish-cost">
+              <T text="Manage Dish Costs" />
             </Link>
           </Button>
         </Card>

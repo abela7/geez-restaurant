@@ -10,7 +10,8 @@ import {
   DollarSign, 
   Palette,
   Settings,
-  MenuSquare
+  MenuSquare,
+  Calculator
 } from "lucide-react";
 
 export const MenuNav: React.FC = () => {
@@ -23,6 +24,7 @@ export const MenuNav: React.FC = () => {
     { path: "/admin/menu/dishes", label: "Dishes", icon: <MenuSquare className="h-4 w-4 mr-2" /> },
     { path: "/admin/menu/categories", label: "Categories", icon: <LayoutGrid className="h-4 w-4 mr-2" /> },
     { path: "/admin/menu/recipes", label: "Recipes", icon: <FileText className="h-4 w-4 mr-2" /> },
+    { path: "/admin/menu/dish-cost", label: "Dish Cost", icon: <Calculator className="h-4 w-4 mr-2" /> },
     { path: "/admin/menu/modifiers", label: "Modifiers", icon: <Settings className="h-4 w-4 mr-2" /> },
     { path: "/admin/menu/pricing", label: "Pricing", icon: <DollarSign className="h-4 w-4 mr-2" /> },
     { path: "/admin/menu/design", label: "Menu Design", icon: <Palette className="h-4 w-4 mr-2" /> },
