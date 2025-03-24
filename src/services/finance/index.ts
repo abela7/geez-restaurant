@@ -4,3 +4,4 @@ export * from './types';
 export * from './expenseService';
 export * from './categoryService';
 export * from './expenseAnalyticsService';
+export * from './inventoryService';

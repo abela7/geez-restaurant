@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Expense, ExpenseWithCategory } from "./types";
 
@@ -14,7 +13,7 @@ export const fetchExpenses = async (
     .from("expenses")
     .select(`
       *,
-      category:expense_categories(id, name, type)
+      category:expense_categories(id, name, type, description, created_at, updated_at)
     `)
     .order("date", { ascending: false });
 
@@ -57,7 +56,19 @@ export const fetchExpenses = async (
     throw new Error(error.message);
   }
 
-  return data;
+  // Make sure the returned data matches the ExpenseWithCategory type
+  // by ensuring all expected fields are present
+  return data.map(expense => ({
+    ...expense,
+    category: expense.category || {
+      id: '',
+      name: 'Uncategorized',
+      type: 'uncategorized',
+      description: null,
+      created_at: null,
+      updated_at: null
+    }
+  })) as ExpenseWithCategory[];
 };
 
 /**
