@@ -21,6 +21,7 @@ import {
   AreaChart,
   Area
 } from "recharts";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 interface InventoryAnalyticsProps {
   analytics: any;
@@ -434,18 +435,20 @@ export const InventoryAnalytics: React.FC<InventoryAnalyticsProps> = ({
                   <ToggleGroup 
                     type="single" 
                     value={chartType} 
-                    onValueChange={(value) => value && setChartType(value as "pie" | "bar" | "area")}
+                    onValueChange={(value: string) => {
+                      if (value) setChartType(value as "pie" | "bar" | "area");
+                    }}
                     className="border rounded-md p-1"
                   >
-                    <TabsTrigger value="pie" className="text-xs px-2 py-1 rounded-sm">
+                    <ToggleGroupItem value="pie" className="text-xs px-2 py-1 rounded-sm">
                       <T text="Pie Chart" />
-                    </TabsTrigger>
-                    <TabsTrigger value="bar" className="text-xs px-2 py-1 rounded-sm">
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="bar" className="text-xs px-2 py-1 rounded-sm">
                       <T text="Bar Chart" />
-                    </TabsTrigger>
-                    <TabsTrigger value="area" className="text-xs px-2 py-1 rounded-sm">
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="area" className="text-xs px-2 py-1 rounded-sm">
                       <T text="Area Chart" />
-                    </TabsTrigger>
+                    </ToggleGroupItem>
                   </ToggleGroup>
                 </div>
               </CardDescription>
@@ -457,9 +460,9 @@ export const InventoryAnalytics: React.FC<InventoryAnalyticsProps> = ({
                 {categoryData.map((category) => (
                   <div key={category.name} className="border rounded-md p-3">
                     <div className="text-sm font-medium">{category.name}</div>
-                    <div className="text-2xl font-bold mt-1">{category.count}</div>
+                    <div className="text-2xl font-bold mt-1">{category.count as number}</div>
                     <div className="text-xs text-muted-foreground">
-                      {Math.round((category.count / totalItems) * 100)}% <T text="of total" />
+                      {totalItems > 0 ? Math.round(((category.count as number) / totalItems) * 100) : 0}% <T text="of total" />
                     </div>
                   </div>
                 ))}
@@ -625,7 +628,7 @@ export const InventoryAnalytics: React.FC<InventoryAnalyticsProps> = ({
                   {transactionData.map((type) => (
                     <div key={type.name} className="border rounded-lg p-4 text-center">
                       <div className="text-lg font-medium">{type.name}</div>
-                      <div className="text-3xl font-bold mt-2">{type.count}</div>
+                      <div className="text-3xl font-bold mt-2">{type.count as number}</div>
                       <div className="text-sm text-muted-foreground mt-1">
                         <T text="transactions" />
                       </div>

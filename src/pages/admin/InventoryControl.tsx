@@ -6,7 +6,7 @@ import { StatCard } from "@/components/ui/card-stat";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, AlertTriangle, Package, Truck, BarChart2, Filter, ArrowDownUp, RefreshCw, FileDown } from "lucide-react";
+import { Search, Plus, AlertTriangle, Package, Filter, RefreshCw, FileDown, ArrowDownUp, BarChart2 } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { InventoryNav } from "@/components/inventory/InventoryNav";
 import { InventoryTable } from "@/components/inventory/InventoryTable";
@@ -211,7 +211,9 @@ const InventoryControl = () => {
       field: filters.sortBy.split('-')[0],
       direction: filters.sortBy.includes('-desc') ? 'desc' : 'asc'
     });
-    setItemsPerPage(filters.pageSize || 10);
+    if (filters.pageSize) {
+      setItemsPerPage(filters.pageSize);
+    }
     setShowFilters(false);
   };
   
@@ -363,7 +365,7 @@ const InventoryControl = () => {
             <T text="More Filters" />
           </Button>
           <Button variant="outline" size="sm" onClick={() => handleSort('name')}>
-            <ArrowUpDown className="mr-2 h-4 w-4" />
+            <ArrowDownUp className="mr-2 h-4 w-4" />
             <T text="Sort" />
           </Button>
         </div>
