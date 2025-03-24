@@ -133,17 +133,26 @@ export const adminRoutes = [
     element: withLayout(DishProfile),
   },
   {
-    path: "/admin/dish-cost",
+    path: "/admin/menu/dish-cost",
     element: withLayout(DishCost),
   },
   {
-    path: "/admin/dish-cost/new",
+    path: "/admin/menu/dish-cost/:id",
     element: withLayout(DishCost),
   },
-  {
-    path: "/admin/dish-cost/:id",
-    element: withLayout(DishCost),
-  },
+  // Remove these old routes that don't match the sidebar
+  // {
+  //   path: "/admin/dish-cost",
+  //   element: withLayout(DishCost),
+  // },
+  // {
+  //   path: "/admin/dish-cost/new",
+  //   element: withLayout(DishCost),
+  // },
+  // {
+  //   path: "/admin/dish-cost/:id",
+  //   element: withLayout(DishCost),
+  // },
   {
     path: "/admin/menu/pricing",
     element: withLayout(Pricing),
