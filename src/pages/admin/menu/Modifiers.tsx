@@ -381,7 +381,9 @@ const Modifiers = () => {
             <DialogTitle><T text="Add Option" /></DialogTitle>
             <DialogDescription>
               {selectedGroup && (
-                <T text="Add option to" /> <strong>{selectedGroup.name}</strong>
+                <>
+                  <T text="Add option to" /> <strong>{selectedGroup.name}</strong>
+                </>
               )}
             </DialogDescription>
           </DialogHeader>
