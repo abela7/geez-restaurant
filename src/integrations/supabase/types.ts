@@ -467,6 +467,45 @@ export type Database = {
           },
         ]
       }
+      food_item_modifiers: {
+        Row: {
+          created_at: string | null
+          food_item_id: string | null
+          id: string
+          modifier_group_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          food_item_id?: string | null
+          id?: string
+          modifier_group_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          food_item_id?: string | null
+          id?: string
+          modifier_group_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_item_modifiers_food_item_id_fkey"
+            columns: ["food_item_id"]
+            isOneToOne: false
+            referencedRelation: "food_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_item_modifiers_modifier_group_id_fkey"
+            columns: ["modifier_group_id"]
+            isOneToOne: false
+            referencedRelation: "modifier_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       food_items: {
         Row: {
           available: boolean | null
