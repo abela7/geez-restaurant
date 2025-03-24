@@ -32,11 +32,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
 import { SideModal } from "@/components/ui/side-modal";
 import { IngredientForm } from "@/components/inventory/IngredientForm";
 import { useToast } from "@/components/ui/use-toast";
-import { fetchStock, addStockItem, updateStockItem } from "@/services/inventory";
+import { fetchStock, addStockItem, updateStockItem, addCategory } from "@/services/inventory";
 import { Ingredient } from "@/services/inventory/types";
+import { Label } from "@/components/ui/label";
 
 const categories = [
   { name: "All", icon: <Leaf className="h-4 w-4" /> },
@@ -60,12 +66,22 @@ const Ingredients = () => {
   const [selectedIngredient, setSelectedIngredient] = useState<Ingredient | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const [newCategory, setNewCategory] = useState("");
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false);
 
   const loadIngredients = async () => {
     setIsLoading(true);
     try {
       const data = await fetchStock();
       setIngredients(data);
+      
+      const uniqueCategories = Array.from(
+        new Set(data.map(item => item.category).filter(Boolean))
+      ) as string[];
+      
+      setAvailableCategories(['All', ...uniqueCategories]);
     } catch (error) {
       console.error("Error loading ingredients:", error);
       toast({
@@ -81,6 +97,52 @@ const Ingredients = () => {
   useEffect(() => {
     loadIngredients();
   }, []);
+
+  const handleAddCategory = async () => {
+    if (!newCategory.trim()) {
+      toast({
+        title: t("Error"),
+        description: t("Category name cannot be empty"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (availableCategories.some(c => c.toLowerCase() === newCategory.trim().toLowerCase())) {
+      toast({
+        title: t("Error"),
+        description: t("Category already exists"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAddingCategory(true);
+    try {
+      await addCategory(newCategory.trim());
+      
+      setAvailableCategories(prev => [...prev, newCategory.trim()]);
+      setSelectedCategoryFilter(newCategory.trim());
+      setNewCategory("");
+      setCategoryPopoverOpen(false);
+      
+      toast({
+        title: t("Success"),
+        description: t("Category added successfully"),
+      });
+      
+      loadIngredients();
+    } catch (error) {
+      console.error("Error adding category:", error);
+      toast({
+        title: t("Error"),
+        description: t("Failed to add category"),
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingCategory(false);
+    }
+  };
 
   const handleAddIngredient = async (data: Omit<Ingredient, 'id' | 'created_at' | 'updated_at'>) => {
     try {
@@ -180,21 +242,57 @@ const Ingredients = () => {
           />
         </div>
         <div className="flex gap-2">
-          <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder={t("Filter by category")} />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map(category => (
-                <SelectItem key={category.name} value={category.name}>
-                  <div className="flex items-center">
-                    {category.icon}
-                    <span className="ml-2"><T text={category.name} /></span>
+          <div className="relative">
+            <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder={t("Filter by category")} />
+              </SelectTrigger>
+              <SelectContent>
+                {availableCategories.map(category => (
+                  <SelectItem key={category} value={category}>
+                    <div className="flex items-center">
+                      <span className="ml-2">{category}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <Popover open={categoryPopoverOpen} onOpenChange={setCategoryPopoverOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Plus className="h-4 w-4 mr-1" />
+                <span className="hidden sm:inline"><T text="Add Category" /></span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-4" side="bottom" align="end">
+              <div className="space-y-4">
+                <h4 className="font-medium"><T text="Add New Category" /></h4>
+                <div className="space-y-2">
+                  <Label htmlFor="new-category"><T text="Category Name" /></Label>
+                  <div className="flex gap-2">
+                    <Input 
+                      id="new-category"
+                      value={newCategory} 
+                      onChange={(e) => setNewCategory(e.target.value)}
+                      placeholder={t("Enter category name")}
+                    />
+                    <Button 
+                      onClick={handleAddCategory}
+                      disabled={isAddingCategory || !newCategory.trim()}
+                    >
+                      {isAddingCategory ? 
+                        <T text="Adding..." /> : 
+                        <T text="Add" />
+                      }
+                    </Button>
                   </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+          
           <Button variant="outline" size="sm">
             <Filter className="mr-2 h-4 w-4" />
             <span className="hidden sm:inline"><T text="More Filters" /></span>
@@ -373,6 +471,8 @@ const Ingredients = () => {
           onSubmit={handleAddIngredient}
           onCancel={() => setIsAddModalOpen(false)}
           isLoading={isLoading}
+          categories={availableCategories.filter(c => c !== 'All')}
+          onAddCategory={handleAddCategory}
         />
       </SideModal>
 
@@ -388,6 +488,8 @@ const Ingredients = () => {
             onSubmit={handleUpdateIngredient}
             onCancel={() => setIsEditModalOpen(false)}
             isLoading={isLoading}
+            categories={availableCategories.filter(c => c !== 'All')}
+            onAddCategory={handleAddCategory}
           />
         )}
       </SideModal>
@@ -507,4 +609,3 @@ const Ingredients = () => {
 };
 
 export default Ingredients;
-
