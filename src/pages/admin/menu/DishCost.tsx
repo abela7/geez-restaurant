@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Link } from "react-router-dom";
 import { MenuNav } from "@/components/menu/MenuNav";
-import { Calculator, ChevronsUpDown, Utensils, RefreshCw, AlertCircle } from "lucide-react";
+import { Calculator, ChevronsUpDown, Utensils, RefreshCw, AlertCircle, Clock } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDishCosts } from "@/hooks/useDishCosts";
 import { DishCost, Ingredient, MeasurementUnit } from "@/types/dishCost";
@@ -50,15 +50,30 @@ const DishCostPage: React.FC = () => {
   const [editIngredient, setEditIngredient] = useState<Ingredient | undefined>(undefined);
   const [editUnit, setEditUnit] = useState<MeasurementUnit | undefined>(undefined);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [loadingStartTime, setLoadingStartTime] = useState<number | null>(null);
 
-  // Manual retry handler
+  // Track loading time
+  useEffect(() => {
+    if (isLoading && !loadingStartTime) {
+      setLoadingStartTime(Date.now());
+    } else if (!isLoading && loadingStartTime) {
+      const loadTime = Date.now() - loadingStartTime;
+      console.log(`Data loading completed in ${loadTime}ms`);
+      setLoadingStartTime(null);
+    }
+  }, [isLoading, loadingStartTime]);
+
+  // Manual retry handler with debounce
   const handleRetry = async () => {
+    if (isRetrying) return;
+    
     setIsRetrying(true);
     try {
       await loadInitialData();
       toast.success(t("Data refreshed successfully"));
     } catch (error) {
       console.error("Manual retry failed:", error);
+      toast.error(t("Failed to refresh data. Please try again."));
     } finally {
       setIsRetrying(false);
     }
@@ -253,9 +268,15 @@ const DishCostPage: React.FC = () => {
                 <CardContent className="flex justify-center items-center p-12">
                   <div className="flex flex-col items-center gap-4">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500"></div>
-                    <p className="text-muted-foreground">
-                      <T text="Loading data..." />
-                    </p>
+                    <div className="text-center">
+                      <p className="text-muted-foreground">
+                        <T text="Loading data..." />
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        <Clock className="h-3 w-3 inline mr-1" />
+                        <T text="This may take a moment" />
+                      </p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

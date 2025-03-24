@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -13,7 +12,6 @@ export const useDishCostManagement = () => {
   const [error, setError] = useState<Error | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   
-  // Use our specialized hooks
   const { 
     ingredients, 
     isLoading: ingredientsLoading, 
@@ -36,16 +34,28 @@ export const useDishCostManagement = () => {
     addHistoryEntry
   } = useDishCostHistory();
 
-  // Improved load function with automatic retry
   const loadDishCosts = useCallback(async () => {
     try {
+      console.log("Fetching dish costs data from database...");
+      
       const { data, error } = await supabase
         .from('dish_costs')
         .select(`
-          *,
-          food_item:food_item_id(name, category_id, menu_categories:category_id(name)),
-          dish_ingredients(*),
-          dish_overhead_costs(*)
+          id,
+          dish_name,
+          food_item_id,
+          total_ingredient_cost,
+          total_overhead_cost,
+          total_cost,
+          profit_margin,
+          suggested_price,
+          manual_price,
+          use_manual_price,
+          created_at,
+          updated_at,
+          food_item:food_item_id(id, name, category_id, menu_categories:category_id(name)),
+          dish_ingredients(id, ingredient_id, ingredient_name, quantity, unit_type, unit_cost, total_cost),
+          dish_overhead_costs(id, category, description, cost)
         `)
         .order('dish_name');
       
@@ -54,6 +64,7 @@ export const useDishCostManagement = () => {
         throw error;
       }
       
+      console.log(`Loaded ${data?.length || 0} dish costs successfully`);
       setDishCosts(data || []);
     } catch (err) {
       console.error("Error loading dish costs:", err);
@@ -61,36 +72,39 @@ export const useDishCostManagement = () => {
     }
   }, []);
 
-  // Main load function with auto-retry
   const loadInitialData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
       console.log("Loading dish cost data, attempt:", retryCount + 1);
       
-      await loadDishCosts();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Request timeout")), 15000)
+      );
       
-      // Reset retry count on success
+      await Promise.race([
+        loadDishCosts(),
+        timeoutPromise
+      ]);
+      
       setRetryCount(0);
     } catch (err) {
       console.error("Error loading dish cost data:", err);
       
-      // Only show toast on final retry attempt
       if (retryCount >= 2) {
         toast.error("Failed to load dish cost data. Please try again later.");
         setError(err instanceof Error ? err : new Error('Unknown error loading dish cost data'));
       } else {
-        // Auto retry after a delay
+        const backoffTime = Math.min(2000 * Math.pow(2, retryCount), 10000);
         setTimeout(() => {
           setRetryCount(prev => prev + 1);
-        }, 2000); // 2 second delay before retry
+        }, backoffTime);
       }
     } finally {
       setIsLoading(false);
     }
   }, [retryCount, loadDishCosts]);
 
-  // Trigger initial load and automatic retries
   useEffect(() => {
     loadInitialData();
   }, [loadInitialData]);
@@ -101,16 +115,13 @@ export const useDishCostManagement = () => {
     try {
       setIsLoading(true);
       
-      // Calculate totals
       const totalIngredientCost = ingredients.reduce((sum, ing) => sum + ing.total_cost, 0);
       const totalOverheadCost = overhead_costs.reduce((sum, cost) => sum + cost.cost, 0);
       const totalCost = totalIngredientCost + totalOverheadCost;
       
-      // Calculate suggested price based on profit margin
       const suggestedPrice = totalCost > 0 ? totalCost / (1 - (profit_margin / 100)) : 0;
       const finalPrice = use_manual_price && manual_price ? manual_price : suggestedPrice;
       
-      // Insert the main dish cost record
       const { data: dishCostData, error: dishCostError } = await supabase
         .from('dish_costs')
         .insert({
@@ -132,7 +143,6 @@ export const useDishCostManagement = () => {
         throw dishCostError;
       }
       
-      // Insert ingredients
       if (ingredients.length > 0) {
         const ingredientsToInsert = ingredients.map(ing => ({
           dish_cost_id: dishCostData.id,
@@ -154,7 +164,6 @@ export const useDishCostManagement = () => {
         }
       }
       
-      // Insert overhead costs
       if (overhead_costs.length > 0) {
         const costsToInsert = overhead_costs.map(cost => ({
           dish_cost_id: dishCostData.id,
@@ -173,7 +182,6 @@ export const useDishCostManagement = () => {
         }
       }
       
-      // Update the food item with the calculated cost if a food_item_id was provided
       if (food_item_id) {
         console.log("Updating food_item with id:", food_item_id);
         console.log("Setting cost to:", totalCost);
@@ -194,7 +202,6 @@ export const useDishCostManagement = () => {
         }
       }
       
-      // Reload data
       await loadInitialData();
       
       return dishCostData;
@@ -211,7 +218,6 @@ export const useDishCostManagement = () => {
     try {
       setIsLoading(true);
       
-      // Get the current dish cost
       const { data: currentDishCost, error: fetchError } = await supabase
         .from('dish_costs')
         .select('*')
@@ -223,7 +229,6 @@ export const useDishCostManagement = () => {
         throw fetchError;
       }
       
-      // Calculate new totals if ingredients or overhead costs are updated
       let totalIngredientCost = currentDishCost.total_ingredient_cost;
       let totalOverheadCost = currentDishCost.total_overhead_cost;
       let needsHistoryEntry = false;
@@ -231,7 +236,6 @@ export const useDishCostManagement = () => {
       if (updates.ingredients) {
         totalIngredientCost = updates.ingredients.reduce((sum, ing) => sum + ing.total_cost, 0);
         
-        // Delete existing ingredients
         const { error: deleteIngredientsError } = await supabase
           .from('dish_ingredients')
           .delete()
@@ -242,7 +246,6 @@ export const useDishCostManagement = () => {
           throw deleteIngredientsError;
         }
         
-        // Insert new ingredients
         const ingredientsToInsert = updates.ingredients.map(ing => ({
           dish_cost_id: id,
           ingredient_id: ing.ingredient_id,
@@ -268,7 +271,6 @@ export const useDishCostManagement = () => {
       if (updates.overhead_costs) {
         totalOverheadCost = updates.overhead_costs.reduce((sum, cost) => sum + cost.cost, 0);
         
-        // Delete existing overhead costs
         const { error: deleteCostsError } = await supabase
           .from('dish_overhead_costs')
           .delete()
@@ -279,7 +281,6 @@ export const useDishCostManagement = () => {
           throw deleteCostsError;
         }
         
-        // Insert new overhead costs
         const costsToInsert = updates.overhead_costs.map(cost => ({
           dish_cost_id: id,
           category: cost.category,
@@ -303,7 +304,6 @@ export const useDishCostManagement = () => {
       const profit_margin = updates.profit_margin ?? currentDishCost.profit_margin;
       const suggestedPrice = totalCost > 0 ? totalCost / (1 - (profit_margin / 100)) : 0;
       
-      // Update the dish cost record
       const updateData: any = {
         total_ingredient_cost: totalIngredientCost,
         total_overhead_cost: totalOverheadCost,
@@ -327,7 +327,6 @@ export const useDishCostManagement = () => {
         throw updateError;
       }
       
-      // Add a history entry if the cost changed
       if (needsHistoryEntry && currentDishCost.total_cost !== totalCost) {
         await addHistoryEntry({
           dish_cost_id: id,
@@ -337,7 +336,6 @@ export const useDishCostManagement = () => {
         });
       }
       
-      // Update the food item with the calculated cost if a food_item_id exists
       if (currentDishCost.food_item_id) {
         console.log("Updating food item with id:", currentDishCost.food_item_id);
         
@@ -364,7 +362,6 @@ export const useDishCostManagement = () => {
         }
       }
       
-      // Reload data
       await loadInitialData();
       
       toast.success("Dish cost updated successfully");
@@ -389,7 +386,6 @@ export const useDishCostManagement = () => {
       
       if (error) throw error;
       
-      // Reload data
       await loadInitialData();
       
     } catch (err) {

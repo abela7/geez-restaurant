@@ -47,6 +47,20 @@ const DishOverheadInput: React.FC<DishOverheadInputProps> = ({
     });
   };
 
+  // Category options with non-empty values
+  const categoryOptions = [
+    { value: "labor", label: "Labor" },
+    { value: "utilities", label: "Utilities" },
+    { value: "rent", label: "Rent" },
+    { value: "maintenance", label: "Maintenance" },
+    { value: "electricity", label: "Electricity" },
+    { value: "gas", label: "Gas" },
+    { value: "water", label: "Water" },
+    { value: "packaging", label: "Packaging" },
+    { value: "insurance", label: "Insurance" },
+    { value: "other", label: "Other" }
+  ];
+
   return (
     <div className="grid grid-cols-12 gap-2 items-center">
       <div className="col-span-3">
@@ -58,16 +72,11 @@ const DishOverheadInput: React.FC<DishOverheadInputProps> = ({
             <SelectValue placeholder={t("Select category")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="Labor"><T text="Labor" /></SelectItem>
-            <SelectItem value="Utilities"><T text="Utilities" /></SelectItem>
-            <SelectItem value="Rent"><T text="Rent" /></SelectItem>
-            <SelectItem value="Maintenance"><T text="Maintenance" /></SelectItem>
-            <SelectItem value="Electricity"><T text="Electricity" /></SelectItem>
-            <SelectItem value="Gas"><T text="Gas" /></SelectItem>
-            <SelectItem value="Water"><T text="Water" /></SelectItem>
-            <SelectItem value="Packaging"><T text="Packaging" /></SelectItem>
-            <SelectItem value="Insurance"><T text="Insurance" /></SelectItem>
-            <SelectItem value="Other"><T text="Other" /></SelectItem>
+            {categoryOptions.map(option => (
+              <SelectItem key={option.value} value={option.value}>
+                <T text={option.label} />
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
