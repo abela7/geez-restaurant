@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, Filter } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -17,7 +17,7 @@ import {
   updateExpenseCategory, 
   deleteExpenseCategory,
   ExpenseCategory
-} from "@/services/expenseService";
+} from "@/services/finance";
 
 const categoryTypes = ["fixed", "variable", "operational", "discretionary"];
 
@@ -29,6 +29,7 @@ const ExpenseCategories: React.FC<ExpenseCategoriesProps> = ({ editMode = false 
   const { t } = useLanguage();
   const { toast } = useToast();
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
+  const [filteredCategories, setFilteredCategories] = useState<ExpenseCategory[]>([]);
   const [newCategory, setNewCategory] = useState<{ name: string; type: string; description: string }>({ 
     name: "", 
     type: "operational", 
@@ -37,16 +38,42 @@ const ExpenseCategories: React.FC<ExpenseCategoriesProps> = ({ editMode = false 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<ExpenseCategory | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
 
   useEffect(() => {
     loadCategories();
   }, []);
+
+  useEffect(() => {
+    if (categories.length > 0) {
+      filterCategories();
+    }
+  }, [categories, searchTerm, typeFilter]);
+
+  const filterCategories = () => {
+    let filtered = [...categories];
+    
+    if (searchTerm) {
+      filtered = filtered.filter(cat => 
+        cat.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        (cat.description && cat.description.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
+    
+    if (typeFilter !== "all") {
+      filtered = filtered.filter(cat => cat.type === typeFilter);
+    }
+    
+    setFilteredCategories(filtered);
+  };
 
   const loadCategories = async () => {
     setIsLoading(true);
     try {
       const data = await fetchExpenseCategories();
       setCategories(data);
+      setFilteredCategories(data);
     } catch (error) {
       console.error("Error loading categories:", error);
       toast({
@@ -159,69 +186,112 @@ const ExpenseCategories: React.FC<ExpenseCategoriesProps> = ({ editMode = false 
     }
   };
 
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setTypeFilter("all");
+  };
+
   return (
     <Card className="p-5">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-medium"><T text="Expense Categories" /></h3>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              <T text="Add Category" />
+        <div className="flex gap-2">
+          {editMode && (
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm">
+                  <Plus className="mr-2 h-4 w-4" />
+                  <T text="Add Category" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle><T text="Add Expense Category" /></DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="name"><T text="Category Name" /></Label>
+                    <Input
+                      id="name"
+                      value={newCategory.name}
+                      onChange={(e) => setNewCategory({...newCategory, name: e.target.value})}
+                      placeholder={t("Enter category name")}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="type"><T text="Category Type" /></Label>
+                    <Select 
+                      value={newCategory.type} 
+                      onValueChange={(value) => setNewCategory({...newCategory, type: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={t("Select a type")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categoryTypes.map(type => (
+                          <SelectItem key={type} value={type}>
+                            <T text={type.charAt(0).toUpperCase() + type.slice(1)} />
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="description"><T text="Description" /></Label>
+                    <Input
+                      id="description"
+                      value={newCategory.description}
+                      onChange={(e) => setNewCategory({...newCategory, description: e.target.value})}
+                      placeholder={t("Enter description")}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                    <T text="Cancel" />
+                  </Button>
+                  <Button onClick={handleAddCategory}>
+                    <T text="Add Category" />
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-col md:flex-row justify-between gap-4 mb-4">
+        <div className="relative flex-1">
+          <Input
+            type="search"
+            placeholder={t("Search categories...")}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-xs"
+          />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder={t("All Types")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all"><T text="All Types" /></SelectItem>
+              {categoryTypes.map((type) => (
+                <SelectItem key={type} value={type}>
+                  <T text={type.charAt(0).toUpperCase() + type.slice(1)} />
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          {(searchTerm || typeFilter !== "all") && (
+            <Button variant="outline" size="sm" onClick={handleClearFilters}>
+              <Filter className="mr-2 h-4 w-4" />
+              <T text="Clear Filters" />
             </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle><T text="Add Expense Category" /></DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="name"><T text="Category Name" /></Label>
-                <Input
-                  id="name"
-                  value={newCategory.name}
-                  onChange={(e) => setNewCategory({...newCategory, name: e.target.value})}
-                  placeholder={t("Enter category name")}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="type"><T text="Category Type" /></Label>
-                <Select 
-                  value={newCategory.type} 
-                  onValueChange={(value) => setNewCategory({...newCategory, type: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("Select a type")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categoryTypes.map(type => (
-                      <SelectItem key={type} value={type}>
-                        <T text={type.charAt(0).toUpperCase() + type.slice(1)} />
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="description"><T text="Description" /></Label>
-                <Input
-                  id="description"
-                  value={newCategory.description}
-                  onChange={(e) => setNewCategory({...newCategory, description: e.target.value})}
-                  placeholder={t("Enter description")}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                <T text="Cancel" />
-              </Button>
-              <Button onClick={handleAddCategory}>
-                <T text="Add Category" />
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          )}
+        </div>
       </div>
 
       {isLoading ? (
@@ -239,8 +309,8 @@ const ExpenseCategories: React.FC<ExpenseCategoriesProps> = ({ editMode = false 
             </TableRow>
           </TableHeader>
           <TableBody>
-            {categories.length > 0 ? (
-              categories.map((category) => (
+            {filteredCategories.length > 0 ? (
+              filteredCategories.map((category) => (
                 <TableRow key={category.id}>
                   <TableCell className="font-medium">{category.name}</TableCell>
                   <TableCell>
@@ -326,7 +396,12 @@ const ExpenseCategories: React.FC<ExpenseCategoriesProps> = ({ editMode = false 
                 <TableCell colSpan={editMode ? 4 : 3} className="h-32 text-center">
                   <div className="flex flex-col items-center justify-center text-muted-foreground">
                     <p><T text="No categories found" /></p>
-                    <p className="text-sm"><T text="Add a new category to get started" /></p>
+                    <p className="text-sm">
+                      {searchTerm || typeFilter !== "all" 
+                        ? <T text="Try adjusting your filters" />
+                        : <T text="Add a new category to get started" />
+                      }
+                    </p>
                   </div>
                 </TableCell>
               </TableRow>

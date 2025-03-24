@@ -1,16 +1,15 @@
-
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, X, Search, Package, ShoppingCart } from "lucide-react";
+import { Plus, X, Search, Package, ShoppingCart, Calendar } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
@@ -23,7 +22,6 @@ import {
   addExpense, 
   deleteExpense,
   fetchIngredients,
-  fetchIngredientsByCategory,
   updateIngredientQuantity,
   getCategoryIngredientMapping,
 } from "@/services/finance";
@@ -66,7 +64,6 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
     loadData();
   }, [searchTerm, categoryFilter, dateFilter]);
   
-  // Update filtered ingredients when category changes
   useEffect(() => {
     if (newExpense.category_id) {
       const selectedCategory = categories.find(cat => cat.id === newExpense.category_id);
@@ -84,7 +81,6 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
     }
   }, [newExpense.category_id, ingredients, categories]);
 
-  // Update unit when ingredient changes
   useEffect(() => {
     if (newExpense.ingredient_id && ingredients.length > 0) {
       const ingredient = ingredients.find(ing => ing.id === newExpense.ingredient_id);
@@ -136,11 +132,9 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
 
       const dateWithTime = new Date(newExpense.date);
       
-      // Prepare the expense object
       const expenseData = {
         ...newExpense,
         date: dateWithTime.toISOString(),
-        // Only include ingredient fields if they're provided
         ingredient_id: newExpense.ingredient_id || null,
         quantity: newExpense.quantity || null,
         unit: newExpense.unit || null
@@ -148,7 +142,6 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
       
       const addedExpense = await addExpense(expenseData);
       
-      // If this is an inventory-related expense, update the inventory quantities
       if (addedExpense.ingredient_id && addedExpense.quantity) {
         await updateIngredientQuantity(addedExpense.ingredient_id, addedExpense.quantity);
         toast({
@@ -168,7 +161,6 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
         onExpenseAdded(addedExpense);
       }
       
-      // Reset the form
       setNewExpense({
         date: new Date().toISOString().split('T')[0],
         category_id: "",
@@ -273,12 +265,10 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
           </Button>
           
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                <T text="Add Expense" />
-              </Button>
-            </DialogTrigger>
+            <Button onClick={() => setIsAddDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              <T text="Add Expense" />
+            </Button>
             <DialogContent className="max-w-md h-[90vh] flex flex-col">
               <DialogHeader>
                 <DialogTitle><T text="Add New Expense" /></DialogTitle>
@@ -289,17 +279,21 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="date"><T text="Date" /></Label>
-                      <Input
-                        id="date"
-                        type="date"
-                        value={newExpense.date}
-                        onChange={(e) => {
-                          setNewExpense({
-                            ...newExpense, 
-                            date: e.target.value
-                          });
-                        }}
-                      />
+                      <div className="relative">
+                        <Calendar className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="date"
+                          type="date"
+                          className="pl-8"
+                          value={newExpense.date}
+                          onChange={(e) => {
+                            setNewExpense({
+                              ...newExpense, 
+                              date: e.target.value
+                            });
+                          }}
+                        />
+                      </div>
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="amount"><T text="Amount (£)" /></Label>
@@ -313,6 +307,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
                       />
                     </div>
                   </div>
+                  
                   <div className="grid gap-2">
                     <Label htmlFor="category"><T text="Category" /></Label>
                     <Select 
@@ -328,6 +323,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
                       </SelectContent>
                     </Select>
                   </div>
+                  
                   <div className="grid gap-2">
                     <Label htmlFor="payee"><T text="Payee" /></Label>
                     <Input
@@ -337,6 +333,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
                       onChange={(e) => setNewExpense({...newExpense, payee: e.target.value})}
                     />
                   </div>
+                  
                   <div className="grid gap-2">
                     <Label htmlFor="payment-method"><T text="Payment Method" /></Label>
                     <Select 
@@ -353,7 +350,6 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({ onExpenseAdded }) => {
                     </Select>
                   </div>
                   
-                  {/* Inventory Integration Fields */}
                   {showIngredientFields() && (
                     <>
                       <div className="mt-2 mb-1">

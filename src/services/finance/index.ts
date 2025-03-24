@@ -1,6 +1,6 @@
 
-// Export all expense-related services and types
+// Export all finance-related services
 export * from './types';
-export * from './categoryService';
 export * from './expenseService';
+export * from './categoryService';
 export * from './expenseAnalyticsService';
