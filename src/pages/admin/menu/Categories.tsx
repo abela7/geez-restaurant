@@ -1,21 +1,22 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronLeft, Loader2 } from "lucide-react";
+import { Plus, ChevronLeft, Loader2, LayoutGrid, List } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Link } from "react-router-dom";
 import { MenuNav } from "@/components/menu/MenuNav";
 import Layout from "@/components/Layout";
 import { CategoryCard } from "@/components/menu/CategoryCard";
-import { AddCategoryDialog } from "@/components/menu/AddCategoryDialog";
-import { EditCategoryDialog } from "@/components/menu/EditCategoryDialog";
-import { DeleteCategoryDialog } from "@/components/menu/DeleteCategoryDialog";
+import { CategorySideModal } from "@/components/menu/CategorySideModal";
+import { DeleteCategorySideModal } from "@/components/menu/DeleteCategorySideModal";
 import { useCategoryManagement } from "@/hooks/useCategoryManagement";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 const Categories = () => {
   const { t } = useLanguage();
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   
   const {
     categories,
@@ -66,42 +67,78 @@ const Categories = () => {
 
         <MenuNav />
 
+        <div className="flex justify-between items-center mt-6 mb-4">
+          <h2 className="text-lg font-medium"><T text="All Categories" /></h2>
+          <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as "grid" | "list")}>
+            <ToggleGroupItem value="grid" aria-label="Grid view">
+              <LayoutGrid className="h-4 w-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="list" aria-label="List view">
+              <List className="h-4 w-4" />
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
+
         {isLoading ? (
           <div className="flex justify-center items-center p-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-            {categories.length === 0 ? (
-              <Card className="p-6 col-span-full text-center">
-                <p className="text-muted-foreground"><T text="No categories found. Create your first category!" /></p>
-              </Card>
+          <>
+            {viewMode === "list" ? (
+              <div className="space-y-3">
+                {categories.length === 0 ? (
+                  <Card className="p-6 text-center">
+                    <p className="text-muted-foreground"><T text="No categories found. Create your first category!" /></p>
+                  </Card>
+                ) : (
+                  categories.map((category) => (
+                    <CategoryCard 
+                      key={category.id}
+                      category={category}
+                      onEdit={handleEditCategory}
+                      onDelete={handleDeleteCategory}
+                      onToggleStatus={handleToggleStatus}
+                      viewMode="list"
+                    />
+                  ))
+                )}
+              </div>
             ) : (
-              categories.map((category) => (
-                <CategoryCard 
-                  key={category.id}
-                  category={category}
-                  onEdit={handleEditCategory}
-                  onDelete={handleDeleteCategory}
-                  onToggleStatus={handleToggleStatus}
-                />
-              ))
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {categories.length === 0 ? (
+                  <Card className="p-6 col-span-full text-center">
+                    <p className="text-muted-foreground"><T text="No categories found. Create your first category!" /></p>
+                  </Card>
+                ) : (
+                  categories.map((category) => (
+                    <CategoryCard 
+                      key={category.id}
+                      category={category}
+                      onEdit={handleEditCategory}
+                      onDelete={handleDeleteCategory}
+                      onToggleStatus={handleToggleStatus}
+                      viewMode="grid"
+                    />
+                  ))
+                )}
+                <Card className="p-4 border-dashed flex justify-center items-center h-32">
+                  <Button variant="ghost" onClick={() => {
+                    resetForm();
+                    setShowAddDialog(true);
+                  }}>
+                    <Plus className="h-5 w-5 mr-2" />
+                    <T text="Add Category" />
+                  </Button>
+                </Card>
+              </div>
             )}
-            <Card className="p-4 border-dashed flex justify-center items-center h-32">
-              <Button variant="ghost" onClick={() => {
-                resetForm();
-                setShowAddDialog(true);
-              }}>
-                <Plus className="h-5 w-5 mr-2" />
-                <T text="Add Category" />
-              </Button>
-            </Card>
-          </div>
+          </>
         )}
       </div>
 
-      {/* Dialogs */}
-      <AddCategoryDialog
+      {/* Side modals replacing dialogs */}
+      <CategorySideModal
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
         formData={formData}
@@ -109,9 +146,10 @@ const Categories = () => {
         onSwitchChange={handleSwitchChange}
         onSubmit={handleAddCategory}
         isLoading={isLoading}
+        mode="add"
       />
       
-      <EditCategoryDialog
+      <CategorySideModal
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
         formData={formData}
@@ -119,9 +157,10 @@ const Categories = () => {
         onSwitchChange={handleSwitchChange}
         onSubmit={confirmEditCategory}
         isLoading={isLoading}
+        mode="edit"
       />
       
-      <DeleteCategoryDialog
+      <DeleteCategorySideModal
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         category={currentCategory}
