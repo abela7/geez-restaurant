@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -43,7 +43,31 @@ import { Loader2, Plus, Pencil, Trash2, AlertCircle, Calendar, Download, Filter 
 import { Link } from "react-router-dom";
 import ViewToggle from "@/components/admin/finance/ViewToggle";
 import { format, parseISO } from "date-fns";
-import { MeasurementUnit } from "./UnitManagement";
+
+// Interface for measurement unit
+export interface MeasurementUnit {
+  id: string;
+  name: string;
+  abbreviation: string;
+  type: string;
+  description?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Interface for recipe ingredient
+interface RecipeIngredient {
+  id: string;
+  name: string;
+  category: string;
+  unit_id: string;
+  cost_per_unit: number;
+  stock_quantity?: number;
+  reorder_level?: number;
+  is_allergen?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
 
 // Interface for Ingredient Expense
 interface IngredientExpense {
@@ -63,19 +87,10 @@ interface IngredientExpense {
   updated_at: string;
 }
 
-// Interface for Ingredient
-interface Ingredient {
-  id: string;
-  name: string;
-  category: string;
-  unit_id: string;
-  cost_per_unit: number;
-}
-
 const IngredientExpenses = () => {
   const { t } = useLanguage();
   const [expenses, setExpenses] = useState<IngredientExpense[]>([]);
-  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [ingredients, setIngredients] = useState<RecipeIngredient[]>([]);
   const [units, setUnits] = useState<MeasurementUnit[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -146,8 +161,8 @@ const IngredientExpenses = () => {
         .from("ingredient_expenses")
         .select(`
           *,
-          ingredient:recipe_ingredients(id, name, category),
-          unit:measurement_units(id, name, abbreviation, type)
+          recipe_ingredients!ingredient_id(id, name, category),
+          measurement_units!unit_id(id, name, abbreviation, type)
         `)
         .order("purchase_date", { ascending: false });
 
@@ -156,10 +171,10 @@ const IngredientExpenses = () => {
       // Format the data for display
       const formattedData = data.map(expense => ({
         ...expense,
-        ingredient_name: expense.ingredient?.name || "Unknown",
-        unit_name: expense.unit?.name || "Unknown",
-        unit_abbreviation: expense.unit?.abbreviation || "",
-      }));
+        ingredient_name: expense.recipe_ingredients?.name || "Unknown",
+        unit_name: expense.measurement_units?.name || "Unknown",
+        unit_abbreviation: expense.measurement_units?.abbreviation || "",
+      })) as IngredientExpense[];
       
       setExpenses(formattedData);
     } catch (error) {

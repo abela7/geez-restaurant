@@ -24,7 +24,7 @@ import IngredientManagement from "@/pages/admin/menu/IngredientManagement";
 import RecipeCostCalculator from "@/pages/admin/menu/RecipeCostCalculator";
 import IngredientExpenses from "@/pages/admin/menu/IngredientExpenses";
 
-const adminRoutes = [
+const adminRoutes: RouteObject[] = [
   {
     path: "/admin",
     element: <Dashboard />,

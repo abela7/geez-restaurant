@@ -571,6 +571,63 @@ export type Database = {
           },
         ]
       }
+      ingredient_expenses: {
+        Row: {
+          created_at: string | null
+          id: string
+          ingredient_id: string
+          notes: string | null
+          price_per_unit: number
+          purchase_date: string
+          quantity: number
+          supplier: string
+          total_cost: number
+          unit_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          ingredient_id: string
+          notes?: string | null
+          price_per_unit: number
+          purchase_date?: string
+          quantity: number
+          supplier: string
+          total_cost: number
+          unit_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          ingredient_id?: string
+          notes?: string | null
+          price_per_unit?: number
+          purchase_date?: string
+          quantity?: number
+          supplier?: string
+          total_cost?: number
+          unit_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingredient_expenses_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "recipe_ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ingredient_expenses_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "measurement_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ingredients: {
         Row: {
           allergens: string[] | null
