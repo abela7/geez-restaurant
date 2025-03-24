@@ -147,7 +147,7 @@ export const getNavSections = (interfaceType: 'admin' | 'waiter' | 'kitchen' | '
     { label: "Order Management", icon: <ClipboardList size={20} />, path: "/waiter/orders" },
     { label: "Payment Processing", icon: <DollarSign size={20} />, path: "/waiter/payments" },
     { label: "Tasks", icon: <ClipboardList size={20} />, path: "/waiter/tasks" },
-    { label: "Logout", icon: <LogOut size={20} />, path: "/login" },
+    { label: "Logout", icon: <LogOut size={20} />, path: "/login" }
   ];
 
   const kitchenLinks: NavSection[] = [
@@ -157,14 +157,14 @@ export const getNavSections = (interfaceType: 'admin' | 'waiter' | 'kitchen' | '
     { label: "Menu Availability", icon: <MenuIcon size={20} />, path: "/kitchen/menu-availability" },
     { label: "Tasks", icon: <ClipboardList size={20} />, path: "/kitchen/tasks" },
     { label: "Food Safety", icon: <Utensils size={20} />, path: "/kitchen/food-safety" },
-    { label: "Logout", icon: <LogOut size={20} />, path: "/login" },
+    { label: "Logout", icon: <LogOut size={20} />, path: "/login" }
   ];
 
   const customerLinks: NavSection[] = [
     { label: "Menu", icon: <MenuIcon size={20} />, path: "/menu" },
     { label: "Feedback", icon: <ClipboardList size={20} />, path: "/feedback" },
     { label: "Promotions", icon: <DollarSign size={20} />, path: "/promotions" },
-    { label: "Logout", icon: <LogOut size={20} />, path: "/login" },
+    { label: "Logout", icon: <LogOut size={20} />, path: "/login" }
   ];
 
   const systemLinks: NavSection[] = [
@@ -172,7 +172,7 @@ export const getNavSections = (interfaceType: 'admin' | 'waiter' | 'kitchen' | '
     { label: "Error Logs", icon: <ClipboardList size={20} />, path: "/system/errors" },
     { label: "User Management", icon: <Users size={20} />, path: "/system/users" },
     { label: "Documentation", icon: <ClipboardList size={20} />, path: "/system/docs" },
-    { label: "Logout", icon: <LogOut size={20} />, path: "/login" },
+    { label: "Logout", icon: <LogOut size={20} />, path: "/login" }
   ];
 
   switch (interfaceType) {
