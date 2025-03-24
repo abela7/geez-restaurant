@@ -7,7 +7,7 @@ export interface MenuCategory {
   image_url: string | null;
   created_at: string;
   updated_at: string;
-  itemCount?: number; // Add this property to fix the type error
+  itemCount?: number;
 }
 
 export interface FoodItem {
@@ -28,4 +28,6 @@ export interface FoodItem {
   is_spicy: boolean;
   preparation_time?: number | null;
   categoryName?: string;
+  cost?: number;
+  profit_margin?: number;
 }
