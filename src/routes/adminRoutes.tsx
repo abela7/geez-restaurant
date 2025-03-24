@@ -1,3 +1,4 @@
+
 import React from "react";
 import { RouteObject } from "react-router-dom";
 import Dashboard from "@/pages/admin/Dashboard";
@@ -21,6 +22,7 @@ import Recipes from "@/pages/admin/inventory/Recipes";
 import UnitManagement from "@/pages/admin/menu/UnitManagement";
 import IngredientManagement from "@/pages/admin/menu/IngredientManagement";
 import RecipeCostCalculator from "@/pages/admin/menu/RecipeCostCalculator";
+import IngredientExpenses from "@/pages/admin/menu/IngredientExpenses";
 
 const adminRoutes = [
   {
@@ -97,7 +99,7 @@ const adminRoutes = [
     path: "/admin/menu/dishes",
     element: <Dishes />,
   },
-  // Add the new routes for unit and ingredient management
+  // Add the new routes for unit, ingredient management and expenses
   {
     path: "/admin/menu/units",
     element: <UnitManagement />,
@@ -109,6 +111,10 @@ const adminRoutes = [
   {
     path: "/admin/menu/recipe-costs",
     element: <RecipeCostCalculator />,
+  },
+  {
+    path: "/admin/menu/ingredient-expenses",
+    element: <IngredientExpenses />,
   },
   
   // Add more routes here

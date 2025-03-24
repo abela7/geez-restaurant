@@ -3,7 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Link, useLocation } from "react-router-dom";
-import { Beef, Calculator, LayoutGrid, Menu, Settings, Utensils } from "lucide-react";
+import { Beef, Calculator, LayoutGrid, Menu, Settings, Utensils, DollarSign } from "lucide-react";
 
 export const MenuNav = () => {
   const location = useLocation();
@@ -33,6 +33,11 @@ export const MenuNav = () => {
       href: "/admin/menu/ingredients",
       label: "Ingredients",
       icon: <Beef className="h-4 w-4 mr-2" />
+    },
+    {
+      href: "/admin/menu/ingredient-expenses",
+      label: "Ingredient Expenses",
+      icon: <DollarSign className="h-4 w-4 mr-2" />
     },
     {
       href: "/admin/menu/recipe-costs",
