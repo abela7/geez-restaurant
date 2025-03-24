@@ -3,7 +3,7 @@ import React from "react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useLocation } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, BarChart2, Warehouse } from "lucide-react";
+import { Package, TruckIcon, BarChart2, Warehouse, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export const InventoryNav = () => {
@@ -14,6 +14,8 @@ export const InventoryNav = () => {
   const getActiveTab = () => {
     if (currentPath.includes("/stock")) return "stock";
     if (currentPath.includes("/ingredients")) return "ingredients";
+    if (currentPath.includes("/suppliers")) return "suppliers";
+    if (currentPath.includes("/purchase-orders")) return "purchase-orders";
     if (currentPath.includes("/reports")) return "reports";
     return "stock";
   };
@@ -33,6 +35,19 @@ export const InventoryNav = () => {
             <Link to="/admin/inventory/ingredients" className="flex items-center">
               <Warehouse className="mr-2 h-4 w-4" />
               <span><T text="Ingredients" /></span>
+            </Link>
+          </TabsTrigger>
+          <TabsTrigger value="suppliers" asChild>
+            <Link to="/admin/inventory/suppliers" className="flex items-center">
+              <FileText className="mr-2 h-4 w-4" />
+              <span><T text="Suppliers" /></span>
+            </Link>
+          </TabsTrigger>
+          <TabsTrigger value="purchase-orders" asChild>
+            <Link to="/admin/inventory/purchase-orders" className="flex items-center">
+              <TruckIcon className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline"><T text="Purchase Orders" /></span>
+              <span className="sm:hidden"><T text="Orders" /></span>
             </Link>
           </TabsTrigger>
           <TabsTrigger value="reports" asChild>

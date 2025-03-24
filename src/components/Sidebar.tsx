@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -180,7 +181,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { to: "stock", label: "Stock Levels" },
         { to: "ingredients", label: "Ingredients" },
         { to: "recipes", label: "Recipes" },
-        { to: "reports", label: "Inventory Reports" }
+        { to: "suppliers", label: "Suppliers" },
+        { to: "purchase-orders", label: "Purchase Orders" }
       ]
     },
     { 
