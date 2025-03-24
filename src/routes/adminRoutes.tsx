@@ -1,4 +1,3 @@
-
 import { lazy } from "react";
 import { Navigate } from "react-router-dom";
 import Layout from "@/components/Layout";
@@ -47,6 +46,7 @@ const Payroll = lazy(() => import("@/pages/admin/staff/Payroll"));
 // Inventory Pages
 const StockLevels = lazy(() => import("@/pages/admin/inventory/StockLevels"));
 const Ingredients = lazy(() => import("@/pages/admin/inventory/Ingredients"));
+const InventoryReports = lazy(() => import("@/pages/admin/reports/InventoryReports"));
 
 // Food Safety Pages
 const Checklists = lazy(() => import("@/pages/admin/food-safety/Checklists"));
@@ -223,6 +223,10 @@ export const adminRoutes = [
   {
     path: "/admin/inventory/ingredients",
     element: withLayout(Ingredients),
+  },
+  {
+    path: "/admin/inventory/reports",
+    element: withLayout(InventoryReports),
   },
   
   // Food Safety routes
