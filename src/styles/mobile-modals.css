@@ -26,6 +26,7 @@
     border-bottom: 1px solid hsl(var(--border));
     margin-bottom: 1rem;
     padding-top: 0.75rem;
+    z-index: 30;
   }
   
   /* Position the close button properly */
@@ -57,17 +58,17 @@
   .side-modal-content .space-x-2 {
     gap: 0.5rem !important;
   }
-  
-  /* Adjust footer positioning */
-  .side-modal-content .border-t {
-    position: sticky;
-    bottom: 0;
-    background-color: hsl(var(--background));
-    padding-top: 0.75rem;
-    padding-bottom: 0.75rem;
-    margin-top: 1rem;
-    z-index: 10;
-  }
+}
+
+/* Improve select dropdown max height and overflow for scrolling */
+[data-radix-popper-content-wrapper] {
+  max-height: 80vh !important;
+  z-index: 100 !important;
+}
+
+.SelectContent {
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 /* Side modal enhancements */
@@ -93,4 +94,14 @@
 .h-\[calc\(100vh-180px\)\] {
   height: calc(100vh - 180px);
   max-height: calc(100vh - 180px);
+}
+
+/* Bottom sticky actions bar in modals */
+.side-modal-content .sticky.bottom-0 {
+  background-color: hsl(var(--background));
+  border-top: 1px solid hsl(var(--border));
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  margin-top: 1rem;
+  z-index: 20;
 }

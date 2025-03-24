@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -200,11 +199,9 @@ export const useDishCosts = () => {
       // Reload data
       await loadInitialData();
       
-      toast.success("Dish cost added successfully!");
       return dishCostData;
     } catch (err) {
       console.error("Error creating dish cost:", err);
-      toast.error("Failed to add dish cost");
       throw err;
     } finally {
       setIsLoading(false);
@@ -348,10 +345,8 @@ export const useDishCosts = () => {
       // Reload data
       await loadInitialData();
       
-      toast.success("Dish cost updated successfully!");
     } catch (err) {
       console.error("Error updating dish cost:", err);
-      toast.error("Failed to update dish cost");
       throw err;
     } finally {
       setIsLoading(false);
@@ -372,10 +367,118 @@ export const useDishCosts = () => {
       // Reload data
       await loadInitialData();
       
-      toast.success("Dish cost deleted successfully!");
     } catch (err) {
       console.error("Error deleting dish cost:", err);
-      toast.error("Failed to delete dish cost");
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateIngredient = async (id: string, updates: Partial<Ingredient>) => {
+    try {
+      setIsLoading(true);
+      
+      const { error } = await supabase
+        .from('ingredients')
+        .update(updates)
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      await loadIngredients();
+      
+    } catch (err) {
+      console.error("Error updating ingredient:", err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteIngredient = async (id: string) => {
+    try {
+      setIsLoading(true);
+      
+      // Check if ingredient is used in any dish
+      const { data: usedIngredients, error: checkError } = await supabase
+        .from('dish_ingredients')
+        .select('id')
+        .eq('ingredient_id', id)
+        .limit(1);
+      
+      if (checkError) throw checkError;
+      
+      if (usedIngredients && usedIngredients.length > 0) {
+        throw new Error("Cannot delete ingredient that is used in dishes");
+      }
+      
+      const { error } = await supabase
+        .from('ingredients')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      await loadIngredients();
+      
+    } catch (err) {
+      console.error("Error deleting ingredient:", err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateUnit = async (id: string, updates: Partial<MeasurementUnit>) => {
+    try {
+      setIsLoading(true);
+      
+      const { error } = await supabase
+        .from('measurement_units')
+        .update(updates)
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      await loadUnits();
+      
+    } catch (err) {
+      console.error("Error updating unit:", err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteUnit = async (id: string) => {
+    try {
+      setIsLoading(true);
+      
+      // Check if unit is used in any ingredient
+      const { data: usedUnits, error: checkError } = await supabase
+        .from('ingredients')
+        .select('id')
+        .eq('unit', (await supabase.from('measurement_units').select('abbreviation').eq('id', id).single()).data?.abbreviation)
+        .limit(1);
+      
+      if (checkError) throw checkError;
+      
+      if (usedUnits && usedUnits.length > 0) {
+        throw new Error("Cannot delete unit that is used by ingredients");
+      }
+      
+      const { error } = await supabase
+        .from('measurement_units')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      await loadUnits();
+      
+    } catch (err) {
+      console.error("Error deleting unit:", err);
       throw err;
     } finally {
       setIsLoading(false);
@@ -394,10 +497,8 @@ export const useDishCosts = () => {
       
       await loadUnits();
       
-      toast.success("Unit added successfully!");
     } catch (err) {
       console.error("Error creating unit:", err);
-      toast.error("Failed to add unit");
       throw err;
     } finally {
       setIsLoading(false);
@@ -416,10 +517,8 @@ export const useDishCosts = () => {
       
       await loadIngredients();
       
-      toast.success("Ingredient added successfully!");
     } catch (err) {
       console.error("Error creating ingredient:", err);
-      toast.error("Failed to add ingredient");
       throw err;
     } finally {
       setIsLoading(false);
@@ -438,6 +537,10 @@ export const useDishCosts = () => {
     updateDishCost,
     deleteDishCost,
     createUnit,
-    createIngredient
+    updateUnit,
+    deleteUnit,
+    createIngredient,
+    updateIngredient,
+    deleteIngredient
   };
 };

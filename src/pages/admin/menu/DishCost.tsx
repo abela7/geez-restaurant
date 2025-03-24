@@ -8,7 +8,7 @@ import { MenuNav } from "@/components/menu/MenuNav";
 import { Calculator, ChevronsUpDown, Utensils } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDishCosts } from "@/hooks/useDishCosts";
-import { DishCost } from "@/types/dishCost";
+import { DishCost, Ingredient, MeasurementUnit } from "@/types/dishCost";
 import { useMenuItems } from "@/hooks/useMenuItems";
 import DishCostList from "@/components/dish-cost/DishCostList";
 import IngredientsTable from "@/components/dish-cost/IngredientsTable";
@@ -16,6 +16,7 @@ import UnitsTable from "@/components/dish-cost/UnitsTable";
 import AddUnitModal from "@/components/dish-cost/AddUnitModal";
 import AddIngredientModal from "@/components/dish-cost/AddIngredientModal";
 import DishCostModal from "@/components/dish-cost/DishCostModal";
+import { toast } from "sonner";
 
 const DishCostPage: React.FC = () => {
   const { t } = useLanguage();
@@ -30,7 +31,11 @@ const DishCostPage: React.FC = () => {
     updateDishCost,
     deleteDishCost,
     createUnit,
-    createIngredient
+    createIngredient,
+    updateIngredient,
+    deleteIngredient,
+    updateUnit,
+    deleteUnit
   } = useDishCosts();
 
   const [activeTab, setActiveTab] = useState("dishCosts");
@@ -39,6 +44,8 @@ const DishCostPage: React.FC = () => {
   const [showIngredientModal, setShowIngredientModal] = useState(false);
   const [showDishCostModal, setShowDishCostModal] = useState(false);
   const [editDishCost, setEditDishCost] = useState<DishCost | undefined>(undefined);
+  const [editIngredient, setEditIngredient] = useState<Ingredient | undefined>(undefined);
+  const [editUnit, setEditUnit] = useState<MeasurementUnit | undefined>(undefined);
 
   // Handle opening the dish cost modal for editing or creating
   const handleOpenDishCostModal = (dish?: DishCost) => {
@@ -46,25 +53,104 @@ const DishCostPage: React.FC = () => {
     setShowDishCostModal(true);
   };
 
+  // Handle opening the ingredient modal for editing or creating
+  const handleOpenIngredientModal = (ingredient?: Ingredient) => {
+    setEditIngredient(ingredient);
+    setShowIngredientModal(true);
+  };
+
+  // Handle opening the unit modal for editing or creating
+  const handleOpenUnitModal = (unit?: MeasurementUnit) => {
+    setEditUnit(unit);
+    setShowUnitModal(true);
+  };
+
   // Handle dish cost submission (create or update)
   const handleDishCostSubmit = async (formData: any) => {
     try {
       if (editDishCost) {
         await updateDishCost(editDishCost.id, formData);
+        toast.success(t("Dish cost updated successfully"));
       } else {
         await createDishCost(formData);
+        toast.success(t("Dish cost created successfully"));
       }
       setShowDishCostModal(false);
       setEditDishCost(undefined);
     } catch (error) {
       console.error("Error submitting dish cost:", error);
+      toast.error(t("Error saving dish cost"));
+    }
+  };
+
+  // Handle ingredient submission (create or update)
+  const handleIngredientSubmit = async (formData: any) => {
+    try {
+      if (editIngredient) {
+        await updateIngredient(editIngredient.id, formData);
+        toast.success(t("Ingredient updated successfully"));
+      } else {
+        await createIngredient(formData);
+        toast.success(t("Ingredient created successfully"));
+      }
+      setShowIngredientModal(false);
+      setEditIngredient(undefined);
+    } catch (error) {
+      console.error("Error submitting ingredient:", error);
+      toast.error(t("Error saving ingredient"));
+    }
+  };
+
+  // Handle unit submission (create or update)
+  const handleUnitSubmit = async (formData: any) => {
+    try {
+      if (editUnit) {
+        await updateUnit(editUnit.id, formData);
+        toast.success(t("Unit updated successfully"));
+      } else {
+        await createUnit(formData);
+        toast.success(t("Unit created successfully"));
+      }
+      setShowUnitModal(false);
+      setEditUnit(undefined);
+    } catch (error) {
+      console.error("Error submitting unit:", error);
+      toast.error(t("Error saving unit"));
     }
   };
 
   // Handle deletion of a dish cost
   const handleDeleteDishCost = async (id: string) => {
     if (window.confirm(t("Are you sure you want to delete this dish cost?"))) {
-      await deleteDishCost(id);
+      try {
+        await deleteDishCost(id);
+        toast.success(t("Dish cost deleted successfully"));
+      } catch (error) {
+        console.error("Error deleting dish cost:", error);
+        toast.error(t("Error deleting dish cost"));
+      }
+    }
+  };
+
+  // Handle deletion of an ingredient
+  const handleDeleteIngredient = async (id: string) => {
+    try {
+      await deleteIngredient(id);
+      toast.success(t("Ingredient deleted successfully"));
+    } catch (error) {
+      console.error("Error deleting ingredient:", error);
+      toast.error(t("Error deleting ingredient"));
+    }
+  };
+
+  // Handle deletion of a unit
+  const handleDeleteUnit = async (id: string) => {
+    try {
+      await deleteUnit(id);
+      toast.success(t("Unit deleted successfully"));
+    } catch (error) {
+      console.error("Error deleting unit:", error);
+      toast.error(t("Error deleting unit"));
     }
   };
 
@@ -119,7 +205,9 @@ const DishCostPage: React.FC = () => {
               ingredients={ingredients}
               searchQuery={searchQuery}
               onSearchChange={(e) => setSearchQuery(e.target.value)}
-              onAddIngredient={() => setShowIngredientModal(true)}
+              onAddIngredient={() => handleOpenIngredientModal()}
+              onEditIngredient={handleOpenIngredientModal}
+              onDeleteIngredient={handleDeleteIngredient}
             />
           </TabsContent>
           
@@ -128,7 +216,9 @@ const DishCostPage: React.FC = () => {
               units={units}
               searchQuery={searchQuery}
               onSearchChange={(e) => setSearchQuery(e.target.value)}
-              onAddUnit={() => setShowUnitModal(true)}
+              onAddUnit={() => handleOpenUnitModal()}
+              onEditUnit={handleOpenUnitModal}
+              onDeleteUnit={handleDeleteUnit}
             />
           </TabsContent>
         </Tabs>
@@ -138,14 +228,16 @@ const DishCostPage: React.FC = () => {
       <AddUnitModal 
         open={showUnitModal}
         onOpenChange={setShowUnitModal}
-        onSubmit={createUnit}
+        onSubmit={handleUnitSubmit}
+        unit={editUnit}
       />
       
       <AddIngredientModal 
         open={showIngredientModal}
         onOpenChange={setShowIngredientModal}
-        onSubmit={createIngredient}
+        onSubmit={handleIngredientSubmit}
         units={units}
+        ingredient={editIngredient}
       />
       
       <DishCostModal 
