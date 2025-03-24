@@ -26,6 +26,7 @@ export interface MenuCategory {
   description?: string | null;
   image_url?: string | null;
   active: boolean;
+  itemCount?: number; // Added itemCount as an optional property
 }
 
 export interface Modifier {

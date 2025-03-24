@@ -120,7 +120,13 @@ const Categories = () => {
       
       toast.success('Category added successfully');
       
-      setCategories([...categories, { ...data, itemCount: 0 }]);
+      // Add the new category with itemCount of 0
+      const newCategory: MenuCategory = {
+        ...data,
+        itemCount: 0
+      };
+      
+      setCategories([...categories, newCategory]);
       
       resetForm();
       setShowAddDialog(false);
@@ -456,11 +462,11 @@ const Categories = () => {
               <div className="flex items-start space-x-2 p-4 bg-amber-50 border border-amber-200 rounded-md">
                 <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5" />
                 <p className="text-sm text-amber-800">
-                  <T text="This category contains {count} food items. You must reassign or delete these items before deleting the category." values={{ count: currentCategory.itemCount }} />
+                  {`This category contains ${currentCategory.itemCount} food items. You must reassign or delete these items before deleting the category.`}
                 </p>
               </div>
             ) : (
-              <p><T text="This will permanently delete the '{name}' category." values={{ name: currentCategory?.name || "" }} /></p>
+              <p>{`This will permanently delete the '${currentCategory?.name || ""}' category.`}</p>
             )}
           </div>
           <DialogFooter>
