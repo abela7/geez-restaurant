@@ -3,9 +3,10 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, CheckCircle, XCircle } from "lucide-react";
+import { Pencil, Trash2, CheckCircle, XCircle, FileText } from "lucide-react";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { FoodItem } from "@/types/menu";
+import FoodItemRecipeButton from "./FoodItemRecipeButton";
 
 interface FoodItemCardProps {
   item: FoodItem;
@@ -66,6 +67,7 @@ const FoodItemCard: React.FC<FoodItemCardProps> = ({
                 {item.available ? t("Deactivate") : t("Activate")}
               </span>
             </Button>
+            <FoodItemRecipeButton foodItem={item} />
           </div>
         </div>
       </CardContent>
