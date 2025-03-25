@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -52,23 +53,27 @@ const TableForm = ({
   const { toast } = useToast();
   const { t } = useLanguage();
   
+  // Memoize default values to prevent unnecessary re-renders
+  const defaultValues = React.useMemo(() => ({
+    table_number: initialData.table_number || 1,
+    capacity: initialData.capacity || 2,
+    status: initialData.status || "available",
+    room_id: initialData.room_id === undefined ? null : initialData.room_id,
+    group_id: initialData.group_id === undefined ? null : initialData.group_id,
+    position_x: initialData.position_x || 0,
+    position_y: initialData.position_y || 0,
+    width: initialData.width || 100,
+    height: initialData.height || 100,
+    rotation: initialData.rotation || 0,
+    shape: initialData.shape || 'rectangle',
+  }), [initialData]);
+  
   const form = useForm<FormValues>({
     resolver: zodResolver(tableSchema),
-    defaultValues: {
-      table_number: initialData.table_number || 1,
-      capacity: initialData.capacity || 2,
-      status: initialData.status || "available",
-      room_id: initialData.room_id === undefined ? null : initialData.room_id,
-      group_id: initialData.group_id === undefined ? null : initialData.group_id,
-      position_x: initialData.position_x || 0,
-      position_y: initialData.position_y || 0,
-      width: initialData.width || 100,
-      height: initialData.height || 100,
-      rotation: initialData.rotation || 0,
-      shape: initialData.shape || 'rectangle',
-    },
+    defaultValues,
   });
   
+  // Handle form submission with error handling
   const handleFormSubmit = async (values: FormValues) => {
     try {
       await onSubmit(values as Table);
@@ -93,6 +98,7 @@ const TableForm = ({
           
           <TabsContent value="basic" className="space-y-4 pt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Table Number Field */}
               <FormField
                 control={form.control}
                 name="table_number"
@@ -111,6 +117,7 @@ const TableForm = ({
                 )}
               />
               
+              {/* Capacity Field */}
               <FormField
                 control={form.control}
                 name="capacity"
@@ -129,6 +136,7 @@ const TableForm = ({
                 )}
               />
               
+              {/* Status Field */}
               <FormField
                 control={form.control}
                 name="status"
@@ -157,6 +165,7 @@ const TableForm = ({
                 )}
               />
               
+              {/* Room Field */}
               <FormField
                 control={form.control}
                 name="room_id"
@@ -186,6 +195,7 @@ const TableForm = ({
                 )}
               />
               
+              {/* Group Field */}
               <FormField
                 control={form.control}
                 name="group_id"
@@ -218,6 +228,7 @@ const TableForm = ({
           </TabsContent>
           
           <TabsContent value="appearance" className="space-y-4 pt-4">
+            {/* Shape Field */}
             <FormField
               control={form.control}
               name="shape"
@@ -262,6 +273,7 @@ const TableForm = ({
             />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Width Field */}
               <FormField
                 control={form.control}
                 name="width"
@@ -285,6 +297,7 @@ const TableForm = ({
                 )}
               />
               
+              {/* Height Field */}
               <FormField
                 control={form.control}
                 name="height"
@@ -308,6 +321,7 @@ const TableForm = ({
                 )}
               />
               
+              {/* Rotation Field */}
               <FormField
                 control={form.control}
                 name="rotation"
@@ -332,6 +346,7 @@ const TableForm = ({
               />
             </div>
             
+            {/* Table Preview */}
             <div className="flex items-center justify-center p-4 border rounded-md">
               <div 
                 className={
@@ -344,7 +359,8 @@ const TableForm = ({
                   transition: 'all 0.2s ease',
                   borderColor: form.watch('status') === 'available' ? 'green' : 
                                form.watch('status') === 'occupied' ? 'red' : 
-                               form.watch('status') === 'reserved' ? 'blue' : 'purple'
+                               form.watch('status') === 'reserved' ? 'blue' : 
+                               form.watch('status') === 'inactive' ? 'gray' : 'purple'
                 }}
               >
                 <div className="text-center font-medium text-xs">

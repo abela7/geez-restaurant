@@ -1,8 +1,17 @@
 
 import React from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useLanguage, T } from "@/contexts/LanguageContext";
-import { SideModal } from "@/components/ui/side-modal";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -12,6 +21,8 @@ interface ConfirmDialogProps {
   description: string;
   confirmLabel?: string;
   cancelLabel?: string;
+  variant?: "destructive" | "default";
+  isLoading?: boolean;
 }
 
 const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
@@ -22,31 +33,44 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   description,
   confirmLabel,
   cancelLabel,
+  variant = "destructive",
+  isLoading = false,
 }) => {
   const { t } = useLanguage();
   
   const handleConfirm = () => {
     onConfirm();
-    onClose();
+    // We don't close here to allow the parent component to control closing
   };
 
   return (
-    <SideModal
-      open={isOpen}
-      onOpenChange={onClose}
-      title={title}
-      description={description}
-      width="sm"
-    >
-      <div className="flex justify-end space-x-2 pt-4">
-        <Button variant="outline" onClick={onClose}>
-          {cancelLabel || t("Cancel")}
-        </Button>
-        <Button onClick={handleConfirm}>
-          {confirmLabel || t("Confirm")}
-        </Button>
-      </div>
-    </SideModal>
+    <AlertDialog open={isOpen} onOpenChange={onClose}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isLoading}>
+            {cancelLabel || t("Cancel")}
+          </AlertDialogCancel>
+          <Button 
+            variant={variant} 
+            onClick={handleConfirm} 
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent"></span>
+                <T text="Processing..." />
+              </>
+            ) : (
+              confirmLabel || t("Confirm")
+            )}
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
 
