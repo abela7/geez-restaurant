@@ -25,7 +25,7 @@ export interface TableWithDetails extends Table {
   reservationTime?: string;
 }
 
-export type TableStatus = 'available' | 'occupied' | 'reserved' | 'cleaning';
+export type TableStatus = 'available' | 'occupied' | 'reserved' | 'cleaning' | 'inactive';
 
 export interface Room {
   id: string;
