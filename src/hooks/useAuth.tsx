@@ -75,34 +75,19 @@ const MOCK_USERS = [
 ];
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // For development, automatically set Tsion as the user
+  const tsionUser = MOCK_USERS.find(u => u.username === 'tsion');
+  const defaultUser = tsionUser ? { ...tsionUser, password: undefined } : null;
+  
+  const [user, setUser] = useState<User | null>(defaultUser);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Check for existing user on mount
-  useEffect(() => {
-    const checkUser = async () => {
-      try {
-        // Check local storage first for our mock auth
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-          const parsedUser = JSON.parse(storedUser);
-          setUser(parsedUser);
-        }
-      } catch (err) {
-        console.error('Error checking authentication:', err);
-        localStorage.removeItem('user');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // We're skipping the check for existing user since we're setting Tsion by default
 
-    checkUser();
-  }, []);
-
-  // Login function
+  // Login function (still available but not needed for development)
   const login = async (username: string, password: string) => {
     setIsLoading(true);
     setError(null);
@@ -162,8 +147,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Clear local storage
       localStorage.removeItem('user');
       
-      // Clear state
-      setUser(null);
+      // Reset to Tsion for development (normally would set to null)
+      setUser(defaultUser);
       
       // Show success message
       toast({
@@ -171,8 +156,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: "You have been successfully logged out.",
       });
       
-      // Redirect to login
-      navigate('/login');
+      // For development, redirect to waiter dashboard instead of login
+      navigate('/waiter');
     } catch (err: any) {
       setError(err.message);
       toast({
@@ -193,7 +178,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         login,
         logout,
         error,
-        isAuthenticated: !!user
+        isAuthenticated: true // Always authenticated for development
       }}
     >
       {children}
