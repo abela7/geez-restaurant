@@ -1,10 +1,9 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage, T } from "@/contexts/LanguageContext";
-import { useWaiterInfo } from "@/hooks/useWaiterInfo";
+import { useAuth } from "@/hooks/useAuth";
 
 interface SidebarUserProfileProps {
   collapsed: boolean;
@@ -12,17 +11,15 @@ interface SidebarUserProfileProps {
 
 const SidebarUserProfile: React.FC<SidebarUserProfileProps> = ({ collapsed }) => {
   const { t } = useLanguage();
-  const navigate = useNavigate();
-  const { waiter } = useWaiterInfo();
-  
-  // Get user from localStorage
-  const storedUser = localStorage.getItem('user');
-  const user = storedUser ? JSON.parse(storedUser) : null;
+  const { user, logout } = useAuth();
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
+  if (!user) {
+    return null;
+  }
+
+  const displayName = user.first_name && user.last_name 
+    ? `${user.first_name} ${user.last_name}`
+    : user.username;
 
   return (
     <div className="border-t border-gray-200 p-4">
@@ -37,17 +34,17 @@ const SidebarUserProfile: React.FC<SidebarUserProfileProps> = ({ collapsed }) =>
           </Button>
           <div className="flex-1 overflow-hidden">
             <p className="text-sm font-medium leading-none truncate">
-              {waiter?.name || user?.username || "User"}
+              {displayName}
             </p>
             <p className="text-xs text-gray-500 truncate">
-              {t(waiter?.role || user?.role || "guest")}
+              {t(user.role || "guest")}
             </p>
           </div>
           <Button
             variant="ghost"
             size="icon"
             className="h-8 w-8 p-0"
-            onClick={handleLogout}
+            onClick={() => logout()}
           >
             <LogOut className="h-4 w-4 text-gray-500 hover:text-gray-700" />
           </Button>
@@ -58,7 +55,8 @@ const SidebarUserProfile: React.FC<SidebarUserProfileProps> = ({ collapsed }) =>
             variant="ghost" 
             size="icon" 
             className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center p-0"
-            onClick={handleLogout}
+            onClick={() => logout()}
+            title="Log out"
           >
             <User className="h-4 w-4 text-gray-600" />
           </Button>

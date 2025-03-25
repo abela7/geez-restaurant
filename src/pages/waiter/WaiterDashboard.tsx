@@ -5,48 +5,28 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Loader2, Users, ShoppingBag, Clock, Bell } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { StaffMember } from "@/hooks/useStaffMembers";
+import { useAuth } from "@/hooks/useAuth";
 import { T } from "@/contexts/LanguageContext";
 
-// Import our new components
+// Import our components
 import ClockInOutCard from "@/components/staff/ClockInOutCard";
 import TasksWidget from "@/components/staff/TasksWidget";
 import StaffDashboardHeader from "@/components/staff/StaffDashboardHeader";
 
 const WaiterDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [staffProfile, setStaffProfile] = useState<StaffMember | null>(null);
   const [orderStats, setOrderStats] = useState({
     today: 0,
     pending: 0,
     completed: 0
   });
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        // Get current user
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          throw new Error("User not authenticated");
-        }
-        
-        // Get staff profile
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-        
-        if (profileError) {
-          throw profileError;
-        }
-        
-        setStaffProfile(profileData as StaffMember);
-        
         // For sample data, we'll set some dummy stats
         // In a production app, you would fetch real data from the database
         setOrderStats({
@@ -68,7 +48,7 @@ const WaiterDashboard = () => {
     };
     
     fetchData();
-  }, []);
+  }, [toast]);
 
   if (isLoading) {
     return (
@@ -78,26 +58,28 @@ const WaiterDashboard = () => {
     );
   }
 
-  // Fallback if staff profile not found
-  if (!staffProfile) {
+  // Fallback if user not found
+  if (!user) {
     return (
       <div className="text-center py-12">
-        <h2 className="text-2xl font-bold mb-2"><T text="Staff Profile Not Found" /></h2>
+        <h2 className="text-2xl font-bold mb-2"><T text="User Not Found" /></h2>
         <p className="text-muted-foreground">
-          <T text="Please contact an administrator to set up your staff profile." />
+          <T text="Please login to access your dashboard." />
         </p>
       </div>
     );
   }
 
-  const staffName = `${staffProfile.first_name || ""} ${staffProfile.last_name || ""}`.trim();
+  const staffName = user.first_name && user.last_name 
+    ? `${user.first_name} ${user.last_name}`
+    : user.username;
 
   return (
     <div className="space-y-6">
       <StaffDashboardHeader 
-        staffId={staffProfile.id}
+        staffId={user.id}
         staffName={staffName}
-        role={staffProfile.role}
+        role={user.role}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -204,8 +186,8 @@ const WaiterDashboard = () => {
         </div>
         
         <div className="space-y-6">
-          <ClockInOutCard staffId={staffProfile.id} staffName={staffName} />
-          <TasksWidget staffId={staffProfile.id} staffName={staffName} />
+          <ClockInOutCard staffId={user.id} staffName={staffName} />
+          <TasksWidget staffId={user.id} staffName={staffName} />
         </div>
       </div>
     </div>

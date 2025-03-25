@@ -1,72 +1,22 @@
+
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@/components/ThemeProvider';
-import { toast } from '@/components/ui/use-toast';
-
-// Mock users for demo
-const users = [
-  { 
-    username: 'admin',
-    password: 'admin123',
-    role: 'admin'
-  },
-  {
-    username: 'waiter',
-    password: 'waiter123',
-    role: 'waiter'
-  },
-  {
-    username: 'kitchen',
-    password: 'kitchen123',
-    role: 'kitchen'
-  }
-];
+import { useLanguage, T } from '@/contexts/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
+  const { t } = useLanguage();
+  const { login, isLoading, error } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    
-    // Simulate authentication check
-    setTimeout(() => {
-      const user = users.find(
-        u => u.username === username && u.password === password
-      );
-      
-      if (user) {
-        // For a real app, store tokens in localStorage and manage a proper auth state
-        localStorage.setItem('user', JSON.stringify({ username, role: user.role }));
-        toast({
-          title: "Login successful",
-          description: `Welcome back, ${username}!`,
-        });
-        
-        // Redirect based on user role
-        if (user.role === 'waiter') {
-          navigate('/waiter');
-        } else if (user.role === 'kitchen') {
-          navigate('/kitchen');
-        } else {
-          navigate('/');
-        }
-      } else {
-        toast({
-          title: "Login failed",
-          description: "Invalid username or password",
-          variant: "destructive",
-        });
-      }
-      setIsLoading(false);
-    }, 1000);
+    await login(username, password);
   };
 
   return (
@@ -128,14 +78,20 @@ const Login: React.FC = () => {
           <div className="p-6">
             <form onSubmit={handleSubmit}>
               <div className="space-y-4">
+                {error && (
+                  <div className="p-3 text-sm bg-destructive/15 text-destructive rounded-md">
+                    {error}
+                  </div>
+                )}
+                
                 <div className="space-y-2">
                   <label className="block text-sm font-medium" htmlFor="username">
-                    Username
+                    <T text="Username" />
                   </label>
                   <Input
                     id="username"
                     type="text"
-                    placeholder="Enter your username"
+                    placeholder={t("Enter your username")}
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
@@ -145,12 +101,12 @@ const Login: React.FC = () => {
                 
                 <div className="space-y-2">
                   <label className="block text-sm font-medium" htmlFor="password">
-                    Password
+                    <T text="Password" />
                   </label>
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Enter your password"
+                    placeholder={t("Enter your password")}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -166,11 +122,11 @@ const Login: React.FC = () => {
                       className="rounded text-primary focus:ring-primary"
                     />
                     <label htmlFor="remember" className="text-sm">
-                      Remember me
+                      <T text="Remember me" />
                     </label>
                   </div>
                   <a href="#" className="text-sm text-primary hover:underline">
-                    Forgot password?
+                    <T text="Forgot password?" />
                   </a>
                 </div>
                 
@@ -179,7 +135,7 @@ const Login: React.FC = () => {
                   className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Logging in...' : 'Login'}
+                  {isLoading ? <T text="Logging in..." /> : <T text="Login" />}
                 </Button>
               </div>
             </form>
@@ -191,7 +147,7 @@ const Login: React.FC = () => {
                 </div>
                 <div className="relative flex justify-center text-sm">
                   <span className="px-2 bg-card text-muted-foreground">
-                    Quick access
+                    <T text="Quick access" />
                   </span>
                 </div>
               </div>
@@ -205,17 +161,17 @@ const Login: React.FC = () => {
                     setPassword('admin123');
                   }}
                 >
-                  Admin
+                  <T text="Admin" />
                 </Button>
                 <Button 
                   variant="outline" 
                   className="hover:bg-accent hover:text-accent-foreground"
                   onClick={() => {
-                    setUsername('waiter');
-                    setPassword('waiter123');
+                    setUsername('tsion');
+                    setPassword('tsion123');
                   }}
                 >
-                  Waiter
+                  Tsion
                 </Button>
                 <Button 
                   variant="outline" 
@@ -225,7 +181,7 @@ const Login: React.FC = () => {
                     setPassword('kitchen123');
                   }}
                 >
-                  Kitchen
+                  <T text="Kitchen" />
                 </Button>
               </div>
             </div>
@@ -233,7 +189,7 @@ const Login: React.FC = () => {
         </Card>
         
         <p className="text-center mt-6 text-sm text-muted-foreground">
-          This is a demo version. Use the quick access buttons for predefined accounts.
+          <T text="This is a demo version. Use the quick access buttons for predefined accounts." />
         </p>
       </div>
     </div>
