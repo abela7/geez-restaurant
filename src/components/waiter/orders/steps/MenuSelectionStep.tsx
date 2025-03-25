@@ -11,6 +11,7 @@ import { Search, Plus, Minus, Trash2, Coffee, Utensils, Loader2 } from "lucide-r
 import { OrderItem } from '@/types/order';
 import { FoodItem } from '@/types/menu';
 import { supabase } from "@/integrations/supabase/client";
+import { useMenuItems } from '@/hooks/useMenuItems';
 
 interface MenuSelectionStepProps {
   searchQuery: string;
@@ -52,7 +53,7 @@ export const MenuSelectionStep: React.FC<MenuSelectionStepProps> = ({
       try {
         // Fetch categories
         const { data: categoriesData, error: categoriesError } = await supabase
-          .from('food_categories')
+          .from('menu_categories')
           .select('*')
           .order('name');
         
@@ -63,15 +64,24 @@ export const MenuSelectionStep: React.FC<MenuSelectionStepProps> = ({
           .from('food_items')
           .select(`
             *,
-            category:food_categories(id, name)
+            menu_categories(id, name)
           `)
-          .eq('is_available', true)
+          .eq('available', true)
           .order('name');
         
         if (itemsError) throw itemsError;
         
-        setCategories(categoriesData || []);
-        setMenuItems(itemsData || []);
+        // Transform the data to match the expected format
+        const typedCategories: FoodCategory[] = categoriesData || [];
+        setCategories(typedCategories);
+        
+        // Process menu items to include category information
+        const typedMenuItems: FoodItem[] = (itemsData || []).map(item => ({
+          ...item,
+          categoryName: item.menu_categories?.name || "Uncategorized"
+        }));
+        
+        setMenuItems(typedMenuItems);
       } catch (error) {
         console.error('Error fetching menu data:', error);
       } finally {
@@ -134,7 +144,7 @@ export const MenuSelectionStep: React.FC<MenuSelectionStepProps> = ({
           </div>
           
           <Tabs defaultValue="all" value={selectedCategory} onValueChange={setSelectedCategory}>
-            <ScrollArea className="w-full" orientation="horizontal">
+            <ScrollArea className="w-full">
               <TabsList className="mb-4">
                 <TabsTrigger value="all"><T text="All Items" /></TabsTrigger>
                 {categories.map(category => (
@@ -246,9 +256,9 @@ export const MenuSelectionStep: React.FC<MenuSelectionStepProps> = ({
                               )}
                               
                               <div className="flex gap-1">
-                                {item.category && (
+                                {item.categoryName && (
                                   <Badge variant="secondary" className="text-xs">
-                                    {t(item.category.name)}
+                                    {t(item.categoryName)}
                                   </Badge>
                                 )}
                               </div>

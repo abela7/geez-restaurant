@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Table } from "@/services/table/types";
+import { Table, TableStatus } from "@/services/table/types";
 
 export const useTables = () => {
   const [tables, setTables] = useState<Table[]>([]);
@@ -22,7 +22,13 @@ export const useTables = () => {
       
       if (error) throw error;
       
-      setTables(data || []);
+      // Transform the data to match the Table type
+      const typedTables: Table[] = data?.map(table => ({
+        ...table,
+        status: table.status as TableStatus,
+      })) || [];
+      
+      setTables(typedTables);
     } catch (err) {
       console.error('Error fetching tables:', err);
       setError(err instanceof Error ? err : new Error('Error fetching tables'));
