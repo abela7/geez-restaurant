@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Table, TableStatus } from "@/services/table/types";
+import { Table, TableStatus, Room } from "@/services/table/types";
 
 export const useTables = () => {
   const [tables, setTables] = useState<Table[]>([]);
@@ -27,6 +27,7 @@ export const useTables = () => {
         ...table,
         status: table.status as TableStatus,
         shape: (table.shape || 'rectangle') as 'rectangle' | 'circle' | 'square',
+        room: table.room as Room | null,
       })) || [];
       
       setTables(typedTables);

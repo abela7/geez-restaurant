@@ -15,6 +15,7 @@ export interface Table {
   location?: string;
   created_at?: string;
   updated_at?: string;
+  room?: Room | null;
 }
 
 export interface TableWithDetails extends Table {
