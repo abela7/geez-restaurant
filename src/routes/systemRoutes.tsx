@@ -6,12 +6,21 @@ import ErrorLogs from "../pages/system/ErrorLogs";
 import UserManagement from "../pages/system/UserManagement";
 import Documentation from "../pages/system/Documentation";
 import NotFound from "@/pages/NotFound";
+import { useAuth } from "@/hooks/useAuth";
 
 const SystemRoutes = () => {
-  // Check if user exists and has system role
-  const storedUser = localStorage.getItem('user');
-  const user = storedUser ? JSON.parse(storedUser) : null;
+  const { user, isLoading } = useAuth();
   
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
+      </div>
+    );
+  }
+  
+  // Check if user exists and has system role
   if (!user || user.role !== 'system') {
     return <Navigate to="/login" replace />;
   }
