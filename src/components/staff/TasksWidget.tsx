@@ -1,307 +1,178 @@
 
 import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Calendar, CheckCircle, AlertCircle, Plus, Clock } from "lucide-react";
-import { format, isToday, isPast } from "date-fns";
-import { useStaffTasks, StaffTask } from "@/hooks/useStaffTasks";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { ListChecks, Loader2, Plus } from "lucide-react";
+import { useLanguage, T } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
-import { T } from "@/contexts/LanguageContext";
+
+interface Task {
+  id: string;
+  title: string;
+  completed: boolean;
+  priority: 'high' | 'medium' | 'low';
+  due?: string;
+}
 
 interface TasksWidgetProps {
   staffId: string;
   staffName: string;
-  limit?: number;
 }
 
-const TasksWidget: React.FC<TasksWidgetProps> = ({ staffId, staffName, limit = 5 }) => {
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [newTask, setNewTask] = useState({
-    title: "",
-    description: "",
-    priority: "Medium",
-    due_date: format(new Date(), "yyyy-MM-dd")
-  });
-  
-  const { tasks, isLoading, error, addTask, updateTask, fetchTasks } = useStaffTasks(staffId);
+const TasksWidget: React.FC<TasksWidgetProps> = ({ staffId, staffName }) => {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const { t } = useLanguage();
   const { toast } = useToast();
   
-  const pendingTasks = tasks
-    .filter(task => task.status !== "Completed")
-    .sort((a, b) => {
-      // Sort by date (null dates at the end)
-      if (!a.due_date && !b.due_date) return 0;
-      if (!a.due_date) return 1;
-      if (!b.due_date) return -1;
-      
-      const dateA = new Date(a.due_date);
-      const dateB = new Date(b.due_date);
-      
-      // First sort by date
-      const dateComparison = dateA.getTime() - dateB.getTime();
-      if (dateComparison !== 0) return dateComparison;
-      
-      // If dates are the same, sort by priority
-      const priorityOrder = { "High": 0, "Medium": 1, "Low": 2 };
-      return priorityOrder[a.priority as keyof typeof priorityOrder] - 
-             priorityOrder[b.priority as keyof typeof priorityOrder];
-    })
-    .slice(0, limit);
-  
-  const handleAddTask = async () => {
-    if (!newTask.title.trim()) {
-      toast({
-        title: "Error",
-        description: "Task title is required",
-        variant: "destructive"
-      });
-      return;
-    }
+  useEffect(() => {
+    const fetchTasks = async () => {
+      setIsLoading(true);
+      try {
+        // For demo purposes, we'll use hardcoded tasks
+        // In production, we would fetch from the database
+        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
+        
+        const demoTasks: Task[] = [
+          {
+            id: '1',
+            title: 'Check if all tables are properly set',
+            completed: false,
+            priority: 'high',
+            due: 'Today'
+          },
+          {
+            id: '2',
+            title: 'Review daily specials and menu changes',
+            completed: true,
+            priority: 'high',
+            due: 'Today'
+          },
+          {
+            id: '3',
+            title: 'Prepare welcome drinks for reservations',
+            completed: false,
+            priority: 'medium',
+            due: 'Today'
+          },
+          {
+            id: '4',
+            title: 'Clean and restock service station',
+            completed: false,
+            priority: 'medium'
+          }
+        ];
+        
+        setTasks(demoTasks);
+      } catch (error: any) {
+        console.error("Error fetching tasks:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load tasks",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
     
-    try {
-      await addTask({
-        staff_id: staffId,
-        title: newTask.title,
-        description: newTask.description,
-        priority: newTask.priority,
-        status: "Pending",
-        due_date: newTask.due_date ? new Date(newTask.due_date).toISOString() : null,
-        due_time: null,
-        category: null
-      });
-      
-      setNewTask({
-        title: "",
-        description: "",
-        priority: "Medium",
-        due_date: format(new Date(), "yyyy-MM-dd")
-      });
-      
-      setIsCreateDialogOpen(false);
-    } catch (err) {
-      console.error("Failed to add task:", err);
-    }
-  };
+    fetchTasks();
+  }, [staffId]);
   
-  const handleTaskCompletion = async (taskId: string, isCompleted: boolean) => {
-    try {
-      await updateTask(taskId, {
-        status: isCompleted ? "Completed" : "Pending",
-        completed_at: isCompleted ? new Date().toISOString() : null
-      });
-      
-      // Refresh tasks after updating
-      fetchTasks();
-      
-      toast({
-        title: isCompleted ? "Task Completed" : "Task Reopened",
-        description: isCompleted ? "Great job!" : "Task has been reopened"
-      });
-    } catch (err) {
-      console.error("Failed to update task:", err);
-      toast({
-        title: "Error",
-        description: "Failed to update task status",
-        variant: "destructive"
-      });
-    }
+  const toggleTaskCompletion = (taskId: string) => {
+    setTasks(prevTasks => 
+      prevTasks.map(task => 
+        task.id === taskId ? { ...task, completed: !task.completed } : task
+      )
+    );
+    
+    // In production, we would update the database here
+    toast({
+      title: "Task updated",
+      description: "Task status has been updated",
+    });
   };
   
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "High":
-        return "text-red-500 bg-red-100 dark:bg-red-900/20 dark:text-red-300";
-      case "Medium":
-        return "text-yellow-500 bg-yellow-100 dark:bg-yellow-900/20 dark:text-yellow-300";
-      case "Low":
-        return "text-green-500 bg-green-100 dark:bg-green-900/20 dark:text-green-300";
+      case 'high':
+        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
+      case 'medium':
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
+      case 'low':
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
       default:
-        return "text-blue-500 bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300";
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300";
     }
   };
   
-  const getDateStatus = (dueDate: string | null) => {
-    if (!dueDate) return "none";
-    
-    const date = new Date(dueDate);
-    if (isToday(date)) return "today";
-    if (isPast(date)) return "overdue";
-    return "upcoming";
-  };
-  
   return (
-    <>
-      <Card className="shadow-md h-full">
-        <CardHeader className="bg-blue-50 dark:bg-blue-900/20 flex flex-row items-center justify-between space-y-0 pb-3">
-          <CardTitle className="text-md font-medium">
-            <Calendar className="mr-2 h-5 w-5 inline" />
-            <T text="Your Tasks" />
-          </CardTitle>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-8 w-8 p-0" 
-            onClick={() => setIsCreateDialogOpen(true)}
-          >
-            <span className="sr-only">Add task</span>
-            <Plus className="h-4 w-4" />
-          </Button>
-        </CardHeader>
-        
-        <CardContent className="pt-6">
-          {isLoading ? (
-            <div className="flex justify-center items-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : error ? (
-            <div className="text-center py-8 text-red-500">
-              <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-              <p><T text="Failed to load tasks" /></p>
-            </div>
-          ) : pendingTasks.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <CheckCircle className="h-8 w-8 mx-auto mb-2" />
-              <p><T text="No pending tasks. Great job!" /></p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {pendingTasks.map((task) => (
-                <div key={task.id} className="flex items-start gap-2 pb-3 border-b last:border-0 last:pb-0">
-                  <Checkbox 
-                    id={`task-${task.id}`} 
-                    className="mt-1"
-                    onCheckedChange={(checked) => handleTaskCompletion(task.id, checked as boolean)}
-                  />
-                  <div className="grid gap-1 w-full">
-                    <label 
-                      htmlFor={`task-${task.id}`} 
-                      className="font-medium cursor-pointer"
-                    >
-                      {task.title}
-                    </label>
-                    {task.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-1">
-                        {task.description}
-                      </p>
-                    )}
-                    <div className="flex gap-2 mt-1 flex-wrap">
-                      <Badge variant="outline" className={getPriorityColor(task.priority)}>
-                        {task.priority}
-                      </Badge>
-                      
-                      {task.due_date && (
-                        <Badge 
-                          variant="outline" 
-                          className={
-                            getDateStatus(task.due_date) === "overdue"
-                              ? "text-red-500 bg-red-100 dark:bg-red-900/20 dark:text-red-300"
-                              : getDateStatus(task.due_date) === "today"
-                              ? "text-yellow-500 bg-yellow-100 dark:bg-yellow-900/20 dark:text-yellow-300"
-                              : "text-green-500 bg-green-100 dark:bg-green-900/20 dark:text-green-300"
-                          }
-                        >
-                          <Clock className="mr-1 h-3 w-3" />
-                          {format(new Date(task.due_date), "MMM d, yyyy")}
-                        </Badge>
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base font-medium flex items-center">
+          <ListChecks className="h-4 w-4 mr-2" />
+          <T text="Today's Tasks" />
+        </CardTitle>
+      </CardHeader>
+      
+      <CardContent className="pt-0">
+        {isLoading ? (
+          <div className="flex justify-center items-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        ) : (
+          <>
+            {tasks.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <T text="No tasks assigned today" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {tasks.map(task => (
+                  <div key={task.id} className="flex items-start gap-2">
+                    <Checkbox 
+                      id={`task-${task.id}`}
+                      checked={task.completed}
+                      onCheckedChange={() => toggleTaskCompletion(task.id)}
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <label 
+                        htmlFor={`task-${task.id}`}
+                        className={`text-sm font-medium flex flex-wrap items-center gap-2 ${task.completed ? 'line-through text-muted-foreground' : ''}`}
+                      >
+                        {task.title}
+                        {task.priority && (
+                          <Badge variant="outline" className={`text-[10px] py-0 h-4 ${getPriorityColor(task.priority)}`}>
+                            {t(task.priority)}
+                          </Badge>
+                        )}
+                      </label>
+                      {task.due && (
+                        <p className="text-xs text-muted-foreground">
+                          <T text="Due" />: {task.due}
+                        </p>
                       )}
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-        
-        {pendingTasks.length > 0 && (
-          <CardFooter className="pt-0">
+                ))}
+              </div>
+            )}
+            
             <Button 
-              variant="link" 
-              className="pl-0 hover:no-underline"
-              // We'll implement the view all tasks page in a future step
-              onClick={() => toast({
-                title: "Feature coming soon",
-                description: "The full task management page will be implemented soon"
-              })}
+              variant="outline" 
+              size="sm" 
+              className="w-full mt-4"
             >
-              <T text="View all tasks" />
-            </Button>
-          </CardFooter>
-        )}
-      </Card>
-      
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle><T text="Add New Task" /></DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="title"><T text="Task Title" /> *</Label>
-              <Input
-                id="title"
-                value={newTask.title}
-                onChange={(e) => setNewTask({...newTask, title: e.target.value})}
-                placeholder="Enter task title"
-              />
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="description"><T text="Description" /></Label>
-              <Textarea
-                id="description"
-                value={newTask.description}
-                onChange={(e) => setNewTask({...newTask, description: e.target.value})}
-                placeholder="Add more details about the task"
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="priority"><T text="Priority" /></Label>
-                <Select
-                  value={newTask.priority}
-                  onValueChange={(value) => setNewTask({...newTask, priority: value})}
-                >
-                  <SelectTrigger id="priority">
-                    <SelectValue placeholder="Select priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="High"><T text="High" /></SelectItem>
-                    <SelectItem value="Medium"><T text="Medium" /></SelectItem>
-                    <SelectItem value="Low"><T text="Low" /></SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="due_date"><T text="Due Date" /></Label>
-                <Input
-                  id="due_date"
-                  type="date"
-                  value={newTask.due_date}
-                  onChange={(e) => setNewTask({...newTask, due_date: e.target.value})}
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-              <T text="Cancel" />
-            </Button>
-            <Button onClick={handleAddTask}>
+              <Plus className="h-3.5 w-3.5 mr-1" />
               <T text="Add Task" />
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

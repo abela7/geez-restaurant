@@ -4,145 +4,27 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
-export type ClockOperation = "in" | "out";
+export type ClockAction = "in" | "out";
+
+interface Attendance {
+  id: string;
+  staff_id: string;
+  check_in: string | null;
+  check_out: string | null;
+  date: string;
+  status: string;
+  hours_worked: number;
+  notes: string | null;
+}
 
 export const useClockInOut = (staffId: string) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const clockInOut = async (operation: ClockOperation, notes?: string) => {
-    setIsLoading(true);
-    setError(null);
-    
+  const getCurrentAttendance = async (): Promise<Attendance | null> => {
     try {
-      const now = new Date();
-      const today = format(now, 'yyyy-MM-dd');
-      
-      // First check if there's already an attendance record for today
-      const { data: existingRecord, error: fetchError } = await supabase
-        .from('staff_attendance')
-        .select('*')
-        .eq('staff_id', staffId)
-        .eq('date', today)
-        .maybeSingle();
-        
-      if (fetchError) {
-        throw fetchError;
-      }
-      
-      if (operation === "in") {
-        // Clock in
-        if (existingRecord) {
-          // If already clocked in today, update only if check_out exists (allowing re-clock in after out)
-          if (!existingRecord.check_out) {
-            throw new Error("You're already clocked in for today");
-          }
-          
-          // Re-clock in after previous clock out
-          const { data, error: updateError } = await supabase
-            .from('staff_attendance')
-            .update({
-              check_in: now.toISOString(),
-              check_out: null,
-              notes: notes || existingRecord.notes
-            })
-            .eq('id', existingRecord.id)
-            .select()
-            .single();
-            
-          if (updateError) {
-            throw updateError;
-          }
-          
-          toast({
-            title: "Success",
-            description: "You have clocked in successfully"
-          });
-          
-          return data;
-        } else {
-          // First clock in for the day
-          const { data, error: insertError } = await supabase
-            .from('staff_attendance')
-            .insert({
-              staff_id: staffId,
-              date: today,
-              status: 'Present',
-              check_in: now.toISOString(),
-              notes: notes || null,
-              hours_worked: 0
-            })
-            .select()
-            .single();
-            
-          if (insertError) {
-            throw insertError;
-          }
-          
-          // Update profile attendance status
-          await supabase
-            .from('profiles')
-            .update({ attendance: 'Present' })
-            .eq('id', staffId);
-          
-          toast({
-            title: "Success",
-            description: "You have clocked in successfully"
-          });
-          
-          return data;
-        }
-      } else {
-        // Clock out
-        if (!existingRecord || !existingRecord.check_in) {
-          throw new Error("You need to clock in first before clocking out");
-        }
-        
-        const checkInTime = new Date(existingRecord.check_in);
-        const hoursWorked = (now.getTime() - checkInTime.getTime()) / (1000 * 60 * 60);
-        
-        // Update existing record with check out time and hours worked
-        const totalHours = existingRecord.hours_worked + hoursWorked;
-        
-        const { data, error: updateError } = await supabase
-          .from('staff_attendance')
-          .update({
-            check_out: now.toISOString(),
-            hours_worked: parseFloat(totalHours.toFixed(2)),
-            notes: notes ? (existingRecord.notes ? existingRecord.notes + "; " + notes : notes) : existingRecord.notes
-          })
-          .eq('id', existingRecord.id)
-          .select()
-          .single();
-          
-        if (updateError) {
-          throw updateError;
-        }
-        
-        toast({
-          title: "Success",
-          description: `You have clocked out successfully. Hours worked today: ${totalHours.toFixed(2)}`
-        });
-        
-        return data;
-      }
-    } catch (err: any) {
-      console.error(`Error during clock ${operation}:`, err);
-      setError(err.message || `Failed to clock ${operation}`);
-      toast({
-        title: "Error",
-        description: err.message || `Failed to clock ${operation}`,
-        variant: "destructive"
-      });
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const getCurrentAttendance = async () => {
-    try {
+      // Get current date in YYYY-MM-DD format
       const today = format(new Date(), 'yyyy-MM-dd');
       
       const { data, error } = await supabase
@@ -151,15 +33,141 @@ export const useClockInOut = (staffId: string) => {
         .eq('staff_id', staffId)
         .eq('date', today)
         .maybeSingle();
+      
+      if (error) throw error;
+      
+      return data as Attendance | null;
+    } catch (err: any) {
+      console.error("Error checking current attendance:", err);
+      return null;
+    }
+  };
+
+  const clockInOut = async (action: ClockAction, notes?: string): Promise<Attendance | null> => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Get current date in YYYY-MM-DD format
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const now = new Date().toISOString();
+      
+      // Check if there's an existing attendance record for today
+      const currentAttendance = await getCurrentAttendance();
+      
+      if (action === "in") {
+        if (currentAttendance && currentAttendance.check_in && !currentAttendance.check_out) {
+          // Already clocked in
+          toast({
+            title: "Already clocked in",
+            description: "You are already clocked in for today.",
+            variant: "destructive"
+          });
+          return currentAttendance;
+        }
         
-      if (error) {
-        throw error;
+        // Clock in - either create new record or update existing one
+        let result;
+        
+        if (!currentAttendance) {
+          // Create new attendance record
+          const { data, error } = await supabase
+            .from('staff_attendance')
+            .insert({
+              staff_id: staffId,
+              date: today,
+              check_in: now,
+              status: 'present',
+              notes: notes || null
+            })
+            .select()
+            .single();
+          
+          if (error) throw error;
+          result = data;
+        } else {
+          // Update existing record
+          const { data, error } = await supabase
+            .from('staff_attendance')
+            .update({
+              check_in: now,
+              status: 'present',
+              notes: notes || currentAttendance.notes
+            })
+            .eq('id', currentAttendance.id)
+            .select()
+            .single();
+          
+          if (error) throw error;
+          result = data;
+        }
+        
+        toast({
+          title: "Clocked in successfully",
+          description: `You have clocked in at ${format(new Date(now), 'h:mm a')}`,
+        });
+        
+        return result as Attendance;
+      } else if (action === "out") {
+        if (!currentAttendance || !currentAttendance.check_in) {
+          // Not clocked in yet
+          toast({
+            title: "Not clocked in",
+            description: "You need to clock in first before clocking out.",
+            variant: "destructive"
+          });
+          return null;
+        }
+        
+        if (currentAttendance.check_out) {
+          // Already clocked out
+          toast({
+            title: "Already clocked out",
+            description: "You have already clocked out for today.",
+            variant: "destructive"
+          });
+          return currentAttendance;
+        }
+        
+        // Calculate hours worked
+        const checkInTime = new Date(currentAttendance.check_in).getTime();
+        const checkOutTime = new Date(now).getTime();
+        const hoursWorked = (checkOutTime - checkInTime) / (1000 * 60 * 60); // Convert ms to hours
+        
+        // Clock out - update existing record
+        const { data, error } = await supabase
+          .from('staff_attendance')
+          .update({
+            check_out: now,
+            hours_worked: parseFloat(hoursWorked.toFixed(2)),
+            notes: notes || currentAttendance.notes
+          })
+          .eq('id', currentAttendance.id)
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Clocked out successfully",
+          description: `You have clocked out at ${format(new Date(now), 'h:mm a')}`,
+        });
+        
+        return data as Attendance;
       }
       
-      return data;
-    } catch (err: any) {
-      console.error('Error fetching current attendance:', err);
       return null;
+    } catch (err: any) {
+      console.error("Error with clock in/out:", err);
+      setError(err.message);
+      toast({
+        title: "Error",
+        description: `Failed to ${action === 'in' ? 'clock in' : 'clock out'}: ${err.message}`,
+        variant: "destructive"
+      });
+      return null;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -170,5 +178,3 @@ export const useClockInOut = (staffId: string) => {
     error
   };
 };
-
-export default useClockInOut;

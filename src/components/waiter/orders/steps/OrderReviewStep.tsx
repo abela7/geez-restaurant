@@ -1,12 +1,15 @@
+
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { useLanguage, T } from "@/contexts/LanguageContext";
-import { Minus, Plus, Trash2, CheckCircle, Printer } from "lucide-react";
-import { OrderItem } from "@/types/order";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Check, Loader2, Minus, Plus, Trash2 } from "lucide-react";
+import { OrderItem } from '@/types/order';
 
 interface OrderReviewStepProps {
   orderItems: OrderItem[];
@@ -14,15 +17,9 @@ interface OrderReviewStepProps {
   handleRemoveItem: (itemId: string) => void;
   orderType: string;
   selectedTable: string;
-  tables: {
-    id: string;
-    table_number: number;
-    capacity: number;
-    status: string;
-    location?: string;
-  }[];
+  tables: any[];
   customerName: string;
-  customerCount: string;
+  customerCount: string | number;
   specialInstructions: string;
   setSpecialInstructions: (instructions: string) => void;
   calculateTotal: () => number;
@@ -47,152 +44,177 @@ export const OrderReviewStep: React.FC<OrderReviewStepProps> = ({
 }) => {
   const { t } = useLanguage();
   
-  const getSelectedTableInfo = () => {
-    const table = tables.find(table => table.id === selectedTable);
-    return table ? `Table ${table.table_number} (${table.capacity} seats)` : "";
+  // Find selected table info
+  const selectedTableInfo = tables.find(table => table.id === selectedTable);
+  
+  const formatOrderType = (type: string) => {
+    switch (type) {
+      case 'dine-in': return t('Dine In');
+      case 'takeout': return t('Takeout');
+      case 'delivery': return t('Delivery');
+      default: return type;
+    }
   };
   
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardContent className="p-4">
-          <h3 className="text-lg font-medium mb-4">
-            <T text="Order Summary" />
-          </h3>
-          
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <h4 className="text-sm font-medium text-muted-foreground">
-                <T text="Order Type" />
-              </h4>
-              <p>{orderType === 'dine-in' ? t('Dine In') : orderType === 'takeout' ? t('Takeout') : t('Delivery')}</p>
-            </div>
-            
-            {orderType === 'dine-in' && (
-              <>
+    <div className="space-y-4 mt-6">
+      <h2 className="text-xl font-semibold"><T text="Review Order" /></h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2">
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="text-lg font-medium mb-4"><T text="Order Summary" /></h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <h4 className="text-sm font-medium text-muted-foreground">
-                    <T text="Table" />
-                  </h4>
-                  <p>{getSelectedTableInfo()}</p>
+                  <Label><T text="Order Type" /></Label>
+                  <div className="mt-1 font-medium">{formatOrderType(orderType)}</div>
+                </div>
+                
+                {orderType === 'dine-in' && selectedTableInfo && (
+                  <div>
+                    <Label><T text="Table" /></Label>
+                    <div className="mt-1 font-medium">
+                      <T text="Table" /> {selectedTableInfo.table_number} ({selectedTableInfo.capacity} <T text="seats" />)
+                    </div>
+                  </div>
+                )}
+                
+                <div>
+                  <Label><T text="Customer" /></Label>
+                  <div className="mt-1 font-medium">{customerName || <span className="text-muted-foreground italic"><T text="Not specified" /></span>}</div>
                 </div>
                 
                 <div>
-                  <h4 className="text-sm font-medium text-muted-foreground">
-                    <T text="Number of Guests" />
-                  </h4>
-                  <p>{customerCount}</p>
+                  <Label><T text="Number of Guests" /></Label>
+                  <div className="mt-1 font-medium">{customerCount}</div>
                 </div>
-              </>
-            )}
-            
-            {customerName && (
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground">
-                  <T text="Customer Name" />
-                </h4>
-                <p>{customerName}</p>
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardContent className="p-4">
-          <h3 className="font-medium text-lg mb-3 flex items-center">
-            <T text="Order Items" />
-            <Badge variant="outline" className="ml-2">{orderItems.length}</Badge>
-          </h3>
-          
-          <ScrollArea className="h-[250px]">
-            <div className="space-y-3">
-              {orderItems.map((item) => (
-                <div key={item.id} className="flex justify-between items-start border-b pb-3">
-                  <div className="flex-1">
-                    <div className="flex justify-between">
-                      <span className="font-medium">{item.foodItem.name}</span>
-                      <span className="font-bold">${(item.foodItem.price * item.quantity).toFixed(2)}</span>
-                    </div>
-                    {item.special_instructions && (
-                      <p className="text-sm text-muted-foreground mt-1">Note: {item.special_instructions}</p>
-                    )}
-                    <div className="flex items-center gap-2 mt-1">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                      >
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <span className="w-6 text-center">{item.quantity}</span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 ml-auto text-destructive"
-                        onClick={() => handleRemoveItem(item.id)}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
+              
+              <Label><T text="Special Instructions" /></Label>
+              <Textarea 
+                value={specialInstructions}
+                onChange={(e) => setSpecialInstructions(e.target.value)}
+                placeholder={t("Enter any special instructions or requests")}
+                className="mt-1 mb-6"
+              />
+              
+              <h3 className="text-lg font-medium mb-4"><T text="Order Items" /></h3>
+              
+              {orderItems.length === 0 ? (
+                <div className="bg-muted/50 p-6 rounded-md text-center text-muted-foreground">
+                  <T text="No items added to the order yet" />
                 </div>
-              ))}
-            </div>
-          </ScrollArea>
-          
-          <div className="border-t pt-3 mt-4">
-            <div className="flex justify-between font-bold text-lg">
-              <span><T text="Total" /></span>
-              <span>${calculateTotal().toFixed(2)}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardContent className="p-4">
-          <h3 className="text-lg font-medium mb-3">
-            <T text="Special Instructions" /> <span className="text-muted-foreground text-sm">(<T text="optional" />)</span>
-          </h3>
-          
-          <Textarea 
-            placeholder={t("Enter any special instructions or requests")}
-            value={specialInstructions}
-            onChange={(e) => setSpecialInstructions(e.target.value)}
-            rows={3}
-          />
-        </CardContent>
-      </Card>
-      
-      <div className="flex flex-col gap-3">
-        <Button 
-          onClick={handleSubmitOrder}
-          disabled={isSubmitting}
-          size="lg"
-          className="w-full"
-        >
-          {isSubmitting ? (
-            <div className="animate-spin h-5 w-5 border-2 border-current border-t-transparent rounded-full mr-2" />
-          ) : (
-            <CheckCircle className="h-5 w-5 mr-2" />
-          )}
-          <T text="Place Order" />
-        </Button>
+              ) : (
+                <ScrollArea className="h-[300px] border rounded-md">
+                  <div className="p-4 space-y-4">
+                    {orderItems.map((item) => (
+                      <div key={item.id} className="flex items-start pb-4 border-b last:border-b-0 last:pb-0">
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h4 className="font-medium">{item.foodItem.name}</h4>
+                              {item.special_instructions && (
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {item.special_instructions}
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <div className="font-medium">£{(item.foodItem.price * item.quantity).toFixed(2)}</div>
+                              <div className="text-sm text-muted-foreground">
+                                £{item.foodItem.price.toFixed(2)} × {item.quantity}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 mt-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <span className="w-8 text-center">{item.quantity}</span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 ml-2 text-destructive"
+                              onClick={() => handleRemoveItem(item.id)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+              
+              <div className="mt-6 space-y-2">
+                <div className="flex justify-between">
+                  <span><T text="Subtotal" /></span>
+                  <span>£{calculateTotal().toFixed(2)}</span>
+                </div>
+                {/* Add tax calculation if needed */}
+                <Separator />
+                <div className="flex justify-between font-bold text-lg">
+                  <span><T text="Total" /></span>
+                  <span>£{calculateTotal().toFixed(2)}</span>
+                </div>
+              </div>
+              
+              <Button 
+                className="w-full mt-6" 
+                size="lg"
+                disabled={orderItems.length === 0 || isSubmitting}
+                onClick={handleSubmitOrder}
+              >
+                {isSubmitting ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Check className="mr-2 h-4 w-4" />
+                )}
+                <T text="Place Order" />
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
         
-        <Button variant="outline" className="w-full">
-          <Printer className="h-5 w-5 mr-2" />
-          <T text="Print Receipt" />
-        </Button>
+        <div>
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="text-lg font-medium mb-4"><T text="Quick Actions" /></h3>
+              
+              <div className="space-y-3">
+                <Button variant="outline" className="w-full justify-start" disabled={isSubmitting}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  <T text="Add More Items" />
+                </Button>
+                
+                <Button variant="outline" className="w-full justify-start" disabled={isSubmitting}>
+                  <T text="Apply Discount" />
+                </Button>
+                
+                <Button variant="outline" className="w-full justify-start" disabled={isSubmitting}>
+                  <T text="Split Order" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
