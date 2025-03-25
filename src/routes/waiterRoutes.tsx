@@ -11,7 +11,6 @@ import NotFound from "@/pages/NotFound";
 import { CartProvider } from "@/contexts/CartContext";
 
 const WaiterRoutes = () => {
-  // Bypassing authentication for development
   return (
     <CartProvider>
       <Routes>

@@ -1,7 +1,5 @@
 
-import { Route, Routes, Navigate } from "react-router-dom";
-import Login from "../pages/Login";
-import NotFound from "../pages/NotFound";
+import { Navigate } from "react-router-dom";
 
 const AuthRoutes = () => {
   // For development, always redirect to waiter dashboard
