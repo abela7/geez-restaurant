@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { useTheme } from '@/components/ThemeProvider';
-import Layout from '@/components/Layout';
 import { PageHeader } from '@/components/ui/page-header';
 import { useLanguage, T } from '@/contexts/LanguageContext';
 import { 
@@ -47,45 +46,43 @@ const ThemeSettings = () => {
   };
   
   return (
-    <Layout interface="admin">
-      <div className="container mx-auto p-4">
-        <PageHeader
-          title={<T text="Theme Settings" />}
-          description={<T text="Customize the appearance of your restaurant management system" />}
-        />
+    <div className="container mx-auto p-4">
+      <PageHeader
+        title={<T text="Theme Settings" />}
+        description={<T text="Customize the appearance of your restaurant management system" />}
+      />
+      
+      <Tabs defaultValue="themes" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="themes"><T text="Themes" /></TabsTrigger>
+          <TabsTrigger value="customization"><T text="Customization" /></TabsTrigger>
+          <TabsTrigger value="advanced"><T text="Advanced" /></TabsTrigger>
+        </TabsList>
         
-        <Tabs defaultValue="themes" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="themes"><T text="Themes" /></TabsTrigger>
-            <TabsTrigger value="customization"><T text="Customization" /></TabsTrigger>
-            <TabsTrigger value="advanced"><T text="Advanced" /></TabsTrigger>
-          </TabsList>
+        <TabsContent value="themes" className="space-y-4">
+          <ThemeSelectionCard 
+            currentTheme={theme}
+            onThemeChange={setTheme}
+            onSavePreferences={saveThemePreferences}
+          />
           
-          <TabsContent value="themes" className="space-y-4">
-            <ThemeSelectionCard 
-              currentTheme={theme}
-              onThemeChange={setTheme}
-              onSavePreferences={saveThemePreferences}
-            />
-            
-            <SystemPreferencesCard 
-              defaultTheme={defaultTheme}
-              autoSwitch={autoSwitch}
-              onDefaultThemeChange={handleThemeChange}
-              onAutoSwitchChange={setAutoSwitch}
-            />
-          </TabsContent>
-          
-          <TabsContent value="customization">
-            <ColorCustomizationCard />
-          </TabsContent>
-          
-          <TabsContent value="advanced">
-            <AdvancedSettingsCard />
-          </TabsContent>
-        </Tabs>
-      </div>
-    </Layout>
+          <SystemPreferencesCard 
+            defaultTheme={defaultTheme}
+            autoSwitch={autoSwitch}
+            onDefaultThemeChange={handleThemeChange}
+            onAutoSwitchChange={setAutoSwitch}
+          />
+        </TabsContent>
+        
+        <TabsContent value="customization">
+          <ColorCustomizationCard />
+        </TabsContent>
+        
+        <TabsContent value="advanced">
+          <AdvancedSettingsCard />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 

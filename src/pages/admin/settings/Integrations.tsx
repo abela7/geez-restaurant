@@ -1,6 +1,4 @@
-
 import React from 'react';
-import Layout from '@/components/Layout';
 import { useLanguage, T } from '@/contexts/LanguageContext';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -70,7 +68,7 @@ const Integrations: React.FC = () => {
   const { t } = useLanguage();
 
   return (
-    <Layout interface="admin">
+    <>
       <PageHeader
         heading={<T text="Integrations" />}
         description={<T text="Connect and manage third-party services" />}
@@ -179,7 +177,7 @@ const Integrations: React.FC = () => {
           </Card>
         ))}
       </div>
-    </Layout>
+    </>
   );
 };
 

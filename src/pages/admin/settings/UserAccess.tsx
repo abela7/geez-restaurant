@@ -1,10 +1,8 @@
-
 import React from 'react';
-import Layout from '@/components/Layout';
 import { useLanguage, T } from '@/contexts/LanguageContext';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { UserPlus, Key, User, Shield, UserCog, Eye, EyeOff, Search, Plus } from 'lucide-react';
+import { UserPlus, Key, Shield, Search, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge-extended';
@@ -97,7 +95,7 @@ const UserAccess: React.FC = () => {
   const { t } = useLanguage();
 
   return (
-    <Layout interface="admin">
+    <>
       <PageHeader
         heading={<T text="User Access" />}
         description={<T text="Manage user accounts and permissions" />}
@@ -225,7 +223,7 @@ const UserAccess: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-    </Layout>
+    </>
   );
 };
 

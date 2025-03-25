@@ -1,6 +1,4 @@
-
 import React from 'react';
-import Layout from '@/components/Layout';
 import { useLanguage, T } from '@/contexts/LanguageContext';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -83,7 +81,7 @@ const PrintersDevices: React.FC = () => {
   const { t } = useLanguage();
 
   return (
-    <Layout interface="admin">
+    <>
       <PageHeader
         heading={<T text="Printers & Devices" />}
         description={<T text="Manage connected hardware and peripherals" />}
@@ -216,7 +214,7 @@ const PrintersDevices: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-    </Layout>
+    </>
   );
 };
 
