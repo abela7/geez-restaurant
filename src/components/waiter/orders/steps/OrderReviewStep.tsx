@@ -1,216 +1,243 @@
 
 import React from 'react';
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { useLanguage, T } from "@/contexts/LanguageContext";
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useLanguage, T } from "@/contexts/LanguageContext";
+import { OrderItem, OrderType } from '@/types/order';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Check, Loader2, Minus, Plus, Trash2 } from "lucide-react";
-import { OrderItem } from '@/types/order';
+import { Check, ClipboardList, Table, User, Plus, Minus, Trash2 } from "lucide-react";
+import { useTables } from "@/hooks/useTables";
 
 interface OrderReviewStepProps {
   orderItems: OrderItem[];
-  handleQuantityChange: (itemId: string, newQuantity: number) => void;
-  handleRemoveItem: (itemId: string) => void;
-  orderType: string;
-  selectedTable: string;
-  tables: any[];
+  orderType: OrderType;
+  tableId: string;
   customerName: string;
-  customerCount: string | number;
+  customerCount: string;
   specialInstructions: string;
-  setSpecialInstructions: (instructions: string) => void;
-  calculateTotal: () => number;
-  handleSubmitOrder: () => void;
+  onUpdateQuantity: (itemId: string, quantity: number) => void;
+  onRemoveItem: (itemId: string) => void;
+  total: number;
+  onPlaceOrder: () => void;
   isSubmitting: boolean;
+  onGoBack: () => void;
 }
 
 export const OrderReviewStep: React.FC<OrderReviewStepProps> = ({
   orderItems,
-  handleQuantityChange,
-  handleRemoveItem,
   orderType,
-  selectedTable,
-  tables,
+  tableId,
   customerName,
   customerCount,
   specialInstructions,
-  setSpecialInstructions,
-  calculateTotal,
-  handleSubmitOrder,
-  isSubmitting
+  onUpdateQuantity,
+  onRemoveItem,
+  total,
+  onPlaceOrder,
+  isSubmitting,
+  onGoBack
 }) => {
   const { t } = useLanguage();
+  const { getTableById } = useTables();
   
-  // Find selected table info
-  const selectedTableInfo = tables.find(table => table.id === selectedTable);
+  const selectedTable = getTableById(tableId);
   
-  const formatOrderType = (type: string) => {
-    switch (type) {
-      case 'dine-in': return t('Dine In');
-      case 'takeout': return t('Takeout');
-      case 'delivery': return t('Delivery');
-      default: return type;
+  const getOrderTypeLabel = () => {
+    switch (orderType) {
+      case 'dine-in':
+        return t('Dine In');
+      case 'takeout':
+        return t('Takeout');
+      case 'delivery':
+        return t('Delivery');
+      default:
+        return '';
+    }
+  };
+  
+  const getOrderTypeBadgeColor = () => {
+    switch (orderType) {
+      case 'dine-in':
+        return 'bg-green-500/10 text-green-700 dark:text-green-300';
+      case 'takeout':
+        return 'bg-blue-500/10 text-blue-700 dark:text-blue-300';
+      case 'delivery':
+        return 'bg-purple-500/10 text-purple-700 dark:text-purple-300';
+      default:
+        return '';
     }
   };
   
   return (
-    <div className="space-y-4 mt-6">
-      <h2 className="text-xl font-semibold"><T text="Review Order" /></h2>
+    <div className="space-y-6 mt-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold"><T text="Review Order" /></h2>
+        <Badge className={`text-sm ${getOrderTypeBadgeColor()}`}>
+          {getOrderTypeLabel()}
+        </Badge>
+      </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-2 space-y-4">
+          {/* Order Items */}
           <Card>
-            <CardContent className="p-6">
-              <h3 className="text-lg font-medium mb-4"><T text="Order Summary" /></h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <Label><T text="Order Type" /></Label>
-                  <div className="mt-1 font-medium">{formatOrderType(orderType)}</div>
-                </div>
-                
-                {orderType === 'dine-in' && selectedTableInfo && (
-                  <div>
-                    <Label><T text="Table" /></Label>
-                    <div className="mt-1 font-medium">
-                      <T text="Table" /> {selectedTableInfo.table_number} ({selectedTableInfo.capacity} <T text="seats" />)
-                    </div>
-                  </div>
-                )}
-                
-                <div>
-                  <Label><T text="Customer" /></Label>
-                  <div className="mt-1 font-medium">{customerName || <span className="text-muted-foreground italic"><T text="Not specified" /></span>}</div>
-                </div>
-                
-                <div>
-                  <Label><T text="Number of Guests" /></Label>
-                  <div className="mt-1 font-medium">{customerCount}</div>
-                </div>
-              </div>
-              
-              <Label><T text="Special Instructions" /></Label>
-              <Textarea 
-                value={specialInstructions}
-                onChange={(e) => setSpecialInstructions(e.target.value)}
-                placeholder={t("Enter any special instructions or requests")}
-                className="mt-1 mb-6"
-              />
-              
-              <h3 className="text-lg font-medium mb-4"><T text="Order Items" /></h3>
-              
-              {orderItems.length === 0 ? (
-                <div className="bg-muted/50 p-6 rounded-md text-center text-muted-foreground">
-                  <T text="No items added to the order yet" />
-                </div>
-              ) : (
-                <ScrollArea className="h-[300px] border rounded-md">
-                  <div className="p-4 space-y-4">
-                    {orderItems.map((item) => (
-                      <div key={item.id} className="flex items-start pb-4 border-b last:border-b-0 last:pb-0">
-                        <div className="flex-1">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h4 className="font-medium">{item.foodItem.name}</h4>
-                              {item.special_instructions && (
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  {item.special_instructions}
-                                </p>
-                              )}
-                            </div>
-                            <div className="text-right">
-                              <div className="font-medium">£{(item.foodItem.price * item.quantity).toFixed(2)}</div>
-                              <div className="text-sm text-muted-foreground">
-                                £{item.foodItem.price.toFixed(2)} × {item.quantity}
-                              </div>
-                            </div>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center">
+                <ClipboardList className="h-5 w-5 mr-2" />
+                <T text="Order Items" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[calc(100vh-500px)] pr-4">
+                <div className="space-y-3">
+                  {orderItems.map(item => (
+                    <div key={item.id} className="flex justify-between items-start py-2 border-b border-border">
+                      <div className="flex-1">
+                        <div className="font-medium">{t(item.foodItem.name)}</div>
+                        {item.special_instructions && (
+                          <div className="text-xs text-muted-foreground italic mt-1">
+                            {item.special_instructions}
                           </div>
-                          
-                          <div className="flex items-center gap-2 mt-2">
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                            >
-                              <Minus className="h-3 w-3" />
-                            </Button>
-                            <span className="w-8 text-center">{item.quantity}</span>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                            >
-                              <Plus className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 ml-2 text-destructive"
-                              onClick={() => handleRemoveItem(item.id)}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
+                        )}
+                        {item.foodItem.is_vegetarian && (
+                          <Badge variant="outline" className="bg-green-500/10 text-green-700 border-green-500 text-xs mt-1">
+                            <T text="Vegetarian" />
+                          </Badge>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              )}
-              
-              <div className="mt-6 space-y-2">
-                <div className="flex justify-between">
-                  <span><T text="Subtotal" /></span>
-                  <span>£{calculateTotal().toFixed(2)}</span>
+                      
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center space-x-1">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="text-sm w-5 text-center font-medium">{item.quantity}</span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        
+                        <div className="text-right w-20 text-sm font-medium">
+                          £{(item.foodItem.price * item.quantity).toFixed(2)}
+                        </div>
+                        
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-destructive"
+                          onClick={() => onRemoveItem(item.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                {/* Add tax calculation if needed */}
-                <Separator />
-                <div className="flex justify-between font-bold text-lg">
-                  <span><T text="Total" /></span>
-                  <span>£{calculateTotal().toFixed(2)}</span>
+              </ScrollArea>
+              
+              <div className="mt-4 pt-4 border-t border-border">
+                <div className="flex justify-between font-medium">
+                  <span className="text-lg"><T text="Total" /></span>
+                  <span className="text-lg">£{total.toFixed(2)}</span>
                 </div>
               </div>
-              
-              <Button 
-                className="w-full mt-6" 
-                size="lg"
-                disabled={orderItems.length === 0 || isSubmitting}
-                onClick={handleSubmitOrder}
-              >
-                {isSubmitting ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Check className="mr-2 h-4 w-4" />
-                )}
-                <T text="Place Order" />
-              </Button>
             </CardContent>
           </Card>
         </div>
         
-        <div>
+        <div className="space-y-4">
+          {/* Order Details */}
           <Card>
-            <CardContent className="p-6">
-              <h3 className="text-lg font-medium mb-4"><T text="Quick Actions" /></h3>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg"><T text="Order Details" /></CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-1">
+                  <T text="Order Type" />
+                </h4>
+                <div className="font-medium">{getOrderTypeLabel()}</div>
+              </div>
               
-              <div className="space-y-3">
-                <Button variant="outline" className="w-full justify-start" disabled={isSubmitting}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  <T text="Add More Items" />
-                </Button>
+              {orderType === 'dine-in' && selectedTable && (
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">
+                    <T text="Table" />
+                  </h4>
+                  <div className="flex items-center">
+                    <Table className="h-4 w-4 mr-1.5" />
+                    <span className="font-medium"><T text="Table" /> {selectedTable.table_number}</span>
+                  </div>
+                </div>
+              )}
+              
+              <div>
+                <h4 className="text-sm font-medium text-muted-foreground mb-1">
+                  <T text="Customer" />
+                </h4>
+                <div className="flex items-center">
+                  <User className="h-4 w-4 mr-1.5" />
+                  <span className="font-medium">{customerName || t('Guest')}</span>
+                </div>
+              </div>
+              
+              {orderType === 'dine-in' && (
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">
+                    <T text="Guest Count" />
+                  </h4>
+                  <div className="font-medium">{customerCount || '1'}</div>
+                </div>
+              )}
+              
+              {specialInstructions && (
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">
+                    <T text="Special Instructions" />
+                  </h4>
+                  <div className="text-sm border rounded p-2 bg-muted/30">
+                    {specialInstructions}
+                  </div>
+                </div>
+              )}
+              
+              <Separator />
+              
+              <div className="pt-2">
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  <Button variant="outline" onClick={onGoBack}>
+                    <T text="Back" />
+                  </Button>
+                  
+                  <Button 
+                    onClick={onPlaceOrder} 
+                    disabled={isSubmitting}
+                    className="flex items-center"
+                  >
+                    {isSubmitting ? (
+                      <div className="animate-spin mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+                    ) : (
+                      <Check className="h-4 w-4 mr-2" />
+                    )}
+                    <T text="Place Order" />
+                  </Button>
+                </div>
                 
-                <Button variant="outline" className="w-full justify-start" disabled={isSubmitting}>
-                  <T text="Apply Discount" />
-                </Button>
-                
-                <Button variant="outline" className="w-full justify-start" disabled={isSubmitting}>
-                  <T text="Split Order" />
-                </Button>
+                <div className="text-xs text-muted-foreground text-center">
+                  <T text="By placing this order, it will be sent to the kitchen for preparation." />
+                </div>
               </div>
             </CardContent>
           </Card>
