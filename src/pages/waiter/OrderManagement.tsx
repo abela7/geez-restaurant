@@ -97,7 +97,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder = false }) =
       case 'table-selection':
         return orderType !== 'dine-in' || !!selectedTable;
       case 'customer-info':
-        return true; // Customer name is optional
+        return true; // Customer name is optional for most order types
       case 'menu-selection':
         return orderItems.length > 0;
       case 'order-review':
@@ -110,7 +110,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder = false }) =
   return (
     <div className="container mx-auto p-4">
       <Card className="border shadow-sm">
-        <CardContent className="p-6">
+        <CardContent className="p-4 md:p-6">
           {currentStep === 'order-type' && (
             <OrderTypeStep onSelectOrderType={handleSelectOrderType} />
           )}
@@ -156,6 +156,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ newOrder = false }) =
               customerName={customerName}
               customerCount={customerCount}
               specialInstructions={specialInstructions}
+              setSpecialInstructions={setSpecialInstructions}
               onUpdateQuantity={handleQuantityChange}
               onRemoveItem={handleRemoveItem}
               total={calculateTotal()}

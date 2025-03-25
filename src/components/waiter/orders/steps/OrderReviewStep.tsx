@@ -1,13 +1,15 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { OrderItem, OrderType } from '@/types/order';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Check, ClipboardList, Table, User, Plus, Minus, Trash2 } from "lucide-react";
+import { Check, ClipboardList, Table, User, Plus, Minus, Trash2, MessageSquare } from "lucide-react";
 import { useTables } from "@/hooks/useTables";
 
 interface OrderReviewStepProps {
@@ -17,6 +19,7 @@ interface OrderReviewStepProps {
   customerName: string;
   customerCount: string;
   specialInstructions: string;
+  setSpecialInstructions: (instructions: string) => void;
   onUpdateQuantity: (itemId: string, quantity: number) => void;
   onRemoveItem: (itemId: string) => void;
   total: number;
@@ -32,6 +35,7 @@ export const OrderReviewStep: React.FC<OrderReviewStepProps> = ({
   customerName,
   customerCount,
   specialInstructions,
+  setSpecialInstructions,
   onUpdateQuantity,
   onRemoveItem,
   total,
@@ -90,7 +94,7 @@ export const OrderReviewStep: React.FC<OrderReviewStepProps> = ({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-[calc(100vh-500px)] pr-4">
+              <ScrollArea className="h-[calc(100vh-520px)] pr-4">
                 <div className="space-y-3">
                   {orderItems.map(item => (
                     <div key={item.id} className="flex justify-between items-start py-2 border-b border-border">
@@ -153,6 +157,22 @@ export const OrderReviewStep: React.FC<OrderReviewStepProps> = ({
                   <span className="text-lg">£{total.toFixed(2)}</span>
                 </div>
               </div>
+
+              <div className="mt-4 pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="specialInstructions" className="flex items-center">
+                    <MessageSquare className="h-4 w-4 mr-1.5" />
+                    <T text="Special Instructions" />
+                  </Label>
+                  <Textarea
+                    id="specialInstructions"
+                    placeholder={t("Enter any special instructions or notes for this order")}
+                    value={specialInstructions}
+                    onChange={(e) => setSpecialInstructions(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -183,15 +203,17 @@ export const OrderReviewStep: React.FC<OrderReviewStepProps> = ({
                 </div>
               )}
               
-              <div>
-                <h4 className="text-sm font-medium text-muted-foreground mb-1">
-                  <T text="Customer" />
-                </h4>
-                <div className="flex items-center">
-                  <User className="h-4 w-4 mr-1.5" />
-                  <span className="font-medium">{customerName || t('Guest')}</span>
+              {customerName && (
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">
+                    <T text="Customer" />
+                  </h4>
+                  <div className="flex items-center">
+                    <User className="h-4 w-4 mr-1.5" />
+                    <span className="font-medium">{customerName}</span>
+                  </div>
                 </div>
-              </div>
+              )}
               
               {orderType === 'dine-in' && (
                 <div>
@@ -199,17 +221,6 @@ export const OrderReviewStep: React.FC<OrderReviewStepProps> = ({
                     <T text="Guest Count" />
                   </h4>
                   <div className="font-medium">{customerCount || '1'}</div>
-                </div>
-              )}
-              
-              {specialInstructions && (
-                <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-1">
-                    <T text="Special Instructions" />
-                  </h4>
-                  <div className="text-sm border rounded p-2 bg-muted/30">
-                    {specialInstructions}
-                  </div>
                 </div>
               )}
               

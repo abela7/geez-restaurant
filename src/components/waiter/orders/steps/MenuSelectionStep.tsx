@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useLanguage, T } from "@/contexts/LanguageContext";
-import { Search, Plus, Minus, Trash2, Coffee, Utensils, Loader2 } from "lucide-react";
+import { Search, Plus, Minus, Trash2, Coffee, Utensils, LayoutGrid, List, Loader2 } from "lucide-react";
 import { OrderItem } from '@/types/order';
 import { FoodItem } from '@/types/menu';
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +29,7 @@ interface FoodCategory {
   name: string;
   description?: string;
   parent_id?: string;
+  image_url?: string;
 }
 
 export const MenuSelectionStep: React.FC<MenuSelectionStepProps> = ({
@@ -45,6 +46,9 @@ export const MenuSelectionStep: React.FC<MenuSelectionStepProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [menuItems, setMenuItems] = useState<FoodItem[]>([]);
   const [categories, setCategories] = useState<FoodCategory[]>([]);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [showModifiers, setShowModifiers] = useState<string | null>(null);
+  const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
   
   // Fetch menu items and categories
   useEffect(() => {
@@ -125,14 +129,41 @@ export const MenuSelectionStep: React.FC<MenuSelectionStepProps> = ({
     );
   }
   
+  const handleFoodItemClick = (item: FoodItem) => {
+    setSelectedFood(item);
+    // In a real app, you would check if this item has modifiers and show them
+    // For now, we'll just add the item directly
+    onAddItem(item);
+  };
+  
   return (
-    <div className="space-y-4 mt-6">
-      <h2 className="text-xl font-semibold"><T text="Select Menu Items" /></h2>
+    <div className="space-y-4 mt-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold"><T text="Select Menu Items" /></h2>
+        <div className="flex space-x-2">
+          <Button 
+            variant={viewMode === 'grid' ? 'default' : 'outline'} 
+            size="sm"
+            onClick={() => setViewMode('grid')}
+          >
+            <LayoutGrid className="h-4 w-4 mr-1" />
+            <T text="Grid" />
+          </Button>
+          <Button 
+            variant={viewMode === 'list' ? 'default' : 'outline'} 
+            size="sm"
+            onClick={() => setViewMode('list')}
+          >
+            <List className="h-4 w-4 mr-1" />
+            <T text="List" />
+          </Button>
+        </div>
+      </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Menu Items Section */}
-        <div className="md:col-span-2 space-y-4">
-          <div className="relative">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Categories and Menu Items */}
+        <div className="md:col-span-3">
+          <div className="relative mb-4">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
@@ -143,135 +174,167 @@ export const MenuSelectionStep: React.FC<MenuSelectionStepProps> = ({
             />
           </div>
           
-          <Tabs defaultValue="all" value={selectedCategory} onValueChange={setSelectedCategory}>
-            <ScrollArea className="w-full">
-              <TabsList className="mb-4">
-                <TabsTrigger value="all"><T text="All Items" /></TabsTrigger>
-                {categories.map(category => (
-                  <TabsTrigger key={category.id} value={category.id}>
-                    {t(category.name)}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </ScrollArea>
+          <div className="mb-6">
+            <h3 className="text-sm font-medium mb-3"><T text="Categories" /></h3>
             
-            <TabsContent value={selectedCategory} className="mt-0">
-              <ScrollArea className="h-[calc(100vh-450px)]">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-1">
-                  {filteredItems.length === 0 ? (
-                    <div className="col-span-full p-8 text-center text-muted-foreground">
-                      <T text="No items found" />
-                    </div>
+            <div className={viewMode === 'grid' 
+              ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2" 
+              : "space-y-2"
+            }>
+              <Card 
+                className={`cursor-pointer hover:shadow-md transition-all ${
+                  selectedCategory === 'all' ? 'ring-2 ring-primary' : ''
+                }`}
+                onClick={() => setSelectedCategory('all')}
+              >
+                <CardContent className={viewMode === 'grid' 
+                  ? "p-3 text-center" 
+                  : "p-3 flex justify-between items-center"
+                }>
+                  {viewMode === 'grid' ? (
+                    <>
+                      <div className="h-8 flex items-center justify-center">
+                        <Utensils className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="font-medium mt-1"><T text="All Items" /></div>
+                    </>
                   ) : (
-                    filteredItems.map(item => {
-                      const quantity = getOrderItemQuantity(item.id);
-                      
-                      return (
-                        <Card 
-                          key={item.id} 
-                          className={`overflow-hidden hover:shadow-md transition-all border-border ${
-                            quantity > 0 ? 'ring-1 ring-primary' : ''
-                          }`}
-                        >
-                          <div className="relative">
-                            <div 
-                              className="h-32 bg-muted bg-cover bg-center" 
-                              style={{ 
-                                backgroundImage: item.image_url ? `url(${item.image_url})` : undefined,
-                                backgroundColor: !item.image_url ? 'hsl(var(--muted))' : undefined
-                              }}
-                            />
-                            <div className="absolute top-2 right-2 flex flex-wrap gap-1 justify-end">
-                              {item.is_vegetarian && (
-                                <Badge variant="outline" className="bg-green-500/20 text-green-700 border-green-500 text-xs">
-                                  <T text="Veg" />
-                                </Badge>
-                              )}
-                              {item.is_spicy && (
-                                <Badge variant="outline" className="bg-red-500/20 text-red-700 border-red-500 text-xs">
-                                  <T text="Spicy" />
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <CardContent className="p-3">
-                            <div className="flex justify-between">
-                              <div>
-                                <h3 className="font-medium text-sm">{t(item.name)}</h3>
-                                {item.description && (
-                                  <p className="text-muted-foreground text-xs mt-0.5 line-clamp-2">
-                                    {t(item.description)}
-                                  </p>
-                                )}
-                              </div>
-                              <div className="text-right">
-                                <div className="font-medium text-primary">£{item.price.toFixed(2)}</div>
-                              </div>
-                            </div>
-                            
-                            <div className="mt-2 flex justify-between items-center">
-                              {quantity > 0 ? (
-                                <div className="flex items-center space-x-2">
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-7 w-7"
-                                    onClick={() => {
-                                      const orderItem = orderItems.find(oi => oi.foodItem.id === item.id);
-                                      if (orderItem) {
-                                        onUpdateQuantity(orderItem.id, orderItem.quantity - 1);
-                                      }
-                                    }}
-                                  >
-                                    {quantity === 1 ? <Trash2 className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
-                                  </Button>
-                                  <span className="text-sm font-medium w-4 text-center">{quantity}</span>
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-7 w-7"
-                                    onClick={() => {
-                                      const orderItem = orderItems.find(oi => oi.foodItem.id === item.id);
-                                      if (orderItem) {
-                                        onUpdateQuantity(orderItem.id, orderItem.quantity + 1);
-                                      } else {
-                                        onAddItem(item);
-                                      }
-                                    }}
-                                  >
-                                    <Plus className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                              ) : (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-7 text-xs"
-                                  onClick={() => onAddItem(item)}
-                                >
-                                  <Plus className="h-3 w-3 mr-1" />
-                                  <T text="Add" />
-                                </Button>
-                              )}
-                              
-                              <div className="flex gap-1">
-                                {item.categoryName && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    {t(item.categoryName)}
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })
+                    <>
+                      <div className="flex items-center">
+                        <Utensils className="h-5 w-5 text-primary mr-2" />
+                        <span className="font-medium"><T text="All Items" /></span>
+                      </div>
+                      <Badge variant="outline" className="ml-2">
+                        {filteredItems.length}
+                      </Badge>
+                    </>
                   )}
+                </CardContent>
+              </Card>
+              
+              {categories.map(category => {
+                const itemsInCategory = menuItems.filter(item => 
+                  item.category_id === category.id
+                );
+                
+                return (
+                  <Card 
+                    key={category.id}
+                    className={`cursor-pointer hover:shadow-md transition-all ${
+                      selectedCategory === category.id ? 'ring-2 ring-primary' : ''
+                    }`}
+                    onClick={() => setSelectedCategory(category.id)}
+                  >
+                    <CardContent className={viewMode === 'grid' 
+                      ? "p-3 text-center" 
+                      : "p-3 flex justify-between items-center"
+                    }>
+                      {viewMode === 'grid' ? (
+                        <>
+                          <div className="h-8 flex items-center justify-center">
+                            <Coffee className="h-6 w-6 text-primary" />
+                          </div>
+                          <div className="font-medium mt-1">{t(category.name)}</div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-center">
+                            <Coffee className="h-5 w-5 text-primary mr-2" />
+                            <span className="font-medium">{t(category.name)}</span>
+                          </div>
+                          <Badge variant="outline" className="ml-2">
+                            {itemsInCategory.length}
+                          </Badge>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+          
+          <h3 className="text-sm font-medium mb-3">
+            <T text="Menu Items" /> - {
+              selectedCategory === 'all' 
+                ? t('All Categories') 
+                : t(categories.find(c => c.id === selectedCategory)?.name || '')
+            }
+          </h3>
+          
+          <ScrollArea className="h-[calc(100vh-480px)]">
+            <div className={viewMode === 'grid' 
+              ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3" 
+              : "space-y-2"
+            }>
+              {filteredItems.length === 0 ? (
+                <div className="col-span-full p-8 text-center text-muted-foreground">
+                  <T text="No items found" />
                 </div>
-              </ScrollArea>
-            </TabsContent>
-          </Tabs>
+              ) : (
+                filteredItems.map(item => {
+                  const quantity = getOrderItemQuantity(item.id);
+                  
+                  return viewMode === 'grid' ? (
+                    <Card 
+                      key={item.id} 
+                      className={`overflow-hidden hover:shadow-md transition-all cursor-pointer ${
+                        quantity > 0 ? 'ring-1 ring-primary' : ''
+                      }`}
+                      onClick={() => handleFoodItemClick(item)}
+                    >
+                      <div 
+                        className="h-24 bg-muted bg-cover bg-center" 
+                        style={{ 
+                          backgroundImage: item.image_url ? `url(${item.image_url})` : undefined,
+                          backgroundColor: !item.image_url ? 'hsl(var(--muted))' : undefined
+                        }}
+                      />
+                      <CardContent className="p-2">
+                        <div className="font-medium text-sm">{t(item.name)}</div>
+                        <div className="flex justify-between items-center mt-1">
+                          <div className="text-sm font-medium text-primary">£{item.price.toFixed(2)}</div>
+                          {quantity > 0 && (
+                            <Badge variant="outline" className="bg-primary/10 text-primary">
+                              {quantity}
+                            </Badge>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <Card 
+                      key={item.id} 
+                      className={`hover:shadow-md transition-all cursor-pointer ${
+                        quantity > 0 ? 'ring-1 ring-primary' : ''
+                      }`}
+                      onClick={() => handleFoodItemClick(item)}
+                    >
+                      <CardContent className="p-3 flex justify-between items-center">
+                        <div className="flex items-center">
+                          {item.image_url && (
+                            <div 
+                              className="h-10 w-10 rounded bg-muted bg-cover bg-center mr-3" 
+                              style={{ backgroundImage: `url(${item.image_url})` }}
+                            />
+                          )}
+                          <div>
+                            <div className="font-medium">{t(item.name)}</div>
+                            <div className="text-sm text-primary">£{item.price.toFixed(2)}</div>
+                          </div>
+                        </div>
+                        {quantity > 0 && (
+                          <Badge variant="outline" className="bg-primary/10 text-primary">
+                            {quantity}
+                          </Badge>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              )}
+            </div>
+          </ScrollArea>
         </div>
         
         {/* Current Order Section */}
@@ -280,7 +343,10 @@ export const MenuSelectionStep: React.FC<MenuSelectionStepProps> = ({
             <CardContent className="p-4 space-y-4">
               <h3 className="font-medium flex items-center">
                 <Utensils className="h-4 w-4 mr-2" />
-                <T text="Current Order" /> ({orderItems.reduce((acc, item) => acc + item.quantity, 0)} <T text="items" />)
+                <T text="Current Order" />
+                <Badge className="ml-2" variant="outline">
+                  {orderItems.reduce((acc, item) => acc + item.quantity, 0)}
+                </Badge>
               </h3>
               
               {orderItems.length === 0 ? (
@@ -288,17 +354,12 @@ export const MenuSelectionStep: React.FC<MenuSelectionStepProps> = ({
                   <T text="No items added yet" />
                 </div>
               ) : (
-                <ScrollArea className="h-[calc(100vh-450px)]">
+                <ScrollArea className="h-[calc(100vh-480px)]">
                   <div className="space-y-2">
                     {orderItems.map(item => (
                       <div key={item.id} className="flex justify-between items-center py-2 border-b border-border">
                         <div className="flex-1">
                           <div className="font-medium text-sm">{t(item.foodItem.name)}</div>
-                          {item.special_instructions && (
-                            <div className="text-xs text-muted-foreground italic">
-                              {item.special_instructions}
-                            </div>
-                          )}
                         </div>
                         
                         <div className="flex items-center gap-2">
@@ -307,16 +368,26 @@ export const MenuSelectionStep: React.FC<MenuSelectionStepProps> = ({
                               variant="ghost"
                               size="icon"
                               className="h-6 w-6"
-                              onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onUpdateQuantity(item.id, item.quantity - 1);
+                              }}
                             >
-                              <Minus className="h-3 w-3" />
+                              {item.quantity === 1 ? (
+                                <Trash2 className="h-3 w-3 text-destructive" />
+                              ) : (
+                                <Minus className="h-3 w-3" />
+                              )}
                             </Button>
                             <span className="text-sm w-4 text-center">{item.quantity}</span>
                             <Button
                               variant="ghost"
                               size="icon"
                               className="h-6 w-6"
-                              onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onUpdateQuantity(item.id, item.quantity + 1);
+                              }}
                             >
                               <Plus className="h-3 w-3" />
                             </Button>
@@ -325,15 +396,6 @@ export const MenuSelectionStep: React.FC<MenuSelectionStepProps> = ({
                           <div className="text-right w-16 text-sm">
                             £{(item.foodItem.price * item.quantity).toFixed(2)}
                           </div>
-                          
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-destructive"
-                            onClick={() => onRemoveItem(item.id)}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
                         </div>
                       </div>
                     ))}

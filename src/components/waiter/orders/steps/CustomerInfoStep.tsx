@@ -2,11 +2,10 @@
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { OrderType } from '@/types/order';
 import { Card, CardContent } from "@/components/ui/card";
-import { User, Users, MessageSquare } from "lucide-react";
+import { Users } from "lucide-react";
 
 interface CustomerInfoStepProps {
   customerName: string;
@@ -23,8 +22,6 @@ export const CustomerInfoStep: React.FC<CustomerInfoStepProps> = ({
   setCustomerName,
   customerCount,
   setCustomerCount,
-  specialInstructions,
-  setSpecialInstructions,
   orderType
 }) => {
   const { t } = useLanguage();
@@ -39,21 +36,21 @@ export const CustomerInfoStep: React.FC<CustomerInfoStepProps> = ({
   return (
     <div className="space-y-4 mt-6">
       <h2 className="text-xl font-semibold">
-        <T text="Customer Information" />
+        <T text="Guest Information" />
       </h2>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardContent className="p-4 space-y-4">
-            <div className="flex items-center space-x-2 text-primary mb-2">
-              <User className="h-5 w-5" />
-              <h3 className="font-medium"><T text="Customer Details" /></h3>
-            </div>
-            
-            <div className="space-y-3">
+      <Card className="w-full max-w-md mx-auto">
+        <CardContent className="p-6 space-y-4">
+          <div className="flex items-center space-x-2 text-primary mb-4">
+            <Users className="h-5 w-5" />
+            <h3 className="font-medium"><T text="Guest Count" /></h3>
+          </div>
+          
+          <div className="space-y-3">
+            {orderType === 'delivery' && (
               <div className="space-y-2">
                 <Label htmlFor="customerName">
-                  <T text="Customer Name" /> {orderType === 'delivery' && <span className="text-destructive">*</span>}
+                  <T text="Customer Name" /> <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="customerName"
@@ -63,49 +60,27 @@ export const CustomerInfoStep: React.FC<CustomerInfoStepProps> = ({
                   required={orderType === 'delivery'}
                 />
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="customerCount">
-                  <T text="Number of Guests" />
-                </Label>
-                <Input
-                  id="customerCount"
-                  type="text"
-                  placeholder="1"
-                  value={customerCount}
-                  onChange={handleCustomerCountChange}
-                  required={orderType === 'dine-in'}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4 space-y-4">
-            <div className="flex items-center space-x-2 text-primary mb-2">
-              <MessageSquare className="h-5 w-5" />
-              <h3 className="font-medium"><T text="Order Notes" /></h3>
-            </div>
+            )}
             
             <div className="space-y-2">
-              <Label htmlFor="specialInstructions">
-                <T text="Special Instructions" />
+              <Label htmlFor="customerCount">
+                <T text="Number of Guests" />
               </Label>
-              <Textarea
-                id="specialInstructions"
-                placeholder={t("Enter any special instructions or notes")}
-                value={specialInstructions}
-                onChange={(e) => setSpecialInstructions(e.target.value)}
-                rows={4}
+              <Input
+                id="customerCount"
+                type="text"
+                placeholder="1"
+                value={customerCount}
+                onChange={handleCustomerCountChange}
+                required={orderType === 'dine-in'}
               />
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
       
       {orderType === 'delivery' && !customerName && (
-        <div className="text-sm text-amber-500 mt-2">
+        <div className="text-sm text-amber-500 mt-2 text-center">
           <T text="Customer name is required for delivery orders" />
         </div>
       )}
