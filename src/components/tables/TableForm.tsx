@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,7 +29,7 @@ const tableSchema = z.object({
   capacity: z.coerce.number().min(1, {
     message: "Capacity must be at least 1.",
   }),
-  status: z.enum(["available", "occupied", "reserved", "cleaning"]),
+  status: z.enum(['available', 'occupied', 'reserved', 'cleaning', 'inactive'] as const),
   room_id: z.string().nullable(),
   group_id: z.string().nullable(),
   position_x: z.number().optional(),
@@ -150,6 +149,7 @@ const TableForm = ({
                         <SelectItem value="occupied"><T text="Occupied" /></SelectItem>
                         <SelectItem value="reserved"><T text="Reserved" /></SelectItem>
                         <SelectItem value="cleaning"><T text="Cleaning" /></SelectItem>
+                        <SelectItem value="inactive"><T text="Inactive" /></SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
