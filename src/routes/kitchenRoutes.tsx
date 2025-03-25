@@ -9,21 +9,12 @@ import KitchenFoodSafety from "../pages/kitchen/KitchenFoodSafety";
 import MenuAvailability from "../pages/kitchen/MenuAvailability";
 import NotFound from "@/pages/NotFound";
 import { CartProvider } from "@/contexts/CartContext";
-import { useAuth } from "@/hooks/useAuth";
 
 const KitchenRoutes = () => {
-  const { user, isLoading } = useAuth();
-  
-  // Show loading state
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
-      </div>
-    );
-  }
-  
   // Check if user exists and has kitchen role
+  const storedUser = localStorage.getItem('user');
+  const user = storedUser ? JSON.parse(storedUser) : null;
+  
   if (!user || user.role !== 'kitchen') {
     return <Navigate to="/login" replace />;
   }

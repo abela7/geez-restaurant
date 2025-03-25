@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { CartProvider } from "@/contexts/CartContext";
-import { AuthProvider } from "@/hooks/useAuth";
 import { Suspense } from "react";
 
 // Import routes
@@ -51,33 +50,31 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <AuthProvider>
-                <Suspense fallback={<LoadingFallback />}>
-                  <Routes>
-                    {/* Map all admin routes */}
-                    {adminRoutes.map((route) => (
-                      <Route key={route.path} path={route.path} element={route.element} />
-                    ))}
-                    
-                    {/* Redirect / to /admin for now */}
-                    <Route path="/" element={<Navigate to="/admin" replace />} />
-                    
-                    {/* Other interface routes */}
-                    <Route path="/waiter/*" element={<WaiterRoutes />} />
-                    <Route path="/kitchen/*" element={<KitchenRoutes />} />
-                    <Route path="/menu/*" element={<CustomerRoutes />} />
-                    <Route path="/feedback/*" element={<CustomerRoutes />} />
-                    <Route path="/promotions/*" element={<CustomerRoutes />} />
-                    <Route path="/system/*" element={<SystemRoutes />} />
-                    
-                    {/* Auth routes */}
-                    <Route path="/login" element={<Login />} />
-                    
-                    {/* Catch All */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Suspense>
-              </AuthProvider>
+              <Suspense fallback={<LoadingFallback />}>
+                <Routes>
+                  {/* Map all admin routes */}
+                  {adminRoutes.map((route) => (
+                    <Route key={route.path} path={route.path} element={route.element} />
+                  ))}
+                  
+                  {/* Redirect / to /admin for now */}
+                  <Route path="/" element={<Navigate to="/admin" replace />} />
+                  
+                  {/* Other interface routes */}
+                  <Route path="/waiter/*" element={<WaiterRoutes />} />
+                  <Route path="/kitchen/*" element={<KitchenRoutes />} />
+                  <Route path="/menu/*" element={<CustomerRoutes />} />
+                  <Route path="/feedback/*" element={<CustomerRoutes />} />
+                  <Route path="/promotions/*" element={<CustomerRoutes />} />
+                  <Route path="/system/*" element={<SystemRoutes />} />
+                  
+                  {/* Auth routes */}
+                  <Route path="/login" element={<Login />} />
+                  
+                  {/* Catch All */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
             </BrowserRouter>
           </TooltipProvider>
         </CartProvider>

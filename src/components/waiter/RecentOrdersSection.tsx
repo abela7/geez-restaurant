@@ -89,7 +89,7 @@ export const RecentOrdersSection: React.FC = () => {
                     </div>
                     <div className="flex items-center">
                       <DollarSign className="h-3 w-3 mr-0.5 flex-shrink-0" />
-                      <span>£{order.total_amount.toFixed(2)}</span>
+                      <span>${order.total_amount.toFixed(2)}</span>
                     </div>
                     {order.customer_name && (
                       <div className="flex items-center">
