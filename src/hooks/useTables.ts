@@ -26,6 +26,7 @@ export const useTables = () => {
       const typedTables: Table[] = data?.map(table => ({
         ...table,
         status: table.status as TableStatus,
+        shape: (table.shape || 'rectangle') as 'rectangle' | 'circle' | 'square',
       })) || [];
       
       setTables(typedTables);
