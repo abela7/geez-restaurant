@@ -146,3 +146,34 @@
 .order-management .mb-6 {
   margin-bottom: 0.75rem !important;
 }
+
+/* Special styling for editor iframe environment */
+.in-editor-iframe {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+/* Ensure content is visible in iframe */
+.in-editor-iframe #root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure z-index works in iframe */
+.in-editor-iframe .z-50 {
+  z-index: 9999;
+}
+
+/* Fix any hidden content issues */
+.in-editor-iframe main {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Ensure proper height in editor */
+.in-editor-iframe .min-h-screen {
+  min-height: 100vh;
+  height: auto !important;
+}

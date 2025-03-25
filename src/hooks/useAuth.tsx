@@ -75,6 +75,9 @@ const MOCK_USERS = [
 ];
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const isInIframe = window.top !== window.self;
+  console.log("AuthProvider initializing. In iframe:", isInIframe);
+  
   // For development, automatically set Tsion as the user
   const tsionUser = MOCK_USERS.find(u => u.username === 'tsion');
   const defaultUser = tsionUser ? { ...tsionUser, password: undefined } : null;
@@ -92,8 +95,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Store Tsion user in localStorage to ensure consistency
     if (defaultUser && !localStorage.getItem('user')) {
       localStorage.setItem('user', JSON.stringify(defaultUser));
+    } else if (localStorage.getItem('user')) {
+      // Load from localStorage if exists
+      try {
+        const storedUser = JSON.parse(localStorage.getItem('user') || '');
+        if (storedUser && storedUser.id) {
+          console.log("Loaded user from localStorage:", storedUser.username);
+          setUser(storedUser);
+        }
+      } catch (e) {
+        console.error("Error parsing stored user:", e);
+        // If there's an error, reset to default user
+        setUser(defaultUser);
+      }
     }
-  }, []);
+    
+    // Force auth in iframe environments to avoid auth issues
+    if (isInIframe) {
+      console.log("In iframe environment - forcing auth state");
+      setUser(defaultUser);
+      localStorage.setItem('user', JSON.stringify(defaultUser));
+    }
+  }, [isInIframe]);
 
   // Login function (still available but not needed for development)
   const login = async (username: string, password: string) => {

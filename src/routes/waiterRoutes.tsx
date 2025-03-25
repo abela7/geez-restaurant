@@ -1,4 +1,3 @@
-
 import { Route, Routes } from "react-router-dom";
 import Layout from "@/components/Layout";
 import WaiterDashboard from "../pages/waiter/WaiterDashboard";
@@ -15,13 +14,16 @@ const WaiterRoutes = () => {
   useEffect(() => {
     // Debug when WaiterRoutes component mounts
     console.log("WaiterRoutes component mounted");
+    console.log("In iframe:", window.top !== window.self);
   }, []);
 
   return (
     <CartProvider>
       <Routes>
         <Route element={<Layout interface="waiter" />}>
+          {/* If we're directly at /waiter, show the dashboard */}
           <Route index element={<WaiterDashboard />} />
+          {/* Other routes */}
           <Route path="tables" element={<TableManagement />} />
           <Route path="orders/*" element={<OrderManagement />} />
           <Route path="payments" element={<PaymentProcessing />} />
