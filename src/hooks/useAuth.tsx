@@ -85,7 +85,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // We're skipping the check for existing user since we're setting Tsion by default
+  useEffect(() => {
+    // Debug log for auth state
+    console.log("Auth state initialized:", { user, isAuthenticated: !!user });
+    
+    // Store Tsion user in localStorage to ensure consistency
+    if (defaultUser && !localStorage.getItem('user')) {
+      localStorage.setItem('user', JSON.stringify(defaultUser));
+    }
+  }, []);
 
   // Login function (still available but not needed for development)
   const login = async (username: string, password: string) => {

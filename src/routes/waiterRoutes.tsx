@@ -9,8 +9,14 @@ import WaiterTasks from "../pages/waiter/WaiterTasks";
 import WaiterFoodSafety from "../pages/waiter/WaiterFoodSafety";
 import NotFound from "@/pages/NotFound";
 import { CartProvider } from "@/contexts/CartContext";
+import { useEffect } from "react";
 
 const WaiterRoutes = () => {
+  useEffect(() => {
+    // Debug when WaiterRoutes component mounts
+    console.log("WaiterRoutes component mounted");
+  }, []);
+
   return (
     <CartProvider>
       <Routes>

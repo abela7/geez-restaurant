@@ -7,7 +7,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/hooks/useAuth";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 // Import routes
 import { adminRoutes } from "./routes/adminRoutes";
@@ -21,6 +21,7 @@ import AuthRoutes from "./routes/authRoutes";
 // Import pages used directly in App.tsx
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import WaiterDashboard from "./pages/waiter/WaiterDashboard";
 
 // Import the storage setup
 import "@/integrations/supabase/setup-storage";
@@ -42,48 +43,83 @@ const LoadingFallback = () => (
   </div>
 );
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <LanguageProvider>
-      <ThemeProvider>
-        <CartProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <AuthProvider>
-                <Suspense fallback={<LoadingFallback />}>
-                  <Routes>
-                    {/* Map all admin routes */}
-                    {adminRoutes.map((route) => (
-                      <Route key={route.path} path={route.path} element={route.element} />
-                    ))}
-                    
-                    {/* Redirect / to /waiter for development */}
-                    <Route path="/" element={<Navigate to="/waiter" replace />} />
-                    
-                    {/* Other interface routes */}
-                    <Route path="/waiter/*" element={<WaiterRoutes />} />
-                    <Route path="/kitchen/*" element={<KitchenRoutes />} />
-                    <Route path="/menu/*" element={<CustomerRoutes />} />
-                    <Route path="/feedback/*" element={<CustomerRoutes />} />
-                    <Route path="/promotions/*" element={<CustomerRoutes />} />
-                    <Route path="/system/*" element={<SystemRoutes />} />
-                    
-                    {/* Auth routes */}
-                    <Route path="/login" element={<Login />} />
-                    
-                    {/* Catch All */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Suspense>
-              </AuthProvider>
-            </BrowserRouter>
-          </TooltipProvider>
-        </CartProvider>
-      </ThemeProvider>
-    </LanguageProvider>
-  </QueryClientProvider>
-);
+// Component to handle direct route rendering
+const IndexRedirect = () => {
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    // Add console log for debugging
+    console.log("Index page loaded, redirecting to waiter dashboard");
+    
+    // Simulate a small delay to ensure routing works properly
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
+  if (loading) {
+    return <LoadingFallback />;
+  }
+  
+  return <Navigate to="/waiter" replace />;
+};
+
+const App = () => {
+  useEffect(() => {
+    // Add console log for debugging when App component mounts
+    console.log("App component mounted, current path:", window.location.pathname);
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <LanguageProvider>
+        <ThemeProvider>
+          <CartProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <AuthProvider>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <Routes>
+                      {/* Root path - redirect to waiter dashboard */}
+                      <Route path="/" element={<IndexRedirect />} />
+                      
+                      {/* Direct route to waiter dashboard for immediate access */}
+                      <Route path="/waiter" element={<WaiterDashboard />} />
+                      
+                      {/* Other waiter routes */}
+                      <Route path="/waiter/*" element={<WaiterRoutes />} />
+                      
+                      {/* Map all admin routes */}
+                      {adminRoutes.map((route) => (
+                        <Route key={route.path} path={route.path} element={route.element} />
+                      ))}
+                      
+                      {/* Other interface routes */}
+                      <Route path="/kitchen/*" element={<KitchenRoutes />} />
+                      <Route path="/menu/*" element={<CustomerRoutes />} />
+                      <Route path="/feedback/*" element={<CustomerRoutes />} />
+                      <Route path="/promotions/*" element={<CustomerRoutes />} />
+                      <Route path="/system/*" element={<SystemRoutes />} />
+                      
+                      {/* Auth routes */}
+                      <Route path="/login" element={<Login />} />
+                      
+                      {/* Catch All */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Suspense>
+                </AuthProvider>
+              </BrowserRouter>
+            </TooltipProvider>
+          </CartProvider>
+        </ThemeProvider>
+      </LanguageProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
