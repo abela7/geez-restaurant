@@ -43,7 +43,7 @@ export const QuickOrderCard: React.FC<QuickOrderCardProps> = ({
           <p className="text-muted-foreground text-xs mt-0.5 line-clamp-1">{t(description)}</p>
         )}
         <div className="flex justify-between items-center mt-1.5">
-          <span className="font-bold text-primary text-sm">${price.toFixed(2)}</span>
+          <span className="font-bold text-primary text-sm">£{price.toFixed(2)}</span>
           <Button 
             size="sm" 
             variant="ghost"
