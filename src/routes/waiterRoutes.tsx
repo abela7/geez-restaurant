@@ -33,11 +33,11 @@ const WaiterRoutes = () => {
       <Routes>
         <Route element={<Layout interface="waiter" />}>
           <Route index element={<WaiterDashboard />} />
-          <Route path="/tables" element={<TableManagement />} />
-          <Route path="/orders/*" element={<OrderManagement />} />
-          <Route path="/payments" element={<PaymentProcessing />} />
-          <Route path="/tasks" element={<WaiterTasks />} />
-          <Route path="/food-safety" element={<WaiterFoodSafety />} />
+          <Route path="tables" element={<TableManagement />} />
+          <Route path="orders/*" element={<OrderManagement />} />
+          <Route path="payments" element={<PaymentProcessing />} />
+          <Route path="tasks" element={<WaiterTasks />} />
+          <Route path="food-safety" element={<WaiterFoodSafety />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

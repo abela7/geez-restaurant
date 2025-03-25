@@ -59,8 +59,8 @@ const App = () => (
                       <Route key={route.path} path={route.path} element={route.element} />
                     ))}
                     
-                    {/* Redirect / to /admin for now */}
-                    <Route path="/" element={<Navigate to="/admin" replace />} />
+                    {/* Root path redirects to waiter dashboard for now */}
+                    <Route path="/" element={<Navigate to="/waiter" replace />} />
                     
                     {/* Other interface routes */}
                     <Route path="/waiter/*" element={<WaiterRoutes />} />

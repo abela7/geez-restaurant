@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -22,7 +22,7 @@ export const useRecentOrders = (waiterId?: string) => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const fetchRecentOrders = async () => {
+  const fetchRecentOrders = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -106,11 +106,11 @@ export const useRecentOrders = (waiterId?: string) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [waiterId, toast]);
 
   useEffect(() => {
     fetchRecentOrders();
-  }, [waiterId, toast]);
+  }, [fetchRecentOrders]);
 
   return {
     orders,
