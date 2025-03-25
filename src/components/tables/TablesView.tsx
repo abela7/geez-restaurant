@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage, T } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -80,12 +80,14 @@ const TablesView = () => {
     setIsEditMode(false);
     setSelectedTable(null);
     setIsTableDialogOpen(true);
+    setErrorMessage(null);
   };
 
   const handleEditTable = (table: TableType) => {
     setIsEditMode(true);
     setSelectedTable(table);
     setIsTableDialogOpen(true);
+    setErrorMessage(null);
   };
 
   const handleDeleteTable = (table: TableType) => {
@@ -104,7 +106,8 @@ const TablesView = () => {
     try {
       await deleteTable(selectedTable.id);
       // Update local state by filtering out the deleted table
-      setTables(tables.filter((table) => table.id !== selectedTable.id));
+      setTables(prevTables => prevTables.filter((table) => table.id !== selectedTable.id));
+      setIsDeleteConfirmationOpen(false);
     } catch (error: any) {
       // If it's an error related to associated orders, offer to deactivate instead
       if (error.message?.includes("associated orders")) {
@@ -113,7 +116,6 @@ const TablesView = () => {
         handleDeactivateTable(selectedTable);
       }
     } finally {
-      setIsDeleteConfirmationOpen(false);
       setSelectedTable(null);
     }
   };
@@ -130,8 +132,8 @@ const TablesView = () => {
           table.id === selectedTable.id ? updatedTable : table
         )
       );
-    } finally {
       setIsDeactivateConfirmationOpen(false);
+    } finally {
       setSelectedTable(null);
     }
   };
@@ -163,13 +165,14 @@ const TablesView = () => {
     }
   };
 
-  const roomOptions = React.useMemo(() => 
+  // Memoize options to prevent unnecessary re-renders
+  const roomOptions = useMemo(() => 
     rooms.map((room) => ({
       value: room.id,
       label: room.name,
     })), [rooms]);
 
-  const groupOptions = React.useMemo(() => 
+  const groupOptions = useMemo(() => 
     tableGroups.map((group) => ({
       value: group.id,
       label: group.name,
@@ -179,7 +182,7 @@ const TablesView = () => {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle><T text="Tables" /></CardTitle>
-        <Button onClick={handleCreateTable} disabled={isUpdating}>
+        <Button onClick={handleCreateTable} disabled={isUpdating || isLoading}>
           <Plus className="mr-2 h-4 w-4" />
           <T text="Add Table" />
         </Button>
@@ -269,6 +272,7 @@ const TablesView = () => {
         // Don't close the dialog while operations are in progress
         if (isUpdating) return;
         setIsTableDialogOpen(open);
+        if (!open) setErrorMessage(null);
       }}>
         <DialogContent>
           <DialogHeader>
@@ -282,6 +286,8 @@ const TablesView = () => {
             onCancel={() => setIsTableDialogOpen(false)}
             roomOptions={roomOptions}
             groupOptions={groupOptions}
+            isSubmitting={isUpdating}
+            error={errorMessage}
           />
         </DialogContent>
       </Dialog>

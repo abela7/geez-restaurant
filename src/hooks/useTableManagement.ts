@@ -19,7 +19,15 @@ export const useTableManagement = () => {
       const processedData = {
         ...tableData,
         room_id: tableData.room_id === "null" ? null : tableData.room_id,
-        group_id: tableData.group_id === "null" ? null : tableData.group_id
+        group_id: tableData.group_id === "null" ? null : tableData.group_id,
+        // Ensure numeric values are properly converted
+        table_number: Number(tableData.table_number),
+        capacity: Number(tableData.capacity),
+        position_x: tableData.position_x ? Number(tableData.position_x) : undefined,
+        position_y: tableData.position_y ? Number(tableData.position_y) : undefined,
+        width: tableData.width ? Number(tableData.width) : undefined,
+        height: tableData.height ? Number(tableData.height) : undefined,
+        rotation: tableData.rotation ? Number(tableData.rotation) : undefined
       };
       
       const { data, error } = await supabase
@@ -42,18 +50,32 @@ export const useTableManagement = () => {
     }
   }, []);
 
-  // Update an existing table
+  // Update an existing table with optimized handling
   const updateTable = useCallback(async (tableId: string, tableData: Partial<Table>) => {
     try {
       setIsUpdating(true);
       setError(null);
       
       // Process form values to ensure proper types
-      const processedData = {
-        ...tableData,
-        room_id: tableData.room_id === "null" ? null : tableData.room_id,
-        group_id: tableData.group_id === "null" ? null : tableData.group_id
-      };
+      const processedData: Record<string, any> = { ...tableData };
+      
+      // Handle special cases for room_id and group_id
+      if ('room_id' in tableData) {
+        processedData.room_id = tableData.room_id === "null" ? null : tableData.room_id;
+      }
+      
+      if ('group_id' in tableData) {
+        processedData.group_id = tableData.group_id === "null" ? null : tableData.group_id;
+      }
+      
+      // Ensure numeric values are properly converted
+      if ('table_number' in tableData) processedData.table_number = Number(tableData.table_number);
+      if ('capacity' in tableData) processedData.capacity = Number(tableData.capacity);
+      if ('position_x' in tableData) processedData.position_x = Number(tableData.position_x);
+      if ('position_y' in tableData) processedData.position_y = Number(tableData.position_y);
+      if ('width' in tableData) processedData.width = Number(tableData.width);
+      if ('height' in tableData) processedData.height = Number(tableData.height);
+      if ('rotation' in tableData) processedData.rotation = Number(tableData.rotation);
       
       const { data, error } = await supabase
         .from('restaurant_tables')
@@ -76,7 +98,7 @@ export const useTableManagement = () => {
     }
   }, []);
 
-  // Update table status
+  // Update table status with optimized handling
   const updateTableStatus = useCallback(async (tableId: string, status: TableStatus) => {
     try {
       setIsUpdating(true);
@@ -103,7 +125,7 @@ export const useTableManagement = () => {
     }
   }, []);
 
-  // Delete a table
+  // Delete a table with proper error handling
   const deleteTable = useCallback(async (tableId: string) => {
     try {
       setIsUpdating(true);

@@ -63,6 +63,39 @@ export const updateRoom = async (id: string, room: Partial<Room>): Promise<Room>
 };
 
 export const deleteRoom = async (id: string): Promise<void> => {
+  // First check if this room is referenced by any table groups
+  const { data: tableGroups, error: tableGroupsError } = await supabase
+    .from('table_groups')
+    .select('id')
+    .eq('room_id', id)
+    .limit(1);
+  
+  if (tableGroupsError) {
+    console.error('Error checking table groups for room:', tableGroupsError);
+    throw tableGroupsError;
+  }
+  
+  if (tableGroups && tableGroups.length > 0) {
+    throw new Error('Cannot delete this room because it has associated table groups. Please remove the table groups first.');
+  }
+  
+  // Next check if this room is referenced by any tables
+  const { data: tables, error: tablesError } = await supabase
+    .from('restaurant_tables')
+    .select('id')
+    .eq('room_id', id)
+    .limit(1);
+  
+  if (tablesError) {
+    console.error('Error checking tables for room:', tablesError);
+    throw tablesError;
+  }
+  
+  if (tables && tables.length > 0) {
+    throw new Error('Cannot delete this room because it has associated tables. Please move or remove the tables first.');
+  }
+  
+  // If no references exist, proceed with deletion
   const { error } = await supabase
     .from('rooms')
     .delete()

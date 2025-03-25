@@ -1,48 +1,63 @@
 
 import React from "react";
+import { useLanguage, T } from "@/contexts/LanguageContext";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-
-import { useLanguage, T } from "@/contexts/LanguageContext";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-
 import { Room } from "@/services/table/types";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+
+// Room form schema
+const roomSchema = z.object({
+  name: z.string().min(1, { message: "Name is required" }),
+  description: z.string().optional(),
+  active: z.boolean().default(true)
+});
+
+type RoomFormValues = z.infer<typeof roomSchema>;
 
 interface RoomFormProps {
   initialData?: Partial<Room>;
-  onSubmit: (values: Room) => Promise<void>;
+  onSubmit: (data: Room) => Promise<void>;
   onCancel: () => void;
+  isSubmitting?: boolean;
+  error?: string | null;
 }
 
-const roomSchema = z.object({
-  name: z.string().min(1, {
-    message: "Room name is required.",
-  }),
-  description: z.string().optional(),
-  active: z.boolean().default(true),
-});
-
-const RoomForm = ({ initialData, onSubmit, onCancel }: RoomFormProps) => {
+const RoomForm: React.FC<RoomFormProps> = ({ 
+  initialData = {}, 
+  onSubmit, 
+  onCancel,
+  isSubmitting = false,
+  error = null
+}) => {
   const { t } = useLanguage();
   
-  const form = useForm<z.infer<typeof roomSchema>>({
+  const form = useForm<RoomFormValues>({
     resolver: zodResolver(roomSchema),
     defaultValues: {
-      name: initialData?.name || "",
-      description: initialData?.description || "",
-      active: initialData?.active === undefined ? true : initialData.active,
-    },
+      name: initialData.name || "",
+      description: initialData.description || "",
+      active: initialData.active !== undefined ? initialData.active : true
+    }
   });
   
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit((data) => onSubmit(data as Room))} className="space-y-4">
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
         <FormField
           control={form.control}
           name="name"
@@ -64,11 +79,7 @@ const RoomForm = ({ initialData, onSubmit, onCancel }: RoomFormProps) => {
             <FormItem>
               <FormLabel><T text="Description" /></FormLabel>
               <FormControl>
-                <Textarea 
-                  placeholder={t("Enter room description (optional)")} 
-                  {...field} 
-                  value={field.value || ""}
-                />
+                <Textarea placeholder={t("Enter description")} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -82,9 +93,7 @@ const RoomForm = ({ initialData, onSubmit, onCancel }: RoomFormProps) => {
             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
                 <FormLabel><T text="Active" /></FormLabel>
-                <FormDescription>
-                  <T text="Mark this room as active or inactive" />
-                </FormDescription>
+                <FormMessage />
               </div>
               <FormControl>
                 <Switch
@@ -96,12 +105,27 @@ const RoomForm = ({ initialData, onSubmit, onCancel }: RoomFormProps) => {
           )}
         />
         
-        <div className="flex justify-end space-x-2">
-          <Button variant="ghost" onClick={onCancel}>
+        <div className="flex justify-end space-x-2 pt-4">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
             <T text="Cancel" />
           </Button>
-          <Button type="submit">
-            <T text="Save" />
+          <Button 
+            type="submit"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent"></span>
+                <T text="Saving..." />
+              </>
+            ) : (
+              <T text="Save" />
+            )}
           </Button>
         </div>
       </form>
