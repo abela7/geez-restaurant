@@ -92,3 +92,32 @@
   box-shadow: none;
   border-color: hsl(var(--border));
 }
+
+/* Desktop-specific styles for larger modals */
+@media (min-width: 769px) {
+  .side-modal-content {
+    min-width: 500px; /* Ensure a minimum width on desktop */
+  }
+  
+  .side-modal-content.sm\:max-w-lg {
+    min-width: 580px;
+  }
+  
+  .side-modal-content.sm\:max-w-xl {
+    min-width: 720px;
+  }
+  
+  .side-modal-content.sm\:max-w-2xl {
+    min-width: 840px;
+  }
+  
+  /* Form layout improvements for desktop */
+  .side-modal-content .tabs-content {
+    padding: 1.5rem;
+  }
+  
+  /* Preview section improvements */
+  .side-modal-content .bg-muted\/30 {
+    background-color: hsl(var(--muted) / 0.15);
+  }
+}
