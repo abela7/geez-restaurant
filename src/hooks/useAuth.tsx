@@ -75,50 +75,34 @@ const MOCK_USERS = [
 ];
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const isInIframe = window.top !== window.self;
-  console.log("AuthProvider initializing. In iframe:", isInIframe);
-  
-  // For development, automatically set Tsion as the user
-  const tsionUser = MOCK_USERS.find(u => u.username === 'tsion');
-  const defaultUser = tsionUser ? { ...tsionUser, password: undefined } : null;
-  
-  const [user, setUser] = useState<User | null>(defaultUser);
-  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Check for existing user on mount
   useEffect(() => {
-    // Debug log for auth state
-    console.log("Auth state initialized:", { user, isAuthenticated: !!user });
-    
-    // Store Tsion user in localStorage to ensure consistency
-    if (defaultUser && !localStorage.getItem('user')) {
-      localStorage.setItem('user', JSON.stringify(defaultUser));
-    } else if (localStorage.getItem('user')) {
-      // Load from localStorage if exists
+    const checkUser = async () => {
       try {
-        const storedUser = JSON.parse(localStorage.getItem('user') || '');
-        if (storedUser && storedUser.id) {
-          console.log("Loaded user from localStorage:", storedUser.username);
-          setUser(storedUser);
+        // Check local storage first for our mock auth
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
         }
-      } catch (e) {
-        console.error("Error parsing stored user:", e);
-        // If there's an error, reset to default user
-        setUser(defaultUser);
+      } catch (err) {
+        console.error('Error checking authentication:', err);
+        localStorage.removeItem('user');
+      } finally {
+        setIsLoading(false);
       }
-    }
-    
-    // Force auth in iframe environments to avoid auth issues
-    if (isInIframe) {
-      console.log("In iframe environment - forcing auth state");
-      setUser(defaultUser);
-      localStorage.setItem('user', JSON.stringify(defaultUser));
-    }
-  }, [isInIframe]);
+    };
 
-  // Login function (still available but not needed for development)
+    checkUser();
+  }, []);
+
+  // Login function
   const login = async (username: string, password: string) => {
     setIsLoading(true);
     setError(null);
@@ -178,8 +162,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Clear local storage
       localStorage.removeItem('user');
       
-      // Reset to Tsion for development (normally would set to null)
-      setUser(defaultUser);
+      // Clear state
+      setUser(null);
       
       // Show success message
       toast({
@@ -187,8 +171,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         description: "You have been successfully logged out.",
       });
       
-      // For development, redirect to waiter dashboard instead of login
-      navigate('/waiter');
+      // Redirect to login
+      navigate('/login');
     } catch (err: any) {
       setError(err.message);
       toast({
@@ -209,7 +193,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         login,
         logout,
         error,
-        isAuthenticated: true // Always authenticated for development
+        isAuthenticated: !!user
       }}
     >
       {children}
