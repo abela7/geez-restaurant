@@ -13,20 +13,34 @@ import {
   BadgePoundSterling
 } from "lucide-react";
 
-export const MenuNav: React.FC = () => {
+interface MenuNavProps {
+  basePath?: string;
+  items?: Array<{
+    path: string;
+    label: string;
+    icon: React.ReactNode;
+  }>;
+}
+
+export const MenuNav: React.FC<MenuNavProps> = ({ 
+  basePath = "/admin/menu",
+  items
+}) => {
   const location = useLocation();
   const { t } = useLanguage();
   
   // Define the menu navigation items
-  const navItems = [
-    { path: "/admin/menu/food", label: "Food Items", icon: <Utensils className="h-4 w-4 mr-2" /> },
-    { path: "/admin/menu/dishes", label: "Dishes", icon: <MenuSquare className="h-4 w-4 mr-2" /> },
-    { path: "/admin/menu/categories", label: "Categories", icon: <LayoutGrid className="h-4 w-4 mr-2" /> },
-    { path: "/admin/menu/dish-cost", label: "Dish Cost", icon: <Calculator className="h-4 w-4 mr-2" /> },
-    { path: "/admin/menu/modifiers", label: "Modifiers", icon: <Settings className="h-4 w-4 mr-2" /> },
-    { path: "/admin/menu/pricing", label: "Pricing", icon: <BadgePoundSterling className="h-4 w-4 mr-2" /> },
-    { path: "/admin/menu/design", label: "Menu Design", icon: <Palette className="h-4 w-4 mr-2" /> },
+  const defaultItems = [
+    { path: `${basePath}/food`, label: "Food Items", icon: <Utensils className="h-4 w-4 mr-2" /> },
+    { path: `${basePath}/dishes`, label: "Dishes", icon: <MenuSquare className="h-4 w-4 mr-2" /> },
+    { path: `${basePath}/categories`, label: "Categories", icon: <LayoutGrid className="h-4 w-4 mr-2" /> },
+    { path: `${basePath}/dish-cost`, label: "Dish Cost", icon: <Calculator className="h-4 w-4 mr-2" /> },
+    { path: `${basePath}/modifiers`, label: "Modifiers", icon: <Settings className="h-4 w-4 mr-2" /> },
+    { path: `${basePath}/pricing`, label: "Pricing", icon: <BadgePoundSterling className="h-4 w-4 mr-2" /> },
+    { path: `${basePath}/design`, label: "Menu Design", icon: <Palette className="h-4 w-4 mr-2" /> },
   ];
+
+  const navItems = items || defaultItems;
 
   return (
     <div className="w-full overflow-x-auto mb-6 bg-white rounded-lg shadow dark:bg-gray-800">

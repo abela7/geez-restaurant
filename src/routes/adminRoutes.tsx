@@ -54,6 +54,14 @@ const Checklists = lazy(() => import("@/pages/admin/food-safety/Checklists"));
 // General Pages
 const TableManagement = lazy(() => import("@/pages/admin/general/TableManagement"));
 
+// Settings Pages
+const RestaurantProfile = lazy(() => import("@/pages/admin/settings/RestaurantProfile"));
+const UserAccess = lazy(() => import("@/pages/admin/settings/UserAccess"));
+const PrintersDevices = lazy(() => import("@/pages/admin/settings/PrintersDevices"));
+const SystemLogs = lazy(() => import("@/pages/admin/settings/SystemLogs"));
+const Integrations = lazy(() => import("@/pages/admin/settings/Integrations"));
+const ThemeSettings = lazy(() => import("@/pages/admin/settings/ThemeSettings"));
+
 // Wrap components with Layout
 const withLayout = (Component: React.ComponentType) => (
   <Layout interface="admin">
@@ -244,6 +252,32 @@ export const adminRoutes = [
   {
     path: "/admin/general/table-management",
     element: withLayout(TableManagement),
+  },
+  
+  // Settings routes
+  {
+    path: "/admin/settings/profile",
+    element: withLayout(RestaurantProfile),
+  },
+  {
+    path: "/admin/settings/users",
+    element: withLayout(UserAccess),
+  },
+  {
+    path: "/admin/settings/printers",
+    element: withLayout(PrintersDevices),
+  },
+  {
+    path: "/admin/settings/system-logs",
+    element: withLayout(SystemLogs),
+  },
+  {
+    path: "/admin/settings/integrations",
+    element: withLayout(Integrations),
+  },
+  {
+    path: "/admin/settings/themes",
+    element: withLayout(ThemeSettings),
   },
 ];
 
